@@ -2,7 +2,7 @@
   <view class="tt-page">
     <!-- 当前考试 -->
     <view class="tt-card">
-      <view class="exam-bar" @tap="chooseExam">
+      <view class="exam-bar" hover-class="tt-hover-light" @tap="chooseExam">
         <view class="tt-flex1">
           <text class="exam-bar__label">当前考试</text>
           <text :class="['exam-bar__name', currentExam ? '' : 'is-empty']">
@@ -25,15 +25,15 @@
       <view class="hint">AI 需要知道「考了哪些题、每题考什么」，才能把失分定位到知识点。支持拍照、PDF、Word、图片。</view>
 
       <view class="source-row">
-        <view class="source-btn" @tap="pickAssets('paper', 'camera')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('paper', 'camera')">
           <text class="source-btn__icon">◉</text>
           <text class="source-btn__text">拍照</text>
         </view>
-        <view class="source-btn" @tap="pickAssets('paper', 'album')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('paper', 'album')">
           <text class="source-btn__icon">▣</text>
           <text class="source-btn__text">相册</text>
         </view>
-        <view class="source-btn" @tap="pickAssets('paper', 'file')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('paper', 'file')">
           <text class="source-btn__icon">▤</text>
           <text class="source-btn__text">PDF / Word</text>
         </view>
@@ -88,15 +88,15 @@
       </view>
 
       <view class="source-row">
-        <view class="source-btn" @tap="pickAssets('sheet', 'camera')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('sheet', 'camera')">
           <text class="source-btn__icon">◉</text>
           <text class="source-btn__text">拍照</text>
         </view>
-        <view class="source-btn" @tap="pickAssets('sheet', 'album')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('sheet', 'album')">
           <text class="source-btn__icon">▣</text>
           <text class="source-btn__text">相册</text>
         </view>
-        <view class="source-btn" @tap="pickAssets('sheet', 'file')">
+        <view class="source-btn" hover-class="tt-hover" @tap="pickAssets('sheet', 'file')">
           <text class="source-btn__icon">▤</text>
           <text class="source-btn__text">PDF / 图片</text>
         </view>

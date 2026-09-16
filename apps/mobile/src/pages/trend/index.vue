@@ -45,6 +45,7 @@
         <view
           class="chip"
           :class="{ 'chip--on': selectedSubjects.length === 0 }"
+          hover-class="tt-hover"
           @tap="selectAll"
         >
           全部学科
@@ -54,6 +55,7 @@
           :key="subject.code"
           class="chip"
           :class="{ 'chip--on': selectedSubjects.indexOf(subject.code) > -1 }"
+          hover-class="tt-hover"
           @tap="toggleSubject(subject.code)"
         >
           <view class="chip__dot" :style="{ background: subjectColor(subject.code) }" />

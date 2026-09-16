@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="tt-page">
     <!-- ======================= 未登录 ======================= -->
     <template v-if="!userStore.isLogin">
@@ -68,7 +68,7 @@
 
         <view class="login-tip">新账号自动赠送 1 点数，可用于跳过 1 段广告直接查看分析</view>
 
-        <view class="agree" @tap="agreed = !agreed">
+        <view class="agree" hover-class="tt-hover-light" @tap="agreed = !agreed">
           <view class="agree__box" :class="{ 'agree__box--on': agreed }">
             <text v-if="agreed">✓</text>
           </view>
@@ -180,19 +180,19 @@
 
       <!-- 设置 -->
       <view class="tt-card">
-        <view class="menu" @tap="changePassword">
+        <view class="menu" hover-class="tt-hover-light" @tap="changePassword">
           <text class="menu__label">绑定 / 修改密码</text>
           <text class="menu__arrow">›</text>
         </view>
-        <view class="menu" @tap="showAgreement">
+        <view class="menu" hover-class="tt-hover-light" @tap="showAgreement">
           <text class="menu__label">用户协议与隐私政策</text>
           <text class="menu__arrow">›</text>
         </view>
-        <view class="menu" @tap="showAbout">
+        <view class="menu" hover-class="tt-hover-light" @tap="showAbout">
           <text class="menu__label">关于 ToTop</text>
           <text class="menu__arrow">v0.1.0</text>
         </view>
-        <view class="menu menu--danger" @tap="logout">
+        <view class="menu menu--danger" hover-class="tt-hover-light" @tap="logout">
           <text class="menu__label">退出登录</text>
           <text class="menu__arrow">›</text>
         </view>
