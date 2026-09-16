@@ -1,0 +1,70 @@
+{
+  "easycom": {
+    "autoscan": true
+  },
+  "pages": [
+    {
+      "path": "pages/trend/index",
+      "style": {
+        "navigationBarTitleText": "成绩趋势",
+        "enablePullDownRefresh": true,
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/import/index",
+      "style": {
+        "navigationBarTitleText": "导入与解锁",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/account/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/analysis/index",
+      "style": {
+        "navigationBarTitleText": "学情分析",
+        "enablePullDownRefresh": false
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "ToTop",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F7F6FB",
+    "backgroundColorTop": "#F7F6FB",
+    "backgroundColorBottom": "#F7F6FB"
+  },
+  "tabBar": {
+    "color": "#B4B9CC",
+    "selectedColor": "#7C5CFF",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/trend/index",
+        "text": "趋势",
+        "iconPath": "static/tabbar/trend.png",
+        "selectedIconPath": "static/tabbar/trend-active.png"
+      },
+      {
+        "pagePath": "pages/import/index",
+        "text": "导入",
+        "iconPath": "static/tabbar/import.png",
+        "selectedIconPath": "static/tabbar/import-active.png"
+      },
+      {
+        "pagePath": "pages/account/index",
+        "text": "账号",
+        "iconPath": "static/tabbar/account.png",
+        "selectedIconPath": "static/tabbar/account-active.png"
+      }
+    ]
+  }
+}

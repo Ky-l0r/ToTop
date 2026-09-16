@@ -1,0 +1,36 @@
+{
+  "name": "ToTop",
+  "appid": "",
+  "description": "拍照导入试卷与答题卡，分阶段解锁 AI 学情分析",
+  "versionName": "0.2.0",
+  "versionCode": "200",
+  "transformPx": false,
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "enhance": true,
+      "postcss": true,
+      "minified": true,
+      "coverView": true,
+      "ignoreUploadUnusedFiles": true
+    },
+    "usingComponents": true,
+    "optimization": {
+      "subPackages": true
+    },
+    "lazyCodeLoading": "requiredComponents",
+    "permission": {},
+    "requiredPrivateInfos": [],
+    "darkmode": false
+  },
+  "h5": {
+    "title": "ToTop",
+    "router": {
+      "mode": "hash",
+      "base": "./"
+    }
+  },
+  "vueVersion": "3"
+}

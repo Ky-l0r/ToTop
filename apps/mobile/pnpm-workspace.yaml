@@ -1,0 +1,10 @@
+# pnpm 11 需要显式批准依赖的构建脚本。
+#
+# esbuild 设为 false：它的 postinstall 只是自检二进制版本（部分环境会因拿不到子进程输出而误报失败），
+# 而真正的二进制已由平台包 @esbuild/win32-x64 提供，构建不受影响。
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  core-js-pure: true
+  esbuild: false
+  vue-demi: true

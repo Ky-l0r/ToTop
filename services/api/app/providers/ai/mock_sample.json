@@ -1,0 +1,240 @@
+{
+  "_comment": "Mock Provider 的假数据模板。可直接修改本文件来定制无 AI Key 时的演示效果；subjects 按 subject_code 匹配，缺失的学科回退到 _default。",
+  "model_name": "mock-qwen-vl-max",
+  "subjects": {
+    "chinese": {
+      "subject_name": "语文",
+      "full_score": 150,
+      "score": 108,
+      "weak_module_names": ["现代文阅读", "古诗文阅读", "写作"],
+      "weak_points": [
+        {
+          "module": "现代文阅读",
+          "chapter": "文学类文本阅读",
+          "knowledge_point": "小说人物形象的概括与分析",
+          "severity": "high",
+          "lost_score": 6,
+          "evidence": {
+            "question_no": "8",
+            "question_text": "文中「他」两次沉默各有什么含义？请结合全文简要分析。",
+            "student_answer": "第一次沉默是因为他不想说话，第二次沉默是因为他很难过。",
+            "correct_answer": "第一次沉默是对父亲决定的默认与隐忍，暗含对家庭处境的理解；第二次沉默是得知真相后情绪冲击下的失语，与前文形成呼应。",
+            "error_type": "答题要点的层级缺失"
+          },
+          "suggestion": "做小说人物分析题时先按「表层行为 + 深层心理 + 与主旨的关联」三层搭骨架，再回原文逐条找依据；每天精读 1 篇小说并写 3 条要点式答案。"
+        },
+        {
+          "module": "古诗文阅读",
+          "chapter": "文言文阅读",
+          "knowledge_point": "文言实词的一词多义与语境推断",
+          "severity": "medium",
+          "lost_score": 4,
+          "evidence": {
+            "question_no": "11(2)",
+            "question_text": "对下列句子中加点词的解释，不正确的一项是",
+            "student_answer": "选 B，「属」解释为「连接」。",
+            "correct_answer": "「属」在「属予作文以记之」中通「嘱」，意为「嘱托」，应选 D。",
+            "error_type": "古今异义与通假辨析不清"
+          },
+          "suggestion": "整理《高考文言 120 实词》中「属、见、致、除」等高频多义字，每个字按「本义—引申义—教材例句」三列做卡片，每周翻卡 3 次。"
+        },
+        {
+          "module": "写作",
+          "chapter": "议论文写作",
+          "knowledge_point": "分论点的逻辑层次与素材贴合度",
+          "severity": "high",
+          "lost_score": 8,
+          "evidence": {
+            "question_no": "23",
+            "question_text": "阅读下面的材料，根据要求写作。（60 分）",
+            "student_answer": "三个分论点均围绕「坚持」展开，素材重复使用同一类人物事例。",
+            "correct_answer": "分论点应形成递进或并列的不同维度（个人—社会—时代），每个分论点匹配差异化素材并回扣材料。",
+            "error_type": "论证结构同质化"
+          },
+          "suggestion": "建立「论点维度表」：个人成长、社会责任、时代价值各准备 3 个人物素材，每篇作文强制使用 3 个不同维度；完成后用红笔标注每个分论点与材料的勾连句。"
+        }
+      ]
+    },
+    "math": {
+      "subject_name": "数学",
+      "full_score": 150,
+      "score": 95,
+      "weak_module_names": ["函数与导数", "解析几何", "立体几何"],
+      "weak_points": [
+        {
+          "module": "函数与导数",
+          "chapter": "导数的应用",
+          "knowledge_point": "利用导数求单调区间与含参讨论",
+          "severity": "high",
+          "lost_score": 8,
+          "evidence": {
+            "question_no": "18(1)",
+            "question_text": "已知函数 f(x)=lnx-ax，讨论 f(x) 的单调性。",
+            "student_answer": "直接求导后写「f′(x)=1/x-a>0，故 f(x) 单调递增」，未讨论 a≤0 的情形。",
+            "correct_answer": "需分 a≤0 与 a>0 讨论：a≤0 时在 (0,+∞) 单调递增；a>0 时在 (0,1/a) 递增、在 (1/a,+∞) 递减。",
+            "error_type": "含参分类讨论遗漏"
+          },
+          "suggestion": "把「含参单调性」做成固定动作：求定义域 → 求导 → 通分 → 令分子为 0 求临界点 → 按临界点是否在定义域内分类。每天限时练 2 道并写全讨论框。"
+        },
+        {
+          "module": "解析几何",
+          "chapter": "圆锥曲线",
+          "knowledge_point": "直线与椭圆位置关系的联立与判别式",
+          "severity": "high",
+          "lost_score": 10,
+          "evidence": {
+            "question_no": "20(2)",
+            "question_text": "设直线 l 与椭圆 C: x²/4+y²=1 交于 A、B 两点，且 OA⊥OB，求 |AB| 的取值范围。",
+            "student_answer": "联立后只写出韦达定理，未讨论判别式 Δ>0 的约束，也未处理垂直条件。",
+            "correct_answer": "联立得 (1+4k²)x²+8kmx+4m²-4=0，需 Δ>0；由 OA⊥OB 得 x₁x₂+y₁y₂=0，进而 5m²=4(1+k²)，再求 |AB| 范围。",
+            "error_type": "条件转化不完整"
+          },
+          "suggestion": "圆锥曲线大题按「设线→联立→判别式→韦达→条件转化→目标表达」六步走，每步写清约束；整理 10 道 OA⊥OB、斜率之积为定值类条件的转化模板。"
+        },
+        {
+          "module": "立体几何",
+          "chapter": "空间向量与立体几何",
+          "knowledge_point": "二面角的向量求法与符号判断",
+          "severity": "medium",
+          "lost_score": 5,
+          "evidence": {
+            "question_no": "19(2)",
+            "question_text": "求平面 PBC 与平面 PAD 所成二面角的余弦值。",
+            "student_answer": "求出两法向量后直接取绝对值，得到正值，未判断二面角是锐角还是钝角。",
+            "correct_answer": "需结合图形判断二面角为钝角，余弦值应为负。",
+            "error_type": "结论细节失误"
+          },
+          "suggestion": "每道二面角题都补一句「由图可知该二面角为锐/钝角」，并把判断方法（观察法向量方向、取半平面内点判定）写成口诀贴在错题本首页。"
+        }
+      ]
+    },
+    "english": {
+      "subject_name": "英语",
+      "full_score": 150,
+      "score": 112,
+      "weak_module_names": ["阅读理解", "语言知识运用", "书面表达"],
+      "weak_points": [
+        {
+          "module": "阅读理解",
+          "chapter": "推理判断题",
+          "knowledge_point": "作者意图与态度的推断",
+          "severity": "high",
+          "lost_score": 6,
+          "evidence": {
+            "question_no": "27",
+            "question_text": "What is the author's attitude towards the new policy?",
+            "student_answer": "选 supportive，依据是第一段的 positive 一词。",
+            "correct_answer": "选 doubtful，第三段 but 之后作者用质疑性表述转折，态度应为怀疑。",
+            "error_type": "忽略转折信号词"
+          },
+          "suggestion": "训练时用荧光笔标出 but / however / yet / actually 等转折词，凡涉及态度题必先定位转折句；每周精做 5 篇真题阅读并整理「态度词清单」。"
+        },
+        {
+          "module": "语言知识运用",
+          "chapter": "语法填空",
+          "knowledge_point": "非谓语动词的逻辑主语判断",
+          "severity": "medium",
+          "lost_score": 4,
+          "evidence": {
+            "question_no": "语法填空 63",
+            "question_text": "______ (compare) with the previous version, the new design is more user-friendly.",
+            "student_answer": "填 Comparing",
+            "correct_answer": "填 Compared，逻辑主语 the new design 与 compare 之间是被动关系。",
+            "error_type": "主动被动关系判断错误"
+          },
+          "suggestion": "做非谓语题先划句子主语，再判断该主语与动词是主动还是被动关系；整理 30 道真题非谓语题做专项限时训练。"
+        }
+      ]
+    },
+    "_default": {
+      "subject_name": "综合",
+      "full_score": 100,
+      "score": 72,
+      "weak_module_names": ["基础概念", "综合应用"],
+      "weak_points": [
+        {
+          "module": "基础概念",
+          "chapter": "核心概念理解",
+          "knowledge_point": "概念辨析与规范表述",
+          "severity": "high",
+          "lost_score": 6,
+          "evidence": {
+            "question_no": "12",
+            "question_text": "简答：请说明该概念的内涵与外延。",
+            "student_answer": "仅写了内涵，未提及外延与适用条件。",
+            "correct_answer": "需同时给出内涵定义、外延范围与适用条件，并举例说明。",
+            "error_type": "概念回答不完整"
+          },
+          "suggestion": "整理该学科核心概念清单，每个概念按「定义—范围—条件—反例」四要素做成表格，每周默写 1 次。"
+        },
+        {
+          "module": "综合应用",
+          "chapter": "综合题解题策略",
+          "knowledge_point": "多知识点综合题的拆解",
+          "severity": "medium",
+          "lost_score": 5,
+          "evidence": {
+            "question_no": "22",
+            "question_text": "综合应用题：结合材料分析并给出解决方案。",
+            "student_answer": "只答了现象描述，缺少原理分析与方案落地。",
+            "correct_answer": "应按「现象—原理—分析—方案」四段作答，每段结合材料关键词。",
+            "error_type": "答题结构缺失"
+          },
+          "suggestion": "用「四段答题模板」重做近 3 次考试的同类大题，每题先写答题提纲再落笔。"
+        }
+      ]
+    }
+  },
+  "improvement_plan": {
+    "summary": "本次考试反映出「基础题稳定、综合题失分集中」的典型特征：失分点主要落在需要多步推理与规范表述的题目上，属于方法熟练度不足而非知识空白，按下面的顺序各突破 1~2 个模块，预计 3~4 周可见明显提升。",
+    "priority_order": ["函数与导数", "解析几何", "写作", "文言文阅读", "阅读理解"],
+    "steps": [
+      {
+        "title": "先修主干：导数与单调性讨论",
+        "detail": "把含参讨论拆成固定流程（定义域→求导→通分→临界点→分区间），每天 2 道限时训练，错题只记「漏了哪一步」。",
+        "estimated_hours": 6.0,
+        "resources": ["教材选修二 第 5 章", "近五年真题导数大题", "错题本「分类讨论」专题页"]
+      },
+      {
+        "title": "圆锥曲线六步法固化",
+        "detail": "按设线→联立→判别式→韦达→条件转化→目标表达六步书写，重点补「条件转化」这一步的模板积累。",
+        "estimated_hours": 5.0,
+        "resources": ["教材选修一 第 3 章", "圆锥曲线专题讲义", "老师课上例题笔记"]
+      },
+      {
+        "title": "作文结构与素材库搭建",
+        "detail": "建立个人素材库（人物/事件/数据三类各 5 条），每篇作文强制使用 3 个不同维度的分论点并回扣材料。",
+        "estimated_hours": 4.0,
+        "resources": ["《高考作文素材精选》", "近三年优秀范文 10 篇", "议论文提纲模板"]
+      },
+      {
+        "title": "阅读题信号词训练",
+        "detail": "文言实词卡片 + 英语阅读转折信号词标注同步做，每天各 15 分钟，重在形成条件反射。",
+        "estimated_hours": 3.5,
+        "resources": ["《高考文言 120 实词》", "英语真题阅读 30 篇", "实词卡片（自建）"]
+      }
+    ],
+    "weekly_plan": [
+      {
+        "week": 1,
+        "focus": "函数与导数：单调性与极值",
+        "target": "含参讨论题正确率≥70%，完成 12 道专项题"
+      },
+      {
+        "week": 2,
+        "focus": "解析几何：直线与圆锥曲线位置关系",
+        "target": "独立写出完整六步过程，限时 20 分钟内完成 1 道大题"
+      },
+      {
+        "week": 3,
+        "focus": "语文写作与文言实词",
+        "target": "完成 2 篇议论文（3 维度分论点），实词卡片过 3 轮"
+      },
+      {
+        "week": 4,
+        "focus": "综合模拟与错题回炉",
+        "target": "完成 1 套整卷模拟，把本次 8 个失分点全部重做一遍且不再失分"
+      }
+    ]
+  }
+}

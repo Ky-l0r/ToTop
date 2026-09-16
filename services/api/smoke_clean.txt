@@ -1,0 +1,93 @@
+ToTop API 冒烟测试  base_url=http://127.0.0.1:8000  run_id=0e6779a7  phone=13986918613
+
+── 服务可用性 ───────────────────────────────────────────────────
+[PASS] 01. GET /health 返回 200  HTTP 200
+[PASS] 02. GET /health 状态为 ok  {"status": "ok", "version": "0.1.0", "ai_provider": "mock", "db": "sqlite", "db_ok": true, "env": "dev"}
+[PASS] 03. GET /health 含 version / ai_provider / db  version=0.1.0 ai=mock db=sqlite
+[PASS] 04. GET /meta/subjects 返回学科字典  9 个学科
+[PASS] 05. 字典含主要学科与「模块→章节」结构  math 模块示例：集合与常用逻辑用语
+
+── 认证：发码 / 注册 / 登录 / 刷新 / 改密 ───────────────────────────────
+[PASS] 06. POST /auth/sms/send 返回 dev_code  dev_code=080138
+[PASS] 07. 未注册手机号验证码登录返回 40014  HTTP 400 code=40014 该手机号尚未注册
+[PASS] 08. POST /auth/register 注册成功  user=f22f8c2d5aa04054913dcddfb3e0934b
+[PASS] 09. 注册返回 access_token / refresh_token
+[PASS] 10. 注册赠送 1 点数（register_bonus_credits）  credits=1
+[PASS] 11. 注册响应中手机号已脱敏  139****8613
+[PASS] 12. GET /users/me 返回当前用户与余额  id=f22f8c2d5aa04054913dcddfb3e0934b credits=1 phone=139****8613
+[PASS] 13. PATCH /users/me 修改昵称  冒烟同学
+[PASS] 14. GET /credits/balance 余额为 1  1
+[PASS] 15. POST /auth/refresh 旋转刷新令牌
+[PASS] 16. POST /auth/password 修改密码
+[PASS] 17. 新密码可登录（POST /auth/login/password）
+[PASS] 18. 密码错误返回 40015  HTTP 400 code=40015
+[PASS] 19. 未带令牌访问返回 40100  HTTP 401 code=40100
+
+── 考试、上传与登记 ────────────────────────────────────────────────
+[PASS] 20. POST /exams 创建考试  id=3fbbd1597fbb45678bcf53f07a04afa8 date=2026-09-09
+[PASS] 21. GET /exams 列表包含新建考试  total=1
+[PASS] 22. POST /uploads/direct 上传成功  key=paper/202609/19b47b9e828d4f8ca79518ff09ee0867.png size=70
+[PASS] 23. 上传结果 url 指向 {public_base_url}/static/...  http://127.0.0.1:8000/static/paper/202609/19b47b9e828d4f8ca79518ff09ee0867.png
+[PASS] 24. 上传后的文件可通过 /static 访问  HTTP 200
+[PASS] 25. 非法扩展名上传返回 40031  HTTP 400 code=40031
+[PASS] 26. POST /exams/{id}/papers（math）返回 paper_id + task_id  paper_id=2e4f2207f3d64d0bbcdcebeab26a7c96
+[PASS] 27. POST /exams/{id}/papers（chinese）返回 paper_id + task_id  paper_id=c1a0b8382f82446c9fd157dc8f242701
+[PASS] 28. POST /exams/{id}/papers（english）返回 paper_id + task_id  paper_id=b1da53adc05349c4a9f1c1a3159b304f
+[PASS] 29. 试卷 OCR 后台任务在超时前完成  status=succeeded progress=100 message=识别完成，共 4 道题
+[PASS] 30. POST /exams/{id}/answer-sheets（math）返回 answer_sheet_id + task_id  answer_sheet_id=05a3fc46b1794c71b2be431fdecb8c58
+[PASS] 31. POST /exams/{id}/answer-sheets（chinese）返回 answer_sheet_id + task_id  answer_sheet_id=05bbde4c9b454b95b376af5456f10fd7
+[PASS] 32. POST /exams/{id}/answer-sheets（english）返回 answer_sheet_id + task_id  answer_sheet_id=c243214f99134986be62995fca8107b0
+[PASS] 33. 答题卡 OCR 后台任务在超时前完成  status=succeeded message=识别完成，共 4 道题
+[PASS] 34. GET /exams/{id} 详情含 3 份试卷与 3 张答题卡  papers=3 sheets=3 subjects=3
+
+── AI 失分分析 ─────────────────────────────────────────────────
+[PASS] 35. POST /analyses 发起分析  {"analysis_id": "b09669981a7d49a6ad7303b73d9e36b3", "status": "pending", "credits_cost": 1, "credits_balance": 0}
+[PASS] 36. 分析扣费 1 点、余额 1 → 0  cost=1 balance=0
+[PASS] 37. 分析在超时前完成（status=succeeded）  status=succeeded error=None
+[PASS] 38. 结果含 ≥3 个学科  [('math', 0.6333), ('chinese', 0.7467), ('english', 0.7867)]
+[PASS] 39. 结果含 ≥6 个失分点  共 8 个
+[PASS] 40. 失分点 id 存在且唯一（前端用作 key）  ['wp1', 'wp2', 'wp3', 'wp4', 'wp5', 'wp6', 'wp7', 'wp8']
+[PASS] 41. 每个失分点都有 evidence（含题号）  18(1)
+[PASS] 42. total_score / full_score / score_rate 与各科分数自洽  total=325.0 full=450.0 rate=0.7222（各科合计 325.0）
+[PASS] 43. 提升方案完整（summary + steps + weekly_plan）  steps=4 weekly=4 priority=5
+[PASS] 44. 结果带 model_name  mock-qwen-vl-max
+[PASS] 45. GET /analyses 列表可查（按考试筛选）  total=1
+[PASS] 46. 点数不足时 POST /analyses 返回 40200（HTTP 402）  HTTP 402 code=40200 点数不足（本次需要 1 点，当前余额 0 点）
+[PASS] 47. 点数不足时余额不变（无副作用）  0
+[PASS] 48. 点数不足时未新建分析记录  total=1
+
+── 趋势与点数账本 ─────────────────────────────────────────────────
+[PASS] 49. GET /trends 数据点按 exam_date 升序  ['2026-09-09']
+[PASS] 50. 趋势数据包含本次考试
+[PASS] 51. subjects 过滤生效（只含 math/chinese，缺考学科不出现）  {'math': 0.6333, 'chinese': 0.7467}
+[PASS] 52. 数学得分率正确（95/150≈0.633）  math=0.6333 total=0.7222
+[PASS] 53. trends.subjects 元数据与过滤一致  [('chinese', '语文'), ('math', '数学')]
+[PASS] 54. GET /credits/ledger 含注册赠送与分析扣费流水  ['analysis', 'register_bonus']
+[PASS] 55. 分析扣费流水 delta=-1、balance_after=0  {"id": "322a9e4650b4420c877b1c648e2afbf6", "delta": -1, "reason": "analysis", "balance_after": 0, "remark": "AI 失分分析：冒烟测试考试 0e6779a7", "created_at": "2026-09-11T16:02:37.377805Z"}
+
+── 激励视频广告 ──────────────────────────────────────────────────
+[PASS] 56. 连打 10 次广告后仅第 10 次触发发奖  credited 出现在第 [10] 次
+[PASS] 57. 发奖后余额 1、进度归零  {"credited": true, "credits": 1, "progress": {"watched": 0, "needed": 10}, "duplicated": false}
+[PASS] 58. 重复 event_id 幂等：code=0、credited=false、余额与进度不变  {"credited": false, "credits": 1, "progress": {"watched": 0, "needed": 10}, "duplicated": true}
+[PASS] 59. GET /credits/ad-progress 进度与配置一致  {"watched": 0, "needed": 10, "per_reward": 1, "credits": 1}
+
+── 套餐与充值 ───────────────────────────────────────────────────
+[PASS] 60. GET /orders/plans 首次访问自动灌入 9 个套餐  9 个
+[PASS] 61. 套餐定价符合契约（1 点=100 分 / iOS 1 点=150 分）  {'alipay-1点': 100, 'alipay-5点': 500, 'alipay-20点': 2000, 'apple_iap-1点': 150, 'apple_iap-5点': 750, 'apple_iap-20点': 3000, 'wechat-1点': 100, 'wechat-5点': 500, 'wechat-20点': 2000}
+[PASS] 62. 每个渠道各 1 个推荐套餐（5 点档）  [('alipay', 5), ('apple_iap', 5), ('wechat', 5)]
+[PASS] 63. POST /orders 创建订单（500 分）  {"order_id": "654c5697354c4d249a3170c2ed7653e4", "order_no": "TT20260911160240664903", "amount_cents": 500, "pay_params": {"channel": "wechat", "order_no": "TT20260911160240664903", "mock": true, "amount_cents": 500, "package": "prepay_id=mock_TT20260911160240664903", "sign_type": "MD5", "pay_sign": "mock"}}
+[PASS] 64. POST /orders/{no}/pay 模拟支付到账（1 + 5 = 6 点）  {"order_no": "TT20260911160240664903", "status": "paid", "credits": 6}
+[PASS] 65. 重复支付幂等（余额仍为 6）  6
+[PASS] 66. GET /orders 返回我的订单列表  total=1
+[PASS] 67. POST /orders/notify/{channel} 占位接口返回 ok  {"ok": true}
+
+── 删除与异常码 ──────────────────────────────────────────────────
+[PASS] 68. 为待删除考试登记答题卡  answer_sheet_id=37f81473275f46c8b417ab7e7c63476a
+[PASS] 69. 待删除考试已有 1 条分析记录  total=1
+[PASS] 70. DELETE /exams/{id} 删除成功
+[PASS] 71. 删除考试后其分析记录一并级联清理  total=0
+[PASS] 72. 删除后查询详情返回 40400  HTTP 404 code=40400
+
+====================================================================
+  冒烟测试结果：PASS 72 / FAIL 0（共 72 项）
+====================================================================

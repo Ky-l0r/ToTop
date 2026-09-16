@@ -1,0 +1,53 @@
+/* ToTop 全局样式变量 · 紫色主题
+ *
+ * 视觉规范：
+ * - 主色 #7C5CFF（紫），浅色底 #F1EDFF，深色 #6344E8
+ * - 强调色 #FF9F45（暖橙，只用于「看广告得奖励」这类需要突出的场景）
+ * - 所有动画只动 transform / opacity，避免触发小程序重排
+ */
+
+/* 品牌色 */
+$tt-primary: #7c5cff;
+$tt-primary-light: #f1edff;
+$tt-primary-dark: #6344e8;
+$tt-primary-soft: rgba(124, 92, 255, 0.12);
+$tt-accent: #ff9f45;
+$tt-accent-soft: rgba(255, 159, 69, 0.14);
+$tt-success: #22c55e;
+$tt-warning: #f59e0b;
+$tt-danger: #f5544f;
+
+/* 文字 */
+$tt-text: #1a1730;
+$tt-text-sub: #6b6880;
+$tt-text-weak: #9e9bb0;
+$tt-text-inverse: #ffffff;
+
+/* 背景与描边 */
+$tt-bg: #f7f6fb;
+$tt-card: #ffffff;
+$tt-border: #efedf7;
+$tt-mask: rgba(26, 23, 48, 0.45);
+
+/* 圆角与阴影 */
+$tt-radius-sm: 12rpx;
+$tt-radius: 24rpx;
+$tt-radius-lg: 32rpx;
+$tt-shadow: 0 8rpx 28rpx rgba(124, 92, 255, 0.08);
+$tt-shadow-strong: 0 16rpx 40rpx rgba(124, 92, 255, 0.22);
+
+/* 渐变 */
+$tt-gradient: linear-gradient(135deg, #8b6cff 0%, #6344e8 100%);
+$tt-gradient-accent: linear-gradient(135deg, #ffb35c 0%, #ff8f3d 100%);
+
+/* 学科配色（趋势图按学科取色，冷暖交替保证可辨识） */
+$tt-subject-chinese: #f5544f;
+$tt-subject-math: #7c5cff;
+$tt-subject-english: #22c55e;
+$tt-subject-physics: #a855f7;
+$tt-subject-chemistry: #f59e0b;
+$tt-subject-biology: #14b8a6;
+$tt-subject-politics: #ec4899;
+$tt-subject-history: #b45309;
+$tt-subject-geography: #0ea5e9;
+$tt-subject-total: #1a1730;
