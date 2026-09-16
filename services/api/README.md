@@ -105,9 +105,11 @@ services/api/
 | POST | `/api/v1/exams/{exam_id}/answer-sheets` | 是 | `{...,is_graded,object_keys[],score?,full_score?}` → `{answer_sheet_id, task_id}` |
 | POST | `/api/v1/uploads/direct` | 是 | multipart `file` + `kind` → `{object_key, url, size, content_type, kind}` |
 | GET | `/api/v1/tasks/{task_id}` | 是 | `{id,status,progress,message,error,result_ref}` |
-| POST | `/api/v1/analyses` | 是 | `{exam_id, answer_sheet_id?, force?}` → `{analysis_id, status, credits_cost, credits_balance}` |
-| GET | `/api/v1/analyses/{id}` | 是 | 完整分析结果（见第 4.6 节） |
+| POST | `/api/v1/analyses` | 是 | `{exam_id, answer_sheet_id?, force?}` → `{analysis_id, status, credits_cost, credits_balance}`（**默认不扣费**） |
+| GET | `/api/v1/analyses/{id}` | 是 | 完整分析结果 + 三阶段解锁状态（见第 4.6 节） |
 | GET | `/api/v1/analyses` | 是 | 分析历史（`exam_id` / `page` / `size`） |
+| POST | `/api/v1/analyses/{id}/stages/{stage}/unlock` | 是 | 上报一次激励视频观看，累计够次数即解锁该阶段（`event_id` 幂等） |
+| POST | `/api/v1/analyses/{id}/stages/{stage}/unlock-by-credit` | 是 | 用点数跳过广告解锁该阶段（不足 → 40200，无副作用） |
 | GET | `/api/v1/trends` | 是 | `limit` / `subjects=math,chinese` |
 
 ### 错误码
@@ -205,7 +207,29 @@ services/api/
 
 - `total_score` / `full_score` 是**参与分析各科**的分数与满分之和；`score_rate = total_score / full_score`（0~1）；
 - `weak_points[].id` 由服务层统一编号（`wp1`…，保证唯一），前端可直接用作列表 key；
-- 未完成时（pending / running）各字段返回空结构，不报错。
+- 未完成时（pending / running）各字段返回空结构，不报错；
+- `stages` 是三阶段解锁状态，**未解锁阶段的 `content` 为 `null`**。
+
+**`stages[]` 结构（小程序核心机制）**：
+
+```json
+"stages": [
+  { "stage": 1, "name": "基础分析", "ad_required": 1, "watched": 1,
+    "unlocked": true, "unlock_method": "ad", "content": { "summary": "…（≤200 字）" } },
+  { "stage": 2, "name": "进阶分析", "ad_required": 2, "watched": 0,
+    "unlocked": false, "unlock_method": null, "content": null },
+  { "stage": 3, "name": "归纳总结", "ad_required": 2, "watched": 0,
+    "unlocked": false, "unlock_method": null, "content": null }
+]
+```
+
+| 阶段 | `content` 字段 | 说明 |
+| --- | --- | --- |
+| 1 基础分析 | `summary`（≤200 字）、`score_rate`、`total_score`、`full_score`、`level_text`、`top_subjects[]` | 超长会被服务层截断到句末标点 |
+| 2 进阶分析 | `weak_questions[]`、`total_lost` | 按 `lost_score` 降序，最多 10 题 |
+| 3 归纳总结 | `modules[]`、`suggestions[]`、`improvement_plan` | `modules` 按累计失分降序聚合 |
+
+三段内容都从**同一次模型调用的结果**派生（图片只送模型一次），解锁只控制可见性，不重复调用模型。
 
 ### 4.7 趋势口径（`/trends`）
 

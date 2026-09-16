@@ -38,6 +38,13 @@ class Analysis(Base):
     full_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     score_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     result: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    stage_state: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    """三个阶段的解锁状态。
+
+    结构：`{"1": {"watched": 0, "unlocked": false, "unlocked_at": null, "unlock_method": null}, ...}`
+
+    注意：JSON 字段必须整体重新赋值，原地修改字典不会被 SQLAlchemy 识别为变更。
+    """
     model_name: Mapped[str] = mapped_column(String(64), default="", nullable=False)
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

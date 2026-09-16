@@ -27,6 +27,7 @@ from __future__ import annotations
 import base64
 import logging
 import mimetypes
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,20 +37,38 @@ from app.core.errors import AppError, ErrorCode, ForbiddenError, NotFoundError, 
 from app.core.utils import new_id, utcnow
 from app.db.session import session_scope
 from app.models.analysis import Analysis
-from app.models.enums import CreditReason, TaskStatus
+from app.models.credits import AdEvent
+from app.models.enums import AdPlatform, AdType, CreditReason, TaskStatus
 from app.models.exam import AnswerSheet, Exam, KnowledgeModule, Paper, Subject
 from app.models.user import User
 from app.providers.ai import get_ai_provider
 from app.providers.ai.base import AnalysisInput, ExamInput, SubjectInput
 from app.providers.storage import get_storage_provider
-from app.schemas.analysis import AnalysisCreated, AnalysisCreate, AnalysisResult, WeakPoint, recompute_subject_rate
+from app.schemas.analysis import (
+    AnalysisCreated,
+    AnalysisCreate,
+    AnalysisResult,
+    UnlockStageRequest,
+    UnlockStageResult,
+    WeakPoint,
+    build_stages,
+    new_stage_state,
+    recompute_subject_rate,
+)
 from app.schemas.common import clamp_rate
 from app.services.credits import add_credits, get_balance, spend_credits
 from app.tasks import queue
 
 logger = logging.getLogger("app.services.analysis")
 
-__all__ = ["build_analysis_input", "create_analysis", "load_images_as_data_urls", "run_analysis"]
+__all__ = [
+    "build_analysis_input",
+    "create_analysis",
+    "load_images_as_data_urls",
+    "run_analysis",
+    "unlock_stage_by_ad",
+    "unlock_stage_by_credit",
+]
 
 # 进行中的分析状态（同一考试不重复扣费）
 _ACTIVE_STATUS = (TaskStatus.PENDING, TaskStatus.RUNNING, TaskStatus.SUCCEEDED)
@@ -91,19 +110,24 @@ async def create_analysis(db: AsyncSession, *, user: User, payload: AnalysisCrea
     cost = settings.analysis_credit_cost
     analysis_id = new_id()
 
-    # ① 原子扣费：余额不足会直接抛 40200，下面一行都不会执行
-    change = await spend_credits(
-        db,
-        user_id=user.id,
-        cost=cost,
-        reason=CreditReason.ANALYSIS,
-        idempotency_key=f"analysis:{analysis_id}",
-        ref_type="analysis",
-        ref_id=analysis_id,
-        remark=f"AI 失分分析：{exam.name}",
-    )
+    # ① 原子扣费：余额不足会直接抛 40200，下面一行都不会执行。
+    #    小程序版本 cost 默认为 0（分析免费，结果分三段看广告解锁），此时跳过扣费只读余额。
+    if cost > 0:
+        change = await spend_credits(
+            db,
+            user_id=user.id,
+            cost=cost,
+            reason=CreditReason.ANALYSIS,
+            idempotency_key=f"analysis:{analysis_id}",
+            ref_type="analysis",
+            ref_id=analysis_id,
+            remark=f"AI 失分分析：{exam.name}",
+        )
+        balance_after = change.balance_after
+    else:
+        balance_after = await get_balance(db, user.id) or 0
 
-    # ② 同一事务内建立分析记录
+    # ② 同一事务内建立分析记录（同时初始化三个阶段的解锁状态）
     db.add(
         Analysis(
             id=analysis_id,
@@ -112,6 +136,7 @@ async def create_analysis(db: AsyncSession, *, user: User, payload: AnalysisCrea
             user_id=user.id,
             status=TaskStatus.PENDING,
             credits_cost=cost,
+            stage_state=new_stage_state(settings.stage_ad_requirements),
             model_name=get_ai_provider().model_name,
         )
     )
@@ -124,7 +149,7 @@ async def create_analysis(db: AsyncSession, *, user: User, payload: AnalysisCrea
         analysis_id=analysis_id,
         status=TaskStatus.PENDING,
         credits_cost=cost,
-        credits_balance=change.balance_after,
+        credits_balance=balance_after,
     )
 
 
@@ -418,6 +443,192 @@ async def _mark_failed(db: AsyncSession, *, analysis_id: str, exc: Exception) ->
             logger.exception("分析 %s 退还点数失败", analysis_id)
 
     await db.commit()
+
+
+# ======================================================================
+# 分阶段解锁
+#
+# 三个阶段的内容全部由 `build_stages` 从**同一份分析结果**派生，这里只负责
+# 「可见性控制」与幂等：
+# - 看激励视频：每次上报累计 1 次，达到阈值即解锁；
+# - 用点数：直接扣费解锁，给不愿看广告的用户一条付费路径。
+#
+# 注意：结果对象一律在 commit **之前**读取。SQLAlchemy 默认 expire_on_commit，
+# commit 之后再访问 ORM 属性会在 async 上下文里触发懒加载而报错。
+# ======================================================================
+
+
+def _ensure_stage(stage: int) -> None:
+    """校验阶段序号。"""
+    if stage not in (1, 2, 3):
+        raise ParamError("阶段序号只能是 1、2、3", detail={"stage": stage})
+
+
+def _coerce_platform(value: str) -> AdPlatform:
+    """归一客户端上报的广告平台；未知值记为 mock，不影响幂等判断。"""
+    try:
+        return AdPlatform(value)
+    except ValueError:
+        return AdPlatform.MOCK
+
+
+def _stage_item(analysis: Analysis, stage: int) -> dict[str, Any]:
+    """读取某阶段的解锁状态（缺失时给出默认结构）。"""
+    state: dict[str, Any] = analysis.stage_state or {}
+    item = state.get(str(stage))
+    if isinstance(item, dict):
+        return dict(item)
+    return {"watched": 0, "unlocked": False, "unlocked_at": None, "unlock_method": None}
+
+
+def _save_stage_item(analysis: Analysis, stage: int, item: dict[str, Any]) -> None:
+    """写回某阶段状态。
+
+    JSON 字段必须整体重新赋值——原地修改字典不会被 SQLAlchemy 识别为变更。
+    """
+    state: dict[str, Any] = dict(analysis.stage_state or {})
+    state[str(stage)] = item
+    analysis.stage_state = state
+
+
+def _stage_result(
+    analysis: Analysis,
+    stage: int,
+    *,
+    credited: bool,
+    duplicated: bool,
+    credits_balance: int | None = None,
+) -> UnlockStageResult:
+    """组装解锁返回体（未解锁时 content 为 null）。"""
+    stages = build_stages(
+        analysis,
+        ad_requirements=settings.stage_ad_requirements,
+        stage_names=settings.stage_names,
+    )
+    current = next((item for item in stages if item.stage == stage), None)
+    return UnlockStageResult(
+        stage=stage,
+        watched=current.watched if current else 0,
+        ad_required=current.ad_required if current else settings.stage_ad_required(stage),
+        unlocked=bool(current and current.unlocked),
+        credited=credited,
+        duplicated=duplicated,
+        unlock_method=current.unlock_method if current else None,
+        content=current.content if current else None,
+        credits_balance=credits_balance,
+    )
+
+
+async def _load_analysis(db: AsyncSession, *, user: User, analysis_id: str) -> Analysis:
+    """取出属于当前用户的分析记录。"""
+    analysis = await db.scalar(
+        select(Analysis).where(Analysis.id == analysis_id, Analysis.user_id == user.id)
+    )
+    if analysis is None:
+        raise NotFoundError("分析记录不存在", detail={"analysis_id": analysis_id})
+    return analysis
+
+
+async def unlock_stage_by_ad(
+    db: AsyncSession,
+    *,
+    user: User,
+    analysis_id: str,
+    stage: int,
+    payload: UnlockStageRequest,
+) -> UnlockStageResult:
+    """上报一次激励视频观看；累计到阈值即解锁该阶段。
+
+    - 同一个 `event_id` 重复上报只计一次（客户端重试安全，返回 `duplicated=true`）；
+    - 观看时长低于 `settings.ad_reward_min_seconds` 时抛 40021，不计入进度。
+    """
+    _ensure_stage(stage)
+    analysis = await _load_analysis(db, user=user, analysis_id=analysis_id)
+
+    existing = await db.scalar(select(AdEvent).where(AdEvent.event_id == payload.event_id))
+    if existing is not None:
+        logger.info("广告事件 %s 已处理过，按幂等返回", payload.event_id)
+        return _stage_result(analysis, stage, credited=False, duplicated=True)
+
+    if payload.watched_seconds < settings.ad_reward_min_seconds:
+        raise ParamError(
+            f"广告观看时长不足（需不少于 {settings.ad_reward_min_seconds} 秒）",
+            detail={"watched_seconds": payload.watched_seconds},
+        )
+
+    db.add(
+        AdEvent(
+            user_id=user.id,
+            platform=_coerce_platform(payload.platform),
+            event_id=payload.event_id,
+            ad_type=AdType.REWARD_VIDEO,
+            watched_seconds=payload.watched_seconds,
+            credited=False,
+        )
+    )
+
+    item = _stage_item(analysis, stage)
+    if not item.get("unlocked"):
+        item["watched"] = int(item.get("watched") or 0) + 1
+        required = settings.stage_ad_required(stage)
+        if item["watched"] >= required:
+            item["unlocked"] = True
+            item["unlock_method"] = "ad"
+            item["unlocked_at"] = utcnow().isoformat()
+            logger.info(
+                "分析 %s 的%s已解锁（看满 %d 次广告）", analysis.id, settings.stage_name(stage), required
+            )
+    _save_stage_item(analysis, stage, item)
+
+    await db.flush()
+    result = _stage_result(analysis, stage, credited=True, duplicated=False)
+    await db.commit()
+    return result
+
+
+async def unlock_stage_by_credit(
+    db: AsyncSession,
+    *,
+    user: User,
+    analysis_id: str,
+    stage: int,
+) -> UnlockStageResult:
+    """用点数跳过广告，直接解锁某个阶段（点数不足返回 40200 且不解锁）。"""
+    _ensure_stage(stage)
+    analysis = await _load_analysis(db, user=user, analysis_id=analysis_id)
+
+    item = _stage_item(analysis, stage)
+    if item.get("unlocked"):
+        balance = await get_balance(db, user.id)
+        return _stage_result(analysis, stage, credited=False, duplicated=True, credits_balance=balance)
+
+    change = await spend_credits(
+        db,
+        user_id=user.id,
+        cost=settings.stage_unlock_credit_cost,
+        reason=CreditReason.PURCHASE,
+        idempotency_key=f"stage-unlock:{analysis.id}:{stage}",
+        ref_type="analysis",
+        ref_id=analysis.id,
+        remark=f"跳过广告解锁{settings.stage_name(stage)}",
+    )
+
+    item.update(
+        {
+            "watched": settings.stage_ad_required(stage),
+            "unlocked": True,
+            "unlock_method": "credit",
+            "unlocked_at": utcnow().isoformat(),
+        }
+    )
+    _save_stage_item(analysis, stage, item)
+
+    await db.flush()
+    result = _stage_result(
+        analysis, stage, credited=True, duplicated=False, credits_balance=change.balance_after
+    )
+    await db.commit()
+    return result
     logger.error("分析 %s 失败：%s", analysis_id, message)
 
 

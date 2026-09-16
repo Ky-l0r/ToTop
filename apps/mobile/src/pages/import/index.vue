@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="tt-page">
     <!-- 当前考试 -->
     <view class="tt-card">
@@ -126,20 +126,20 @@
     <view class="tt-card analyze-card">
       <view class="tt-card__title">
         <text>③ AI 失分分析</text>
-        <text class="tt-card__subtitle">消耗 {{ ANALYSIS_COST }} 点数</text>
+        <text class="tt-card__subtitle">免费 · 结果分 3 段解锁</text>
       </view>
 
       <!-- 空闲态 -->
       <template v-if="stage === 'idle'">
         <view class="balance-row">
-          <text class="tt-muted">当前点数余额</text>
+          <text class="tt-muted">点数余额 · 解锁时可直接跳过广告</text>
           <text class="balance-row__value">{{ credits }}</text>
         </view>
-        <view class="tt-btn" :class="{ 'tt-btn--disabled': !canAnalyze }" @tap="confirmAnalyze">
+        <view class="tt-btn" :class="{ 'tt-btn--disabled': !canAnalyze }" hover-class="tt-hover" @tap="confirmAnalyze">
           {{ canAnalyze ? '开始分析' : analyzeBlockReason }}
         </view>
         <view class="hint hint--sub">
-          分析内容：逐题失分点 → 所属知识模块与章节 → 错误类型 → 针对性提升指南与周计划。
+          分析完成后分 3 段查看：① 基础学情（看 1 次视频）② 失分题目（看 2 次）③ 知识模块与学习建议（看 2 次）。
         </view>
       </template>
 
@@ -163,7 +163,7 @@
           </view>
           <view class="result-head__right">
             <text class="tt-muted">{{ analysis.total_score }} / {{ analysis.full_score }}</text>
-            <text class="tt-weak">扣 {{ ANALYSIS_COST }} 点数</text>
+            <text class="tt-weak">已生成 3 段分析</text>
           </view>
         </view>
 
@@ -196,7 +196,7 @@
 import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import * as api from '@/api'
-import { ANALYSIS_COST, USE_MOCK } from '@/api/config'
+import { USE_MOCK } from '@/api/config'
 import { useUserStore } from '@/store/user'
 import { dateOnly, percent, subjectColor } from '@/utils/format'
 import type { Analysis, ExamSummary, SourceType, WeakPoint } from '@/types'
@@ -228,12 +228,11 @@ const errorMessage = ref('')
 const credits = computed(() => userStore.credits)
 const isDemo = USE_MOCK
 
-const canAnalyze = computed(() => papers.value.length > 0 && sheets.value.length > 0 && credits.value >= ANALYSIS_COST)
+const canAnalyze = computed(() => papers.value.length > 0 && sheets.value.length > 0)
 
 const analyzeBlockReason = computed(() => {
   if (!papers.value.length) return '请先导入题目'
   if (!sheets.value.length) return '请先导入答题卡'
-  if (credits.value < ANALYSIS_COST) return '点数不足，请先获取点数'
   return '开始分析'
 })
 
@@ -345,10 +344,44 @@ async function pickAssets(target: 'paper' | 'sheet', from: 'camera' | 'album' | 
     return
   }
 
+  chooseImages(target, from)
+}
+
+/**
+ * 拍照 / 从相册选择。
+ * 微信小程序优先用 chooseMedia（官方推荐，chooseImage 已不维护），其他端回退到 chooseImage。
+ */
+function chooseImages(target: 'paper' | 'sheet', from: 'camera' | 'album'): void {
+  const count = from === 'camera' ? 1 : 9
+  const sourceType = from === 'camera' ? 'camera' : 'album'
+  const media = (uni as any).chooseMedia
+
+  if (typeof media === 'function') {
+    media({
+      count,
+      mediaType: ['image'],
+      sourceType: [sourceType],
+      sizeType: ['compressed'],
+      success: (res: any) => {
+        const files: any[] = res.tempFiles || []
+        files.forEach((file: any, index: number) => {
+          enqueue(target, {
+            path: file.tempFilePath,
+            name: `拍摄_${Date.now()}_${index + 1}.jpg`,
+            sourceType: 'photo',
+            size: file.size || 0
+          })
+        })
+      },
+      fail: () => {}
+    })
+    return
+  }
+
   uni.chooseImage({
-    count: from === 'camera' ? 1 : 9,
+    count,
     sizeType: ['compressed', 'original'],
-    sourceType: [from === 'camera' ? 'camera' : 'album'],
+    sourceType: [sourceType],
     success: (res) => {
       // 不同平台/版本下 tempFilePaths 可能是字符串或数组，统一成数组处理
       const rawPaths = res.tempFilePaths as unknown
@@ -368,7 +401,36 @@ async function pickAssets(target: 'paper' | 'sheet', from: 'camera' | 'album' | 
   })
 }
 
+/**
+ * 选择 PDF / Word / 图片文件。
+ * 微信小程序没有通用文件选择器，只能用 chooseMessageFile 从「聊天记录」里选——
+ * 用户把试卷文件发给「文件传输助手」再选即可，这是小程序生态的标准做法。
+ */
 function chooseFiles(target: 'paper' | 'sheet'): void {
+  const chooseMessage = (uni as any).chooseMessageFile
+  if (typeof chooseMessage === 'function') {
+    uni.showToast({ title: '请从聊天记录中选择文件', icon: 'none', duration: 1500 })
+    chooseMessage({
+      count: 9,
+      type: 'file',
+      extension: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'webp'],
+      success: (res: any) => {
+        const files: any[] = res.tempFiles || []
+        files.forEach((file: any, index: number) => {
+          const name = file.name || `文件_${Date.now()}_${index + 1}`
+          enqueue(target, {
+            path: file.path,
+            name,
+            sourceType: guessSourceType(name),
+            size: file.size || 0
+          })
+        })
+      },
+      fail: () => {}
+    })
+    return
+  }
+
   const choose = (uni as any).chooseFile
   if (typeof choose !== 'function') {
     uni.showToast({ title: '当前平台暂不支持文件选择，请改用拍照或相册', icon: 'none' })
@@ -390,9 +452,7 @@ function chooseFiles(target: 'paper' | 'sheet'): void {
         })
       })
     },
-    fail: () => {
-      uni.showToast({ title: '已取消选择', icon: 'none' })
-    }
+    fail: () => {}
   })
 }
 
@@ -445,24 +505,13 @@ function removeAsset(target: 'paper' | 'sheet', key: string): void {
 
 function confirmAnalyze(): void {
   if (!canAnalyze.value) {
-    if (credits.value < ANALYSIS_COST) {
-      uni.showModal({
-        title: '点数不足',
-        content: `本次分析需要 ${ANALYSIS_COST} 点数，当前余额 ${credits.value} 点。可以观看激励视频广告获取，或直接充值。`,
-        confirmText: '去获取',
-        success: (res) => {
-          if (res.confirm) uni.switchTab({ url: '/pages/account/index' })
-        }
-      })
-      return
-    }
     uni.showToast({ title: analyzeBlockReason.value, icon: 'none' })
     return
   }
 
   uni.showModal({
     title: '确认开始分析',
-    content: `本次分析将消耗 ${ANALYSIS_COST} 点数，分析后余额 ${credits.value - ANALYSIS_COST} 点。分析结果会给出失分知识点、所属模块与提升指南。`,
+    content: '本次分析不消耗点数。分析完成后分 3 段查看，每段看几次视频即可解锁，也可以直接用点数跳过广告。',
     confirmText: '开始',
     success: (res) => {
       if (res.confirm) runAnalysis()
@@ -471,7 +520,8 @@ function confirmAnalyze(): void {
 }
 
 async function runAnalysis(): Promise<void> {
-  if (!currentExam.value) return
+  const exam = currentExam.value
+  if (!exam) return
   stage.value = 'running'
   progress.value = 0
   errorMessage.value = ''
@@ -479,8 +529,10 @@ async function runAnalysis(): Promise<void> {
   const timer = startProgressTimer()
 
   try {
-    const created = await api.createAnalysis(currentExam.value.id, undefined, true)
-    userStore.setCredits(created.credits_balance)
+    const created = await api.createAnalysis(exam.id, undefined, true)
+    if (typeof created.credits_balance === 'number') {
+      userStore.setCredits(created.credits_balance)
+    }
 
     let result = await api.fetchAnalysis(created.analysis_id)
     let guard = 0
@@ -497,7 +549,11 @@ async function runAnalysis(): Promise<void> {
     analysis.value = result
     stage.value = 'done'
     await userStore.refreshMe().catch(() => {})
-    await userStore.refreshAdProgress().catch(() => {})
+
+    // 分析完成后直接进入分析页，逐段看视频解锁
+    uni.navigateTo({
+      url: `/pages/analysis/index?analysis_id=${created.analysis_id}&name=${encodeURIComponent(exam.name)}`
+    })
   } catch (e: any) {
     clearInterval(timer)
     errorMessage.value = e?.message || '分析失败'
@@ -742,7 +798,7 @@ onShow(() => {
 
 .progress__bar {
   height: 100%;
-  background: linear-gradient(90deg, #4c6fff, #6d8bff);
+  background: linear-gradient(90deg, #8b6cff, #6344e8);
   border-radius: 8rpx;
   transition: width 0.4s ease;
 }

@@ -70,6 +70,14 @@ class LoginSmsRequest(Schema):
     sms_code: SmsCodeStr = Field(..., description="短信验证码")
 
 
+class WechatLoginRequest(Schema):
+    """微信小程序一键登录请求。"""
+
+    code: str = Field(..., min_length=1, description="wx.login 返回的临时登录凭证")
+    nickname: str | None = Field(None, max_length=64, description="昵称，可选；不传时用默认昵称")
+    avatar_url: str | None = Field(None, max_length=512, description="头像地址，可选")
+
+
 class RefreshRequest(Schema):
     """刷新令牌请求。"""
 

@@ -1,7 +1,7 @@
 <template>
   <view class="tt-page">
     <!-- 成绩概览 -->
-    <view class="overview">
+    <view class="overview tt-anim-fade-up">
       <view class="overview__head">
         <text class="overview__label">最近一次总分得分率</text>
         <view v-if="isDemo" class="tt-demo-badge">演示数据</view>
@@ -21,13 +21,13 @@
 
       <view class="overview__stats">
         <view class="stat">
-          <text class="stat__num" :style="{ color: strongest ? subjectColor(strongest.code) : '#9AA3B8' }">
+          <text class="stat__num" :style="{ color: strongest ? subjectColor(strongest.code) : '#9E9BB0' }">
             {{ strongest ? strongest.name : '--' }}
           </text>
           <text class="stat__label">最强学科</text>
         </view>
         <view class="stat">
-          <text class="stat__num" :style="{ color: weakest ? subjectColor(weakest.code) : '#9AA3B8' }">
+          <text class="stat__num" :style="{ color: weakest ? subjectColor(weakest.code) : '#9E9BB0' }">
             {{ weakest ? weakest.name : '--' }}
           </text>
           <text class="stat__label">最弱学科</text>
@@ -40,7 +40,7 @@
     </view>
 
     <!-- 学科筛选 -->
-    <scroll-view class="chips" scroll-x :show-scrollbar="false">
+    <scroll-view class="chips tt-anim-fade-up tt-delay-1" scroll-x :show-scrollbar="false">
       <view class="chips__inner">
         <view
           class="chip"
@@ -63,7 +63,7 @@
     </scroll-view>
 
     <!-- 趋势折线图 -->
-    <view class="tt-card">
+    <view class="tt-card tt-anim-fade-up tt-delay-2">
       <view class="tt-card__title">
         <text>分数变化趋势</text>
         <text class="tt-card__subtitle">纵轴为得分率，点击数据点看详情</text>
@@ -78,7 +78,7 @@
     </view>
 
     <!-- 历次考试 -->
-    <view class="tt-card">
+    <view class="tt-card tt-anim-fade-up tt-delay-3">
       <view class="tt-card__title">
         <text>历次考试</text>
         <text class="tt-card__subtitle">共 {{ examList.length }} 次</text>
@@ -90,6 +90,7 @@
         v-for="(exam, index) in examList"
         :key="exam.id"
         class="exam-item"
+        hover-class="tt-hover"
         @tap="openExam(exam)"
       >
         <view class="exam-item__left">
@@ -303,7 +304,7 @@ onPullDownRefresh(async () => {
 
 <style lang="scss" scoped>
 .overview {
-  background: linear-gradient(135deg, #4c6fff 0%, #6d8bff 100%);
+  background: linear-gradient(135deg, #8b6cff 0%, #6344e8 100%);
   border-radius: $tt-radius-lg;
   padding: 36rpx 32rpx 28rpx;
   margin-bottom: 24rpx;

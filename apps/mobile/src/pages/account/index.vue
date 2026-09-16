@@ -57,11 +57,16 @@
           placeholder-class="ph"
         />
 
-        <view class="tt-btn submit-btn" :class="{ 'tt-btn--disabled': !canSubmit }" @tap="submit">
+        <view class="tt-btn submit-btn" :class="{ 'tt-btn--disabled': !canSubmit }" hover-class="tt-hover" @tap="submit">
           {{ mode === 'sms' ? '登录 / 注册' : '登录' }}
         </view>
 
-        <view class="login-tip">未注册的手机号将自动创建账号，并赠送 1 点数，可用于首次 AI 分析</view>
+        <!-- #ifdef MP-WEIXIN -->
+        <view class="divider-with-text"><text>或</text></view>
+        <view class="tt-btn wechat-btn" hover-class="tt-hover" @tap="handleWechatLogin">微信一键登录</view>
+        <!-- #endif -->
+
+        <view class="login-tip">新账号自动赠送 1 点数，可用于跳过 1 段广告直接查看分析</view>
 
         <view class="agree" @tap="agreed = !agreed">
           <view class="agree__box" :class="{ 'agree__box--on': agreed }">
@@ -115,36 +120,41 @@
           <text class="tt-weak">每 {{ adProgress.needed }} 次广告 = 1 点数</text>
         </view>
 
-        <view class="tt-btn tt-btn--ghost ad-btn" @tap="watchAd">观看激励视频</view>
+        <view class="tt-btn tt-btn--ghost ad-btn" hover-class="tt-hover" @tap="watchAd">观看激励视频</view>
       </view>
 
-      <!-- 充值 -->
+      <!-- 充值：微信小程序 iOS 端禁止虚拟支付，因此 iOS 用户只能看视频获取点数 -->
       <view class="tt-card">
         <view class="tt-card__title">
           <text>充值点数</text>
-          <text class="tt-card__subtitle">{{ isIOS ? 'App Store 内购' : '微信 / 支付宝' }}</text>
+          <text class="tt-card__subtitle">{{ isIOS ? 'iOS 端暂不支持' : '微信支付' }}</text>
         </view>
 
-        <view class="plans">
-          <view
-            v-for="plan in visiblePlans"
-            :key="plan.id"
-            class="plan"
-            :class="{ 'plan--on': selectedPlanId === plan.id }"
-            @tap="selectedPlanId = plan.id"
-          >
-            <text class="plan__credits">{{ plan.credits }} 点</text>
-            <text class="plan__price">{{ yuan(plan.price_cents) }}</text>
-            <text v-if="plan.recommended" class="plan__badge">超值</text>
+        <view v-if="isIOS" class="ios-tip">
+          受微信小程序平台规则限制，iOS 端不能购买点数。你可以观看激励视频免费获取点数，或在安卓设备上充值后跨设备使用同一账号。
+        </view>
+
+        <template v-else>
+          <view class="plans">
+            <view
+              v-for="plan in visiblePlans"
+              :key="plan.id"
+              class="plan"
+              :class="{ 'plan--on': selectedPlanId === plan.id }"
+              hover-class="tt-hover"
+              @tap="selectedPlanId = plan.id"
+            >
+              <text class="plan__credits">{{ plan.credits }} 点</text>
+              <text class="plan__price">{{ yuan(plan.price_cents) }}</text>
+              <text v-if="plan.recommended" class="plan__badge">超值</text>
+            </view>
           </view>
-        </view>
 
-        <view class="tt-btn buy-btn" @tap="buy">立即充值</view>
-        <view class="hint">
-          {{ isIOS
-            ? 'iOS 端按苹果规则通过 App Store 内购结算，单价 ¥1.50 / 点；未消耗的点数不支持跨平台迁移。'
-            : 'Android 与鸿蒙端通过微信 / 支付宝结算，单价 ¥1.00 / 点，支付成功后点数即时到账。' }}
-        </view>
+          <view class="tt-btn buy-btn" hover-class="tt-hover" @tap="buy">立即充值</view>
+          <view class="hint">
+            通过微信支付结算，单价 ¥1.00 / 点，支付成功后点数即时到账。点数在解锁分析阶段时可直接跳过广告。
+          </view>
+        </template>
       </view>
 
       <!-- 点数明细 -->
@@ -199,10 +209,8 @@ import { ADS_PER_CREDIT, USE_MOCK } from '@/api/config'
 import { ApiError } from '@/api/request'
 import { useUserStore } from '@/store/user'
 import { dateTimeShort, yuan } from '@/utils/format'
+import { initRewardedAd, playRewardedAd } from '@/utils/ad'
 import type { AdProgress, CreditLedgerItem, Plan } from '@/types'
-
-/** 激励视频广告位 ID：在 uni-ad / 穿山甲后台申请后填入，留空则使用演示流程 */
-const REWARDED_AD_PID = ''
 
 const userStore = useUserStore()
 const isDemo = USE_MOCK
@@ -245,9 +253,10 @@ const adPercent = computed(() => {
   return Math.min(100, Math.round((adProgress.value.watched / adProgress.value.needed) * 100))
 })
 
-/** iOS 显示内购套餐，其余平台显示微信/支付宝套餐 */
+/** iOS 小程序不能售卖虚拟商品，直接不展示任何充值套餐 */
 const visiblePlans = computed(() => {
-  const list = plans.value.filter((p) => (isIOS.value ? p.channel === 'apple_iap' : p.channel !== 'apple_iap'))
+  if (isIOS.value) return [] as Plan[]
+  const list = plans.value.filter((p) => p.channel !== 'apple_iap')
   if (list.length && !list.some((p) => p.id === selectedPlanId.value)) {
     selectedPlanId.value = (list.find((p) => p.recommended) || list[0]).id
   }
@@ -319,42 +328,51 @@ async function submit(): Promise<void> {
   }
 }
 
-/* ---------------------------------------------------------------- 广告 */
+/* -------------------------------------------------------- 微信一键登录 */
 
-/** 播放激励视频。返回是否完整观看。开发/演示环境走模拟流程。 */
-function playRewardedAd(): Promise<boolean> {
-  const createAd = (uni as any).createRewardedVideoAd
-  if (REWARDED_AD_PID && typeof createAd === 'function') {
-    return new Promise((resolve) => {
-      const ad = createAd({ adpid: REWARDED_AD_PID })
-      const onClose = (res: any) => {
-        ad.offClose(onClose)
-        resolve(!!(res && res.isEnded))
-      }
-      ad.onClose(onClose)
-      ad.onError(() => resolve(false))
-      ad.show().catch(() => ad.load().then(() => ad.show()).catch(() => resolve(false)))
-    })
+async function handleWechatLogin(): Promise<void> {
+  if (!agreed.value) {
+    uni.showToast({ title: '请先阅读并同意用户协议', icon: 'none' })
+    return
   }
-
-  // 演示流程：模拟 3 秒广告播放
-  return new Promise((resolve) => {
-    uni.showLoading({ title: '广告播放中…', mask: true })
-    setTimeout(() => {
-      uni.hideLoading()
-      resolve(true)
-    }, 3000)
+  // #ifdef MP-WEIXIN
+  uni.login({
+    provider: 'weixin',
+    success: async (res) => {
+      if (!res.code) {
+        uni.showToast({ title: '微信授权失败，请重试', icon: 'none' })
+        return
+      }
+      try {
+        await userStore.loginByWechat(res.code)
+        await loadAccountData()
+        uni.showToast({ title: '登录成功', icon: 'none' })
+      } catch (e: any) {
+        uni.showToast({ title: e?.message || '登录失败', icon: 'none' })
+      }
+    },
+    fail: () => uni.showToast({ title: '微信授权失败，请重试', icon: 'none' })
   })
+  // #endif
+  // #ifndef MP-WEIXIN
+  uni.showToast({ title: '请在小程序内使用微信一键登录', icon: 'none' })
+  // #endif
 }
 
+/* ---------------------------------------------------------------- 广告 */
+
 async function watchAd(): Promise<void> {
-  const finished = await playRewardedAd()
-  if (!finished) {
-    uni.showToast({ title: '需要看完广告才能获得进度', icon: 'none' })
+  const played = await playRewardedAd()
+  if (!played.ok) {
+    if (played.reason) uni.showToast({ title: played.reason, icon: 'none' })
     return
   }
   try {
-    const result = await api.reportAdReward(isDemo ? 'mock' : 'chuangshanjian', `ad_${Date.now()}`, 30)
+    const result = await api.reportAdReward(
+      'wechat',
+      `ad_${Date.now()}_${Math.floor(Math.random() * 1e6)}`,
+      30
+    )
     adProgress.value = {
       ...adProgress.value,
       watched: result.progress.watched,
@@ -389,7 +407,7 @@ async function buy(): Promise<void> {
     uni.showModal({
       title: '订单已创建',
       content: isDemo
-        ? `演示模式：${plan.credits} 点数，应付 ${yuan(order.amount_cents)}。真实环境会在此调起${isIOS.value ? ' App Store 内购' : '微信/支付宝'}支付。`
+        ? `演示模式：${plan.credits} 点数，应付 ${yuan(order.amount_cents)}。真实环境会在此调起微信支付。`
         : `应付 ${yuan(order.amount_cents)}，即将调起支付。`,
       showCancel: false
     })
@@ -489,6 +507,8 @@ async function loadAccountData(): Promise<void> {
 }
 
 onShow(() => {
+  // 提前拉取激励视频，用户点击「观看」时能更快出片
+  initRewardedAd()
   if (userStore.isLogin) {
     userStore.refreshMe().catch(() => {})
     loadAccountData()
@@ -497,6 +517,41 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
+
+/* ------------------------------------------------------------ 登录方式 */
+
+.divider-with-text {
+  display: flex;
+  align-items: center;
+  margin: 28rpx 0 20rpx;
+  color: $tt-text-weak;
+  font-size: 22rpx;
+}
+
+.divider-with-text::before,
+.divider-with-text::after {
+  content: '';
+  flex: 1;
+  height: 1rpx;
+  background-color: $tt-border;
+}
+
+.wechat-btn {
+  background: #ffffff;
+  color: #07c160;
+  border: 2rpx solid rgba(7, 193, 96, 0.3);
+  box-shadow: none;
+}
+
+/* iOS 端小程序不允许虚拟支付时的说明块 */
+.ios-tip {
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: $tt-text-sub;
+  background-color: $tt-primary-light;
+  border-radius: $tt-radius-sm;
+  padding: 22rpx;
+}
 /* ---------------------------------------------------------- 未登录 */
 
 .brand {
@@ -634,7 +689,7 @@ onShow(() => {
   display: flex;
   align-items: center;
   padding: 30rpx 32rpx;
-  background: linear-gradient(135deg, #4c6fff 0%, #6d8bff 100%);
+  background: linear-gradient(135deg, #8b6cff 0%, #6344e8 100%);
   border-radius: $tt-radius-lg;
   margin-bottom: 24rpx;
   box-shadow: 0 10rpx 30rpx rgba(76, 111, 255, 0.22);

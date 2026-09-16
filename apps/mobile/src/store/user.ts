@@ -1,12 +1,13 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import * as api from '@/api'
+import { loginByWechat as apiLoginByWechat } from '@/api/wechat'
 import { clearTokens, getToken, setTokens } from '@/api/request'
 import type { AuthResult, User } from '@/types'
 
 /**
  * 用户状态：登录态、点数余额、广告进度。
- * token 存在本地 storage，App 冷启动时用 bootstrap() 静默恢复登录。
+ * token 存在本地 storage，小程序冷启动时用 bootstrap() 静默恢复登录。
  */
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
@@ -48,6 +49,17 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     try {
       applyAuth(await api.loginBySms(phone, code))
+      await refreshAdProgress()
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /** 微信一键登录：小程序主推方式，后端用 code 换 openid，新用户自动建号并赠送点数 */
+  async function loginByWechat(code: string, nickname?: string, avatarUrl?: string): Promise<void> {
+    loading.value = true
+    try {
+      applyAuth(await apiLoginByWechat(code, nickname, avatarUrl))
       await refreshAdProgress()
     } finally {
       loading.value = false
@@ -97,6 +109,7 @@ export const useUserStore = defineStore('user', () => {
     bootstrap,
     loginByPassword,
     loginBySms,
+    loginByWechat,
     register,
     refreshMe,
     refreshAdProgress,

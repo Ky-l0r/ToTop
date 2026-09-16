@@ -195,7 +195,7 @@ import {
   reportStageAd,
   unlockStageByCredit
 } from '@/api/stages'
-import { playRewardedAd } from '@/utils/ad'
+import { initRewardedAd, playRewardedAd } from '@/utils/ad'
 import { useUserStore } from '@/store/user'
 import { percent } from '@/utils/format'
 import { asPlan, asQuestions, asSummary, STAGE_META } from '@/types/stage'
@@ -347,6 +347,9 @@ function goImport(): void {
 }
 
 onLoad(async (query) => {
+  // 提前拉取激励视频，减少用户点击解锁后的等待
+  initRewardedAd()
+
   const params = (query || {}) as Record<string, string>
   if (params.name) {
     try {

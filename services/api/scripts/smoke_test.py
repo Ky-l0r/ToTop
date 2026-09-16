@@ -408,8 +408,8 @@ def main() -> int:
         )
         analysis_id = str(created.get("analysis_id"))
         require(
-            created.get("credits_cost") == 1 and created.get("credits_balance") == 0,
-            "分析扣费 1 点、余额 1 → 0",
+            created.get("credits_cost") == 0 and created.get("credits_balance") == 1,
+            "发起分析不消耗点数（余额保持 1）",
             f"cost={created.get('credits_cost')} balance={created.get('credits_balance')}",
         )
 
@@ -418,6 +418,19 @@ def main() -> int:
             result.get("status") == "succeeded",
             "分析在超时前完成（status=succeeded）",
             f"status={result.get('status')} error={result.get('error')}",
+        )
+
+        stages = {item.get("stage"): item for item in (result.get("stages") or [])}
+        require(
+            len(stages) == 3
+            and all(not item.get("unlocked") and item.get("content") is None for item in stages.values()),
+            "结果默认三个阶段全部锁定且不下发内容",
+            json.dumps({n: [item.get("ad_required"), item.get("unlocked")] for n, item in stages.items()}, ensure_ascii=False),
+        )
+        require(
+            [stages[1].get("ad_required"), stages[2].get("ad_required"), stages[3].get("ad_required")] == [1, 2, 2],
+            "三个阶段解锁所需广告次数为 1/2/2",
+            str([stages[i].get("ad_required") for i in (1, 2, 3)]),
         )
 
         result_subjects = result.get("subjects") or []
@@ -467,17 +480,122 @@ def main() -> int:
             f"total={data_of(body).get('total')}",
         )
 
-        # 点数不足（余额当前为 0，force=true 会再次尝试扣费）
+        # ------------------------------------------------------ 分阶段解锁
+        status, body = request(
+            client,
+            "POST",
+            f"{API}/analyses/{analysis_id}/stages/1/unlock",
+            json={"platform": "wechat", "event_id": f"smoke_s1_{analysis_id}", "watched_seconds": 30},
+            headers=auth,
+        )
+        stage1 = data_of(body)
+        require(
+            status == 200 and stage1.get("unlocked") is True,
+            "阶段1 看 1 次广告即解锁",
+            f"watched={stage1.get('watched')}",
+        )
+        stage1_summary = (stage1.get("content") or {}).get("summary", "")
+        require(
+            0 < len(stage1_summary) <= 200,
+            "阶段1 学情概述不超过 200 字",
+            f"{len(stage1_summary)} 字",
+        )
+
+        status, body = request(
+            client,
+            "POST",
+            f"{API}/analyses/{analysis_id}/stages/2/unlock",
+            json={"platform": "wechat", "event_id": f"smoke_s2a_{analysis_id}", "watched_seconds": 30},
+            headers=auth,
+        )
+        require(
+            data_of(body).get("unlocked") is False and data_of(body).get("watched") == 1,
+            "阶段2 第 1 次广告后仍未解锁",
+            json.dumps(data_of(body), ensure_ascii=False),
+        )
+
+        status, body = request(
+            client,
+            "POST",
+            f"{API}/analyses/{analysis_id}/stages/2/unlock",
+            json={"platform": "wechat", "event_id": f"smoke_s2a_{analysis_id}", "watched_seconds": 30},
+            headers=auth,
+        )
+        require(
+            data_of(body).get("duplicated") is True and data_of(body).get("watched") == 1,
+            "重复 event_id 幂等且不涨进度",
+            json.dumps(data_of(body), ensure_ascii=False),
+        )
+
+        status, body = request(
+            client,
+            "POST",
+            f"{API}/analyses/{analysis_id}/stages/2/unlock",
+            json={"platform": "wechat", "event_id": f"smoke_s2b_{analysis_id}", "watched_seconds": 30},
+            headers=auth,
+        )
+        stage2 = data_of(body)
+        weak_questions = (stage2.get("content") or {}).get("weak_questions") or []
+        require(
+            stage2.get("unlocked") is True and len(weak_questions) > 0,
+            "阶段2 第 2 次广告后解锁并给出失分题目",
+            f"{len(weak_questions)} 道题",
+        )
+
+        status, body = request(
+            client,
+            "POST",
+            f"{API}/analyses/{analysis_id}/stages/3/unlock",
+            json={"platform": "wechat", "event_id": f"smoke_s3_short_{analysis_id}", "watched_seconds": 3},
+            headers=auth,
+        )
+        require(
+            body.get("code") == 40001,
+            "广告观看时长不足被拒绝且不计入进度",
+            f"code={body.get('code')} {body.get('message')}",
+        )
+
+        status, body = request(
+            client, "POST", f"{API}/analyses/{analysis_id}/stages/3/unlock-by-credit", headers=auth
+        )
+        stage3 = data_of(body)
+        stage3_modules = (stage3.get("content") or {}).get("modules") or []
+        require(
+            status == 200 and stage3.get("unlocked") is True and stage3.get("credits_balance") == 0,
+            "用点数跳过广告解锁阶段3（余额 1 → 0）",
+            json.dumps(stage3, ensure_ascii=False),
+        )
+        require(
+            len(stage3_modules) > 0,
+            "阶段3 给出需要重点补的知识模块",
+            f"{len(stage3_modules)} 个模块",
+        )
+
+        # 余额已为 0：对一条新的分析用点数解锁应返回 40200 且不产生任何副作用
         status, body = request(client, "POST", f"{API}/analyses", json={"exam_id": exam_id, "force": True}, headers=auth)
+        second_analysis_id = str(data_of(body).get("analysis_id") or "")
+        require(
+            status == 200 and bool(second_analysis_id) and data_of(body).get("credits_cost") == 0,
+            "再次发起分析同样不扣费",
+            json.dumps(data_of(body), ensure_ascii=False),
+        )
+        status, body = request(
+            client, "POST", f"{API}/analyses/{second_analysis_id}/stages/1/unlock-by-credit", headers=auth
+        )
         require(
             status == 402 and body.get("code") == 40200,
-            "点数不足时 POST /analyses 返回 40200（HTTP 402）",
+            "点数不足时用点数解锁阶段返回 40200（HTTP 402）",
             f"HTTP {status} code={body.get('code')} {body.get('message')}",
         )
         status, body = request(client, "GET", f"{API}/credits/balance", headers=auth)
         require(data_of(body).get("credits") == 0, "点数不足时余额不变（无副作用）", str(data_of(body).get("credits")))
-        status, body = request(client, "GET", f"{API}/analyses?exam_id={exam_id}", headers=auth)
-        require(data_of(body).get("total") == 1, "点数不足时未新建分析记录", f"total={data_of(body).get('total')}")
+        status, body = request(client, "GET", f"{API}/analyses/{second_analysis_id}", headers=auth)
+        second_stages = {item.get("stage"): item for item in (data_of(body).get("stages") or [])}
+        require(
+            second_stages.get(1, {}).get("unlocked") is False,
+            "点数不足时该阶段仍保持锁定",
+            json.dumps(second_stages.get(1, {}), ensure_ascii=False),
+        )
 
         # ---------------------------------------------------------- 4. 趋势与账本
         section("趋势与点数账本")
@@ -509,23 +627,35 @@ def main() -> int:
         ledger = data_of(body).get("items") or []
         reasons = [item.get("reason") for item in ledger]
         require(
-            status == 200 and "register_bonus" in reasons and "analysis" in reasons,
-            "GET /credits/ledger 含注册赠送与分析扣费流水",
+            status == 200 and "register_bonus" in reasons and "purchase" in reasons,
+            "GET /credits/ledger 含注册赠送与点数解锁流水",
             str(reasons),
         )
-        analysis_item = next((item for item in ledger if item.get("reason") == "analysis"), {})
+        purchase_item = next((item for item in ledger if item.get("reason") == "purchase"), {})
         require(
-            analysis_item.get("delta") == -1 and analysis_item.get("balance_after") == 0,
-            "分析扣费流水 delta=-1、balance_after=0",
-            json.dumps(analysis_item, ensure_ascii=False),
+            purchase_item.get("delta") == -1 and purchase_item.get("balance_after") == 0,
+            "点数解锁阶段流水 delta=-1、balance_after=0",
+            json.dumps(purchase_item, ensure_ascii=False),
+        )
+        require(
+            "analysis" not in reasons,
+            "发起分析不产生扣费流水",
+            str(reasons),
         )
 
         # ---------------------------------------------------------- 5. 广告奖励
         section("激励视频广告")
+        # 广告进度按「用户」累计，而前面的分阶段解锁也上报过广告事件，
+        # 所以这里先读当前进度再决定还差几次，避免用例之间互相污染。
+        status, body = request(client, "GET", f"{API}/credits/ad-progress", headers=auth)
+        start_progress = data_of(body)
+        needed = int(start_progress.get("needed") or 10)
+        already = int(start_progress.get("watched") or 0)
+        remaining = max(1, needed - already)
+
         credited_indexes: list[int] = []
         last_reward: dict[str, Any] = {}
-        reward_event_id = f"smoke-{run_id}-09"
-        for index in range(10):
+        for index in range(remaining):
             event_id = f"smoke-{run_id}-{index:02d}"
             status, body = request(
                 client,
@@ -540,10 +670,11 @@ def main() -> int:
             if reward.get("credited"):
                 credited_indexes.append(index)
             last_reward = reward
+        reward_event_id = f"smoke-{run_id}-{remaining - 1:02d}"
         require(
-            credited_indexes == [9],
-            "连打 10 次广告后仅第 10 次触发发奖",
-            f"credited 出现在第 {[i + 1 for i in credited_indexes]} 次",
+            credited_indexes == [remaining - 1],
+            f"累计看满 {needed} 次广告后仅最后一次触发发奖",
+            f"起始进度 {already}/{needed}，本轮第 {[i + 1 for i in credited_indexes]} 次触发",
         )
         require(
             last_reward.get("credits") == 1 and (last_reward.get("progress") or {}).get("watched") == 0,

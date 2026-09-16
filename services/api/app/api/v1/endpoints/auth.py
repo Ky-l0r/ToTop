@@ -1,23 +1,28 @@
-"""认证端点：短信验证码、注册、密码/验证码登录、刷新令牌、设置密码。
+"""认证端点：短信验证码、注册、密码/验证码登录、微信一键登录、刷新令牌、设置密码。
 
 约定（与 `docs/02-API契约.md` 第 2 节一致）：
 
 - 注册成功自动赠送 `settings.register_bonus_credits` 点数，并写一条 `reason=register_bonus` 的账本（幂等键 `register:{user_id}`）；
 - 手机号不存在时登录接口返回 **40014**，前端据此自动转为注册流程；
+- 微信小程序一键登录（`POST /auth/wechat/login`）按 `openid` 识别用户，首次登录自动建号，
+  响应结构与手机号登录完全一致（复用 `_issue_tokens`）；
 - 刷新令牌只存 SHA-256 哈希，刷新时**旋转**（旧令牌立即作废）。
 """
 
 from __future__ import annotations
 
+import hashlib
 import logging
 
+import httpx
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, DbSession, ip_rate_limit
 from app.core.config import settings
-from app.core.errors import ErrorCode, ParamError, UnauthorizedError
+from app.core.errors import ErrorCode, ParamError, UnauthorizedError, UpstreamError
 from app.core.response import EnvelopeRoute
 from app.core.security import (
     create_access_token,
@@ -41,6 +46,7 @@ from app.schemas.auth import (
     SmsSendRequest,
     SmsSendResult,
     TokenPair,
+    WechatLoginRequest,
 )
 from app.schemas.common import OkResult
 from app.schemas.user import UserOut
@@ -53,6 +59,16 @@ router = APIRouter(route_class=EnvelopeRoute, prefix="/auth", tags=["auth"])
 
 # 生成邀请码时的最大重试次数（唯一约束冲突时重试）
 _INVITE_CODE_RETRY = 10
+
+# 微信 code2Session 接口（POST/GET 均可，这里用 GET 拼 query）
+_WECHAT_CODE2SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session"
+_WECHAT_TIMEOUT_SECONDS = 10.0
+
+# 微信一键登录的默认昵称（前端未传昵称时使用）
+_WECHAT_DEFAULT_NICKNAME = "微信用户"
+
+# 日志里最多打印 openid 的前若干位，避免把完整凭据写进日志
+_OPENID_LOG_PREFIX = 8
 
 
 @router.post(
@@ -168,6 +184,40 @@ async def login_by_sms(payload: LoginSmsRequest, db: DbSession, request: Request
     return result
 
 
+@router.post(
+    "/wechat/login",
+    response_model=AuthResult,
+    summary="微信小程序一键登录",
+    dependencies=[Depends(ip_rate_limit("wechat_login", 30, 60))],
+)
+async def login_by_wechat(payload: WechatLoginRequest, db: DbSession, request: Request) -> AuthResult:
+    """微信小程序一键登录（**无需鉴权**）：用 `wx.login` 的 code 换 openid，按 openid 认人。
+
+    - 配置了 `WECHAT_APPID` / `WECHAT_SECRET` 时调用微信 `code2Session`；
+      未配置时走 dev 模式（用 code 的哈希派生稳定假 openid），保证本地无凭据也能跑通；
+    - openid 已存在即直接登录；不存在则建号（`phone=None`）并在**同一事务**内
+      赠送 `settings.register_bonus_credits` 点数（账本幂等键 `register:{user_id}`）；
+    - 返回值与手机号登录**完全同构**：`{access_token, refresh_token, user}`。
+    """
+    openid = await _resolve_openid(payload.code)
+
+    user = await db.scalar(select(User).where(User.openid == openid))
+    created = user is None
+    if user is None:
+        user, created = await _create_wechat_user(db, payload=payload, openid=openid)
+    _ensure_active(user)
+
+    result = await _issue_tokens(db, user=user, request=request)
+    await db.commit()
+    logger.info(
+        "微信登录成功：用户 %s（%s），openid 前缀 %s",
+        user.id,
+        "新建账号" if created else "已有账号",
+        openid[:_OPENID_LOG_PREFIX],
+    )
+    return result
+
+
 @router.post("/refresh", response_model=TokenPair, summary="刷新访问令牌")
 async def refresh_token(payload: RefreshRequest, db: DbSession, request: Request) -> TokenPair:
     """用 refresh_token 换一对新令牌（旧的 refresh_token 立即作废）。"""
@@ -227,6 +277,105 @@ def _ensure_active(user: User) -> None:
     """账号被禁用时拒绝登录。"""
     if not user.is_active:
         raise UnauthorizedError("账号已被禁用，请联系客服", code=ErrorCode.ACCOUNT_DISABLED)
+
+
+async def _create_wechat_user(
+    db: AsyncSession,
+    *,
+    payload: WechatLoginRequest,
+    openid: str,
+) -> tuple[User, bool]:
+    """按 openid 建号，并在同一事务内赠送注册点数。
+
+    :return: `(用户, 是否本次新建)`；并发首登撞上 openid 唯一约束时，
+        回滚本次插入并复用另一个请求刚建好的账号（返回 `False`）。
+    """
+    user = User(
+        phone=None,  # 微信一键登录拿不到手机号
+        openid=openid,
+        password_hash=None,
+        nickname=(payload.nickname or "").strip() or _WECHAT_DEFAULT_NICKNAME,
+        avatar_url=(payload.avatar_url or "").strip(),
+        invite_code=await _generate_invite_code(db),
+        credits=0,
+    )
+    db.add(user)
+    try:
+        await db.flush()
+    except IntegrityError:
+        # 并发首登：另一个请求已用同一 openid 建号，回滚本次插入后复用已有账号
+        await db.rollback()
+        existing = await db.scalar(select(User).where(User.openid == openid))
+        if existing is None:
+            raise
+        logger.info("微信首登并发冲突，复用已存在账号 %s", existing.id)
+        return existing, False
+
+    if settings.register_bonus_credits > 0:
+        change = await add_credits(
+            db,
+            user_id=user.id,
+            delta=settings.register_bonus_credits,
+            reason=CreditReason.REGISTER_BONUS,
+            idempotency_key=f"register:{user.id}",
+            ref_type="user",
+            ref_id=user.id,
+            remark="注册赠送点数",
+        )
+        user.credits = change.balance_after
+
+    return user, True
+
+
+async def _resolve_openid(code: str) -> str:
+    """用 `wx.login` 的 code 换取 openid。
+
+    配置了 `WECHAT_APPID` / `WECHAT_SECRET` 时请求微信 `code2Session`；
+    二者任一为空即走 dev 模式（`_dev_openid`），保证无凭据环境下也能完整跑通登录链路。
+
+    :raises ParamError: 微信返回 `errcode != 0`（detail 带 `errcode` / `errmsg`）
+    :raises UpstreamError: 网络异常或响应无法解析
+    """
+    appid = settings.wechat_appid.strip()
+    secret = settings.wechat_secret.strip()
+    if not appid or not secret:
+        return _dev_openid(code)
+
+    try:
+        async with httpx.AsyncClient(timeout=_WECHAT_TIMEOUT_SECONDS) as client:
+            response = await client.get(
+                _WECHAT_CODE2SESSION_URL,
+                params={
+                    "appid": appid,
+                    "secret": secret,
+                    "js_code": code,
+                    "grant_type": "authorization_code",
+                },
+            )
+        response.raise_for_status()
+        data = response.json()
+    except httpx.HTTPError as exc:
+        raise UpstreamError("微信登录服务暂时不可用，请稍后重试", detail={"error": str(exc)}) from exc
+    except ValueError as exc:  # 微信返回了非 JSON（如网关错误页）
+        raise UpstreamError("微信登录返回了无法解析的响应", detail={"error": str(exc)}) from exc
+
+    if not isinstance(data, dict):
+        raise UpstreamError("微信登录返回了非预期的响应", detail={"body": str(data)[:200]})
+
+    errcode = int(data.get("errcode") or 0)
+    errmsg = str(data.get("errmsg") or "")
+    if errcode != 0:
+        raise ParamError(f"微信登录失败：{errmsg or '未知错误'}", detail={"errcode": errcode, "errmsg": errmsg})
+
+    openid = str(data.get("openid") or "").strip()
+    if not openid:
+        raise ParamError("微信登录失败：未返回 openid", detail={"errcode": errcode, "errmsg": errmsg})
+    return openid
+
+
+def _dev_openid(code: str) -> str:
+    """dev 模式下的假 openid：`dev_` + code 的 SHA-256 前 24 位（同一 code 结果稳定）。"""
+    return f"dev_{hashlib.sha256(code.encode('utf-8')).hexdigest()[:24]}"
 
 
 async def _issue_tokens(db: AsyncSession, *, user: User, request: Request) -> AuthResult:

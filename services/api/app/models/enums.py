@@ -54,6 +54,8 @@ class CreditReason(str, Enum):
 class AdPlatform(str, Enum):
     """广告平台。"""
 
+    WECHAT = "wechat"
+    """微信小程序流量主（激励视频）。"""
     CHUANGSHANJIAN = "chuangshanjian"
     GDT = "gdt"
     ADMOB = "admob"

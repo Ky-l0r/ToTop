@@ -116,10 +116,14 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | POST | `/analyses` | `{exam_id, answer_sheet_id?, force?}` → `{analysis_id, status, credits_cost, credits_balance}` |
-| GET | `/analyses/{id}` | 完整分析结果（见下） |
+| GET | `/analyses/{id}` | 完整分析结果 + 三阶段解锁状态（见下） |
 | GET | `/analyses?exam_id=&page=&size=` | 分析列表 |
+| POST | `/analyses/{id}/stages/{stage}/unlock` | 上报一次激励视频观看，累计够次数即解锁该阶段 |
+| POST | `/analyses/{id}/stages/{stage}/unlock-by-credit` | 用点数跳过广告、直接解锁该阶段 |
 
-**扣费规则**：`POST` 时先原子扣减 1 点数，扣减失败立即返回 `40201` 且不产生副作用；分析失败则写一条 `reason=refund` 的退还流水。
+**计费规则（小程序版本）**：`POST /analyses` **不消耗点数**（`ANALYSIS_CREDIT_COST=0`），分析本身免费。
+变现来自三阶段解锁：看激励视频可免费解锁，或用点数跳过广告。
+把 `ANALYSIS_CREDIT_COST` 配成 `>0` 即可恢复「按次扣费」，扣费与失败退费逻辑完整保留。
 
 `GET /analyses/{id}` 的 `data`：
 
@@ -152,9 +156,51 @@
     "weekly_plan": [{ "week": 1, "focus": "...", "target": "..." }]
   },
   "model_name": "qwen-vl-max",
-  "created_at": "2026-09-10T21:30:00+08:00"
+  "created_at": "2026-09-10T21:30:00+08:00",
+  "stages": [
+    { "stage": 1, "name": "基础分析", "ad_required": 1, "watched": 1,
+      "unlocked": true, "unlock_method": "ad", "content": { "...": "..." } },
+    { "stage": 2, "name": "进阶分析", "ad_required": 2, "watched": 0,
+      "unlocked": false, "unlock_method": null, "content": null },
+    { "stage": 3, "name": "归纳总结", "ad_required": 2, "watched": 0,
+      "unlocked": false, "unlock_method": null, "content": null }
+  ]
 }
 ```
+
+### 8.1 三阶段解锁
+
+| 阶段 | `name` | 默认所需广告次数 | 解锁后的 `content` |
+| --- | --- | --- | --- |
+| 1 | 基础分析 | 1 | `{summary, score_rate, total_score, full_score, level_text, top_subjects[]}`，`summary` 不超过 200 字 |
+| 2 | 进阶分析 | 2 | `{weak_questions[], total_lost}`，按失分降序，最多 10 题 |
+| 3 | 归纳总结 | 2 | `{modules[], suggestions[], improvement_plan}`，`modules` 按累计失分降序 |
+
+**关键约定**
+
+- **未解锁阶段的 `content` 一律为 `null`** —— 内容不下发到客户端，无法绕过广告直接读取；
+- 三个阶段的内容由**同一次模型调用的结果派生**（图片只送模型一次，成本最低），解锁只控制可见性；
+- 所需次数由 `STAGE_AD_REQUIREMENTS` 配置（默认 `1,2,2`），并通过 `ad_required` 下发给前端。
+
+**上报一次观看** `POST /analyses/{id}/stages/{stage}/unlock`
+
+```json
+{ "platform": "wechat", "event_id": "ad_xxx_1_1730000000", "watched_seconds": 30 }
+```
+
+```json
+{ "stage": 1, "watched": 1, "ad_required": 1, "unlocked": true, "credited": true,
+  "duplicated": false, "unlock_method": "ad", "content": { "...": "..." } }
+```
+
+- `event_id` 由客户端生成、全局唯一，**重复上报幂等**（返回 `duplicated=true`，进度不增长）；
+- `watched_seconds` 低于 `AD_REWARD_MIN_SECONDS`（默认 15 秒）返回 `40001`，不计入进度；
+- `stage` 只能是 `1` / `2` / `3`，否则 `40001`。
+
+**用点数解锁** `POST /analyses/{id}/stages/{stage}/unlock-by-credit`
+
+消耗 `STAGE_UNLOCK_CREDIT_COST`（默认 1）点数，返回体额外带 `credits_balance`。
+点数不足返回 `40200`（HTTP 402）**且不产生任何副作用**（不解锁、不扣费）。
 
 ## 9. 趋势 `/trends`
 

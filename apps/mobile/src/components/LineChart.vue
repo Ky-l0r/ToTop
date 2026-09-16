@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <view class="chart">
     <view class="chart__wrap" :style="{ height: height + 'px', width: width + 'px' }">
       <canvas
@@ -122,7 +122,7 @@ function draw(): void {
 
   ctx.clearRect(0, 0, w, h)
   if (n === 0 || series.length === 0) {
-    ctx.setFillStyle('#9AA3B8')
+    ctx.setFillStyle('#9E9BB0')
     ctx.setFontSize(12)
     ctx.setTextAlign('center')
     ctx.fillText('暂无成绩数据', w / 2, h / 2)
@@ -155,7 +155,7 @@ function draw(): void {
     ctx.lineTo(PAD.left + plotW, y)
     ctx.stroke()
 
-    ctx.setFillStyle('#9AA3B8')
+    ctx.setFillStyle('#9E9BB0')
     ctx.setFontSize(10)
     ctx.setTextAlign('right')
     ctx.fillText(yLabel(value), PAD.left - 8, y + 3.5)
@@ -164,7 +164,7 @@ function draw(): void {
   // 横轴标签：点多时隔一个显示，避免拥挤
   const labelStep = n > 7 ? 2 : 1
   ctx.setTextAlign('center')
-  ctx.setFillStyle('#9AA3B8')
+  ctx.setFillStyle('#9E9BB0')
   ctx.setFontSize(10)
   props.labels.forEach((label, i) => {
     if (i % labelStep !== 0 && i !== n - 1) return

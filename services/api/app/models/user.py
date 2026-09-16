@@ -16,13 +16,23 @@ from app.models.mixins import TimestampMixin
 class User(Base, TimestampMixin):
     """用户。
 
+    两种注册来源共存于同一张表：
+
+    - 手机号注册 / 登录：`phone` 有值、`openid` 为 `None`；
+    - 微信小程序一键登录：`openid` 有值、`phone` 为 `None`（拿不到手机号）。
+
+    因此 `phone` 与 `openid` 都可空但各自唯一（SQLite / PostgreSQL 的 UNIQUE 均允许多个 NULL）。
+
     `phone` 存明文（业务需要按手机号登录/找回），对外输出一律经过 `mask_phone` 脱敏。
     """
 
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
-    phone: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True, index=True, nullable=True)
+    """手机号；微信一键登录创建的用户没有手机号，为 `None`。"""
+    openid: Mapped[str | None] = mapped_column(String(64), unique=True, index=True, nullable=True)
+    """微信小程序 openid；手机号注册的老用户为 `None`。"""
     password_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     nickname: Mapped[str] = mapped_column(String(64), default="", nullable=False)
     avatar_url: Mapped[str] = mapped_column(String(512), default="", nullable=False)

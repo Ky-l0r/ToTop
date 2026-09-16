@@ -104,15 +104,36 @@ class Settings(BaseSettings):
     s3_presign_expire_seconds: int = 900
 
     # ------------------------------------------------------------ 业务规则
-    analysis_credit_cost: int = 1
+    analysis_credit_cost: int = 0
+    """发起一次 AI 分析消耗的点数。
+
+    小程序版本改为「分析免费、结果分三段看广告解锁」，因此默认 0；
+    置为 >0 即可恢复按次扣费，扣费与账本逻辑仍然保留。
+    """
     register_bonus_credits: int = 1
     ad_watch_needed: int = 10
     """累计看多少次激励视频广告兑换 1 点数。"""
     ad_reward_credits: int = 1
+    ad_reward_min_seconds: int = 15
+    """单次激励视频的有效观看时长下限（秒），低于该值不计入进度。"""
+
+    # ------------------------------------------------------------ 分阶段解锁
+    stage_ad_requirements: list[int] = [1, 2, 2]
+    """三个阶段各自需要看完几次激励视频才能解锁（基础分析 / 进阶分析 / 归纳总结）。"""
+    stage_unlock_credit_cost: int = 1
+    """用点数跳过广告、直接解锁一个阶段的花费。"""
+    stage_names: list[str] = ["基础分析", "进阶分析", "归纳总结"]
+    """三个阶段的中文名，随接口下发以保证前后端文案一致。"""
+
+    # ------------------------------------------------------------ 微信小程序
+    wechat_appid: str = ""
+    wechat_secret: str = ""
+    """微信小程序 AppID / AppSecret，用于 code2Session 一键登录；留空时走 dev 假 openid。"""
+
     mock_sample_path: Path = BASE_DIR / "app" / "providers" / "ai" / "mock_sample.json"
 
     # ------------------------------------------------------------ 校验 / 派生
-    @field_validator("cors_origins", "allowed_upload_ext", mode="before")
+    @field_validator("cors_origins", "allowed_upload_ext", "stage_names", mode="before")
     @classmethod
     def _split_csv(cls, value: Any) -> Any:
         """允许用逗号分隔的字符串配置列表项（也兼容 JSON 数组写法）。"""
@@ -138,6 +159,31 @@ class Settings(BaseSettings):
                 continue
             normalized.append(ext if ext.startswith(".") else f".{ext}")
         return normalized
+
+    @field_validator("stage_ad_requirements", mode="before")
+    @classmethod
+    def _parse_stage_ads(cls, value: Any) -> Any:
+        """支持 "1,2,2" 与 [1,2,2] 两种写法。"""
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return [1, 2, 2]
+            if raw.startswith("["):
+                import json
+
+                return json.loads(raw)
+            return [int(item.strip()) for item in raw.split(",") if item.strip()]
+        return value
+
+    @field_validator("stage_ad_requirements", mode="after")
+    @classmethod
+    def _normalize_stage_ads(cls, value: list[int]) -> list[int]:
+        """固定为 3 个阶段，每阶段至少 1 次，缺项用默认值补齐。"""
+        defaults = [1, 2, 2]
+        result = [max(1, int(item)) for item in value[:3]]
+        while len(result) < 3:
+            result.append(defaults[len(result)])
+        return result
 
     @property
     def is_dev(self) -> bool:
@@ -166,6 +212,20 @@ class Settings(BaseSettings):
         if "postgresql" in name:
             return "postgresql"
         return name
+
+    def stage_ad_required(self, stage: int) -> int:
+        """第 stage 阶段（从 1 开始）需要看完的广告次数。"""
+        index = stage - 1
+        if 0 <= index < len(self.stage_ad_requirements):
+            return self.stage_ad_requirements[index]
+        return 1
+
+    def stage_name(self, stage: int) -> str:
+        """第 stage 阶段的中文名。"""
+        index = stage - 1
+        if 0 <= index < len(self.stage_names):
+            return self.stage_names[index]
+        return f"第 {stage} 阶段"
 
     @property
     def max_upload_bytes(self) -> int:
