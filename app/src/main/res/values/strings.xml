@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">To Top</string>
+
+    <!-- 导航与通用 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_hub">功能中心</string>
+    <string name="nav_solve">拍题</string>
+    <string name="nav_mistakes">错题本</string>
+    <string name="nav_knowledge">知识点</string>
+    <string name="nav_report">学情报告</string>
+    <string name="nav_settings">设置</string>
+    <string name="nav_review">复习</string>
+    <string name="nav_backup">备份与恢复</string>
+    <string name="nav_kpoint_detail">知识点详情</string>
+    <string name="nav_back">返回</string>
+
+    <!-- 占位文案（由后续里程碑替换） -->
+    <string name="placeholder_developing">该页面将在后续里程碑实现</string>
+    <string name="placeholder_solve">拍照或导入错题，进入对话式解题</string>
+    <string name="placeholder_mistakes">按科目、知识点、错因筛选历史错题</string>
+    <string name="placeholder_review">重做错题并自评，驱动间隔重复</string>
+    <string name="placeholder_knowledge">掌握度雷达、章节热力与趋势</string>
+    <string name="placeholder_kpoint_detail">知识点定义、通用思路、易错点与我的错题</string>
+    <string name="placeholder_report">周报与月报，全部本地统计</string>
+    <string name="placeholder_settings">配置模型 Base URL、Key 与教学偏好</string>
+    <string name="placeholder_backup">本地备份与恢复，用于换机迁移</string>
+
+    <!-- 本地通知（复习提醒，FR-4.4） -->
+    <string name="notification_channel_review">复习提醒</string>
+    <string name="notification_channel_review_desc">按遗忘曲线提醒今天该复习的错题，全部在本机计算</string>
+    <string name="notification_review_title">今天该复习了</string>
+
+    <!-- 合规 -->
+    <string name="ai_disclaimer">内容由 AI 生成，可能存在错误，不替代老师</string>
+</resources>

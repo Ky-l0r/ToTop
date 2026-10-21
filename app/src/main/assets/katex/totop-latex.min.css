@@ -1,0 +1,31 @@
+/*
+ * To Top 轻量 LaTeX 渲染器的样式（KaTeX 缺位时的兜底，非 KaTeX 资源）。
+ *
+ * 说明：这是一个**自研**的极简样式表，只为让 assets/katex/totop-latex.min.js
+ * 输出的 HTML 结构可读，不包含任何 KaTeX 字体或版权资源。
+ * KaTeX 正式资源就位后（katex.min.css + fonts/），本文件自动不被引用。
+ */
+.tt-t, .tt-bold, .tt-num, .tt-den, .tt-radicand, .tt-supbase, .tt-subbase {
+    display: inline;
+}
+
+.tt-frac {
+    font-size: 0.98em;
+}
+
+.tt-num, .tt-den {
+    line-height: 1.15;
+}
+
+.tt-root {
+    font-size: 1.05em;
+}
+
+.tt-space {
+    vertical-align: middle;
+}
+
+.katex-error {
+    color: #9B2C2C;
+    font-family: monospace;
+}

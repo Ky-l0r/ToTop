@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # 一、密钥泄露扫描：每次改动都跑，绝不放过任何真实 Key
+  secret-scan:
+    name: 密钥泄露扫描
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 二、代码规范：ktlint 管格式，detekt 管复杂度与潜在缺陷
+  static-analysis:
+    name: 代码规范检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 配置 Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 生成 local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: ktlint 格式检查
+        run: ./gradlew :app:ktlintCheck --console=plain
+
+      - name: detekt 静态分析
+        run: ./gradlew :app:detekt --console=plain
+
+      - name: 上传静态检查报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-analysis-report
+          path: |
+            app/build/reports/ktlint
+            app/build/reports/detekt
+          if-no-files-found: ignore
+
+  # 三、构建与测试
+  build:
+    name: 构建与测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 配置 Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 生成 local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Android Lint
+        run: ./gradlew :app:lintDebug --console=plain
+
+      - name: 单元测试
+        run: ./gradlew :app:testDebugUnitTest --console=plain
+
+      - name: 构建 Debug APK
+        run: ./gradlew :app:assembleDebug --console=plain
+
+      - name: 上传测试报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-report
+          path: app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: ignore
+
+      - name: 上传 Lint 报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+
+      - name: 上传 Debug APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore

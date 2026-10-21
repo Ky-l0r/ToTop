@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 题目原图（本地压缩后保存，不上传开发者服务器） -->
+    <files-path
+        name="question_images"
+        path="images/" />
+    <!-- 导出产物（Markdown / CSV / 备份包） -->
+    <files-path
+        name="exports"
+        path="exports/" />
+    <cache-path
+        name="cache_images"
+        path="images/" />
+    <external-files-path
+        name="external_exports"
+        path="exports/" />
+</paths>

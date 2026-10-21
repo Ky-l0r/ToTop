@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13+ 主题图标单色图层，系统按壁纸取色 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,26 L74,52 L62,52 L62,78 L46,78 L46,52 L34,52 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,84 L76,84 L76,88 L32,88 Z" />
+</vector>

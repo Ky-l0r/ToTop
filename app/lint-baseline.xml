@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.5.2">
+    <!-- 初始为空：质量门禁要求 lint 零 error 与零新增 warning。
+         仅当确认为误报时才在此登记，并在 PR 描述中说明原因。 -->
+</issues>

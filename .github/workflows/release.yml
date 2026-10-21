@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  # 允许手动触发，用于演练发布流程而不真正创建 tag
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: 构建并发布 Release APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: 配置 Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: 写入签名配置
+        env:
+          RELEASE_STORE_BASE64: ${{ secrets.RELEASE_STORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          # 签名材料只存在于 Secrets，落盘后立即在后续步骤中删除
+          echo "$RELEASE_STORE_BASE64" | base64 -d > release.jks
+          {
+            echo "RELEASE_STORE_FILE=release.jks"
+            echo "RELEASE_STORE_PASSWORD=$RELEASE_STORE_PASSWORD"
+            echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS"
+            echo "RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD"
+          } >> local.properties
+
+      - name: 质量门禁（规范、静态分析、单元测试）
+        run: |
+          ./gradlew :app:ktlintCheck --console=plain
+          ./gradlew :app:detekt --console=plain
+          ./gradlew :app:testDebugUnitTest --console=plain
+
+      - name: R8 构建 Release APK
+        run: ./gradlew :app:assembleRelease --console=plain
+
+      - name: 校验产物与体积门禁（arm64 不超过 30MB）
+        run: |
+          set -e
+          apk=app/build/outputs/apk/release/app-release.apk
+          if [ ! -f "$apk" ]; then
+            echo "未找到已签名的 release APK，请检查 Secrets 中的签名配置"
+            ls -l app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          size=$(stat -c%s "$apk")
+          mb=$((size / 1024 / 1024))
+          echo "APK 体积: ${mb} MB（${size} 字节）"
+          if [ "$size" -gt 31457280 ]; then
+            echo "APK 体积超出 30MB 门禁，请检查资源与依赖"
+            exit 1
+          fi
+
+      - name: 清理签名材料
+        if: always()
+        run: |
+          rm -f release.jks
+          # 防止签名信息残留在构建缓存与工作区
+          find . -name "*.jks" -delete || true
+
+      - name: 创建 Release 并上传 APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/app-release.apk
+          generate_release_notes: true

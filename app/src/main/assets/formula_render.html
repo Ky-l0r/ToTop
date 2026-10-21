@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<!--
+  To Top 公式渲染宿主页（完全离线，禁止 MathJax，禁止任何 CDN）。
+
+  渲染器选择顺序（脚本内自动判定，无需 Kotlin 关心）：
+  1. 优先 assets/katex/katex.min.js + katex.min.css（正式方案）；
+  2. 缺失时退回 assets/katex/totop-latex.min.js（自研轻量兜底，见该文件头部说明）；
+  3. 两者都不可用时回调 onFailed，由 Kotlin 侧把公式降级为纯文本。
+
+  接口约定（与 FormulaRenderer 严格对齐）：
+  - ToTop.render(id, latex, displayMode, maxWidthPx)
+  - 成功：window.ToTopBridge.onRendered(id, widthPx, heightPx)
+  - 失败：window.ToTopBridge.onFailed(id, message)
+  #slot 的宽度被固定为 maxWidthPx，保证 JS 排版宽度与 Kotlin 截图宽度一致。
+-->
+<link rel="stylesheet" href="katex/katex.min.css" />
+<link rel="stylesheet" href="katex/totop-latex.min.css" />
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background: transparent;
+        font-size: 16px;
+        font-family: sans-serif;
+        -webkit-text-size-adjust: 100%;
+        overflow: hidden;
+    }
+    #slot {
+        box-sizing: border-box;
+        padding: 2px 4px 4px 4px;
+        color: #1B1C1A;
+        line-height: 1.5;
+        word-break: break-word;
+    }
+    #slot.display {
+        text-align: center;
+        margin: 2px 0;
+    }
+    .katex-error {
+        color: #9B2C2C;
+    }
+</style>
+</head>
+<body>
+<div id="slot"></div>
+<!-- 正式 KaTeX 资源：若未下载会被浏览器跳过（不抛异常） -->
+<script src="katex/katex.min.js"></script>
+<!-- 自研兜底渲染器：KaTeX 不可用时接管 -->
+<script src="katex/totop-latex.min.js"></script>
+<script>
+    (function () {
+        "use strict";
+
+        var slot = document.getElementById("slot");
+        var bridge = window.ToTopBridge || null;
+        var hasKatex = typeof katex !== "undefined" && katex !== null && typeof katex.render === "function";
+        var hasFallback = typeof window.ToTopLatexFallback !== "undefined";
+
+        function reportOk(id) {
+            if (!bridge) {
+                return;
+            }
+            try {
+                var rect = slot.getBoundingClientRect();
+                bridge.onRendered(String(id), Math.ceil(rect.width) || 1, Math.ceil(rect.height) || 1);
+            } catch (e) {
+                // 桥接异常不得抛回页面，否则后续渲染会被阻断
+            }
+        }
+
+        function reportFailed(id, message) {
+            if (!bridge) {
+                return;
+            }
+            try {
+                bridge.onFailed(String(id), String(message || "公式渲染失败"));
+            } catch (e) {
+                // 同上
+            }
+        }
+
+        var ToTop = {
+            /**
+             * 渲染一条公式。
+             * @param {number} id       请求序号
+             * @param {string} latex    LaTeX 源码（不含定界符）
+             * @param {boolean} display 是否行间公式
+             * @param {number} maxWidth 排版宽度（物理像素），与 Kotlin 截图宽度一致
+             */
+            render: function (id, latex, display, maxWidth) {
+                var width = maxWidth > 0 ? maxWidth : 720;
+                slot.className = display ? "display" : "";
+                slot.style.width = width + "px";
+                slot.textContent = "";
+
+                if (hasKatex) {
+                    try {
+                        katex.render(String(latex), slot, {
+                            displayMode: !!display,
+                            throwOnError: true,
+                            strict: "ignore",
+                            trust: false,
+                            output: "html"
+                        });
+                        setTimeout(function () {
+                            reportOk(id);
+                        }, 0);
+                        return;
+                    } catch (error) {
+                        // KaTeX 语法不支持时，先尝试兜底渲染器，仍失败才降级
+                        slot.textContent = "";
+                        if (!hasFallback) {
+                            reportFailed(id, (error && error.message) ? error.message : "KaTeX render failed");
+                            return;
+                        }
+                    }
+                }
+
+                if (hasFallback) {
+                    try {
+                        window.ToTopLatexFallback.render(String(latex), slot);
+                        setTimeout(function () {
+                            reportOk(id);
+                        }, 0);
+                        return;
+                    } catch (error2) {
+                        slot.textContent = String(latex);
+                        slot.className = slot.className + " katex-error";
+                        reportFailed(id, (error2 && error2.message) ? error2.message : "fallback render failed");
+                        return;
+                    }
+                }
+
+                slot.textContent = String(latex);
+                slot.className = slot.className + " katex-error";
+                reportFailed(id, "KaTeX 资源缺失，且兼底渲染器不可用");
+            }
+        };
+
+        window.ToTop = ToTop;
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+[
+  {
+    "pattern": "\\\\d?frac\\s*\\{(.+?)\\}\\s*\\{(.+?)\\}",
+    "type": "prefix",
+    "spoken": "$2 分之 $1"
+  },
+  {
+    "pattern": "\\\\sqrt\\s*\\[3\\]\\s*\\{(.+?)\\}",
+    "type": "prefix",
+    "spoken": "三次根号 $1"
+  },
+  {
+    "pattern": "\\\\sqrt\\s*\\{(.+?)\\}",
+    "type": "prefix",
+    "spoken": "根号 $1"
+  },
+  {
+    "pattern": "\\\\binom\\s*\\{(.+?)\\}\\s*\\{(.+?)\\}",
+    "type": "prefix",
+    "spoken": "从 $1 个中取 $2 个的组合数"
+  },
+  {
+    "pattern": "\\\\overline\\s*\\{([A-Z]{2,4})\\}",
+    "type": "prefix",
+    "spoken": "线段 $1"
+  },
+  {
+    "pattern": "\\\\vec\\s*\\{([a-zA-Z]+)\\}",
+    "type": "prefix",
+    "spoken": "向量 $1"
+  },
+  {
+    "pattern": "\\\\angle\\s*([A-Z]{2,4})",
+    "type": "prefix",
+    "spoken": "角 $1"
+  },
+  {
+    "pattern": "\\\\sin",
+    "type": "prefix",
+    "spoken": "正弦"
+  },
+  {
+    "pattern": "\\\\cos",
+    "type": "prefix",
+    "spoken": "余弦"
+  },
+  {
+    "pattern": "\\\\tan",
+    "type": "prefix",
+    "spoken": "正切"
+  },
+  {
+    "pattern": "\\\\log",
+    "type": "prefix",
+    "spoken": "对数"
+  },
+  {
+    "pattern": "\\\\ln",
+    "type": "prefix",
+    "spoken": "自然对数"
+  },
+  {
+    "pattern": "\\\\lg",
+    "type": "prefix",
+    "spoken": "常用对数"
+  },
+  {
+    "pattern": "\\\\lim",
+    "type": "prefix",
+    "spoken": "极限"
+  },
+  {
+    "pattern": "\\\\max",
+    "type": "prefix",
+    "spoken": "最大值"
+  },
+  {
+    "pattern": "\\\\min",
+    "type": "prefix",
+    "spoken": "最小值"
+  },
+  {
+    "pattern": "\\\\sum",
+    "type": "whole",
+    "spoken": "求和"
+  },
+  {
+    "pattern": "\\\\prod",
+    "type": "whole",
+    "spoken": "连乘"
+  },
+  {
+    "pattern": "\\\\int",
+    "type": "whole",
+    "spoken": "积分"
+  },
+  {
+    "pattern": "\\\\alpha",
+    "type": "whole",
+    "spoken": "阿尔法"
+  },
+  {
+    "pattern": "\\\\beta",
+    "type": "whole",
+    "spoken": "贝塔"
+  },
+  {
+    "pattern": "\\\\gamma",
+    "type": "whole",
+    "spoken": "伽马"
+  },
+  {
+    "pattern": "\\\\theta",
+    "type": "whole",
+    "spoken": "西塔"
+  },
+  {
+    "pattern": "\\\\Delta",
+    "type": "whole",
+    "spoken": "德尔塔"
+  },
+  {
+    "pattern": "\\\\lambda",
+    "type": "whole",
+    "spoken": "拉姆达"
+  },
+  {
+    "pattern": "\\\\mu",
+    "type": "whole",
+    "spoken": "缪"
+  },
+  {
+    "pattern": "\\\\sigma",
+    "type": "whole",
+    "spoken": "西格玛"
+  },
+  {
+    "pattern": "\\\\omega",
+    "type": "whole",
+    "spoken": "欧米伽"
+  },
+  {
+    "pattern": "\\\\pi",
+    "type": "whole",
+    "spoken": "圆周率"
+  },
+  {
+    "pattern": "\\\\leq?\\b",
+    "type": "whole",
+    "spoken": "小于等于"
+  },
+  {
+    "pattern": "\\\\geq?\\b",
+    "type": "whole",
+    "spoken": "大于等于"
+  },
+  {
+    "pattern": "\\\\neq?\\b",
+    "type": "whole",
+    "spoken": "不等于"
+  },
+  {
+    "pattern": "\\\\approx",
+    "type": "whole",
+    "spoken": "约等于"
+  },
+  {
+    "pattern": "\\\\equiv",
+    "type": "whole",
+    "spoken": "恒等于"
+  },
+  {
+    "pattern": "\\\\pm",
+    "type": "whole",
+    "spoken": "正负"
+  },
+  {
+    "pattern": "\\\\infty",
+    "type": "whole",
+    "spoken": "无穷大"
+  },
+  {
+    "pattern": "\\\\to\\b|\\\\rightarrow",
+    "type": "whole",
+    "spoken": "趋于"
+  },
+  {
+    "pattern": "\\\\Rightarrow",
+    "type": "whole",
+    "spoken": "推出"
+  },
+  {
+    "pattern": "\\\\Leftrightarrow",
+    "type": "whole",
+    "spoken": "等价于"
+  },
+  {
+    "pattern": "\\\\notin",
+    "type": "whole",
+    "spoken": "不属于"
+  },
+  {
+    "pattern": "\\\\in\\b",
+    "type": "whole",
+    "spoken": "属于"
+  },
+  {
+    "pattern": "\\\\subseteq",
+    "type": "whole",
+    "spoken": "包含于或等于"
+  },
+  {
+    "pattern": "\\\\subset\\b",
+    "type": "whole",
+    "spoken": "包含于"
+  },
+  {
+    "pattern": "\\\\cup",
+    "type": "whole",
+    "spoken": "并集"
+  },
+  {
+    "pattern": "\\\\cap",
+    "type": "whole",
+    "spoken": "交集"
+  },
+  {
+    "pattern": "\\\\emptyset|\\\\varnothing",
+    "type": "whole",
+    "spoken": "空集"
+  },
+  {
+    "pattern": "\\\\forall",
+    "type": "whole",
+    "spoken": "任意"
+  },
+  {
+    "pattern": "\\\\exists",
+    "type": "whole",
+    "spoken": "存在"
+  },
+  {
+    "pattern": "\\\\because",
+    "type": "whole",
+    "spoken": "因为"
+  },
+  {
+    "pattern": "\\\\therefore",
+    "type": "whole",
+    "spoken": "所以"
+  },
+  {
+    "pattern": "\\\\perp",
+    "type": "whole",
+    "spoken": "垂直于"
+  },
+  {
+    "pattern": "\\\\parallel",
+    "type": "whole",
+    "spoken": "平行于"
+  },
+  {
+    "pattern": "\\\\cong",
+    "type": "whole",
+    "spoken": "全等于"
+  },
+  {
+    "pattern": "\\\\sim",
+    "type": "whole",
+    "spoken": "相似于"
+  },
+  {
+    "pattern": "\\\\times|\\\\cdot",
+    "type": "whole",
+    "spoken": "乘"
+  },
+  {
+    "pattern": "\\\\div",
+    "type": "whole",
+    "spoken": "除以"
+  },
+  {
+    "pattern": "\\\\%",
+    "type": "whole",
+    "spoken": "百分号"
+  },
+  {
+    "pattern": "\\\\cdots|\\\\ldots",
+    "type": "whole",
+    "spoken": "省略号"
+  },
+  {
+    "pattern": "\\\\quad",
+    "type": "whole",
+    "spoken": "，"
+  },
+  {
+    "pattern": "([0-9]+)\\s*[\\^]\\\\circ",
+    "type": "whole",
+    "spoken": "$1 度"
+  },
+  {
+    "pattern": "[\\^]\\\\circ|\\\\degree",
+    "type": "whole",
+    "spoken": "度"
+  },
+  {
+    "pattern": "([0-9A-Za-z])\\s*!",
+    "type": "whole",
+    "spoken": "$1 的阶乘"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*\\{2\\}",
+    "type": "whole",
+    "spoken": "$1 的平方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*2(?![0-9a-zA-Z])",
+    "type": "whole",
+    "spoken": "$1 的平方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*\\{3\\}",
+    "type": "whole",
+    "spoken": "$1 的立方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*3(?![0-9a-zA-Z])",
+    "type": "whole",
+    "spoken": "$1 的立方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*\\{n\\}",
+    "type": "whole",
+    "spoken": "$1 的 n 次方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*n(?![0-9a-zA-Z])",
+    "type": "whole",
+    "spoken": "$1 的 n 次方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*\\{([^{}]+)\\}",
+    "type": "whole",
+    "spoken": "$1 的 $2 次方"
+  },
+  {
+    "pattern": "([a-zA-Z0-9])\\s*\\^\\s*([0-9a-zA-Z])",
+    "type": "whole",
+    "spoken": "$1 的 $2 次方"
+  },
+  {
+    "pattern": "([a-zA-Z])\\s*_\\s*\\{([^{}]+)\\}",
+    "type": "whole",
+    "spoken": "$1 下标 $2"
+  },
+  {
+    "pattern": "([a-zA-Z])\\s*_\\s*([0-9a-zA-Z])",
+    "type": "whole",
+    "spoken": "$1 下标 $2"
+  },
+  {
+    "pattern": "_\\s*\\{([^{}]*)\\}",
+    "type": "prefix",
+    "spoken": "$1"
+  },
+  {
+    "pattern": "<",
+    "type": "whole",
+    "spoken": "小于"
+  },
+  {
+    "pattern": ">",
+    "type": "whole",
+    "spoken": "大于"
+  },
+  {
+    "pattern": "=",
+    "type": "whole",
+    "spoken": "等于"
+  }
+]

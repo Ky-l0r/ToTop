@@ -1,0 +1,1034 @@
+[
+  {
+    "fromId": "KP_MATH_0002",
+    "toId": "KP_MATH_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0003",
+    "toId": "KP_MATH_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0004",
+    "toId": "KP_MATH_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0004",
+    "toId": "KP_MATH_0010",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0002",
+    "toId": "KP_MATH_0006",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0006",
+    "toId": "KP_MATH_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0007",
+    "toId": "KP_MATH_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0007",
+    "toId": "KP_MATH_0009",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0012",
+    "toId": "KP_MATH_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0013",
+    "toId": "KP_MATH_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0014",
+    "toId": "KP_MATH_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0015",
+    "toId": "KP_MATH_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0016",
+    "toId": "KP_MATH_0017",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0017",
+    "toId": "KP_MATH_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0020",
+    "toId": "KP_MATH_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0021",
+    "toId": "KP_MATH_0022",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0022",
+    "toId": "KP_MATH_0023",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0017",
+    "toId": "KP_MATH_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0020",
+    "toId": "KP_MATH_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0020",
+    "toId": "KP_MATH_0025",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0021",
+    "toId": "KP_MATH_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0025",
+    "toId": "KP_MATH_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0028",
+    "toId": "KP_MATH_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0029",
+    "toId": "KP_MATH_0030",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0030",
+    "toId": "KP_MATH_0031",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0031",
+    "toId": "KP_MATH_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0032",
+    "toId": "KP_MATH_0033",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0022",
+    "toId": "KP_MATH_0033",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0032",
+    "toId": "KP_MATH_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0036",
+    "toId": "KP_MATH_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0037",
+    "toId": "KP_MATH_0038",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0038",
+    "toId": "KP_MATH_0039",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0038",
+    "toId": "KP_MATH_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0042",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0043",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0038",
+    "toId": "KP_MATH_0045",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0046",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0046",
+    "toId": "KP_MATH_0047",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0046",
+    "toId": "KP_MATH_0048",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0048",
+    "toId": "KP_MATH_0049",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0037",
+    "toId": "KP_MATH_0051",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0051",
+    "toId": "KP_MATH_0052",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0052",
+    "toId": "KP_MATH_0053",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0052",
+    "toId": "KP_MATH_0054",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0054",
+    "toId": "KP_MATH_0055",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0041",
+    "toId": "KP_MATH_0055",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0052",
+    "toId": "KP_MATH_0056",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0058",
+    "toId": "KP_MATH_0059",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0059",
+    "toId": "KP_MATH_0060",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0060",
+    "toId": "KP_MATH_0064",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0060",
+    "toId": "KP_MATH_0061",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0058",
+    "toId": "KP_MATH_0062",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0062",
+    "toId": "KP_MATH_0065",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0059",
+    "toId": "KP_MATH_0063",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0069",
+    "toId": "KP_MATH_0070",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0067",
+    "toId": "KP_MATH_0068",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0067",
+    "toId": "KP_MATH_0070",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0068",
+    "toId": "KP_MATH_0070",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0069",
+    "toId": "KP_MATH_0071",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0073",
+    "toId": "KP_MATH_0074",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0074",
+    "toId": "KP_MATH_0075",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0076",
+    "toId": "KP_MATH_0077",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0079",
+    "toId": "KP_MATH_0080",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0080",
+    "toId": "KP_MATH_0081",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0081",
+    "toId": "KP_MATH_0082",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0082",
+    "toId": "KP_MATH_0083",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0085",
+    "toId": "KP_MATH_0086",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0085",
+    "toId": "KP_MATH_0087",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0086",
+    "toId": "KP_MATH_0088",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0086",
+    "toId": "KP_MATH_0089",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0087",
+    "toId": "KP_MATH_0089",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0091",
+    "toId": "KP_MATH_0092",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0092",
+    "toId": "KP_MATH_0093",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0093",
+    "toId": "KP_MATH_0094",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0094",
+    "toId": "KP_MATH_0095",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0095",
+    "toId": "KP_MATH_0096",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0092",
+    "toId": "KP_MATH_0097",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0099",
+    "toId": "KP_MATH_0100",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0100",
+    "toId": "KP_MATH_0101",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0101",
+    "toId": "KP_MATH_0102",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0102",
+    "toId": "KP_MATH_0103",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0103",
+    "toId": "KP_MATH_0104",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0103",
+    "toId": "KP_MATH_0105",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0107",
+    "toId": "KP_MATH_0108",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0108",
+    "toId": "KP_MATH_0109",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0109",
+    "toId": "KP_MATH_0110",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0110",
+    "toId": "KP_MATH_0111",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0110",
+    "toId": "KP_MATH_0112",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0109",
+    "toId": "KP_MATH_0113",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0115",
+    "toId": "KP_MATH_0116",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0116",
+    "toId": "KP_MATH_0117",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0117",
+    "toId": "KP_MATH_0118",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0118",
+    "toId": "KP_MATH_0119",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0118",
+    "toId": "KP_MATH_0120",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0122",
+    "toId": "KP_MATH_0123",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0123",
+    "toId": "KP_MATH_0124",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0124",
+    "toId": "KP_MATH_0125",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0125",
+    "toId": "KP_MATH_0126",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0125",
+    "toId": "KP_MATH_0127",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0129",
+    "toId": "KP_MATH_0130",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0130",
+    "toId": "KP_MATH_0134",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0131",
+    "toId": "KP_MATH_0132",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0132",
+    "toId": "KP_MATH_0133",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0136",
+    "toId": "KP_MATH_0137",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0137",
+    "toId": "KP_MATH_0138",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0138",
+    "toId": "KP_MATH_0139",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0139",
+    "toId": "KP_MATH_0140",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0142",
+    "toId": "KP_MATH_0143",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0143",
+    "toId": "KP_MATH_0144",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0144",
+    "toId": "KP_MATH_0145",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0145",
+    "toId": "KP_MATH_0146",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0148",
+    "toId": "KP_MATH_0149",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0148",
+    "toId": "KP_MATH_0150",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0148",
+    "toId": "KP_MATH_0151",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0149",
+    "toId": "KP_MATH_0152",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0152",
+    "toId": "KP_MATH_0153",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0155",
+    "toId": "KP_MATH_0156",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0156",
+    "toId": "KP_MATH_0158",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0156",
+    "toId": "KP_MATH_0157",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0160",
+    "toId": "KP_MATH_0161",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0161",
+    "toId": "KP_MATH_0162",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0162",
+    "toId": "KP_MATH_0163",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0163",
+    "toId": "KP_MATH_0165",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0167",
+    "toId": "KP_MATH_0168",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0168",
+    "toId": "KP_MATH_0169",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0169",
+    "toId": "KP_MATH_0170",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0023",
+    "toId": "KP_MATH_0170",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0031",
+    "toId": "KP_MATH_0091",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0032",
+    "toId": "KP_MATH_0086",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0022",
+    "toId": "KP_MATH_0086",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0014",
+    "toId": "KP_MATH_0095",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0054",
+    "toId": "KP_MATH_0099",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0052",
+    "toId": "KP_MATH_0100",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0041",
+    "toId": "KP_MATH_0109",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0131",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0046",
+    "toId": "KP_MATH_0138",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0058",
+    "toId": "KP_MATH_0145",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0077",
+    "toId": "KP_MATH_0160",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0074",
+    "toId": "KP_MATH_0164",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0015",
+    "toId": "KP_MATH_0157",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0038",
+    "toId": "KP_MATH_0110",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0091",
+    "toId": "KP_MATH_0115",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0051",
+    "toId": "KP_MATH_0148",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_MATH_0027",
+    "toId": "KP_MATH_0090",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0027",
+    "toId": "KP_MATH_0121",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0019",
+    "toId": "KP_MATH_0084",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0050",
+    "toId": "KP_MATH_0098",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0057",
+    "toId": "KP_MATH_0141",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0072",
+    "toId": "KP_MATH_0159",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0035",
+    "toId": "KP_MATH_0128",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0035",
+    "toId": "KP_MATH_0106",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0066",
+    "toId": "KP_MATH_0135",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0011",
+    "toId": "KP_MATH_0114",
+    "type": "extends",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0041",
+    "toId": "KP_MATH_0054",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0069",
+    "toId": "KP_MATH_0091",
+    "type": "related",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0033",
+    "toId": "KP_MATH_0097",
+    "type": "related",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0075",
+    "toId": "KP_MATH_0163",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0116",
+    "toId": "KP_MATH_0117",
+    "type": "related",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0149",
+    "toId": "KP_MATH_0150",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0109",
+    "toId": "KP_MATH_0169",
+    "type": "related",
+    "weight": 0.6
+  },
+  {
+    "fromId": "KP_MATH_0039",
+    "toId": "KP_MATH_0052",
+    "type": "related",
+    "weight": 0.9
+  },
+  {
+    "fromId": "KP_MATH_0058",
+    "toId": "KP_MATH_0063",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0023",
+    "toId": "KP_MATH_0152",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0077",
+    "toId": "KP_MATH_0156",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0007",
+    "toId": "KP_MATH_0014",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0099",
+    "toId": "KP_MATH_0101",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0062",
+    "toId": "KP_MATH_0130",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0139",
+    "toId": "KP_MATH_0144",
+    "type": "related",
+    "weight": 0.7
+  },
+  {
+    "fromId": "KP_MATH_0122",
+    "toId": "KP_MATH_0144",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0095",
+    "toId": "KP_MATH_0096",
+    "type": "related",
+    "weight": 0.8
+  },
+  {
+    "fromId": "KP_MATH_0069",
+    "toId": "KP_MATH_0167",
+    "type": "related",
+    "weight": 0.6
+  }
+]

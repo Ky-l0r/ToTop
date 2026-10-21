@@ -1,0 +1,65 @@
+name: 功能建议
+description: 提出新功能或改进建议
+title: "[建议] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本项目遵循《AI 辅助学习 App 开发方案》的既定边界。提出建议前请确认不触碰下列硬性约束：
+        - 不引入后端服务器与账号体系；
+        - 不引入统计、广告、埋点 SDK；
+        - 不做判卷与正确率统计，全部指标建立在错题侧；
+        - 新增 AI 能力必须能由用户自带的 Key 承担成本。
+
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: 相关里程碑
+      options:
+        - M1 工程骨架与 BYOK
+        - M2 解题主链路
+        - M3 错题本
+        - M4 掌握度与复习
+        - M5 周报与引导模式与 TTS
+        - M6 图谱与学习路径
+        - M7 导出与备份
+        - M8 性能优化与开源
+        - 不在现有里程碑内
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你遇到的问题
+      description: 描述真实使用场景，而不是先给方案
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望的做法
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 考虑过的替代方案
+    validations:
+      required: false
+
+  - type: dropdown
+    id: cost
+    attributes:
+      label: 是否增加模型调用成本
+      description: 本项目对成本极敏感，任何新增调用都需要说明必要性
+      options:
+        - 不增加调用成本
+        - 增加少量调用，可由用户手动关闭
+        - 增加调用，且无法关闭
+        - 不确定
+    validations:
+      required: true

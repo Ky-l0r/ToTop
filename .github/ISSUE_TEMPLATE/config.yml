@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全漏洞披露
+    url: https://github.com/Ky-l0r/ToTop/security/advisories/new
+    about: 涉及密钥泄露、数据外传等安全问题，请勿公开提 Issue，改用安全公告或邮件私下联系。
+  - name: 使用与配置问题
+    url: https://github.com/Ky-l0r/ToTop/blob/main/README.md
+    about: 配置 Key、选择模型、成本估算等问题，请先阅读 README。

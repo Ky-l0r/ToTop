@@ -1,0 +1,2528 @@
+[
+  {
+    "id": "KP_MATH_0001",
+    "name": "有理数与实数",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "有理数与实数",
+    "orderIndex": 1,
+    "definition": "初中阶段数与式的基础，涵盖实数体系、数轴与二次根式。",
+    "commonApproach": "先明确数集归属与符号，再按运算顺序与性质化简计算。",
+    "pitfalls": [
+      "混合运算顺序错误",
+      "忽略二次根式成立条件"
+    ]
+  },
+  {
+    "id": "KP_MATH_0002",
+    "name": "有理数与数轴",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 1,
+    "definition": "有理数是能写成两个整数之比的数，可用数轴上的点表示；数轴规定了原点、正方向和单位长度。",
+    "commonApproach": "先判断数的符号与所属数集，再借助数轴比较大小、表示相反数与绝对值。",
+    "pitfalls": [
+      "把带负号的分数误判为无理数",
+      "数轴上左右方向与大小关系记反",
+      "绝对值化简时忽略符号讨论"
+    ]
+  },
+  {
+    "id": "KP_MATH_0003",
+    "name": "相反数与绝对值",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 2,
+    "definition": "只有符号不同的两个数互为相反数；绝对值表示数轴上该点到原点的距离，恒为非负数。",
+    "commonApproach": "绝对值问题先判断内部式子的正负，再按定义去掉绝对值符号。",
+    "pitfalls": [
+      "认为负 a 一定是负数",
+      "去绝对值时忘记分类讨论",
+      "绝对值等于某数的解只写一个"
+    ]
+  },
+  {
+    "id": "KP_MATH_0004",
+    "name": "有理数的四则运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 3,
+    "definition": "有理数运算遵循先乘除后加减、有括号先算括号的顺序，减法转化为加法，除法转化为乘法。",
+    "commonApproach": "先定符号再算绝对值，混合运算先统一成加法或乘法，再按运算顺序计算。",
+    "pitfalls": [
+      "减去一个负数时符号处理错误",
+      "乘除混合运算漏数负号个数",
+      "使用分配律时漏乘某一项"
+    ]
+  },
+  {
+    "id": "KP_MATH_0005",
+    "name": "科学记数法与近似数",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 4,
+    "definition": "科学记数法把数写成 a 乘 10 的 n 次方的形式，其中 a 的绝对值不小于 1 且小于 10；近似数由精确度决定有效数字位数。",
+    "commonApproach": "先确定小数点移动的位数得到 n，再由末位数字所在数位判断精确度。",
+    "pitfalls": [
+      "a 的取值范围写成 0 到 1 之间",
+      "有效数字起始位判断错误",
+      "大数还原时小数点位置点错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0006",
+    "name": "实数的大小比较与估算",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 5,
+    "definition": "实数包括有理数和无理数，无理数是无限不循环小数；实数可按大小顺序排列在数轴上。",
+    "commonApproach": "比较含根号的数时先平方或找相邻整数，估算时用夹逼方式确定整数部分。",
+    "pitfalls": [
+      "把根号 9 当成无理数",
+      "比较负数时忽略绝对值越大反而越小",
+      "估算时两边平方后方向写错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0007",
+    "name": "平方根与立方根",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 6,
+    "definition": "若 x 的平方等于 a 且 a 非负，则 x 叫 a 的平方根，其中非负的一个叫算术平方根；若 x 的立方等于 a，则 x 叫 a 的立方根。",
+    "commonApproach": "先看被开方数的符号，平方根有两个且互为相反数，立方根只有一个且符号与原数相同。",
+    "pitfalls": [
+      "把算术平方根当成平方根写出两个答案",
+      "负数开平方仍写实数解",
+      "根号下 a 的平方直接写成 a 而忽略绝对值"
+    ]
+  },
+  {
+    "id": "KP_MATH_0008",
+    "name": "实数与无理数",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 7,
+    "definition": "无理数是无限不循环小数，常见形式包括开不尽的方根、圆周率及其倍数和特定构造数。",
+    "commonApproach": "判断一个数是否为无理数时先化为最简形式，再看是否为无限不循环小数。",
+    "pitfalls": [
+      "把七分之二十二当作圆周率的精确值",
+      "认为带根号的数一定是无理数",
+      "把循环小数误判为无理数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0009",
+    "name": "二次根式的化简与运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 8,
+    "definition": "形如根号 a 且 a 非负的式子叫二次根式，满足根号 ab 等于根号 a 乘根号 b，根号 a 除以 b 等于根号 a 除以根号 b。",
+    "commonApproach": "化简时把被开方数分解出完全平方因数，运算时先化成最简二次根式再合并同类根式。",
+    "pitfalls": [
+      "根号 a 加根号 b 直接写成根号下 a 加 b",
+      "分母有理化时漏乘分子",
+      "忽略二次根式有意义的条件"
+    ]
+  },
+  {
+    "id": "KP_MATH_0010",
+    "name": "有理数的乘方与混合运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0001",
+    "chapter": "有理数与实数",
+    "orderIndex": 9,
+    "definition": "求 n 个相同因数的积的运算叫乘方，结果叫幂；负数的偶次幂为正、奇次幂为负。",
+    "commonApproach": "先算乘方再算乘除最后算加减，有括号先算括号，注意负号与分数线的双重含义。",
+    "pitfalls": [
+      "负数的奇次幂符号判断错误",
+      "分数写成负号在分母前的形式后被误读",
+      "乘方与乘法混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0011",
+    "name": "代数式与整式",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "代数式与整式",
+    "orderIndex": 2,
+    "definition": "初中阶段整式与分式的运算基础，核心是运算法则与因式分解。",
+    "commonApproach": "先识别式子结构，再按运算法则展开或分解，最后化简到最简形式。",
+    "pitfalls": [
+      "乘法公式套用错误",
+      "分解不彻底"
+    ]
+  },
+  {
+    "id": "KP_MATH_0012",
+    "name": "用字母表示数与代数式求值",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 1,
+    "definition": "用运算符号把数和表示数的字母连接起来的式子叫代数式，代入具体数值可求得代数式的值。",
+    "commonApproach": "求值前先化简代数式，再把字母的值代入，注意运算顺序与负数的括号。",
+    "pitfalls": [
+      "代入负数时忘记加括号",
+      "分数代入后约分出错",
+      "把代数式与方程混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0013",
+    "name": "整式的加减与合并同类项",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 2,
+    "definition": "所含字母相同且相同字母的指数也相同的项叫同类项，合并同类项时系数相加、字母部分不变。",
+    "commonApproach": "先去括号，再标出同类项，按字母顺序整理后合并。",
+    "pitfalls": [
+      "去括号时括号前是负号未变号",
+      "把 x 的平方与 x 当成同类项",
+      "合并时把字母指数也相加"
+    ]
+  },
+  {
+    "id": "KP_MATH_0014",
+    "name": "幂的运算性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 3,
+    "definition": "同底数幂相乘指数相加，幂的乘方指数相乘，积的乘方各因数分别乘方，同底数幂相除指数相减。",
+    "commonApproach": "先统一底数，再按运算性质处理指数，注意零指数与负整数指数幂的条件。",
+    "pitfalls": [
+      "同底数幂相乘误算成指数相乘",
+      "幂的乘方误算成指数相加",
+      "忽略零指数幂要求底数不为零"
+    ]
+  },
+  {
+    "id": "KP_MATH_0015",
+    "name": "整式的乘法与乘法公式",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 4,
+    "definition": "单项式与多项式相乘按分配律展开；平方差公式为两数和乘两数差等于平方差，完全平方公式首平方加尾平方再加或减二倍乘积。",
+    "commonApproach": "观察是否符合公式结构，能套公式的先套公式，不能套的按分配律逐项相乘再合并。",
+    "pitfalls": [
+      "完全平方漏掉中间的二倍乘积项",
+      "平方差公式中符号对应错误",
+      "多项式乘法漏乘某些项"
+    ]
+  },
+  {
+    "id": "KP_MATH_0016",
+    "name": "因式分解",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 5,
+    "definition": "把一个多项式化成几个整式乘积的形式叫因式分解，常用提公因式法、公式法和十字相乘法。",
+    "commonApproach": "按先提公因式、再看公式、最后十字相乘的顺序，分解到每个因式都不能再分为止。",
+    "pitfalls": [
+      "分解不彻底，公因式没有提干净",
+      "提公因式后漏写 1",
+      "把因式分解与整式乘法混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0017",
+    "name": "分式的概念与运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 6,
+    "definition": "分母含字母且分母不为零的式子叫分式，分式的基本性质是分子分母同乘或同除同一个不为零的整式，分式的值不变。",
+    "commonApproach": "运算前先因式分解并约分，通分时找最简公分母，最后结果化为最简分式。",
+    "pitfalls": [
+      "忽略分母不为零的条件",
+      "约分时把加减项直接约掉",
+      "通分时只乘分母不乘分子"
+    ]
+  },
+  {
+    "id": "KP_MATH_0018",
+    "name": "整式与分式的化简求值",
+    "subject": "math",
+    "parentId": "KP_MATH_0011",
+    "chapter": "代数式与整式",
+    "orderIndex": 7,
+    "definition": "化简求值指先对代数式进行整式或分式运算化简，再代入字母取值。",
+    "commonApproach": "先通分或因式分解约分到最简，再代入求值，取值须使原式有意义。",
+    "pitfalls": [
+      "代值前未化简导致计算量过大",
+      "代入使分母为零的值",
+      "化简过程中符号丢失"
+    ]
+  },
+  {
+    "id": "KP_MATH_0019",
+    "name": "方程与不等式",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "方程与不等式",
+    "orderIndex": 3,
+    "definition": "初中阶段方程与不等式模型，是列方程解应用题的直接工具。",
+    "commonApproach": "先设元并翻译条件，再按解法步骤求解，最后检验是否满足实际意义。",
+    "pitfalls": [
+      "去分母漏项",
+      "忽略增根检验"
+    ]
+  },
+  {
+    "id": "KP_MATH_0020",
+    "name": "一元一次方程",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 1,
+    "definition": "只含一个未知数且未知数次数为 1 的整式方程叫一元一次方程，一般形式为 ax 加 b 等于零且 a 不为零。",
+    "commonApproach": "去分母、去括号、移项、合并同类项、系数化为 1，逐步化为未知数等于常数的形式。",
+    "pitfalls": [
+      "去分母时漏乘不含分母的项",
+      "移项忘记变号",
+      "系数化为 1 时两边除以负数忘记变号"
+    ]
+  },
+  {
+    "id": "KP_MATH_0021",
+    "name": "二元一次方程组",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 2,
+    "definition": "由两个二元一次方程组成的方程组，其解是同时满足两个方程的未知数的值。",
+    "commonApproach": "观察系数选择代入消元或加减消元，消元后化为一元一次方程求解再回代。",
+    "pitfalls": [
+      "加减消元时符号处理错误",
+      "回代时代入错误的方程",
+      "把一组解写成坐标形式却漏括号"
+    ]
+  },
+  {
+    "id": "KP_MATH_0022",
+    "name": "一元二次方程的解法",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 3,
+    "definition": "形如 ax 平方加 bx 加 c 等于零且 a 不为零的方程，可用直接开平方法、配方法、公式法和因式分解法求解。",
+    "commonApproach": "先看能否因式分解，不能分解时用公式法，计算判别式后再代入求根公式。",
+    "pitfalls": [
+      "求根公式中分母写成 a 而不是 2a",
+      "配方时忘记两边同时加常数",
+      "开平方时漏掉负根"
+    ]
+  },
+  {
+    "id": "KP_MATH_0023",
+    "name": "一元二次方程根的判别式与根与系数关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 4,
+    "definition": "判别式 b 平方减 4ac 决定实根个数；两根之和为负 b 除以 a，两根之积为 c 除以 a。",
+    "commonApproach": "先算判别式确定根的情况，涉及两根和与积时用韦达定理整体代入。",
+    "pitfalls": [
+      "使用韦达定理前未验证判别式非负",
+      "两根之和的符号写成 b 除以 a",
+      "含参问题忽略二次项系数不为零"
+    ]
+  },
+  {
+    "id": "KP_MATH_0024",
+    "name": "分式方程与增根",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 5,
+    "definition": "分母含未知数的方程叫分式方程，解分式方程必须验根，使最简公分母为零的根是增根。",
+    "commonApproach": "两边同乘最简公分母化为整式方程，解出后代入最简公分母检验，舍去增根。",
+    "pitfalls": [
+      "解完不验根直接写答案",
+      "去分母时漏乘整式项",
+      "把增根与原方程无解混为一谈"
+    ]
+  },
+  {
+    "id": "KP_MATH_0025",
+    "name": "一元一次不等式与不等式组",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 6,
+    "definition": "用不等号连接的式子叫不等式，不等式两边同乘或同除以负数时不等号方向必须改变。",
+    "commonApproach": "分别解每个不等式，在数轴上表示解集后取公共部分，注意端点是否包含。",
+    "pitfalls": [
+      "两边乘除负数忘记变号",
+      "数轴上端点实心与空心画错",
+      "不等式组解集取交集写成并集"
+    ]
+  },
+  {
+    "id": "KP_MATH_0026",
+    "name": "方程与不等式的实际应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0019",
+    "chapter": "方程与不等式",
+    "orderIndex": 7,
+    "definition": "通过设未知数、找等量或不等关系列方程、方程组或不等式解决实际问题。",
+    "commonApproach": "先明确设什么，再把题目条件翻译成等量或不等关系，解完回到实际情境检验取值范围。",
+    "pitfalls": [
+      "设元后单位不统一",
+      "忽略实际意义的取值限制",
+      "把至少、不超过的临界值区间开闭写错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0027",
+    "name": "函数及其图象",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "函数及其图象",
+    "orderIndex": 4,
+    "definition": "初中阶段一次、反比例与二次函数的整体认识。",
+    "commonApproach": "先由解析式画出草图，再结合图象分析增减性、最值与交点。",
+    "pitfalls": [
+      "忽略定义域",
+      "图象与性质对应错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0028",
+    "name": "变量与函数的概念",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 1,
+    "definition": "在一个变化过程中有两个变量，对于自变量的每一个确定的值，因变量都有唯一确定的值与之对应，则称因变量是自变量的函数。",
+    "commonApproach": "先确定自变量与因变量，再由解析式求出定义域，判断对应是否唯一。",
+    "pitfalls": [
+      "把多值对应当作函数",
+      "求定义域时忽略分母与开方限制",
+      "混淆函数值与自变量"
+    ]
+  },
+  {
+    "id": "KP_MATH_0029",
+    "name": "一次函数的图象与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 2,
+    "definition": "形如 y 等于 kx 加 b 且 k 不为零的函数叫一次函数，图象是一条直线，k 决定增减性，b 决定与 y 轴交点。",
+    "commonApproach": "用两点确定直线，结合 k 与 b 的符号判断经过的象限与增减性。",
+    "pitfalls": [
+      "k 等于零时仍当作一次函数",
+      "把 b 的符号与截距坐标混淆",
+      "图象平移方向判断错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0030",
+    "name": "反比例函数的图象与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 3,
+    "definition": "形如 y 等于 k 除以 x 且 k 不为零的函数叫反比例函数，图象是双曲线，两支关于原点对称。",
+    "commonApproach": "先由 k 的符号确定图象所在象限，再由点的坐标求 k 或比较函数值大小。",
+    "pitfalls": [
+      "忽略自变量不为零的取值范围",
+      "比较函数值时未分象限讨论",
+      "把 k 的几何意义中矩形面积写成二倍绝对值 k"
+    ]
+  },
+  {
+    "id": "KP_MATH_0031",
+    "name": "二次函数的图象与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 4,
+    "definition": "形如 y 等于 ax 平方加 bx 加 c 且 a 不为零的函数叫二次函数，图象是抛物线，对称轴为 x 等于负 b 除以 2a，a 决定开口方向。",
+    "commonApproach": "配方成顶点式确定顶点与对称轴，结合开口方向画草图判断增减与最值。",
+    "pitfalls": [
+      "对称轴公式符号写错",
+      "最值直接取顶点纵坐标却忽略取值范围",
+      "开口方向与 a 的符号对应反了"
+    ]
+  },
+  {
+    "id": "KP_MATH_0032",
+    "name": "二次函数的三种表达式与最值",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 5,
+    "definition": "二次函数有一般式、顶点式与交点式三种表达形式，顶点式直接反映顶点坐标。",
+    "commonApproach": "已知顶点用顶点式，已知与 x 轴交点用交点式，其余用一般式，再按需互化。",
+    "pitfalls": [
+      "顶点式中横坐标符号写反",
+      "交点式忘记补二次项系数",
+      "配方过程中常数项处理错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0033",
+    "name": "函数与方程、不等式的联系",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 6,
+    "definition": "函数图象与 x 轴交点的横坐标就是对应方程的根，图象在 x 轴上方或下方的区间对应不等式的解集。",
+    "commonApproach": "把方程或不等式问题转化为两个函数图象的交点与上下位置关系。",
+    "pitfalls": [
+      "交点横坐标与纵坐标混用",
+      "解集端点开闭判断错误",
+      "忽略定义域对图象的限制"
+    ]
+  },
+  {
+    "id": "KP_MATH_0034",
+    "name": "函数图象与实际问题建模",
+    "subject": "math",
+    "parentId": "KP_MATH_0027",
+    "chapter": "函数及其图象",
+    "orderIndex": 7,
+    "definition": "用函数刻画实际数量关系，图象的形状与关键点对应实际情境中的变化与临界状态。",
+    "commonApproach": "先确定自变量与因变量的实际含义，再由图象的关键点读取信息并写出解析式。",
+    "pitfalls": [
+      "忽略自变量的实际取值范围",
+      "图象上升下降与增减性对应错误",
+      "分段函数的分界点归属错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0035",
+    "name": "三角形与几何基础",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "三角形与几何基础",
+    "orderIndex": 5,
+    "definition": "初中平面几何的起点，包含三角形全等与勾股定理。",
+    "commonApproach": "先找已知相等的边角，再按判定定理补齐条件并规范书写。",
+    "pitfalls": [
+      "判定与性质混用",
+      "辅助线作错位置"
+    ]
+  },
+  {
+    "id": "KP_MATH_0036",
+    "name": "几何图形与基础概念",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 1,
+    "definition": "几何图形由点、线、面构成，基本元素包括直线、射线、线段和角，常用工具是直尺与圆规。",
+    "commonApproach": "先识别图形中的基本元素与位置关系，再按作图要求保留作图痕迹。",
+    "pitfalls": [
+      "把射线与线段混淆",
+      "角度单位换算错误",
+      "作图不保留痕迹无法说明理由"
+    ]
+  },
+  {
+    "id": "KP_MATH_0037",
+    "name": "相交线与平行线",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 2,
+    "definition": "两条直线被第三条直线所截形成同位角、内错角和同旁内角，平行线的判定与性质互为逆命题。",
+    "commonApproach": "先找出截线与被截直线，再根据角的位置关系选择判定或性质。",
+    "pitfalls": [
+      "判定与性质用反方向",
+      "内错角找错位置",
+      "忽略同旁内角互补而不是相等"
+    ]
+  },
+  {
+    "id": "KP_MATH_0038",
+    "name": "三角形的边角关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 3,
+    "definition": "三角形任意两边之和大于第三边，内角和为 180 度，外角等于与它不相邻的两个内角之和。",
+    "commonApproach": "判断三边能否构成三角形时检验较小两边之和是否大于第三边。",
+    "pitfalls": [
+      "只检验一组两边之和",
+      "把外角写成相邻内角之和",
+      "等腰三角形分类讨论时漏解"
+    ]
+  },
+  {
+    "id": "KP_MATH_0039",
+    "name": "全等三角形的判定与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 4,
+    "definition": "能够完全重合的两个三角形叫全等三角形，判定方法有边边边、边角边、角边角、角角边和直角三角形专用的斜边直角边。",
+    "commonApproach": "先找已知相等的边角，再按判定方法补齐条件，书写时对应顶点顺序一致。",
+    "pitfalls": [
+      "用两边及其中一边对角判定全等",
+      "对应顶点顺序写乱",
+      "把全等性质当作判定使用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0040",
+    "name": "等腰三角形与等边三角形",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 5,
+    "definition": "有两边相等的三角形叫等腰三角形，等边对等角且三线合一；三边相等的三角形是等边三角形。",
+    "commonApproach": "遇等腰先考虑分类讨论顶角与底角、腰与底边，再用三线合一作辅助线。",
+    "pitfalls": [
+      "已知角未说明是顶角还是底角",
+      "腰与底边的分类遗漏",
+      "把三线合一误用于一般三角形"
+    ]
+  },
+  {
+    "id": "KP_MATH_0041",
+    "name": "勾股定理及其逆定理",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 6,
+    "definition": "直角三角形两直角边的平方和等于斜边的平方；反之若三边满足该关系则是直角三角形。",
+    "commonApproach": "先确定直角与斜边，再用勾股定理列方程；判断形状时找最长边作比较。",
+    "pitfalls": [
+      "斜边与直角边对应错误",
+      "使用逆定理时不检验最长边",
+      "把测量得到的近似值当作精确勾股数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0042",
+    "name": "尺规作图",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 7,
+    "definition": "尺规作图只使用无刻度直尺和圆规完成作图，常见类型有作角平分线、垂直平分线和作一个角等于已知角。",
+    "commonApproach": "先明确作图目标，按基本作图步骤操作并保留弧线痕迹，最后写出结论。",
+    "pitfalls": [
+      "用刻度尺量取代替尺规作图",
+      "角平分线与垂直平分线作法混淆",
+      "作图后不写结论"
+    ]
+  },
+  {
+    "id": "KP_MATH_0043",
+    "name": "命题、定理与证明",
+    "subject": "math",
+    "parentId": "KP_MATH_0035",
+    "chapter": "三角形与几何基础",
+    "orderIndex": 8,
+    "definition": "判断一件事情的语句叫命题，由题设与结论组成；证明须依据定义、基本事实与已证定理逐步推理。",
+    "commonApproach": "先分清题设与结论，再写出已知与求证，按推理链给出依据并注明理由。",
+    "pitfalls": [
+      "命题的条件与结论颠倒",
+      "证明步骤缺少依据",
+      "把逆命题当作原命题成立"
+    ]
+  },
+  {
+    "id": "KP_MATH_0044",
+    "name": "四边形与多边形",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "四边形与多边形",
+    "orderIndex": 6,
+    "definition": "初中四边形体系，重点在平行四边形的性质与判定链。",
+    "commonApproach": "先证平行四边形，再逐层叠加特殊条件得到矩形、菱形或正方形。",
+    "pitfalls": [
+      "特殊条件叠加不全",
+      "对角线性质记错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0045",
+    "name": "多边形的内角和与外角和",
+    "subject": "math",
+    "parentId": "KP_MATH_0044",
+    "chapter": "四边形与多边形",
+    "orderIndex": 1,
+    "definition": "n 边形内角和为 n 减 2 乘以 180 度，任意多边形的外角和为 360 度。",
+    "commonApproach": "先用内角和公式求边数或某个内角，再用外角和为定值简化计算。",
+    "pitfalls": [
+      "内角和公式记成 n 乘以 180 度",
+      "把外角和与内角和混淆",
+      "正多边形把每个外角算成内角"
+    ]
+  },
+  {
+    "id": "KP_MATH_0046",
+    "name": "平行四边形的性质与判定",
+    "subject": "math",
+    "parentId": "KP_MATH_0044",
+    "chapter": "四边形与多边形",
+    "orderIndex": 2,
+    "definition": "平行四边形两组对边分别平行且相等、对角相等、对角线互相平分；判定与性质互为逆命题。",
+    "commonApproach": "从边、角、对角线三个角度寻找条件，证明时优先使用对角线互相平分。",
+    "pitfalls": [
+      "一组对边平行另一组对边相等误判为平行四边形",
+      "性质与判定混用",
+      "忽略对角线互相平分是充要条件"
+    ]
+  },
+  {
+    "id": "KP_MATH_0047",
+    "name": "矩形、菱形与正方形",
+    "subject": "math",
+    "parentId": "KP_MATH_0044",
+    "chapter": "四边形与多边形",
+    "orderIndex": 3,
+    "definition": "有一个角是直角的平行四边形是矩形，邻边相等的平行四边形是菱形，既是矩形又是菱形的四边形是正方形。",
+    "commonApproach": "先证平行四边形，再补一个特殊条件得到矩形或菱形，最后叠加得到正方形。",
+    "pitfalls": [
+      "只证对角线相等就判定矩形",
+      "菱形面积用底乘高与对角线积的一半混淆",
+      "正方形判定条件叠加不全"
+    ]
+  },
+  {
+    "id": "KP_MATH_0048",
+    "name": "三角形的中位线与梯形",
+    "subject": "math",
+    "parentId": "KP_MATH_0044",
+    "chapter": "四边形与多边形",
+    "orderIndex": 4,
+    "definition": "三角形中位线平行于第三边且等于第三边的一半；梯形是只有一组对边平行的四边形。",
+    "commonApproach": "见中点想中位线，梯形常作高、平移一腰或延长两腰转化为三角形处理。",
+    "pitfalls": [
+      "中位线写成等于第三边而不是一半",
+      "梯形辅助线作错位置",
+      "忽略梯形上下底不相等"
+    ]
+  },
+  {
+    "id": "KP_MATH_0049",
+    "name": "四边形综合与中点四边形",
+    "subject": "math",
+    "parentId": "KP_MATH_0044",
+    "chapter": "四边形与多边形",
+    "orderIndex": 5,
+    "definition": "依次连接任意四边形各边中点所得的四边形是平行四边形，特殊四边形的中点四边形具有更强的形状。",
+    "commonApproach": "见多个中点先连对角线用三角形中位线，再由原四边形对角线关系推断中点四边形形状。",
+    "pitfalls": [
+      "中位线性质使用错误",
+      "由对角线相等误推中点四边形为矩形",
+      "辅助线未连对角线"
+    ]
+  },
+  {
+    "id": "KP_MATH_0050",
+    "name": "相似与锐角三角函数",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 7,
+    "definition": "初中比例与相似以及直角三角形边角关系。",
+    "commonApproach": "先找对应关系，再列比例式或三角函数式求解。",
+    "pitfalls": [
+      "对应边顺序写错",
+      "对边邻边混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0051",
+    "name": "比例线段与平行线分线段成比例",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 1,
+    "definition": "四条线段成比例指其中两条之比等于另两条之比；平行线分线段成比例定理说明截得的对应线段成比例。",
+    "commonApproach": "先找平行线确定对应线段，再按比例式列方程求解。",
+    "pitfalls": [
+      "对应线段找错顺序",
+      "比例式交叉相乘时漏项",
+      "忽略线段长度的实际意义"
+    ]
+  },
+  {
+    "id": "KP_MATH_0052",
+    "name": "相似三角形的判定与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 2,
+    "definition": "对应角相等、对应边成比例的三角形叫相似三角形，判定方法有角角、边角边、边边边三种。",
+    "commonApproach": "先找一组等角，再补对应边成比例或另一组等角，最后由相似比求长度与面积。",
+    "pitfalls": [
+      "对应边写错顺序导致比例错误",
+      "面积比当作相似比",
+      "用两边及其中一边对角判定相似"
+    ]
+  },
+  {
+    "id": "KP_MATH_0053",
+    "name": "位似与图形放大缩小",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 3,
+    "definition": "位似图形是相似图形且对应点连线交于一点，该点叫位似中心，位似比等于相似比。",
+    "commonApproach": "先确定位似中心与位似比，再按坐标或射线方向确定对应点位置。",
+    "pitfalls": [
+      "位似比与面积比混淆",
+      "位似中心在图形内部时漏解",
+      "放大缩小的方向判断反了"
+    ]
+  },
+  {
+    "id": "KP_MATH_0054",
+    "name": "锐角三角函数的定义与特殊角",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 4,
+    "definition": "在直角三角形中，正弦是对边比斜边，余弦是邻边比斜边，正切是对边比邻边。",
+    "commonApproach": "先明确所求角的对边、邻边与斜边，再写比值；特殊角直接记函数值。",
+    "pitfalls": [
+      "对边邻边相对哪个角搞错",
+      "特殊角函数值记混",
+      "忽略锐角三角函数值的取值范围"
+    ]
+  },
+  {
+    "id": "KP_MATH_0055",
+    "name": "解直角三角形及其应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 5,
+    "definition": "由已知边角求其余边角的过程叫解直角三角形，常用关系是两锐角互余与三边满足勾股定理。",
+    "commonApproach": "画出示意图标出已知量与未知量，选择合适的三角函数建立方程。",
+    "pitfalls": [
+      "仰角俯角方向判断错误",
+      "坡度与坡角混淆",
+      "结果未按要求取近似值"
+    ]
+  },
+  {
+    "id": "KP_MATH_0056",
+    "name": "相似三角形的实际测量应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0050",
+    "chapter": "相似与锐角三角函数",
+    "orderIndex": 6,
+    "definition": "利用相似三角形对应边成比例，可测量不可直接到达的距离与高度。",
+    "commonApproach": "先构造相似三角形并明确对应边，再列比例式求解，注意测量误差与单位统一。",
+    "pitfalls": [
+      "对应边找错导致比例式错误",
+      "单位未统一",
+      "把影长比直接当作高度比而不说明依据"
+    ]
+  },
+  {
+    "id": "KP_MATH_0057",
+    "name": "圆",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "圆",
+    "orderIndex": 8,
+    "definition": "初中圆的核心性质，包括垂径定理、圆周角与切线。",
+    "commonApproach": "见弦作弦心距，见直径想直角，见切点连半径。",
+    "pitfalls": [
+      "忽略条件前提",
+      "优弧劣弧混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0058",
+    "name": "圆的基本概念与垂径定理",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 1,
+    "definition": "圆是平面内到定点距离等于定长的点的集合；垂直于弦的直径平分弦且平分弦所对的两条弧。",
+    "commonApproach": "遇弦作弦心距构造直角三角形，用半径、半弦、弦心距三者关系求解。",
+    "pitfalls": [
+      "垂径定理中忽略直径垂直于弦的条件",
+      "弦心距与半径关系写错",
+      "忽略同一条弦对应的两解情况"
+    ]
+  },
+  {
+    "id": "KP_MATH_0059",
+    "name": "圆心角、弧与弦的关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 2,
+    "definition": "在同圆或等圆中，相等的圆心角所对的弧相等、所对的弦相等、弦心距相等。",
+    "commonApproach": "把圆心角相等转化为弧、弦、弦心距的相等关系，注意前提是同圆或等圆。",
+    "pitfalls": [
+      "忽略同圆或等圆的前提",
+      "弧相等与弦相等的对应关系写错",
+      "优弧与劣弧混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0060",
+    "name": "圆周角定理",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 3,
+    "definition": "同弧所对的圆周角等于它所对圆心角的一半，直径所对的圆周角是直角。",
+    "commonApproach": "见直径想直角，见同弧想等角，需要时连半径构造圆心角。",
+    "pitfalls": [
+      "圆周角与圆心角的对应关系错位",
+      "忽略圆周角顶点在圆上的条件",
+      "圆内接四边形对角和写错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0061",
+    "name": "切线的判定与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 4,
+    "definition": "经过半径外端且垂直于半径的直线是圆的切线；切线垂直于过切点的半径，切线长相等。",
+    "commonApproach": "有切点连半径证垂直，无切点作垂线证等于半径；切线长问题用切线长定理。",
+    "pitfalls": [
+      "判定切线时未说明经过半径外端",
+      "把割线当作切线",
+      "切线长与切线混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0062",
+    "name": "弧长、扇形面积与圆锥侧面展开",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 5,
+    "definition": "弧长等于圆心角弧度数与半径之积，扇形面积等于二分之一弧长乘半径；圆锥侧面展开图是扇形，扇形弧长等于底面周长。",
+    "commonApproach": "先确定圆心角与半径再代入公式；圆锥问题抓住底面半径、母线、展开扇形半径的对应关系。",
+    "pitfalls": [
+      "弧长与扇形面积公式混用",
+      "把圆锥母线误当作底面半径",
+      "角度制与弧度制混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0063",
+    "name": "正多边形与圆",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 6,
+    "definition": "正多边形的各边相等、各角相等，任何正多边形都有一个外接圆和一个内切圆。",
+    "commonApproach": "把正 n 边形分割成 n 个等腰三角形，用中心角 360 度除以 n 计算边长、边心距与面积。",
+    "pitfalls": [
+      "中心角与内角混淆",
+      "边心距与外接圆半径混用",
+      "正多边形面积公式记错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0064",
+    "name": "圆内接四边形与圆中角综合",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 7,
+    "definition": "圆内接四边形的对角互补，任一外角等于它的内对角。",
+    "commonApproach": "先识别四点共圆或圆内接四边形，再用对角互补与外角性质转移角。",
+    "pitfalls": [
+      "对角互补写成对角相等",
+      "外角与内对角对应错误",
+      "圆内接四边形与一般四边形性质混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0065",
+    "name": "扇形、弓形与阴影面积",
+    "subject": "math",
+    "parentId": "KP_MATH_0057",
+    "chapter": "圆",
+    "orderIndex": 8,
+    "definition": "扇形面积与弓形面积由圆心角、半径与三角形面积组合得到，阴影面积常用割补法。",
+    "commonApproach": "先把不规则图形分割或补形为规则图形，再用扇形、三角形面积加减求解。",
+    "pitfalls": [
+      "弓形面积忘记减去三角形部分",
+      "圆心角与圆周角混用",
+      "割补后重复计算重叠部分"
+    ]
+  },
+  {
+    "id": "KP_MATH_0066",
+    "name": "图形变换与坐标",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "图形变换与坐标",
+    "orderIndex": 9,
+    "definition": "初中图形变换与平面直角坐标系的结合。",
+    "commonApproach": "先用坐标规律描述变换，再整体求出变换后的点。",
+    "pitfalls": [
+      "变换规律符号写反",
+      "坐标顺序颠倒"
+    ]
+  },
+  {
+    "id": "KP_MATH_0067",
+    "name": "轴对称与轴对称图形",
+    "subject": "math",
+    "parentId": "KP_MATH_0066",
+    "chapter": "图形变换与坐标",
+    "orderIndex": 1,
+    "definition": "把一个图形沿某条直线折叠后能与另一个图形重合，这两个图形成轴对称，折痕所在直线是对称轴。",
+    "commonApproach": "先找对称轴，再利用对应点连线被对称轴垂直平分的性质求坐标与长度。",
+    "pitfalls": [
+      "轴对称图形与两个图形成轴对称混淆",
+      "对称点坐标符号写错",
+      "忽略对称轴垂直平分对应点连线"
+    ]
+  },
+  {
+    "id": "KP_MATH_0068",
+    "name": "平移与旋转",
+    "subject": "math",
+    "parentId": "KP_MATH_0066",
+    "chapter": "图形变换与坐标",
+    "orderIndex": 2,
+    "definition": "平移是图形沿某方向移动一定距离，旋转是图形绕定点转动一定角度，两者都不改变图形的形状与大小。",
+    "commonApproach": "用对应点坐标变化规律处理平移，用旋转中心、旋转角与对应点到中心距离相等处理旋转。",
+    "pitfalls": [
+      "平移向量的方向与长度写错",
+      "旋转方向顺时针与逆时针判断错误",
+      "旋转后对应点到中心距离不相等"
+    ]
+  },
+  {
+    "id": "KP_MATH_0069",
+    "name": "平面直角坐标系与点的坐标",
+    "subject": "math",
+    "parentId": "KP_MATH_0066",
+    "chapter": "图形变换与坐标",
+    "orderIndex": 3,
+    "definition": "平面直角坐标系由两条互相垂直的数轴构成，点的坐标是有序实数对，象限按逆时针顺序排列。",
+    "commonApproach": "先确定象限与符号特征，再由距离求坐标，注意坐标是有序数对。",
+    "pitfalls": [
+      "横纵坐标顺序写反",
+      "坐标轴上点的坐标特征记错",
+      "点到坐标轴的距离与坐标混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0070",
+    "name": "坐标与图形变换",
+    "subject": "math",
+    "parentId": "KP_MATH_0066",
+    "chapter": "图形变换与坐标",
+    "orderIndex": 4,
+    "definition": "关于 x 轴对称横坐标不变纵坐标相反，关于 y 轴对称纵坐标不变横坐标相反，关于原点对称两者都相反。",
+    "commonApproach": "先把变换翻译成坐标符号规律，再整体求出变换后各顶点坐标。",
+    "pitfalls": [
+      "关于原点对称与关于某轴对称混淆",
+      "平移时横纵坐标变化量写反",
+      "缩放时漏乘比例系数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0071",
+    "name": "坐标系中的图形面积与距离",
+    "subject": "math",
+    "parentId": "KP_MATH_0066",
+    "chapter": "图形变换与坐标",
+    "orderIndex": 5,
+    "definition": "借助坐标可求线段的水平与竖直距离、三角形的底与高，从而求出图形面积。",
+    "commonApproach": "先用坐标求水平竖直距离作为底与高，再用割补法处理斜三角形面积。",
+    "pitfalls": [
+      "用斜边直接当作高",
+      "面积计算未取绝对值",
+      "割补时顶点坐标读错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0072",
+    "name": "统计与概率",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "统计与概率",
+    "orderIndex": 10,
+    "definition": "初中统计与概率的初步内容。",
+    "commonApproach": "先整理数据再用统计量描述，概率问题先列举全部等可能结果。",
+    "pitfalls": [
+      "中位数忘记排序",
+      "频率与概率混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0073",
+    "name": "数据的收集与整理",
+    "subject": "math",
+    "parentId": "KP_MATH_0072",
+    "chapter": "统计与概率",
+    "orderIndex": 1,
+    "definition": "收集数据常用全面调查和抽样调查，整理数据可用频数分布表与频数分布直方图。",
+    "commonApproach": "先明确调查目的与总体，再选择调查方式并绘制统计图描述数据分布。",
+    "pitfalls": [
+      "混淆总体、个体与样本",
+      "抽样调查的样本不具代表性",
+      "直方图组距与频数对应错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0074",
+    "name": "平均数、中位数与众数",
+    "subject": "math",
+    "parentId": "KP_MATH_0072",
+    "chapter": "统计与概率",
+    "orderIndex": 2,
+    "definition": "平均数是所有数据之和除以数据个数，中位数是排序后处于中间位置的数，众数是出现次数最多的数。",
+    "commonApproach": "先排序再找中位数，结合平均数与众数从集中趋势多角度描述数据。",
+    "pitfalls": [
+      "求中位数忘记先排序",
+      "偶数个数据的中位数取错位置",
+      "加权平均数的权重使用错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0075",
+    "name": "方差与离散程度",
+    "subject": "math",
+    "parentId": "KP_MATH_0072",
+    "chapter": "统计与概率",
+    "orderIndex": 3,
+    "definition": "方差是各数据与平均数差的平方的平均数，方差越大数据波动越大。",
+    "commonApproach": "先求平均数，再求偏差平方和除以数据个数，比较稳定性时看方差大小。",
+    "pitfalls": [
+      "方差公式漏平方",
+      "除以 n 与除以 n 减 1 混用",
+      "把方差大当作数据更好"
+    ]
+  },
+  {
+    "id": "KP_MATH_0076",
+    "name": "频率与概率",
+    "subject": "math",
+    "parentId": "KP_MATH_0072",
+    "chapter": "统计与概率",
+    "orderIndex": 4,
+    "definition": "频率是某事件发生次数与总次数的比值，大量重复试验下频率稳定于概率。",
+    "commonApproach": "用频率估计概率时需足够多的试验次数，理论概率用等可能结果数之比计算。",
+    "pitfalls": [
+      "频率与概率混为一谈",
+      "试验次数很少就下结论",
+      "把所有结果都当作等可能"
+    ]
+  },
+  {
+    "id": "KP_MATH_0077",
+    "name": "简单事件的概率计算",
+    "subject": "math",
+    "parentId": "KP_MATH_0072",
+    "chapter": "统计与概率",
+    "orderIndex": 5,
+    "definition": "若一次试验有 n 种等可能结果，事件 A 包含 m 种，则事件 A 的概率等于 m 除以 n，且概率在 0 到 1 之间。",
+    "commonApproach": "先列举或用树状图、列表法列出所有等可能结果，再数符合条件的结果数。",
+    "pitfalls": [
+      "列举时遗漏或重复结果",
+      "忽略各结果等可能的前提",
+      "把概率写成大于 1 的数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0078",
+    "name": "集合与常用逻辑用语",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 1,
+    "definition": "高中数学的语言基础，用集合与逻辑关系精确表达数学对象。",
+    "commonApproach": "先明确对象范围，再用集合运算与推出关系处理问题。",
+    "pitfalls": [
+      "空集被忽略",
+      "充分必要方向说反"
+    ]
+  },
+  {
+    "id": "KP_MATH_0079",
+    "name": "集合的概念与表示",
+    "subject": "math",
+    "parentId": "KP_MATH_0078",
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 1,
+    "definition": "集合是确定的、互异的对象的整体，常用列举法、描述法与区间法表示。",
+    "commonApproach": "先明确元素的确定性与互异性，再选择合适表示法，注意空集是任何集合的子集。",
+    "pitfalls": [
+      "忽略元素的互异性导致重复计数",
+      "列举法漏写省略情形",
+      "空集与含空集的集合混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0080",
+    "name": "集合间的基本关系与运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0078",
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 2,
+    "definition": "集合关系包括子集、真子集与相等，运算包括交集、并集与补集。",
+    "commonApproach": "借助数轴或韦恩图处理运算，含参数问题注意端点是否取到。",
+    "pitfalls": [
+      "子集与真子集符号混用",
+      "补集忘记全集范围",
+      "端点开闭判断错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0081",
+    "name": "充分条件与必要条件",
+    "subject": "math",
+    "parentId": "KP_MATH_0078",
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 3,
+    "definition": "若 p 成立必有 q 成立，则 p 是 q 的充分条件，q 是 p 的必要条件；互为推出关系的两个命题等价。",
+    "commonApproach": "先写出命题之间的推出关系，再用集合包含关系判断充分必要性。",
+    "pitfalls": [
+      "把充分条件与必要条件说反",
+      "小范围与大范围的推出方向搞错",
+      "混淆充分不必要与必要不充分"
+    ]
+  },
+  {
+    "id": "KP_MATH_0082",
+    "name": "全称量词与存在量词及命题否定",
+    "subject": "math",
+    "parentId": "KP_MATH_0078",
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 4,
+    "definition": "全称命题的否定是存在命题，存在命题的否定是全称命题，否定时量词与结论同时改变。",
+    "commonApproach": "先判断命题类型，再按量词互换、结论取反的规则写出否定。",
+    "pitfalls": [
+      "只否定结论而忘记改变量词",
+      "否定结论时未取相反表述",
+      "把否命题与命题的否定混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0083",
+    "name": "含参集合与量词的综合问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0078",
+    "chapter": "集合与常用逻辑用语",
+    "orderIndex": 5,
+    "definition": "含参数的集合关系与命题真假问题，需要把条件转化为参数的不等式或范围。",
+    "commonApproach": "先化简集合或命题，再把关系翻译成参数条件，最后按端点情形分类验证。",
+    "pitfalls": [
+      "空集情形遗漏",
+      "端点能否取到未验证",
+      "全称命题与存在命题范围混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0084",
+    "name": "不等式",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "不等式",
+    "orderIndex": 2,
+    "definition": "高中数学不等式主线，包含一元二次不等式与基本不等式。",
+    "commonApproach": "先化为标准形式，再用图象或性质确定解集与最值。",
+    "pitfalls": [
+      "乘除负数未变号",
+      "基本不等式前提检验缺失"
+    ]
+  },
+  {
+    "id": "KP_MATH_0085",
+    "name": "不等式的性质与比较大小",
+    "subject": "math",
+    "parentId": "KP_MATH_0084",
+    "chapter": "不等式",
+    "orderIndex": 1,
+    "definition": "不等式两边同加同一个数不变号，同乘同一个正数不变号，同乘同一个负数要变号。",
+    "commonApproach": "作差比较法先作差再因式分解判断符号，作商比较法须保证两边为正。",
+    "pitfalls": [
+      "两边乘除负数忘记变号",
+      "作商比较时忽略正负前提",
+      "多次使用性质时传递方向出错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0086",
+    "name": "一元二次不等式及其解法",
+    "subject": "math",
+    "parentId": "KP_MATH_0084",
+    "chapter": "不等式",
+    "orderIndex": 2,
+    "definition": "一元二次不等式的解集由对应二次函数的图象与 x 轴交点确定，口诀是大于取两边、小于取中间。",
+    "commonApproach": "先求对应方程的根并画出抛物线草图，再按开口方向与不等号方向写解集。",
+    "pitfalls": [
+      "二次项系数为负时未先化为正",
+      "解集端点开闭写错",
+      "忽略判别式小于零时的情况"
+    ]
+  },
+  {
+    "id": "KP_MATH_0087",
+    "name": "基本不等式及其应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0084",
+    "chapter": "不等式",
+    "orderIndex": 3,
+    "definition": "两个正数的算术平均数不小于几何平均数，当且仅当两数相等时取等号。",
+    "commonApproach": "使用前确认各项为正、和或积为定值、等号条件可取得，三者缺一不可。",
+    "pitfalls": [
+      "忽略使用前提各项为正",
+      "和定积最大与积定和最小记反",
+      "取等条件验证缺失导致最值错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0088",
+    "name": "绝对值不等式与简单线性规划",
+    "subject": "math",
+    "parentId": "KP_MATH_0084",
+    "chapter": "不等式",
+    "orderIndex": 4,
+    "definition": "含绝对值的不等式按零点分段讨论或利用绝对值的几何意义求解；线性规划在可行域顶点处取得最优解。",
+    "commonApproach": "分段讨论先找零点划分区间，线性规划先画可行域再平移目标函数直线。",
+    "pitfalls": [
+      "分段讨论边界点归属混乱",
+      "可行域边界虚实线画错",
+      "目标函数平移方向判断错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0089",
+    "name": "含参不等式与恒成立问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0084",
+    "chapter": "不等式",
+    "orderIndex": 5,
+    "definition": "含参数的不等式需要分类讨论；恒成立问题常转化为最值问题或分离参数处理。",
+    "commonApproach": "先确定讨论标准（二次项系数、判别式、根的大小），再用分离参数或构造函数求最值。",
+    "pitfalls": [
+      "讨论分类遗漏",
+      "分离参数时未讨论正负",
+      "恒成立与能成立混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0090",
+    "name": "函数的概念与性质",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "函数的概念与性质",
+    "orderIndex": 3,
+    "definition": "高中数学函数主线，涵盖单调性、奇偶性、周期性与基本初等函数。",
+    "commonApproach": "先求定义域，再用定义或导数判断性质，最后结合图象求值域与最值。",
+    "pitfalls": [
+      "忽略定义域",
+      "单调区间用并集连接"
+    ]
+  },
+  {
+    "id": "KP_MATH_0091",
+    "name": "函数的概念与三要素",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 1,
+    "definition": "函数由定义域、对应关系与值域三要素确定，两个函数相同当且仅当三要素完全一致。",
+    "commonApproach": "先求定义域，再分析对应关系，最后求值域，注意分段函数的各段定义域。",
+    "pitfalls": [
+      "忽略定义域直接化简解析式",
+      "把对应关系不同但表达式相同的函数当作同一函数",
+      "分段函数端点归属重复或遗漏"
+    ]
+  },
+  {
+    "id": "KP_MATH_0092",
+    "name": "函数的单调性",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 2,
+    "definition": "在区间内自变量增大时函数值也增大则函数单调递增，反之单调递减。",
+    "commonApproach": "用定义法作差判断符号，或用导数符号判断，复合函数遵循同增异减。",
+    "pitfalls": [
+      "单调区间用并集符号连接",
+      "忽略区间端点是否包含",
+      "多个单调区间写成并集"
+    ]
+  },
+  {
+    "id": "KP_MATH_0093",
+    "name": "函数的奇偶性",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 3,
+    "definition": "定义域关于原点对称时，满足 f 负 x 等于负 f x 为奇函数，满足 f 负 x 等于 f x 为偶函数。",
+    "commonApproach": "先检验定义域是否关于原点对称，再比较 f 负 x 与 f x 的关系。",
+    "pitfalls": [
+      "未检验定义域对称性就判断奇偶",
+      "把非奇非偶函数误判为奇函数",
+      "奇函数在原点处一定有定义"
+    ]
+  },
+  {
+    "id": "KP_MATH_0094",
+    "name": "函数的周期性与对称性",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 4,
+    "definition": "若存在非零常数 T 使 f x 加 T 等于 f x 恒成立，则 T 为周期；函数图象关于直线或点对称会导出周期性。",
+    "commonApproach": "由对称关系推导周期，再用周期把大自变量化到已知区间求值。",
+    "pitfalls": [
+      "把对称轴与对称中心混淆",
+      "周期与最小正周期混用",
+      "推导周期时符号处理错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0095",
+    "name": "指数函数与对数函数",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 5,
+    "definition": "指数函数 y 等于 a 的 x 次方与对数函数 y 等于 log 以 a 为底 x 互为反函数，底数大于 1 时递增，在 0 到 1 之间时递减。",
+    "commonApproach": "先统一底数再比较大小，复合函数注意内层值域与外层定义域的限制。",
+    "pitfalls": [
+      "对数真数不为正仍写解",
+      "底数范围未讨论",
+      "指数与对数互化时底数位置写错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0096",
+    "name": "幂函数与函数图象变换",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 6,
+    "definition": "幂函数 y 等于 x 的 a 次方，图象随指数不同而变化；函数图象平移遵循左加右减、上加下减。",
+    "commonApproach": "先确定基本函数图象，再按平移、伸缩、翻折顺序逐步变换。",
+    "pitfalls": [
+      "平移方向左右颠倒",
+      "伸缩变换系数用反",
+      "含绝对值翻折顺序错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0097",
+    "name": "函数的零点与二分法",
+    "subject": "math",
+    "parentId": "KP_MATH_0090",
+    "chapter": "函数的概念与性质",
+    "orderIndex": 7,
+    "definition": "使函数值为零的自变量叫函数的零点，零点个数可由图象交点或单调性判断，二分法用于求近似解。",
+    "commonApproach": "先判断单调性与端点函数值符号，再用二分法逐步缩小区间。",
+    "pitfalls": [
+      "零点与交点个数混淆",
+      "二分法未验证端点异号",
+      "忽略零点是实数而非点"
+    ]
+  },
+  {
+    "id": "KP_MATH_0098",
+    "name": "三角函数",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "三角函数",
+    "orderIndex": 4,
+    "definition": "高中数学三角函数主线，从任意角到图象性质与恒等变换。",
+    "commonApproach": "先化为一角一函数形式，再用整体代换研究性质。",
+    "pitfalls": [
+      "符号判断错误",
+      "平移量未除以 omega"
+    ]
+  },
+  {
+    "id": "KP_MATH_0099",
+    "name": "任意角与弧度制",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 1,
+    "definition": "角可以推广到任意角，弧度制用弧长与半径之比度量角，180 度等于 pi 弧度。",
+    "commonApproach": "先把角度与弧度统一，再用终边相同的角表示法化简大角。",
+    "pitfalls": [
+      "角度与弧度混用",
+      "终边相同角漏写 k 倍的 360 度",
+      "扇形弧长与面积公式用错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0100",
+    "name": "三角函数的定义与同角关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 2,
+    "definition": "在单位圆上，角的终边与单位圆交点的坐标分别为余弦值与正弦值；平方关系与商数关系把六个三角函数联系起来。",
+    "commonApproach": "先确定角所在象限判断符号，再用平方关系与商数关系化简求值。",
+    "pitfalls": [
+      "开方求值时未讨论符号",
+      "平方关系写成和等于 1 的错误形式",
+      "商数关系方向写反"
+    ]
+  },
+  {
+    "id": "KP_MATH_0101",
+    "name": "诱导公式",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 3,
+    "definition": "诱导公式把任意角的三角函数化为锐角三角函数，遵循奇变偶不变、符号看象限。",
+    "commonApproach": "先把角写成 k 乘以二分之 pi 加 alpha 的形式，再判断原函数所在象限的符号。",
+    "pitfalls": [
+      "符号看象限时把 alpha 当作任意角",
+      "奇变偶不变判断奇偶出错",
+      "连续使用公式时符号累加错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0102",
+    "name": "三角函数的图象与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 4,
+    "definition": "正弦、余弦函数的周期为 2pi，正切函数周期为 pi；振幅、周期、初相由解析式参数决定。",
+    "commonApproach": "先化为一角一函数形式，再由整体代换求单调区间、对称轴与最值。",
+    "pitfalls": [
+      "周期公式写成 2pi 除以 omega 时 omega 取绝对值遗漏",
+      "整体代换时忘记解出 x 范围",
+      "对称中心与对称轴混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0103",
+    "name": "两角和与差的三角函数及二倍角",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 5,
+    "definition": "两角和差公式给出和差角的正余弦与正切，二倍角公式由和角公式令两角相等得到。",
+    "commonApproach": "先观察角之间的关系，把非特殊角拆成特殊角的和差，再统一函数名化简。",
+    "pitfalls": [
+      "正切和差公式忘记分母条件",
+      "二倍角公式余弦三种形式选择不当",
+      "辅助角公式中辅助角象限判断错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0104",
+    "name": "正弦型函数的图象变换与解三角形基础",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 6,
+    "definition": "正弦型函数由振幅、周期与初相确定，图象变换包括平移与伸缩；解三角形常用正弦定理与余弦定理。",
+    "commonApproach": "先化为标准形式再描述变换，解三角形时先判断已知元素类型再选定理。",
+    "pitfalls": [
+      "平移量写成 phi 而不是 phi 除以 omega",
+      "正弦定理中边与角对应错误",
+      "余弦定理符号写错导致钝角锐角判断失误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0105",
+    "name": "三角函数的最值与值域",
+    "subject": "math",
+    "parentId": "KP_MATH_0098",
+    "chapter": "三角函数",
+    "orderIndex": 7,
+    "definition": "化为正弦型函数后可求最值；含二次结构的可换元为二次函数求值域。",
+    "commonApproach": "先化为一角一函数或换元，再结合自变量范围确定最值，注意端点能否取到。",
+    "pitfalls": [
+      "换元后未更新取值范围",
+      "最值取在不可达的自变量处",
+      "忽略绝对值对值域的影响"
+    ]
+  },
+  {
+    "id": "KP_MATH_0106",
+    "name": "平面向量与解三角形",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 5,
+    "definition": "高中数学向量工具与解三角形方法。",
+    "commonApproach": "先建立基底或坐标系，再把几何条件翻译为运算。",
+    "pitfalls": [
+      "向量夹角与几何角混淆",
+      "正弦定理漏解"
+    ]
+  },
+  {
+    "id": "KP_MATH_0107",
+    "name": "向量的概念与线性运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 1,
+    "definition": "向量是既有大小又有方向的量，加法遵循平行四边形与三角形法则，数乘改变长度可能改变方向。",
+    "commonApproach": "用三角形法则处理首尾相接，用平行四边形法则处理共起点，注意零向量的特殊性。",
+    "pitfalls": [
+      "忽略零向量方向的特殊性",
+      "向量减法方向写反",
+      "数乘结果为负时方向未改变"
+    ]
+  },
+  {
+    "id": "KP_MATH_0108",
+    "name": "平面向量基本定理与坐标运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 2,
+    "definition": "平面内任一向量可由两个不共线向量线性表示，坐标运算把向量问题转化为实数运算。",
+    "commonApproach": "先选好基底或建立坐标系，再把几何条件翻译成坐标等式求解。",
+    "pitfalls": [
+      "基底共线导致表示不唯一",
+      "坐标运算符号出错",
+      "向量相等与模相等混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0109",
+    "name": "数量积与夹角",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 3,
+    "definition": "数量积等于两向量模的乘积再乘夹角余弦，也等于对应坐标乘积之和，可用于求夹角与判断垂直。",
+    "commonApproach": "先求模与数量积，再用夹角公式；判断垂直只需数量积为零。",
+    "pitfalls": [
+      "数量积结果写成向量而非实数",
+      "夹角范围忽略导致余弦符号错误",
+      "投影与数量积混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0110",
+    "name": "正弦定理与余弦定理",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 4,
+    "definition": "正弦定理给出边与对角正弦之比等于外接圆直径，余弦定理用两边及其夹角求第三边。",
+    "commonApproach": "已知两角一边用正弦定理，已知两边及夹角或三边用余弦定理。",
+    "pitfalls": [
+      "正弦定理求角时漏掉钝角情况",
+      "余弦定理中夹角选择错误",
+      "外接圆半径与内切圆半径混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0111",
+    "name": "解三角形的实际应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 5,
+    "definition": "利用正弦定理与余弦定理解决测量距离、高度与角度的问题，常涉及仰角、俯角与方位角。",
+    "commonApproach": "先画示意图标注已知量与未知量，再构造三角形选择定理求解。",
+    "pitfalls": [
+      "方位角与方向角混淆",
+      "示意图与实际方位不符",
+      "结果未按精度要求取近似值"
+    ]
+  },
+  {
+    "id": "KP_MATH_0112",
+    "name": "三角形中的最值与范围问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 6,
+    "definition": "结合正弦定理、余弦定理与面积公式，求边长、面积或角的取值范围。",
+    "commonApproach": "先把目标量表示为某一角的函数，再用三角函数或基本不等式求范围。",
+    "pitfalls": [
+      "忽略三角形内角和的限制",
+      "取值范围端点未验证能否取到",
+      "面积公式选择不当导致计算复杂"
+    ]
+  },
+  {
+    "id": "KP_MATH_0113",
+    "name": "向量与三角形面积、四心",
+    "subject": "math",
+    "parentId": "KP_MATH_0106",
+    "chapter": "平面向量与解三角形",
+    "orderIndex": 7,
+    "definition": "用向量数量积可表示三角形面积，重心、垂心、内心与外心可用向量关系刻画。",
+    "commonApproach": "先由向量关系判断心类型，再用数量积与面积公式计算。",
+    "pitfalls": [
+      "重心与垂心向量关系混淆",
+      "面积公式忘记二分之一",
+      "内心与外心条件混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0114",
+    "name": "数列",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "数列",
+    "orderIndex": 6,
+    "definition": "高中数学数列主线，等差等比与求和方法。",
+    "commonApproach": "先判断数列类型，再选通项与求和方法，注意首项验证。",
+    "pitfalls": [
+      "公比为 1 未讨论",
+      "错位相减项数错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0115",
+    "name": "数列的概念与通项公式",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 1,
+    "definition": "按一定顺序排列的一列数叫数列，通项公式描述第 n 项与序号 n 的关系。",
+    "commonApproach": "先观察项与序号的关系，再验证首项是否满足统一表达式。",
+    "pitfalls": [
+      "通项公式只验证部分项就下结论",
+      "分段通项首项未单独检验",
+      "数列与集合混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0116",
+    "name": "等差数列",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 2,
+    "definition": "从第二项起每一项与前一项的差为同一常数的数列叫等差数列，通项为线性式，前 n 项和是二次式。",
+    "commonApproach": "先确定首项与公差，再用通项与前 n 项和公式；证明时用定义作差。",
+    "pitfalls": [
+      "公差符号计算错误",
+      "前 n 项和公式系数写错",
+      "把等差中项条件写反"
+    ]
+  },
+  {
+    "id": "KP_MATH_0117",
+    "name": "等比数列",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 3,
+    "definition": "从第二项起每一项与前一项的比为同一常数的数列叫等比数列，注意公比不为零且首项不为零。",
+    "commonApproach": "先确定首项与公比，再分类讨论公比是否为 1 求前 n 项和。",
+    "pitfalls": [
+      "公比为 1 时仍套用分式求和公式",
+      "忽略各项不为零的条件",
+      "等比中项漏掉负值情况"
+    ]
+  },
+  {
+    "id": "KP_MATH_0118",
+    "name": "数列求和的方法",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 4,
+    "definition": "常见求和方法有公式法、错位相减法、裂项相消法与分组求和法。",
+    "commonApproach": "先判断通项结构，等差乘等比的用错位相减，分式型的考虑裂项相消。",
+    "pitfalls": [
+      "错位相减时相减后项数数错",
+      "裂项后首尾保留项写错",
+      "求和结果未化简"
+    ]
+  },
+  {
+    "id": "KP_MATH_0119",
+    "name": "递推数列与数列综合",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 5,
+    "definition": "由相邻项关系给出的数列叫递推数列，常用构造法、累加法与累乘法求通项。",
+    "commonApproach": "先对递推式变形构造等差或等比结构，再求通项并验证首项。",
+    "pitfalls": [
+      "构造时待定系数求解错误",
+      "累加时项数范围写错",
+      "忽略 n 等于 1 的特殊情况"
+    ]
+  },
+  {
+    "id": "KP_MATH_0120",
+    "name": "数列与不等式的综合",
+    "subject": "math",
+    "parentId": "KP_MATH_0114",
+    "chapter": "数列",
+    "orderIndex": 6,
+    "definition": "在数列背景下证明不等式或求参数范围，常用放缩法、数学归纳法与单调性分析。",
+    "commonApproach": "先判断数列的单调性与通项结构，再选择放缩或归纳证明，注意首项验证。",
+    "pitfalls": [
+      "放缩过度导致结论不成立",
+      "归纳假设未使用",
+      "单调性判断未验证相邻项差"
+    ]
+  },
+  {
+    "id": "KP_MATH_0121",
+    "name": "导数及其应用",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "导数及其应用",
+    "orderIndex": 7,
+    "definition": "高中数学导数主线，用导数研究函数的单调性、极值与最值。",
+    "commonApproach": "先求定义域与导数，再解不等式确定单调区间并列表分析。",
+    "pitfalls": [
+      "忽略定义域",
+      "极值点与端点比较遗漏"
+    ]
+  },
+  {
+    "id": "KP_MATH_0122",
+    "name": "导数的概念与几何意义",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 1,
+    "definition": "函数在某点的导数是该点处切线的斜率，反映了函数在该点附近的变化快慢。",
+    "commonApproach": "先求导函数再代入横坐标得斜率，用点斜式写出切线方程。",
+    "pitfalls": [
+      "切线方程只写斜率不写点",
+      "过某点与在某点处切线混淆",
+      "导数定义中极限方向写错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0123",
+    "name": "导数的运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 2,
+    "definition": "常用导数公式与四则运算法则以及复合函数求导法则构成导数运算体系。",
+    "commonApproach": "先识别函数结构，按和差、乘积、商与复合的法则逐层求导。",
+    "pitfalls": [
+      "复合函数漏乘内层导数",
+      "商法则分子符号写错",
+      "把常数当作变量求导"
+    ]
+  },
+  {
+    "id": "KP_MATH_0124",
+    "name": "导数与函数的单调性",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 3,
+    "definition": "在区间内导数大于零则函数递增，导数小于零则函数递减，导数为零的点是可能的极值点。",
+    "commonApproach": "先求定义域，再解导数不等式确定单调区间，最后列表判断。",
+    "pitfalls": [
+      "单调区间用并集连接",
+      "忽略定义域限制",
+      "把导数为零的点直接当作极值点"
+    ]
+  },
+  {
+    "id": "KP_MATH_0125",
+    "name": "导数与极值、最值",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 4,
+    "definition": "极值点是导数变号的点，闭区间上的最值在极值点与端点处比较取得。",
+    "commonApproach": "先求导找驻点，再判断两侧符号变化，最后比较所有候选点的函数值。",
+    "pitfalls": [
+      "只比较极值点忽略端点",
+      "极大值与最大值混淆",
+      "导数不变号的驻点误判为极值点"
+    ]
+  },
+  {
+    "id": "KP_MATH_0126",
+    "name": "导数与不等式及实际优化",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 5,
+    "definition": "构造函数后利用导数研究其单调性与最值，可证明不等式或求实际问题的最大最小值。",
+    "commonApproach": "先移项构造函数，再求导分析单调性，最后说明取等条件与实际意义。",
+    "pitfalls": [
+      "构造函数时未整理为统一形式",
+      "恒成立问题忘记取等条件",
+      "实际问题的定义域被忽略"
+    ]
+  },
+  {
+    "id": "KP_MATH_0127",
+    "name": "导数与恒成立、存在性问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0121",
+    "chapter": "导数及其应用",
+    "orderIndex": 6,
+    "definition": "恒成立问题转化为函数最值，存在性问题转化为值域覆盖，含参时常用分离参数或分类讨论。",
+    "commonApproach": "先构造函数并求导分析最值，再按参数讨论临界情形，最后写结论。",
+    "pitfalls": [
+      "恒成立与存在性条件写反",
+      "分离参数后忘记讨论参数正负",
+      "最值点不在定义域内仍取用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0128",
+    "name": "立体几何初步",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "立体几何初步",
+    "orderIndex": 8,
+    "definition": "高中数学空间几何基础，包括几何体度量与位置关系证明。",
+    "commonApproach": "先识别几何体结构，再作辅助线完成平行与垂直证明。",
+    "pitfalls": [
+      "三视图方向错误",
+      "判定定理条件缺项"
+    ]
+  },
+  {
+    "id": "KP_MATH_0129",
+    "name": "空间几何体的结构与三视图",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 1,
+    "definition": "常见空间几何体包括棱柱、棱锥、棱台、圆柱、圆锥、圆台与球，三视图反映从三个方向的正投影。",
+    "commonApproach": "先识别几何体结构特征，再按长对正、高平齐、宽相等画或还原三视图。",
+    "pitfalls": [
+      "三视图方向对应错误",
+      "实线与虚线混淆",
+      "由三视图还原时遗漏可见棱"
+    ]
+  },
+  {
+    "id": "KP_MATH_0130",
+    "name": "空间几何体的表面积与体积",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 2,
+    "definition": "柱体体积等于底面积乘高，锥体体积等于三分之一底面积乘高，球的表面积与体积由半径确定。",
+    "commonApproach": "先确定几何体类型与关键长度，再代入对应公式，组合体注意分割或补形。",
+    "pitfalls": [
+      "锥体体积漏掉三分之一",
+      "把母线当作高",
+      "表面积计算漏掉底面"
+    ]
+  },
+  {
+    "id": "KP_MATH_0131",
+    "name": "平面的基本性质与空间点线面位置关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 3,
+    "definition": "基本事实刻画了平面无限延展与确定平面的条件，空间中点线面位置关系包括平行、相交与异面。",
+    "commonApproach": "先用基本事实证明共面，再判断位置关系，异面直线用反证法说明。",
+    "pitfalls": [
+      "把异面直线当作不相交的平行线",
+      "确定平面的条件记错",
+      "共面与共线混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0132",
+    "name": "平行与垂直关系的证明",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 4,
+    "definition": "线面平行、面面平行与线面垂直、面面垂直的判定与性质定理构成空间位置关系证明体系。",
+    "commonApproach": "证明平行常作辅助线找线线平行，证明垂直优先找线面垂直，再由线面垂直推出面面垂直。",
+    "pitfalls": [
+      "判定定理条件缺项仍下结论",
+      "线面平行误认为线线平行无条件成立",
+      "性质定理与判定定理混用"
+    ]
+  },
+  {
+    "id": "KP_MATH_0133",
+    "name": "空间角与距离",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 5,
+    "definition": "异面直线所成角、直线与平面所成角、二面角统称空间角，范围各不相同。",
+    "commonApproach": "平移法或向量法求角，注意各角的取值范围与夹角余弦可能取绝对值。",
+    "pitfalls": [
+      "异面直线所成角取到钝角",
+      "线面角当作线线角计算",
+      "二面角与平面角混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0134",
+    "name": "简单几何体的外接球与内切球",
+    "subject": "math",
+    "parentId": "KP_MATH_0128",
+    "chapter": "立体几何初步",
+    "orderIndex": 6,
+    "definition": "多面体与旋转体的外接球球心到各顶点距离相等，内切球球心到各面距离相等。",
+    "commonApproach": "先找几何体的对称中心或构造直角三角形求半径，再用球体积与表面积公式计算。",
+    "pitfalls": [
+      "外接球半径与内切球半径混淆",
+      "球心位置判断错误",
+      "球表面积写成四分之三 pi r 立方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0135",
+    "name": "空间向量与立体几何",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 9,
+    "definition": "用空间向量方法处理立体几何问题。",
+    "commonApproach": "先建系求坐标，再用向量运算求角与距离。",
+    "pitfalls": [
+      "坐标系手性错误",
+      "线面角正余弦混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0136",
+    "name": "空间直角坐标系与向量坐标",
+    "subject": "math",
+    "parentId": "KP_MATH_0135",
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 1,
+    "definition": "建立空间直角坐标系后，空间向量可用三维坐标表示，几何问题转化为代数运算。",
+    "commonApproach": "先选好原点与坐标轴建立右手系，再写出关键点坐标与向量坐标。",
+    "pitfalls": [
+      "坐标系手性判断错误",
+      "点的坐标顺序写乱",
+      "向量坐标与点坐标混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0137",
+    "name": "空间向量的数量积与夹角",
+    "subject": "math",
+    "parentId": "KP_MATH_0135",
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 2,
+    "definition": "空间向量数量积等于模的乘积乘夹角余弦，也可用坐标乘积之和计算。",
+    "commonApproach": "先求向量坐标与模，再代入夹角公式，注意所求角与向量夹角的转化。",
+    "pitfalls": [
+      "余弦值符号与几何角不匹配",
+      "模的计算漏加一项",
+      "夹角范围未说明"
+    ]
+  },
+  {
+    "id": "KP_MATH_0138",
+    "name": "空间向量与平行、垂直的判定",
+    "subject": "math",
+    "parentId": "KP_MATH_0135",
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 3,
+    "definition": "两向量共线对应线线平行，方向向量与法向量垂直对应线面平行或直线在平面内。",
+    "commonApproach": "先求方向向量与法向量，再用共线与数量积为零判断位置关系。",
+    "pitfalls": [
+      "线面平行时未排除直线在平面内",
+      "法向量求错导致结论错误",
+      "共线判断时漏写比例条件"
+    ]
+  },
+  {
+    "id": "KP_MATH_0139",
+    "name": "空间向量与空间角、距离的计算",
+    "subject": "math",
+    "parentId": "KP_MATH_0135",
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 4,
+    "definition": "用方向向量与法向量可计算线线角、线面角、二面角与点到平面的距离。",
+    "commonApproach": "先求所需向量与法向量，再套用对应公式，最后结合图形判断取正取负。",
+    "pitfalls": [
+      "线面角正弦值当作余弦值",
+      "二面角二义性未讨论",
+      "点到平面距离公式漏绝对值"
+    ]
+  },
+  {
+    "id": "KP_MATH_0140",
+    "name": "空间向量处理探索性问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0135",
+    "chapter": "空间向量与立体几何",
+    "orderIndex": 5,
+    "definition": "对于存在性、动点与参数问题，可设参数表示点坐标，再用向量条件建立方程。",
+    "commonApproach": "先设动点坐标含参数，再写出满足条件的向量等式，解出参数并检验范围。",
+    "pitfalls": [
+      "参数范围未检验",
+      "动点坐标设错",
+      "向量等式与几何条件对应错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0141",
+    "name": "直线与圆",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "直线与圆",
+    "orderIndex": 10,
+    "definition": "平面解析几何的入门内容，用坐标与方程研究直线与圆的位置关系。",
+    "commonApproach": "先化为一般式或标准式，再用距离与判别式判定位置关系。",
+    "pitfalls": [
+      "斜率不存在未讨论",
+      "距离公式忘记开方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0142",
+    "name": "直线的倾斜角与斜率",
+    "subject": "math",
+    "parentId": "KP_MATH_0141",
+    "chapter": "直线与圆",
+    "orderIndex": 1,
+    "definition": "直线倾斜角范围是零到 180 度且不含 180 度，斜率为倾斜角的正切值，垂直于 x 轴的直线斜率不存在。",
+    "commonApproach": "先由两点求斜率，再由倾斜角范围讨论斜率的正负与不存在情形。",
+    "pitfalls": [
+      "倾斜角取到 180 度",
+      "斜率不存在时仍套用点斜式",
+      "倾斜角与斜率一一对应误判"
+    ]
+  },
+  {
+    "id": "KP_MATH_0143",
+    "name": "直线方程的几种形式",
+    "subject": "math",
+    "parentId": "KP_MATH_0141",
+    "chapter": "直线与圆",
+    "orderIndex": 2,
+    "definition": "直线方程有点斜式、斜截式、两点式、截距式与一般式，各有适用条件。",
+    "commonApproach": "先判断已知条件类型，再选择合适形式，最后统一化为一般式便于比较。",
+    "pitfalls": [
+      "截距式忽略截距为零的情况",
+      "两点式用于两点横坐标相同",
+      "一般式系数要求未满足"
+    ]
+  },
+  {
+    "id": "KP_MATH_0144",
+    "name": "两直线的位置关系与距离公式",
+    "subject": "math",
+    "parentId": "KP_MATH_0141",
+    "chapter": "直线与圆",
+    "orderIndex": 3,
+    "definition": "两直线平行或垂直可由斜率或一般式系数判断，点到直线距离由一般式系数与常数计算。",
+    "commonApproach": "先化为一般式，再用系数比判断平行与垂直，距离公式注意分母开方。",
+    "pitfalls": [
+      "垂直条件写成斜率之积等于 1",
+      "平行判断未排除重合",
+      "距离公式分母忘记开方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0145",
+    "name": "圆的方程与直线与圆的位置关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0141",
+    "chapter": "直线与圆",
+    "orderIndex": 4,
+    "definition": "圆的标准方程给出圆心与半径，一般方程需配方判断是否表示圆；直线与圆的位置由圆心到直线距离与半径比较确定。",
+    "commonApproach": "先配方求圆心半径，再用距离比较判断相交、相切或相离。",
+    "pitfalls": [
+      "一般方程未验证半径平方为正",
+      "弦长公式漏乘 2",
+      "相切时未说明只有一个公共点"
+    ]
+  },
+  {
+    "id": "KP_MATH_0146",
+    "name": "圆与圆的位置关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0141",
+    "chapter": "直线与圆",
+    "orderIndex": 5,
+    "definition": "两圆的位置关系由圆心距与两半径的和差比较确定，公共弦所在直线可由两圆方程相减得到。",
+    "commonApproach": "先求圆心距并比较半径关系，再用方程相减求公共弦所在直线。",
+    "pitfalls": [
+      "圆心距与半径和差比较关系写错",
+      "相交与内切混淆",
+      "公共弦直线方程相减顺序影响符号"
+    ]
+  },
+  {
+    "id": "KP_MATH_0147",
+    "name": "圆锥曲线",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "圆锥曲线",
+    "orderIndex": 11,
+    "definition": "高中数学解析几何核心，椭圆、双曲线与抛物线的定义与性质。",
+    "commonApproach": "先由定义确定曲线类型与标准方程，再联立直线方程用韦达定理处理。",
+    "pitfalls": [
+      "参数关系记错",
+      "联立后未讨论二次项系数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0148",
+    "name": "椭圆的定义与标准方程",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 1,
+    "definition": "平面内到两定点距离之和为常数且该常数大于两定点距离的点的轨迹叫椭圆。",
+    "commonApproach": "先由定义判断轨迹类型，再由焦点位置确定标准方程的形式与参数关系。",
+    "pitfalls": [
+      "椭圆定义中常数小于焦距仍当作椭圆",
+      "焦点在 x 轴与 y 轴方程形式混淆",
+      "参数关系写成 a 平方加 b 平方等于 c 平方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0149",
+    "name": "椭圆的几何性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 2,
+    "definition": "椭圆关于两坐标轴对称，离心率描述扁平程度，取值范围在 0 到 1 之间。",
+    "commonApproach": "先把方程化为标准形式读出 a 与 b，再用 c 平方等于 a 平方减 b 平方求离心率。",
+    "pitfalls": [
+      "长轴与短轴长度写成 a 与 b",
+      "离心率公式写反",
+      "顶点坐标与焦点坐标混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0150",
+    "name": "双曲线的定义与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 3,
+    "definition": "平面内到两定点距离之差的绝对值为常数的点的轨迹叫双曲线，渐近线由 a 与 b 的比确定。",
+    "commonApproach": "先确定焦点位置与实轴方向，再由参数关系求渐近线与离心率。",
+    "pitfalls": [
+      "定义中漏掉绝对值",
+      "渐近线斜率写成 a 除以 b",
+      "参数关系写成 a 平方加 b 平方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0151",
+    "name": "抛物线的定义与性质",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 4,
+    "definition": "平面内到定点与定直线距离相等的点的轨迹叫抛物线，定点为焦点，定直线为准线。",
+    "commonApproach": "先由开口方向确定标准方程形式，再用定义把到焦点距离转化为到准线距离。",
+    "pitfalls": [
+      "四种标准方程形式混淆",
+      "焦点到准线距离写成 p 而不是 2p",
+      "开口方向判断错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0152",
+    "name": "直线与圆锥曲线的位置关系",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 5,
+    "definition": "联立直线与圆锥曲线方程消元后得到一元二次方程，判别式决定交点个数，韦达定理用于处理弦长与中点问题。",
+    "commonApproach": "先联立消元并写出判别式条件，再用韦达定理整体代入计算弦长或参数。",
+    "pitfalls": [
+      "联立后未讨论二次项系数为零",
+      "弦长公式忘记乘根号下 1 加 k 平方",
+      "中点坐标公式代入方向错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0153",
+    "name": "圆锥曲线中的定点定值问题",
+    "subject": "math",
+    "parentId": "KP_MATH_0147",
+    "chapter": "圆锥曲线",
+    "orderIndex": 6,
+    "definition": "直线与圆锥曲线相交时，某些几何量在参数变化下保持不变，可通过设参数并化简验证。",
+    "commonApproach": "先设直线或点坐标含参数，再用韦达定理代入目标式化简，最后说明与参数无关。",
+    "pitfalls": [
+      "未讨论斜率不存在的情形",
+      "化简时符号出错导致误判",
+      "定点坐标未验证在曲线上"
+    ]
+  },
+  {
+    "id": "KP_MATH_0154",
+    "name": "计数原理与二项式定理",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "计数原理与二项式定理",
+    "orderIndex": 12,
+    "definition": "高中数学排列组合与二项式定理基础。",
+    "commonApproach": "先判断分类或分步与是否计顺序，再选公式计算。",
+    "pitfalls": [
+      "分类标准重叠",
+      "二项式系数与项系数混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0155",
+    "name": "分类加法与分步乘法计数原理",
+    "subject": "math",
+    "parentId": "KP_MATH_0154",
+    "chapter": "计数原理与二项式定理",
+    "orderIndex": 1,
+    "definition": "完成一件事有若干类办法用加法原理，需要分若干步完成用乘法原理。",
+    "commonApproach": "先判断是分类还是分步，再确定每类或每步的方法数并做加或乘。",
+    "pitfalls": [
+      "分类与分步混淆",
+      "分类标准重叠导致重复计数",
+      "分步遗漏某一步的方法数"
+    ]
+  },
+  {
+    "id": "KP_MATH_0156",
+    "name": "排列与组合",
+    "subject": "math",
+    "parentId": "KP_MATH_0154",
+    "chapter": "计数原理与二项式定理",
+    "orderIndex": 2,
+    "definition": "排列考虑顺序，组合不考虑顺序，排列数等于组合数乘以全排列数。",
+    "commonApproach": "先判断是否与顺序有关，再用对应公式计算，复杂问题用间接法排除不合要求的方案。",
+    "pitfalls": [
+      "排列组合公式混用",
+      "有顺序要求时用组合计算",
+      "相邻与不相邻问题方法选择错误"
+    ]
+  },
+  {
+    "id": "KP_MATH_0157",
+    "name": "二项式定理",
+    "subject": "math",
+    "parentId": "KP_MATH_0154",
+    "chapter": "计数原理与二项式定理",
+    "orderIndex": 3,
+    "definition": "二项展开式共 n 加 1 项，通项由组合数、幂次与系数组成，二项式系数与项的系数不同。",
+    "commonApproach": "先写出通项，再由指定项的幂次确定 r 的值，最后回代求系数。",
+    "pitfalls": [
+      "通项中 r 的取值范围写错",
+      "二项式系数与项的系数混淆",
+      "求常数项时代数式化简出错"
+    ]
+  },
+  {
+    "id": "KP_MATH_0158",
+    "name": "排列组合的综合应用",
+    "subject": "math",
+    "parentId": "KP_MATH_0154",
+    "chapter": "计数原理与二项式定理",
+    "orderIndex": 4,
+    "definition": "相邻、不相邻、定序、分组分配等模型各有固定处理策略。",
+    "commonApproach": "先判断模型类型，相邻用捆绑、不相邻用插空、定序用除法、分组注意均匀分组去重。",
+    "pitfalls": [
+      "均匀分组未除以组数阶乘",
+      "插空时未先排其他元素",
+      "捆绑后内部未排列"
+    ]
+  },
+  {
+    "id": "KP_MATH_0159",
+    "name": "概率与统计",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "概率与统计",
+    "orderIndex": 13,
+    "definition": "高中数学概率统计主线，包括分布列与线性回归。",
+    "commonApproach": "先明确样本空间与事件关系，再计算概率与数字特征。",
+    "pitfalls": [
+      "独立与互斥混淆",
+      "分布列概率和不为 1"
+    ]
+  },
+  {
+    "id": "KP_MATH_0160",
+    "name": "随机事件的概率与互斥对立",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 1,
+    "definition": "互斥事件不能同时发生，对立事件必有一个发生，对立事件概率之和为 1。",
+    "commonApproach": "先把复杂事件分解为互斥事件之和，或转化为对立事件用 1 减去求概率。",
+    "pitfalls": [
+      "互斥与对立混淆",
+      "相互独立与互斥混淆",
+      "概率加法公式用于非互斥事件"
+    ]
+  },
+  {
+    "id": "KP_MATH_0161",
+    "name": "古典概型与条件概率",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 2,
+    "definition": "古典概型要求结果有限且等可能；条件概率是在已知事件发生的条件下另一事件发生的概率。",
+    "commonApproach": "先明确样本空间与条件，再用缩小样本空间后的比值计算条件概率。",
+    "pitfalls": [
+      "条件概率分母用原样本空间",
+      "非等可能结果套用古典概型",
+      "条件概率与积事件概率混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0162",
+    "name": "相互独立事件与独立重复试验",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 3,
+    "definition": "两事件相互独立时同时发生的概率等于概率之积，独立重复试验服从二项分布。",
+    "commonApproach": "先验证独立性，再用乘法公式或二项分布公式计算概率。",
+    "pitfalls": [
+      "把互斥当作独立",
+      "二项分布与超几何分布混用",
+      "至少问题未用对立事件简化"
+    ]
+  },
+  {
+    "id": "KP_MATH_0163",
+    "name": "离散型随机变量的分布列与数字特征",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 4,
+    "definition": "分布列列出全部取值及其概率，数学期望是取值与概率乘积之和，方差刻画离散程度。",
+    "commonApproach": "先确定取值并验证概率和为 1，再按定义求期望与方差。",
+    "pitfalls": [
+      "分布列概率和不为 1",
+      "期望公式漏乘概率",
+      "方差公式写成期望的平方"
+    ]
+  },
+  {
+    "id": "KP_MATH_0164",
+    "name": "抽样方法与统计图表、线性回归",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 5,
+    "definition": "常见抽样方法有简单随机抽样、分层抽样与系统抽样；线性回归用最小二乘法估计回归方程。",
+    "commonApproach": "先按总体特征选择抽样方法，再由样本数据求回归系数并解释其含义。",
+    "pitfalls": [
+      "分层抽样按人数比例计算错误",
+      "回归直线必过样本中心点被忽略",
+      "相关系数与回归系数混淆"
+    ]
+  },
+  {
+    "id": "KP_MATH_0165",
+    "name": "正态分布与统计推断初步",
+    "subject": "math",
+    "parentId": "KP_MATH_0159",
+    "chapter": "概率与统计",
+    "orderIndex": 6,
+    "definition": "正态分布曲线关于均值对称，落在均值左右相同距离区间内的概率相等，常用三倍标准差原则估计。",
+    "commonApproach": "先由对称性转化区间，再用给定概率值或三倍标准差原则计算。",
+    "pitfalls": [
+      "对称性使用方向错误",
+      "标准差与方差混淆",
+      "区间概率直接相加而忽略不互斥"
+    ]
+  },
+  {
+    "id": "KP_MATH_0166",
+    "name": "复数",
+    "subject": "math",
+    "parentId": null,
+    "chapter": "复数",
+    "orderIndex": 14,
+    "definition": "高中数学复数基础，包括运算与几何意义。",
+    "commonApproach": "先化为标准形式，再按运算法则化简或求模。",
+    "pitfalls": [
+      "虚部把 i 算入",
+      "除法未乘共轭"
+    ]
+  },
+  {
+    "id": "KP_MATH_0167",
+    "name": "复数的概念与几何意义",
+    "subject": "math",
+    "parentId": "KP_MATH_0166",
+    "chapter": "复数",
+    "orderIndex": 1,
+    "definition": "形如 a 加 bi 且 a、b 为实数的数叫复数，复数与复平面内的点或向量一一对应。",
+    "commonApproach": "先化为标准形式确定实部与虚部，再用坐标表示复数对应的点。",
+    "pitfalls": [
+      "虚部把 i 一起算入",
+      "实部虚部与坐标顺序写反",
+      "纯虚数条件遗漏实部为零"
+    ]
+  },
+  {
+    "id": "KP_MATH_0168",
+    "name": "复数的四则运算",
+    "subject": "math",
+    "parentId": "KP_MATH_0166",
+    "chapter": "复数",
+    "orderIndex": 2,
+    "definition": "复数加减法按实部虚部分别运算，乘法按多项式展开并用 i 平方等于负一化简，除法需分母实数化。",
+    "commonApproach": "先按运算法则展开，再用 i 平方等于负一化简，除法同乘共轭复数。",
+    "pitfalls": [
+      "i 平方写成 1",
+      "除法未乘共轭复数",
+      "乘法展开时漏项"
+    ]
+  },
+  {
+    "id": "KP_MATH_0169",
+    "name": "复数的模与共轭复数",
+    "subject": "math",
+    "parentId": "KP_MATH_0166",
+    "chapter": "复数",
+    "orderIndex": 3,
+    "definition": "复数 a 加 bi 的模为根号下 a 平方加 b 平方，共轭复数为 a 减 bi。",
+    "commonApproach": "先写出共轭复数，再利用模的运算性质与共轭的性质简化计算。",
+    "pitfalls": [
+      "模的平方与模混淆",
+      "共轭符号只改变实部",
+      "模的运算性质误用于加减法"
+    ]
+  },
+  {
+    "id": "KP_MATH_0170",
+    "name": "复数与一元二次方程",
+    "subject": "math",
+    "parentId": "KP_MATH_0166",
+    "chapter": "复数",
+    "orderIndex": 4,
+    "definition": "实系数一元二次方程在判别式小于零时有一对共轭虚根，虚根成对出现。",
+    "commonApproach": "先算判别式确定根的类型，再由韦达定理与共轭性质写出虚根。",
+    "pitfalls": [
+      "虚根写成相等实根",
+      "韦达定理用于复数根时未验证",
+      "共轭根符号写错"
+    ]
+  }
+]

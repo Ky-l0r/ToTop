@@ -1,0 +1,99 @@
+name: 缺陷报告
+description: 报告一个可复现的问题，例如崩溃、识别错误、数据异常
+title: "[缺陷] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。提交前请先确认：
+        1. 已在最新版本上复现；
+        2. 已搜索过现有 Issue，没有重复；
+        3. 内容中不包含 API Key、手机号、学校名称等敏感信息。
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 影响范围
+      description: 选择最接近的一项
+      options:
+        - 拍照与图片处理
+        - OCR 与识别结果
+        - AI 解题与错因定位
+        - 知识点与掌握度
+        - 错题本与复习
+        - 周报与统计
+        - 导出与备份
+        - 设置与 BYOK
+        - 界面显示
+        - 构建与安装
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: app_version
+    attributes:
+      label: 应用版本
+      description: 可在设置页或安装包文件名中查看
+      placeholder: "0.1.0 (versionCode 1)"
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: 机型与系统版本
+      placeholder: "Redmi Note 10, Android 12"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 按顺序写清每一步操作
+      placeholder: |
+        1. 打开应用，进入解题页
+        2. 拍照一道数学题
+        3. 等待识别完成
+        4. 观察到 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+      description: 若有崩溃日志，请附上堆栈，但务必先删除其中的 Key 与个人信息
+    validations:
+      required: true
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: 问题发生时的网络状态
+      options:
+        - 正常网络
+        - 弱网或频繁切换
+        - 完全离线
+        - 使用本地模型（Ollama）
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 确认项
+      options:
+        - label: 我已确认内容中不含 API Key 与个人隐私信息
+          required: true
+        - label: 我已搜索过现有 Issue，没有发现重复
+          required: true

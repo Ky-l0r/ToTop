@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+captures/
+.externalNativeBuild/
+.cxx/
+.navigation/
+
+# 构建产物
+*.apk
+*.aab
+*.ap_
+*.dex
+*.idsig
+output.json
+
+# 签名与密钥（绝不提交）
+*.jks
+*.keystore
+signing.properties
+keystore.properties
+
+# 本地配置
+secrets.properties
+*.local
+
+# 临时工作目录与临时脚本（文档提取、资产生成的中间产物不入库）
+.tmp/
+.tmp*
+doc_extract.txt
+_tmp_extract.py
+
+# 日志与临时文件
+*.log
+*.hprof
+.DS_Store
+Thumbs.db
+
+# 多智能体协作的本地状态目录（含会话记录，不入库）
+.agent-teams/
+
+# 本地构建输出目录
+.gradle-local/
