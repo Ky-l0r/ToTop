@@ -1,0 +1,278 @@
+[
+  {
+    "fromId": "KP_GEOGRAPHY_0002",
+    "toId": "KP_GEOGRAPHY_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0003",
+    "toId": "KP_GEOGRAPHY_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0004",
+    "toId": "KP_GEOGRAPHY_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0007",
+    "toId": "KP_GEOGRAPHY_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0008",
+    "toId": "KP_GEOGRAPHY_0009",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0005",
+    "toId": "KP_GEOGRAPHY_0007",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0011",
+    "toId": "KP_GEOGRAPHY_0012",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0012",
+    "toId": "KP_GEOGRAPHY_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0013",
+    "toId": "KP_GEOGRAPHY_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0014",
+    "toId": "KP_GEOGRAPHY_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0015",
+    "toId": "KP_GEOGRAPHY_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0009",
+    "toId": "KP_GEOGRAPHY_0011",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0018",
+    "toId": "KP_GEOGRAPHY_0019",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0019",
+    "toId": "KP_GEOGRAPHY_0020",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0020",
+    "toId": "KP_GEOGRAPHY_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0021",
+    "toId": "KP_GEOGRAPHY_0022",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0022",
+    "toId": "KP_GEOGRAPHY_0023",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0023",
+    "toId": "KP_GEOGRAPHY_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0016",
+    "toId": "KP_GEOGRAPHY_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0026",
+    "toId": "KP_GEOGRAPHY_0027",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0027",
+    "toId": "KP_GEOGRAPHY_0028",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0028",
+    "toId": "KP_GEOGRAPHY_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0029",
+    "toId": "KP_GEOGRAPHY_0030",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0024",
+    "toId": "KP_GEOGRAPHY_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0032",
+    "toId": "KP_GEOGRAPHY_0033",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0033",
+    "toId": "KP_GEOGRAPHY_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0034",
+    "toId": "KP_GEOGRAPHY_0035",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0035",
+    "toId": "KP_GEOGRAPHY_0036",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0036",
+    "toId": "KP_GEOGRAPHY_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0030",
+    "toId": "KP_GEOGRAPHY_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0039",
+    "toId": "KP_GEOGRAPHY_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0040",
+    "toId": "KP_GEOGRAPHY_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0041",
+    "toId": "KP_GEOGRAPHY_0042",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0042",
+    "toId": "KP_GEOGRAPHY_0043",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0043",
+    "toId": "KP_GEOGRAPHY_0044",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0037",
+    "toId": "KP_GEOGRAPHY_0039",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0046",
+    "toId": "KP_GEOGRAPHY_0047",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0047",
+    "toId": "KP_GEOGRAPHY_0048",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0048",
+    "toId": "KP_GEOGRAPHY_0049",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0049",
+    "toId": "KP_GEOGRAPHY_0050",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0044",
+    "toId": "KP_GEOGRAPHY_0046",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0052",
+    "toId": "KP_GEOGRAPHY_0053",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0053",
+    "toId": "KP_GEOGRAPHY_0054",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0054",
+    "toId": "KP_GEOGRAPHY_0055",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0055",
+    "toId": "KP_GEOGRAPHY_0056",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_GEOGRAPHY_0050",
+    "toId": "KP_GEOGRAPHY_0052",
+    "type": "prerequisite",
+    "weight": 1.0
+  }
+]

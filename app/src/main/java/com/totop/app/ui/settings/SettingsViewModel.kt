@@ -204,7 +204,8 @@ class SettingsViewModel
                 val enriched =
                     if (result is ConnectivityResult.Failed && result.error is LlmError.ModelNameInvalid) {
                         val available = llmClient.listModels(credentials, requestId)
-                        val modelFailure = result.error as LlmError.ModelNameInvalid
+                        // 智能转换已把 result.error 收窄为 ModelNameInvalid，无需再强转
+                        val modelFailure = result.error
                         result.copy(
                             error =
                                 modelFailure.copy(

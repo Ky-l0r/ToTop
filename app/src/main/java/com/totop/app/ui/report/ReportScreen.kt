@@ -4,11 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -95,6 +98,7 @@ fun ReportScreen(
                 aiEnabled = uiState.aiEnabled,
                 onSelectPeriod = viewModel::setPeriod,
                 onToggleAi = viewModel::toggleAi,
+                onRegenerate = viewModel::regenerate,
             )
 
             OfflineBanner()
@@ -147,9 +151,14 @@ private fun PeriodSelector(
     aiEnabled: Boolean,
     onSelectPeriod: (ReportPeriod) -> Unit,
     onToggleAi: (Boolean) -> Unit,
+    onRegenerate: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             ReportPeriod.entries.forEach { candidate ->
                 FilterChip(
                     selected = candidate == period,
@@ -157,15 +166,23 @@ private fun PeriodSelector(
                     label = { Text(text = candidate.label) },
                 )
             }
-            Box(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = Icons.Filled.Refresh,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(Modifier.weight(1f))
+            // 这里原本放的是一个**不可点击**的 Refresh 图标：它既不能刷新，
+            // 又因为只有一个 16dp 的小灰圈而显得莫名其妙（真机截图里就是这样）。
+            // 现在换成真正可点的「重新生成」文字按钮，语义与行为一致。
+            TextButton(onClick = onRegenerate, contentPadding = PaddingValues(horizontal = 8.dp)) {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Text(text = " 重新生成", style = MaterialTheme.typography.labelMedium)
+            }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = "AI 解读", style = MaterialTheme.typography.bodyMedium)
                 Text(
@@ -174,7 +191,13 @@ private fun PeriodSelector(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Switch(checked = aiEnabled, onCheckedChange = onToggleAi)
+            // 必须显式给宽度：Switch 的轨道在 Row 里被 weight 的 Column 挤压后
+            // 会被裁掉右半边，看起来就是一条被切断的灰色胶囊（真机截图里的样子）。
+            Switch(
+                checked = aiEnabled,
+                onCheckedChange = onToggleAi,
+                modifier = Modifier.width(52.dp),
+            )
         }
     }
 }

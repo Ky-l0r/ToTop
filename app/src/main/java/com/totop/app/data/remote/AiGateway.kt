@@ -9,6 +9,7 @@ import com.totop.app.domain.model.AiSolveResultMapper
 import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.AiStandardSolution
 import com.totop.app.domain.model.Question
+import com.totop.app.domain.model.Subjects
 import com.totop.app.ml.ModelRouter
 import com.totop.app.ml.OcrSnapshot
 import com.totop.app.ml.RouteDecision
@@ -265,13 +266,25 @@ class AiGateway(
                 // ---------- 阶段 D：知识点抽取（必须注入候选清单） ----------
                 stage = AiStage.D
                 send(SolveEvent.StageStarted(stage))
-                // 候选清单为空时不调用模型，直接得到「无知识点」的结构化结果：
-                // - 非数学科目（化学/物理等）目前没有内置知识点树，候选必然为空；
-                // - 让模型对着空清单作答既浪费一次调用，也容易返回不合契约的内容。
+                // 按阶段 A 识别出的科目收敛候选清单。
+                //
+                // 为什么必须收敛：知识点树已扩到十科 700+ 节点，若不收敛，
+                // 一道物理题的候选里会混进语文、英语的节点，模型很容易给出跨科目的错误归属，
+                // 而错误的归属会直接污染掌握度统计（本项目明令禁止）。
+                // 收敛失败（该科目没有节点）时退回全量，宁可候选嘈杂也不让阶段 D 白跑。
+                val subjectOfQuestion = Subjects.normalize(question.subject)
+                val scopedCandidates =
+                    request.candidateKpoints.filter { candidate ->
+                        candidate.subject.isBlank() || candidate.subject.equals(subjectOfQuestion, ignoreCase = true)
+                    }.ifEmpty { request.candidateKpoints }
+                // 候选清单为空时不调用模型，直接得到「无知识点」的结构化结果。
                 // 这不是静默降级：会下发 StageCompleted 与一条告警，UI 明确显示原因。
-                val hasCandidates = request.candidateKpoints.isNotEmpty()
+                val hasCandidates = scopedCandidates.isNotEmpty()
                 if (!hasCandidates) {
-                    warnings.add("本题没有可用的候选知识点（当前只有数学知识点树），知识点区块留空")
+                    warnings.add(
+                        "这道题没有匹配到内置知识点（科目：" +
+                            Subjects.label(subjectOfQuestion) + "），知识点区块留空",
+                    )
                     send(SolveEvent.StageCompleted(AiStage.D, "跳过（暂无该科目的知识点树）"))
                 }
                 val rawD =
@@ -283,7 +296,7 @@ class AiGateway(
                                 StageInput.AssignKpoints(
                                     question = question,
                                     standardSolution = solution,
-                                    candidates = request.candidateKpoints,
+                                    candidates = scopedCandidates,
                                 ),
                                 requestId = requestId,
                             )
@@ -348,7 +361,9 @@ class AiGateway(
                 val domainQuestion =
                     Question(
                         id = requestId,
-                        subject = dto.question?.subject ?: "math",
+                        // 科目归一：模型可能返回「数学」「Math」「初中数学」，
+                        // 一律收敛到受控代码，否则错题本按科目筛选会失效。
+                        subject = Subjects.normalize(dto.question?.subject),
                         grade = dto.question?.grade ?: "未知",
                         stemText = dto.question?.stem.orEmpty(),
                         known = dto.question?.known.orEmpty(),

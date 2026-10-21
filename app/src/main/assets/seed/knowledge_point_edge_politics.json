@@ -1,0 +1,350 @@
+[
+  {
+    "fromId": "KP_POLITICS_0002",
+    "toId": "KP_POLITICS_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0003",
+    "toId": "KP_POLITICS_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0004",
+    "toId": "KP_POLITICS_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0005",
+    "toId": "KP_POLITICS_0006",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0006",
+    "toId": "KP_POLITICS_0007",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0007",
+    "toId": "KP_POLITICS_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0010",
+    "toId": "KP_POLITICS_0011",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0011",
+    "toId": "KP_POLITICS_0012",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0012",
+    "toId": "KP_POLITICS_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0013",
+    "toId": "KP_POLITICS_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0014",
+    "toId": "KP_POLITICS_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0015",
+    "toId": "KP_POLITICS_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0008",
+    "toId": "KP_POLITICS_0010",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0018",
+    "toId": "KP_POLITICS_0019",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0019",
+    "toId": "KP_POLITICS_0020",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0020",
+    "toId": "KP_POLITICS_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0021",
+    "toId": "KP_POLITICS_0022",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0016",
+    "toId": "KP_POLITICS_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0024",
+    "toId": "KP_POLITICS_0025",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0025",
+    "toId": "KP_POLITICS_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0026",
+    "toId": "KP_POLITICS_0027",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0027",
+    "toId": "KP_POLITICS_0028",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0028",
+    "toId": "KP_POLITICS_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0029",
+    "toId": "KP_POLITICS_0030",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0022",
+    "toId": "KP_POLITICS_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0032",
+    "toId": "KP_POLITICS_0033",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0033",
+    "toId": "KP_POLITICS_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0034",
+    "toId": "KP_POLITICS_0035",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0035",
+    "toId": "KP_POLITICS_0036",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0036",
+    "toId": "KP_POLITICS_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0037",
+    "toId": "KP_POLITICS_0038",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0030",
+    "toId": "KP_POLITICS_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0040",
+    "toId": "KP_POLITICS_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0041",
+    "toId": "KP_POLITICS_0042",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0042",
+    "toId": "KP_POLITICS_0043",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0043",
+    "toId": "KP_POLITICS_0044",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0044",
+    "toId": "KP_POLITICS_0045",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0045",
+    "toId": "KP_POLITICS_0046",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0046",
+    "toId": "KP_POLITICS_0047",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0047",
+    "toId": "KP_POLITICS_0048",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0048",
+    "toId": "KP_POLITICS_0049",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0049",
+    "toId": "KP_POLITICS_0050",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0038",
+    "toId": "KP_POLITICS_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0052",
+    "toId": "KP_POLITICS_0053",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0053",
+    "toId": "KP_POLITICS_0054",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0054",
+    "toId": "KP_POLITICS_0055",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0055",
+    "toId": "KP_POLITICS_0056",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0056",
+    "toId": "KP_POLITICS_0057",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0057",
+    "toId": "KP_POLITICS_0058",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0058",
+    "toId": "KP_POLITICS_0059",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0059",
+    "toId": "KP_POLITICS_0060",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0060",
+    "toId": "KP_POLITICS_0061",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0061",
+    "toId": "KP_POLITICS_0062",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0062",
+    "toId": "KP_POLITICS_0063",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0063",
+    "toId": "KP_POLITICS_0064",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0064",
+    "toId": "KP_POLITICS_0065",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0065",
+    "toId": "KP_POLITICS_0066",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_POLITICS_0050",
+    "toId": "KP_POLITICS_0052",
+    "type": "prerequisite",
+    "weight": 1.0
+  }
+]

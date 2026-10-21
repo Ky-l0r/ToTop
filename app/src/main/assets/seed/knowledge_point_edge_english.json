@@ -1,0 +1,212 @@
+[
+  {
+    "fromId": "KP_ENGLISH_0002",
+    "toId": "KP_ENGLISH_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0003",
+    "toId": "KP_ENGLISH_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0004",
+    "toId": "KP_ENGLISH_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0005",
+    "toId": "KP_ENGLISH_0006",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0006",
+    "toId": "KP_ENGLISH_0007",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0009",
+    "toId": "KP_ENGLISH_0010",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0010",
+    "toId": "KP_ENGLISH_0011",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0011",
+    "toId": "KP_ENGLISH_0012",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0012",
+    "toId": "KP_ENGLISH_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0013",
+    "toId": "KP_ENGLISH_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0014",
+    "toId": "KP_ENGLISH_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0015",
+    "toId": "KP_ENGLISH_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0016",
+    "toId": "KP_ENGLISH_0017",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0017",
+    "toId": "KP_ENGLISH_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0018",
+    "toId": "KP_ENGLISH_0019",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0019",
+    "toId": "KP_ENGLISH_0020",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0020",
+    "toId": "KP_ENGLISH_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0007",
+    "toId": "KP_ENGLISH_0009",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0023",
+    "toId": "KP_ENGLISH_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0024",
+    "toId": "KP_ENGLISH_0025",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0025",
+    "toId": "KP_ENGLISH_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0026",
+    "toId": "KP_ENGLISH_0027",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0027",
+    "toId": "KP_ENGLISH_0028",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0028",
+    "toId": "KP_ENGLISH_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0021",
+    "toId": "KP_ENGLISH_0023",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0031",
+    "toId": "KP_ENGLISH_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0032",
+    "toId": "KP_ENGLISH_0033",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0033",
+    "toId": "KP_ENGLISH_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0029",
+    "toId": "KP_ENGLISH_0031",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0036",
+    "toId": "KP_ENGLISH_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0037",
+    "toId": "KP_ENGLISH_0038",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0038",
+    "toId": "KP_ENGLISH_0039",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0039",
+    "toId": "KP_ENGLISH_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0040",
+    "toId": "KP_ENGLISH_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_ENGLISH_0034",
+    "toId": "KP_ENGLISH_0036",
+    "type": "prerequisite",
+    "weight": 1.0
+  }
+]

@@ -1,0 +1,691 @@
+[
+  {
+    "id": "KP_TECHNOLOGY_0001",
+    "name": "信息技术·数据与信息",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "信息技术·数据与信息",
+    "orderIndex": 0,
+    "definition": "信息技术的概念基础，考查数据、信息与知识的区别与数字化表示。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0002",
+    "name": "数据、信息与知识",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0001",
+    "chapter": "信息技术·数据与信息",
+    "orderIndex": 1,
+    "definition": "三者的含义与相互关系。",
+    "commonApproach": "抓「数据是载体、信息是含义、知识是规律」这条区分线索。",
+    "pitfalls": [
+      "数据与信息混为一谈",
+      "把信息当知识"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0003",
+    "name": "数据的编码与二进制",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0001",
+    "chapter": "信息技术·数据与信息",
+    "orderIndex": 2,
+    "definition": "二进制与十进制、十六进制的转换以及字符编码。",
+    "commonApproach": "转换按「除2取余、乘2取整」；ASCII码用7位二进制表示128个字符。",
+    "pitfalls": [
+      "进制转换出错",
+      "ASCII码位数记错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0004",
+    "name": "声音与图像的数字化",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0001",
+    "chapter": "信息技术·数据与信息",
+    "orderIndex": 3,
+    "definition": "采样、量化与编码的基本概念。",
+    "commonApproach": "采样频率越高、量化位数越大，音质越好且文件越大。",
+    "pitfalls": [
+      "采样与量化概念混淆",
+      "存储容量计算公式记错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0005",
+    "name": "数据压缩",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0001",
+    "chapter": "信息技术·数据与信息",
+    "orderIndex": 4,
+    "definition": "无损压缩与有损压缩的区别与应用。",
+    "commonApproach": "无损压缩可完全还原（如ZIP），有损压缩不可还原（如JPEG、MP3）。",
+    "pitfalls": [
+      "无损与有损压缩判断错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0006",
+    "name": "信息技术·算法与程序",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 0,
+    "definition": "信息技术选考的核心，考查算法思想与 Python 程序实现。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0007",
+    "name": "算法的特征与描述",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 1,
+    "definition": "算法的有穷性、确定性、可行性以及三种描述方式。",
+    "commonApproach": "流程图要能准确表达顺序、分支、循环三种结构。",
+    "pitfalls": [
+      "算法特征列举不全",
+      "流程图符号用错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0008",
+    "name": "顺序与分支结构",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 2,
+    "definition": "顺序执行与单分支、双分支、多分支的实现。",
+    "commonApproach": "分支要理清条件表达式与执行分支的对应关系。",
+    "pitfalls": [
+      "分支嵌套层次混乱",
+      "条件表达式写错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0009",
+    "name": "循环结构",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 3,
+    "definition": "for 循环与 while 循环的语法与执行过程。",
+    "commonApproach": "先确定循环变量初值与终止条件，再手工跟踪每一轮变量值。",
+    "pitfalls": [
+      "循环边界条件写错",
+      "循环变量未更新导致死循环"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0010",
+    "name": "常见算法·穷举",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 4,
+    "definition": "穷举法的思想与实现。",
+    "commonApproach": "先明确枚举范围，再写判断条件，注意不要遗漏边界。",
+    "pitfalls": [
+      "枚举范围不全"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0011",
+    "name": "常见算法·排序",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 5,
+    "definition": "冒泡排序、选择排序与插入排序的思想与过程。",
+    "commonApproach": "冒泡每轮把最大（小）值移到一端，注意轮数与比较次数的关系。",
+    "pitfalls": [
+      "三种排序过程混淆",
+      "排序比较次数计算错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0012",
+    "name": "常见算法·查找",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 6,
+    "definition": "顺序查找与对分查找的思想与前提。",
+    "commonApproach": "对分查找要求数据有序，注意中点取整与查找区间的更新。",
+    "pitfalls": [
+      "对分查找未要求有序",
+      "区间更新边界错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0013",
+    "name": "常见算法·解析",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 7,
+    "definition": "枚举、递归、递推等算法思想的应用。",
+    "commonApproach": "递归要写清递归式与终止条件，递推要写清初值。",
+    "pitfalls": [
+      "递归缺少终止条件",
+      "递推初值写错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0014",
+    "name": "程序调试与错误分析",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0006",
+    "chapter": "信息技术·算法与程序",
+    "orderIndex": 8,
+    "definition": "语法错误与逻辑错误的识别与修改。",
+    "commonApproach": "先看报错信息定位语法错误，再用中间结果输出排查逻辑错误。",
+    "pitfalls": [
+      "只改语法不查逻辑"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0015",
+    "name": "信息技术·计算机系统与网络",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 0,
+    "definition": "考查硬件、软件与网络的基础。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0016",
+    "name": "计算机的硬件组成",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0015",
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 1,
+    "definition": "冯·诺依曼结构与五大部件的功能。",
+    "commonApproach": "按「运算器、控制器、存储器、输入设备、输出设备」记忆并说清各自作用。",
+    "pitfalls": [
+      "五大部件功能张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0017",
+    "name": "软件系统",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0015",
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 2,
+    "definition": "系统软件与应用软件的分类。",
+    "commonApproach": "操作系统是最重要的系统软件，负责管理计算机的软硬件资源。",
+    "pitfalls": [
+      "软件分类判断错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0018",
+    "name": "计算机网络",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0015",
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 3,
+    "definition": "网络的组成、拓扑结构、协议与IP地址。",
+    "commonApproach": "IP地址要会判断网段、划分子网并判断是否在同一网络。",
+    "pitfalls": [
+      "IP地址与域名混淆",
+      "网络协议层次对应错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0019",
+    "name": "网络应用",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0015",
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 4,
+    "definition": "常见网络应用与云端服务的概念。",
+    "commonApproach": "浏览器访问网页依靠 HTTP 协议与域名解析。",
+    "pitfalls": [
+      "协议功能对应错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0020",
+    "name": "信息安全与社会责任",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0015",
+    "chapter": "信息技术·计算机系统与网络",
+    "orderIndex": 5,
+    "definition": "信息安全的威胁、防护措施与信息社会的道德规范。",
+    "commonApproach": "按「技术防护 + 行为规范」两方面作答。",
+    "pitfalls": [
+      "只答技术措施忽略行为规范"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0021",
+    "name": "信息技术·数据处理与数据库",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 0,
+    "definition": "考查数据的整理、分析与数据库的基本操作。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0022",
+    "name": "数据整理与计算",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0021",
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 1,
+    "definition": "Excel 或表格软件中的数据整理与常用函数。",
+    "commonApproach": "先明确数据格式与缺失值处理，再用函数完成计算与统计。",
+    "pitfalls": [
+      "数据格式不统一导致计算错",
+      "函数参数使用错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0023",
+    "name": "数据分析与可视化",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0021",
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 2,
+    "definition": "图表类型的选择与数据解读。",
+    "commonApproach": "比较用柱状图、趋势用折线图、构成用饼图。",
+    "pitfalls": [
+      "图表类型选择不当",
+      "忽略数据单位导致结论错误"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0024",
+    "name": "数据库的基本概念",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0021",
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 3,
+    "definition": "数据表、记录、字段与主键。",
+    "commonApproach": "一张数据表就是一个关系，一条记录是一行，字段是一列。",
+    "pitfalls": [
+      "记录与字段概念混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0025",
+    "name": "SQL查询",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0021",
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 4,
+    "definition": "SELECT 语句的基本结构与常见子句。",
+    "commonApproach": "按「SELECT … FROM … WHERE … GROUP BY … HAVING … ORDER BY」结构书写。",
+    "pitfalls": [
+      "WHERE 与 HAVING 混用",
+      "聚合函数使用位置错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0026",
+    "name": "大数据与人工智能",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0021",
+    "chapter": "信息技术·数据处理与数据库",
+    "orderIndex": 5,
+    "definition": "大数据特征与人工智能的典型应用。",
+    "commonApproach": "大数据具有「4V」特征：大量、高速、多样、价值。",
+    "pitfalls": [
+      "大数据特征记不全"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0027",
+    "name": "通用技术·技术与设计",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "通用技术·技术与设计",
+    "orderIndex": 0,
+    "definition": "通用技术的基础，考查技术性质与设计的一般过程。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0028",
+    "name": "技术的性质",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0027",
+    "chapter": "通用技术·技术与设计",
+    "orderIndex": 1,
+    "definition": "技术的目的性、创新性、综合性、两面性与专利性。",
+    "commonApproach": "每条性质要能对应到具体技术实例。",
+    "pitfalls": [
+      "技术性质列举不全",
+      "两面性理解片面"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0029",
+    "name": "设计的一般过程",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0027",
+    "chapter": "通用技术·技术与设计",
+    "orderIndex": 2,
+    "definition": "发现与明确问题、方案构思、方案呈现、制作、评价。",
+    "commonApproach": "按「发现与明确问题→方案构思→方案呈现→制作→评价」五步走。",
+    "pitfalls": [
+      "设计的一般过程顺序颠倒"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0030",
+    "name": "设计的基本原则",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0027",
+    "chapter": "通用技术·技术与设计",
+    "orderIndex": 3,
+    "definition": "科学性原则、实用性原则、创新性原则、安全性原则、经济性原则、道德与可持续发展原则。",
+    "commonApproach": "评价设计方案时要逐条对照基本原则找依据。",
+    "pitfalls": [
+      "原则列举不全",
+      "评价缺少依据"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0031",
+    "name": "技术试验",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0027",
+    "chapter": "通用技术·技术与设计",
+    "orderIndex": 4,
+    "definition": "技术试验的方法与类型。",
+    "commonApproach": "按「优选试验、模拟试验、强化试验、移植试验、虚拟试验」分类。",
+    "pitfalls": [
+      "试验方法分类混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0032",
+    "name": "通用技术·结构与设计",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 0,
+    "definition": "考查结构类型、受力分析与强度和稳定性。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0033",
+    "name": "结构的类型",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0032",
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 1,
+    "definition": "实体结构、框架结构与壳体结构的特点。",
+    "commonApproach": "实体结构抗压、框架结构抗弯、壳体结构受力分散。",
+    "pitfalls": [
+      "结构类型特点张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0034",
+    "name": "结构的受力分析",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0032",
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 2,
+    "definition": "拉力、压力、剪切力、弯曲力与扭转力。",
+    "commonApproach": "先看构件承受外力的方式，再判断内力形式。",
+    "pitfalls": [
+      "五种受力形式混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0035",
+    "name": "结构的强度",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0032",
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 3,
+    "definition": "影响结构强度的因素。",
+    "commonApproach": "强度与材料、截面形状、连接方式有关，与形状的改变有关。",
+    "pitfalls": [
+      "强度与稳定性影响因素搞混"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0036",
+    "name": "结构的稳定性",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0032",
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 4,
+    "definition": "影响结构稳定性的因素。",
+    "commonApproach": "稳定性与支撑面积、重心位置、结构形状有关。",
+    "pitfalls": [
+      "稳定性与强度影响因素搞混"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0037",
+    "name": "结构的设计与欣赏",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0032",
+    "chapter": "通用技术·结构与设计",
+    "orderIndex": 5,
+    "definition": "结构设计的要求与经典结构的欣赏。",
+    "commonApproach": "结构设计兼顾功能、安全、美观与经济。",
+    "pitfalls": [
+      "结构设计要求考虑不全"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0038",
+    "name": "通用技术·流程与系统",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 0,
+    "definition": "考查流程的环节与时序、系统的特性与分析。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0039",
+    "name": "流程的环节与时序",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0038",
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 1,
+    "definition": "环节、时序的概念与流程图的绘制。",
+    "commonApproach": "环节是可以独立完成的工作步骤，时序是各环节的先后顺序。",
+    "pitfalls": [
+      "环节与时序混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0040",
+    "name": "流程的分析与优化",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0038",
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 2,
+    "definition": "流程分析的角度与优化的目标。",
+    "commonApproach": "流程优化看「工期、成本、质量」三目标，注意约束条件。",
+    "pitfalls": [
+      "优化目标考虑不全"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0041",
+    "name": "系统的特性",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0038",
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 3,
+    "definition": "系统的整体性、相关性、目的性、动态性与环境适应性。",
+    "commonApproach": "每条特性要能对应到具体系统实例。",
+    "pitfalls": [
+      "系统特性张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0042",
+    "name": "系统分析的原则",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0038",
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 4,
+    "definition": "系统分析的三个基本原则。",
+    "commonApproach": "抓「整体性原则、科学性原则、综合性原则」。",
+    "pitfalls": [
+      "系统分析原则记不全"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0043",
+    "name": "系统的优化",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0038",
+    "chapter": "通用技术·流程与系统",
+    "orderIndex": 5,
+    "definition": "系统优化的目标、约束条件与方法。",
+    "commonApproach": "优化要明确目标函数与约束条件，两者缺一不可。",
+    "pitfalls": [
+      "忽略约束条件"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0044",
+    "name": "通用技术·控制与设计",
+    "subject": "technology",
+    "parentId": null,
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 0,
+    "definition": "考查控制系统类型与电子控制技术。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0045",
+    "name": "控制的含义与分类",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 1,
+    "definition": "人工控制与自动控制的区别。",
+    "commonApproach": "按「是否需要人为干预」区分人工控制与自动控制。",
+    "pitfalls": [
+      "人工与自动控制判断错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0046",
+    "name": "开环与闭环控制系统",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 2,
+    "definition": "两种控制系统的组成与区别。",
+    "commonApproach": "先找被控对象与控制量，再看有无反馈环节来区分开环与闭环。",
+    "pitfalls": [
+      "开环与闭环判断错",
+      "反馈与干扰混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0047",
+    "name": "控制系统的干扰",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 3,
+    "definition": "干扰因素对控制系统的影响与克服。",
+    "commonApproach": "干扰是外部因素，反馈是内部调节机制，二者要分清。",
+    "pitfalls": [
+      "干扰因素与反馈混淆"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0048",
+    "name": "电子元器件",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 4,
+    "definition": "电阻、电容、二极管、三极管的符号与作用。",
+    "commonApproach": "先识别元器件符号，再按「输入—处理—输出」分析电路功能。",
+    "pitfalls": [
+      "元器件符号识别错",
+      "二极管方向判断错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0049",
+    "name": "传感器",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 5,
+    "definition": "常见传感器（光、温、湿、声）的工作原理与符号。",
+    "commonApproach": "传感器把非电量转换为电量，注意特性曲线与灵敏度。",
+    "pitfalls": [
+      "传感器类型与功能对应错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0050",
+    "name": "数字电路基础",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 6,
+    "definition": "逻辑门电路的符号、真值表与简单应用。",
+    "commonApproach": "与门全1出1、或门有1出1、非门取反，可写真值表逐一验证。",
+    "pitfalls": [
+      "逻辑门符号记错",
+      "真值表填写错"
+    ]
+  },
+  {
+    "id": "KP_TECHNOLOGY_0051",
+    "name": "控制系统的设计与实施",
+    "subject": "technology",
+    "parentId": "KP_TECHNOLOGY_0044",
+    "chapter": "通用技术·控制与设计",
+    "orderIndex": 7,
+    "definition": "控制系统的设计步骤与方案评价。",
+    "commonApproach": "按「明确目标—分析对象—选定控制方式—选择元器件—调试改进」推进。",
+    "pitfalls": [
+      "设计步骤顺序乱"
+    ]
+  }
+]

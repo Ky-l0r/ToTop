@@ -40,16 +40,33 @@ object KpointCandidates {
     /** 参与匹配的文本长度上限，避免超长题干拖慢匹配。 */
     private const val MAX_HAYSTACK_LENGTH: Int = 4000
 
-    /** 筛选候选。 */
+    /**
+     * 筛选候选。
+     *
+     * @param subject 题目科目代码。为空时不做科目过滤（兼容旧调用）；
+     *   给定时**只在该科目内挑候选**——这一点是必须的：
+     *   知识点树扩到十科共 700+ 节点后，若不分科目，一道物理题的候选里会混进
+     *   语文、英语的节点，模型很可能给出跨科目错误归属。
+     */
     fun pick(
         points: List<KnowledgePoint>,
         haystack: String,
+        subject: String = "",
         limit: Int = MAX_CANDIDATES,
     ): List<CandidateKpoint> {
         if (points.isEmpty() || limit <= 0) return emptyList()
         val text = haystack.take(MAX_HAYSTACK_LENGTH)
-        val leaves = points.filter { it.parentId != null }
-        val pool = leaves.ifEmpty { points }
+        val scoped =
+            if (subject.isBlank()) {
+                points
+            } else {
+                points.filter { it.subject.equals(subject, ignoreCase = true) }
+            }
+        // 该科目还没有知识点树时不要把别的科目塞进来，直接返回空，
+        // 由上层跳过阶段 D 并给出「暂无该科目知识点树」的提示。
+        if (scoped.isEmpty()) return emptyList()
+        val leaves = scoped.filter { it.parentId != null }
+        val pool = leaves.ifEmpty { scoped }
 
         val matched =
             pool
@@ -69,7 +86,7 @@ object KpointCandidates {
             if (ordered.size < limit && seen.add(point.id)) ordered.add(point)
         }
 
-        return ordered.map { CandidateKpoint(id = it.id, name = it.name, chapter = it.chapter) }
+        return ordered.map { CandidateKpoint(id = it.id, name = it.name, chapter = it.chapter, subject = it.subject) }
     }
 }
 

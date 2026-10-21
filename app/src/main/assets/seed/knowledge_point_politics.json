@@ -1,0 +1,894 @@
+[
+  {
+    "id": "KP_POLITICS_0001",
+    "name": "经济生活·商品与价格",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 0,
+    "definition": "经济生活的基础概念，考查价值规律与价格机制。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0002",
+    "name": "商品的基本属性",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 1,
+    "definition": "商品的使用价值与价值及其关系。",
+    "commonApproach": "使用价值是自然属性、价值是社会属性，二者统一于商品体中。",
+    "pitfalls": [
+      "把使用价值当价值",
+      "认为有使用价值就是商品"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0003",
+    "name": "货币的本质与职能",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 2,
+    "definition": "货币的产生、本质与五种职能。",
+    "commonApproach": "本质是一般等价物，基本职能是价值尺度与流通手段，其余为贮藏、支付、世界货币。",
+    "pitfalls": [
+      "货币职能判断错",
+      "把纸币当货币"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0004",
+    "name": "纸币与通货膨胀",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 3,
+    "definition": "纸币的发行规律与通货膨胀、通货紧缩。",
+    "commonApproach": "纸币发行量以流通中所需货币量为限，超发引起通胀。",
+    "pitfalls": [
+      "通胀通缩表现混淆",
+      "纸币购买力与实际需求关系说错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0005",
+    "name": "汇率变动的影响",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 4,
+    "definition": "汇率变动对进出口、资本流动与国内经济的影响。",
+    "commonApproach": "本币升值利于进口不利于出口，贬值相反；注意「利于」的判断基准。",
+    "pitfalls": [
+      "汇率变动对进出口影响说反",
+      "汇率与币值变化方向混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0006",
+    "name": "影响价格的因素",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 5,
+    "definition": "价值决定价格、供求影响价格。",
+    "commonApproach": "价值是基础、供求是直接因素，二者共同决定价格波动。",
+    "pitfalls": [
+      "价值决定价格与供求影响价格混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0007",
+    "name": "价格变动的影响",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 6,
+    "definition": "价格变动对生活消费与生产经营的影响。",
+    "commonApproach": "生活必需品需求弹性小、高档耐用品弹性大，互补品替代品影响方向相反。",
+    "pitfalls": [
+      "替代品与互补品影响说反",
+      "需求弹性判断错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0008",
+    "name": "消费类型与消费心理",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0001",
+    "chapter": "经济生活·商品与价格",
+    "orderIndex": 7,
+    "definition": "消费类型划分与常见消费心理。",
+    "commonApproach": "消费心理抓「从众、求异、攀比、求实」四种，对应正确的消费观。",
+    "pitfalls": [
+      "消费心理类型混淆",
+      "四种消费心理对应做法搞错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0009",
+    "name": "经济生活·生产与分配",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 0,
+    "definition": "考查我国基本经济制度、企业与劳动者、分配制度。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0010",
+    "name": "我国的基本经济制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 1,
+    "definition": "公有制为主体、多种所有制经济共同发展。",
+    "commonApproach": "公有制主体地位体现在公有资产在社会总资产中占优势与国有经济控制力。",
+    "pitfalls": [
+      "公有制主体与国有经济主导混淆",
+      "非公有制地位表述不准"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0011",
+    "name": "公司的经营与发展",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 2,
+    "definition": "公司的类型与企业经营成功的因素。",
+    "commonApproach": "企业经营成功的因素按「战略、技术、品牌、管理」四条分点作答。",
+    "pitfalls": [
+      "企业经营与经济效益混为一谈",
+      "公司类型特点混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0012",
+    "name": "劳动与就业",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 3,
+    "definition": "劳动的意义、就业形势与正确就业观。",
+    "commonApproach": "就业观抓「自主择业、竞争就业、职业平等、多种方式就业」四种。",
+    "pitfalls": [
+      "就业观内容记不全",
+      "劳动者权利与义务混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0013",
+    "name": "投资与理财",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 4,
+    "definition": "储蓄、股票、债券、商业保险的特点与风险收益。",
+    "commonApproach": "按「收益性、安全性、流动性」三维度比较四种投资方式。",
+    "pitfalls": [
+      "各种投资方式特点张冠李戴",
+      "股票与债券性质混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0014",
+    "name": "分配制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 5,
+    "definition": "按劳分配为主体、多种分配方式并存。",
+    "commonApproach": "按劳分配只在公有制经济中，按生产要素分配包括劳动、资本、技术、管理等。",
+    "pitfalls": [
+      "按劳分配与按劳动要素分配混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0015",
+    "name": "效率与公平",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 6,
+    "definition": "效率与公平的关系及实现社会公平的措施。",
+    "commonApproach": "先分清初次分配与再分配，再谈如何实现社会公平。",
+    "pitfalls": [
+      "初次分配与再分配混淆",
+      "效率与公平关系绝对化"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0016",
+    "name": "财政与税收",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0009",
+    "chapter": "经济生活·生产与分配",
+    "orderIndex": 7,
+    "definition": "财政收入与支出、财政的作用与税收的特征和种类。",
+    "commonApproach": "财政三大作用：促进社会公平、促进资源合理配置、促进经济平稳运行。",
+    "pitfalls": [
+      "财政作用与货币政策混淆",
+      "税收三个特征记不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0017",
+    "name": "经济生活·市场经济",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 0,
+    "definition": "社会主义市场经济与新发展理念、经济全球化。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0018",
+    "name": "市场配置资源",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0017",
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 1,
+    "definition": "市场在资源配置中起决定性作用及其弊端。",
+    "commonApproach": "市场调节弊端有三种：自发性、盲目性、滞后性，要能对应具体现象。",
+    "pitfalls": [
+      "市场调节弊端的三种表现记不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0019",
+    "name": "社会主义市场经济",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0017",
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 2,
+    "definition": "社会主义市场经济的基本特征。",
+    "commonApproach": "坚持公有制主体地位、共同富裕为根本目标、能实行科学的宏观调控。",
+    "pitfalls": [
+      "基本特征列举不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0020",
+    "name": "宏观调控",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0017",
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 3,
+    "definition": "宏观调控的目标与手段。",
+    "commonApproach": "手段分经济、法律、行政三类，以经济和法律手段为主。",
+    "pitfalls": [
+      "宏观调控手段张冠李戴",
+      "财政政策与货币政策混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0021",
+    "name": "新发展理念",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0017",
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 4,
+    "definition": "创新、协调、绿色、开放、共享五大发展理念。",
+    "commonApproach": "每个理念要能对应到具体举措与意义。",
+    "pitfalls": [
+      "五大理念内涵对应错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0022",
+    "name": "经济全球化与对外开放",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0017",
+    "chapter": "经济生活·市场经济",
+    "orderIndex": 5,
+    "definition": "经济全球化的表现、影响与我国的对外开放。",
+    "commonApproach": "经济全球化是双刃剑，要写清机遇与挑战并重的应对。",
+    "pitfalls": [
+      "全球化影响只答一面",
+      "对外开放基本国策表述不准"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0023",
+    "name": "政治生活·公民与政府",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 0,
+    "definition": "考查公民的政治参与与政府的职能、宗旨。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0024",
+    "name": "我国的国家性质",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 1,
+    "definition": "人民民主专政的本质与特点。",
+    "commonApproach": "本质是人民当家作主，特点是对人民民主、对敌人专政的统一。",
+    "pitfalls": [
+      "国家性质表述不准确"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0025",
+    "name": "公民的政治权利与义务",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 2,
+    "definition": "选举权与被选举权、政治自由、监督权以及公民义务。",
+    "commonApproach": "权利与义务相统一，注意「选举权」特指选举人大代表的权利。",
+    "pitfalls": [
+      "权利与义务关系表述不准",
+      "选举权范围扩大"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0026",
+    "name": "公民参与政治生活的原则",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 3,
+    "definition": "权利与义务统一、个人利益与国家利益结合、法律面前一律平等。",
+    "commonApproach": "三条原则要能对应到具体情境分析。",
+    "pitfalls": [
+      "原则与情境对应错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0027",
+    "name": "公民政治参与的途径",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 4,
+    "definition": "民主选举、民主决策、民主管理、民主监督。",
+    "commonApproach": "四种途径要能各举出具体形式（如民主决策的社情民意反映制度）。",
+    "pitfalls": [
+      "四种参与途径混淆",
+      "具体形式与途径对应错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0028",
+    "name": "政府的职能",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 5,
+    "definition": "政治、经济、文化、社会、生态五方面职能。",
+    "commonApproach": "答题按「政治、经济、文化、社会、生态」五方面分点作答。",
+    "pitfalls": [
+      "政府职能与党的工作混淆",
+      "职能列举不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0029",
+    "name": "政府的宗旨与原则",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 6,
+    "definition": "为人民服务的宗旨与对人民负责的原则。",
+    "commonApproach": "对人民负责要坚持「为人民服务的工作态度、求真务实的工作作风、从群众中来到群众中去的工作方法」。",
+    "pitfalls": [
+      "三个工作作风表述不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0030",
+    "name": "依法行政与权力监督",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0023",
+    "chapter": "政治生活·公民与政府",
+    "orderIndex": 7,
+    "definition": "依法行政的要求与对政府权力的制约监督。",
+    "commonApproach": "监督体系分内部（上级、审计）与外部（权力机关、司法、社会与公民）两类。",
+    "pitfalls": [
+      "内部与外部监督混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0031",
+    "name": "政治生活·民主政治与外交",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 0,
+    "definition": "考查人大制度、政党制度、民族区域自治与外交政策。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0032",
+    "name": "人民代表大会制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 1,
+    "definition": "人民代表大会的性质、职权与人大代表的权利义务。",
+    "commonApproach": "人大职权有立法权、决定权、任免权、监督权四项。",
+    "pitfalls": [
+      "人大职权与人代会职权混淆",
+      "人大代表权利与公民权利混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0033",
+    "name": "中国共产党的领导",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 2,
+    "definition": "党的领导地位、执政方式与执政理念。",
+    "commonApproach": "执政方式抓「科学执政、民主执政、依法执政」，依法执政是基本方式。",
+    "pitfalls": [
+      "依法行政与依法执政混淆",
+      "三种执政方式对应错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0034",
+    "name": "多党合作与政治协商制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 3,
+    "definition": "我国政党制度的特点与人民政协的职能。",
+    "commonApproach": "政协三大职能是政治协商、民主监督、参政议政。",
+    "pitfalls": [
+      "政协职能表述不准",
+      "政协是国家机关这一点判断错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0035",
+    "name": "民族区域自治制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 4,
+    "definition": "民族区域自治的内容与优越性。",
+    "commonApproach": "自治权是核心，自治机关是自治地方的人大和人民政府。",
+    "pitfalls": [
+      "自治机关范围记错",
+      "自治权内容表述不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0036",
+    "name": "基层群众自治制度",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 5,
+    "definition": "村委会、居委会的性质与村民自治的内容。",
+    "commonApproach": "村委会与居委会是基层群众性自治组织，不是国家机关。",
+    "pitfalls": [
+      "村委会当国家机关"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0037",
+    "name": "国际社会与主权国家",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 6,
+    "definition": "主权国家的构成要素与权利、国际关系及其决定因素。",
+    "commonApproach": "国际关系的决定因素是国家利益，共同利益是合作基础。",
+    "pitfalls": [
+      "国家利益与国际关系决定因素表述不准"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0038",
+    "name": "我国的外交政策",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0031",
+    "chapter": "政治生活·民主政治与外交",
+    "orderIndex": 7,
+    "definition": "独立自主的和平外交政策的内容与我国的外交实践。",
+    "commonApproach": "基本立场是独立自主、基本目标是维护我国主权安全发展利益、基本准则是和平共处五项原则。",
+    "pitfalls": [
+      "外交政策基本立场记错",
+      "基本目标与宗旨混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0039",
+    "name": "文化生活",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "文化生活",
+    "orderIndex": 0,
+    "definition": "考查文化的作用、传承与创新、中华文化与核心价值观。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0040",
+    "name": "文化的内涵与特点",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 1,
+    "definition": "文化的含义、特点与文化的形式。",
+    "commonApproach": "文化是相对于经济政治而言的人类全部精神活动及其产品。",
+    "pitfalls": [
+      "把文化等同于知识水平"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0041",
+    "name": "文化的作用",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 2,
+    "definition": "文化对社会与对人的作用。",
+    "commonApproach": "作用要从「对社会」和「对个人」两个层面分点说明。",
+    "pitfalls": [
+      "文化作用绝对化",
+      "文化与经济政治关系单向理解"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0042",
+    "name": "文化与经济政治",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 3,
+    "definition": "文化与经济、政治的相互关系。",
+    "commonApproach": "经济政治决定文化，文化反作用于经济政治，二者相互交融。",
+    "pitfalls": [
+      "文化与经济政治关系单向理解"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0043",
+    "name": "文化多样性",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 4,
+    "definition": "文化多样性的表现与对待态度。",
+    "commonApproach": "既要认同本民族文化，又要尊重其他民族文化。",
+    "pitfalls": [
+      "对待文化多样性的态度表述不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0044",
+    "name": "文化传播",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 5,
+    "definition": "文化传播的途径与手段、中外文化交流。",
+    "commonApproach": "途径有商业贸易、人口迁徙、教育，手段主要是大众传媒。",
+    "pitfalls": [
+      "传播途径与手段混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0045",
+    "name": "文化继承与发展",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 6,
+    "definition": "传统文化的特点、作用与对待态度。",
+    "commonApproach": "对待传统文化要「取其精华、去其糟粕」，批判继承、古为今用。",
+    "pitfalls": [
+      "继承与发展的关系表述反了",
+      "传统文化特点记不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0046",
+    "name": "文化创新",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 7,
+    "definition": "文化创新的源泉、动力与途径。",
+    "commonApproach": "根本途径是社会实践，基本途径是继承传统推陈出新与面向世界博采众长。",
+    "pitfalls": [
+      "文化创新的根本途径与基本途径混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0047",
+    "name": "中华文化",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 8,
+    "definition": "中华文化的基本特征与力量之源。",
+    "commonApproach": "基本特征是源远流长与博大精深，包容性是重要原因。",
+    "pitfalls": [
+      "中华文化特征记不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0048",
+    "name": "民族精神",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 9,
+    "definition": "中华民族精神的基本内涵与弘扬。",
+    "commonApproach": "核心是爱国主义，内涵包括创造、奋斗、团结、梦想精神。",
+    "pitfalls": [
+      "民族精神内涵记不全",
+      "爱国主义表述过于笼统"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0049",
+    "name": "文化自信与核心价值观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 10,
+    "definition": "文化自信的来源与社会主义核心价值观的内容。",
+    "commonApproach": "核心价值观三个层面：国家、社会、公民个人。",
+    "pitfalls": [
+      "核心价值观三个层面内容混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0050",
+    "name": "思想道德建设",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0039",
+    "chapter": "文化生活",
+    "orderIndex": 11,
+    "definition": "思想道德建设的内容与提高道德修养的途径。",
+    "commonApproach": "途径是「重在实践、贵在自觉」，要提高科学文化修养与思想道德修养。",
+    "pitfalls": [
+      "两个修养关系说不清"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0051",
+    "name": "生活与哲学",
+    "subject": "politics",
+    "parentId": null,
+    "chapter": "生活与哲学",
+    "orderIndex": 0,
+    "definition": "哲学是政治的理论制高点，考查四大模块。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0052",
+    "name": "哲学与世界观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 1,
+    "definition": "哲学与世界观、具体科学的关系。",
+    "commonApproach": "哲学是系统化理论化的世界观，具体科学是哲学的基础。",
+    "pitfalls": [
+      "哲学与具体科学关系说反"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0053",
+    "name": "哲学的基本问题",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 2,
+    "definition": "思维与存在的关系问题是哲学的基本问题。",
+    "commonApproach": "第一方面是思维与存在何者为本原，第二方面是同一性。",
+    "pitfalls": [
+      "唯物主义与唯心主义形态混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0054",
+    "name": "物质与意识",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 3,
+    "definition": "物质决定意识、意识的能动作用与一切从实际出发。",
+    "commonApproach": "答题按「物质决定意识→意识有能动作用→一切从实际出发」展开。",
+    "pitfalls": [
+      "夸大或否定意识的能动作用"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0055",
+    "name": "规律的客观性",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 4,
+    "definition": "规律的客观性与主观能动性的关系。",
+    "commonApproach": "规律客观的、不以人的意志为转移，但人能够认识和利用规律。",
+    "pitfalls": [
+      "规律客观性与主观能动性关系说反"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0056",
+    "name": "实践与认识",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 5,
+    "definition": "实践的含义、特点与实践是认识的基础。",
+    "commonApproach": "实践四个表现：来源、动力、检验标准、目的。",
+    "pitfalls": [
+      "实践与认识关系单向理解"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0057",
+    "name": "真理",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 6,
+    "definition": "真理的客观性、条件性与具体性。",
+    "commonApproach": "真理是具体的有条件的，超出条件范围真理会变成谬误。",
+    "pitfalls": [
+      "真理与谬误界限绝对化"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0058",
+    "name": "认识的反复性与无限性",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 7,
+    "definition": "认识发展的过程特点。",
+    "commonApproach": "认识具有反复性、无限性、上升性，追求真理是永无止境的过程。",
+    "pitfalls": [
+      "认识过程特点表述不全"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0059",
+    "name": "联系观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 8,
+    "definition": "联系的普遍性、客观性、多样性与整体与部分的关系。",
+    "commonApproach": "整体与部分要分「二者相互区别」和「相互联系」两层作答。",
+    "pitfalls": [
+      "整体与部分关系表述片面"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0060",
+    "name": "发展观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 9,
+    "definition": "发展的实质、量变与质变、前进性与曲折性。",
+    "commonApproach": "发展的实质是新事物产生与旧事物灭亡，前进中有曲折。",
+    "pitfalls": [
+      "量变与质变关系表述不准",
+      "发展的实质表述错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0061",
+    "name": "矛盾观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 10,
+    "definition": "矛盾的普遍性、特殊性、主要矛盾与矛盾的主要方面。",
+    "commonApproach": "矛盾分析法是根本方法，答题按「原理→方法论→结合材料」三步。",
+    "pitfalls": [
+      "主要矛盾与矛盾主要方面混淆",
+      "普遍性与特殊性关系说错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0062",
+    "name": "辩证否定观",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 11,
+    "definition": "辩证否定的实质与创新意识。",
+    "commonApproach": "实质是「扬弃」，要求树立创新意识。",
+    "pitfalls": [
+      "把辩证否定当全盘肯定或否定"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0063",
+    "name": "社会存在与社会意识",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 12,
+    "definition": "二者的辩证关系与价值判断价值选择。",
+    "commonApproach": "社会存在决定社会意识，社会意识有相对独立性。",
+    "pitfalls": [
+      "社会存在与社会意识关系说反"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0064",
+    "name": "社会基本矛盾",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 13,
+    "definition": "生产力与生产关系、经济基础与上层建筑的矛盾。",
+    "commonApproach": "两对矛盾是社会发展的基本动力，通过改革实现自我完善。",
+    "pitfalls": [
+      "两对矛盾内容对应错"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0065",
+    "name": "人民群众是历史的创造者",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 14,
+    "definition": "群众观点与群众路线。",
+    "commonApproach": "群众观点是要相信群众、服务群众，群众路线是「一切为了群众、一切依靠群众、从群众中来到群众中去」。",
+    "pitfalls": [
+      "群众观点与群众路线混淆"
+    ]
+  },
+  {
+    "id": "KP_POLITICS_0066",
+    "name": "人生价值的实现",
+    "subject": "politics",
+    "parentId": "KP_POLITICS_0051",
+    "chapter": "生活与哲学",
+    "orderIndex": 15,
+    "definition": "价值的含义与人生价值的评价标准、实现途径。",
+    "commonApproach": "实现途径是在劳动与奉献中创造价值、在个人与社会统一中实现价值。",
+    "pitfalls": [
+      "人生价值评价标准表述错"
+    ]
+  }
+]

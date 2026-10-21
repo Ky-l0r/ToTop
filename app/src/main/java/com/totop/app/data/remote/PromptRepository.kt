@@ -13,11 +13,18 @@ import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/** 候选知识点（阶段 D 的候选清单元素，开发方案 6.3：id/name/chapter）。 */
+/**
+ * 候选知识点（阶段 D 的候选清单元素，开发方案 6.3：id/name/chapter）。
+ *
+ * [subject] 不发给模型（提示词 schema 里只有 id/name/chapter），
+ * 只用于客户端在阶段 A 识别出科目后把候选清单收敛到同一科目，
+ * 避免一道物理题的候选里混进语文、英语的节点。
+ */
 data class CandidateKpoint(
     val id: String,
     val name: String,
     val chapter: String = "",
+    val subject: String = "",
 )
 
 /**

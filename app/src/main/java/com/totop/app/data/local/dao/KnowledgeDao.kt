@@ -84,6 +84,28 @@ interface KnowledgeDao {
     @Query("DELETE FROM knowledge_point")
     suspend fun deleteAllKnowledgePoints()
 
+    /**
+     * 按科目删除知识点（种子数据「按科目替换」用）。
+     *
+     * 为什么必须按科目删：种子是逐科加载的，若每科都整表清空，
+     * 加载第二科时就会把第一科刚写进去的知识点全部删掉，
+     * 最终库里只剩最后一科——这正是「只有数学有知识点」的成因。
+     */
+    @Query("DELETE FROM knowledge_point WHERE subject = :subject")
+    suspend fun deleteKnowledgePointsOfSubject(subject: String)
+
+    /**
+     * 按科目删除边。
+     *
+     * 边表本身没有 subject 列（不改表结构、不引入迁移），
+     * 因此用「端点属于该科目」的子查询来界定：只要 fromId 或 toId 落在该科目内就删。
+     */
+    @Query(
+        "DELETE FROM kpoint_edge WHERE fromId IN (SELECT id FROM knowledge_point WHERE subject = :subject) " +
+            "OR toId IN (SELECT id FROM knowledge_point WHERE subject = :subject)",
+    )
+    suspend fun deleteEdgesOfSubject(subject: String)
+
     @Query("DELETE FROM kpoint_edge")
     suspend fun deleteAllEdges()
 }

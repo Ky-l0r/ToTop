@@ -1,0 +1,736 @@
+[
+  {
+    "id": "KP_CHINESE_0001",
+    "name": "现代文阅读",
+    "subject": "chinese",
+    "parentId": null,
+    "chapter": "现代文阅读",
+    "orderIndex": 0,
+    "definition": "现代文阅读是语文高考的主体板块，考查信息筛选、文本分析与鉴赏评价能力。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0002",
+    "name": "论述类文本·论点与论据",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 1,
+    "definition": "论述类文本以议论为主，考查中心论点、分论点、论据类型与论证方法。",
+    "commonApproach": "先通读圈出中心论点，再按题干定位区间，逐项比对原文的范围、程度与条件。",
+    "pitfalls": [
+      "把「可能」读成「必然」",
+      "把选项当常识判断而不回原文",
+      "混淆论点与论据"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0003",
+    "name": "论述类文本·论证结构",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 2,
+    "definition": "考查论证的展开方式：并列、递进、对照、总分，以及段落间逻辑关系。",
+    "commonApproach": "给每段标一句「这段在证明什么」，再看段间是并列还是递进。",
+    "pitfalls": [
+      "把并列结构说成递进",
+      "忽略段落之间的转折"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0004",
+    "name": "论述类文本·选项陷阱识别",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 3,
+    "definition": "常见陷阱有偷换概念、以偏概全、混淆时态、强加因果、无中生有。",
+    "commonApproach": "逐一核对选项中「主体、范围、程度、条件、因果」五要素是否与原文一致。",
+    "pitfalls": [
+      "忽略程度副词差异",
+      "把未然当已然",
+      "强加因果看不出来"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0005",
+    "name": "文学类文本·人物形象",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 4,
+    "definition": "小说与散文中人物形象的概括与分析，考查性格特征与塑造手法。",
+    "commonApproach": "每题按「性格关键词 + 原文依据 + 塑造手法」三部分组织答案。",
+    "pitfalls": [
+      "只贴标签不引原文",
+      "把人物形象与主题混谈"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0006",
+    "name": "文学类文本·情节作用",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 5,
+    "definition": "考查某情节在内容、结构、主题三方面的作用。",
+    "commonApproach": "按「内容上写了什么 → 结构上承上启下还是埋下伏笔 → 主题上凸显什么」作答。",
+    "pitfalls": [
+      "只答结构作用漏掉内容与主题",
+      "术语堆砌不与文本结合"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0007",
+    "name": "文学类文本·环境描写作用",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 6,
+    "definition": "自然环境与社会环境描写的作用：交代背景、渲染气氛、烘托心情、推动情节。",
+    "commonApproach": "逐条检查四点是否命中本文，命中的才写，不命中的不硬凑。",
+    "pitfalls": [
+      "把所有作用全写上",
+      "不区分自然环境与社会环境"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0008",
+    "name": "文学类文本·语言赏析",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 7,
+    "definition": "考查用词、句式、修辞与语言风格的分析。",
+    "commonApproach": "按「手法 + 具体表现 + 表达效果 + 情感」四步作答。",
+    "pitfalls": [
+      "只写「生动形象」",
+      "赏析脱离具体语句"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0009",
+    "name": "文学类文本·标题与主题",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 8,
+    "definition": "考查标题的含义与作用、主题的探究与多元解读。",
+    "commonApproach": "标题从「表层义、深层义、结构作用、主题指向」四层作答。",
+    "pitfalls": [
+      "标题含义只答表层",
+      "主题探究脱离文本随意发挥"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0010",
+    "name": "实用类文本·信息筛选整合",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 9,
+    "definition": "新闻、传记、科普、报告的信息筛选与要点整合。",
+    "commonApproach": "先按题干明确信息类型，回原文定位后合并同类项，再分条呈现。",
+    "pitfalls": [
+      "信息筛选不全",
+      "整合时丢失限定条件"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0011",
+    "name": "实用类文本·材料比较",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 10,
+    "definition": "非连续性文本中多则材料的异同比较与观点印证。",
+    "commonApproach": "给每则材料写一句核心观点，再横向比对同一问题的不同表述。",
+    "pitfalls": [
+      "只答单则材料",
+      "比较时未指出具体差异"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0012",
+    "name": "散文·线索与结构",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 11,
+    "definition": "散文的行文线索、思路展开与结构安排。",
+    "commonApproach": "抓「时间线、空间线、情感线、物件线」四类线索之一，再看结构是总分还是层进。",
+    "pitfalls": [
+      "找错线索导致结构分析混乱",
+      "把散文当小说分析人物"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0013",
+    "name": "散文·情感与哲理",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0001",
+    "chapter": "现代文阅读",
+    "orderIndex": 12,
+    "definition": "散文的情感把握与哲理意蕴的体悟。",
+    "commonApproach": "从「直接抒情句 + 意象 + 议论句」三处提取情感与哲理。",
+    "pitfalls": [
+      "只概括情感不结合文本",
+      "把作者情感与人物情感混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0014",
+    "name": "古诗文阅读",
+    "subject": "chinese",
+    "parentId": null,
+    "chapter": "古诗文阅读",
+    "orderIndex": 0,
+    "definition": "古诗文阅读考查文言基础、翻译能力与诗歌鉴赏，是拉开分差的关键板块。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0015",
+    "name": "文言实词·一词多义",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 1,
+    "definition": "常见实词在不同语境下的多个义项辨析。",
+    "commonApproach": "用「代入语境法 + 结构分析法」判断：先看词性与搭配，再代入检验句意是否通顺。",
+    "pitfalls": [
+      "以今义解古义",
+      "只看单句不看上下文"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0016",
+    "name": "文言实词·古今异义",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 2,
+    "definition": "古今字形相同而意义不同的词语辨析。",
+    "commonApproach": "遇到现代常见词要格外警惕，先按古义解释再验证。",
+    "pitfalls": [
+      "按现代汉语理解古今异义词"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0017",
+    "name": "文言实词·词类活用",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 3,
+    "definition": "名词作动词、名词作状语、形容词作名词、使动意动等活用现象。",
+    "commonApproach": "先看该词在句中的位置：名词后带宾语则多为活用为动词。",
+    "pitfalls": [
+      "词类活用判断不出",
+      "使动与意动混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0018",
+    "name": "文言虚词",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 4,
+    "definition": "之、其、而、以、于、乃、则、焉、者、也等常见虚词的用法。",
+    "commonApproach": "先判虚词的词性（代词/副词/介词/连词/助词），再判具体用法。",
+    "pitfalls": [
+      "只背用法不结合句意",
+      "把连词当介词"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0019",
+    "name": "文言句式",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 5,
+    "definition": "判断句、被动句、宾语前置、状语后置、定语后置与省略句。",
+    "commonApproach": "抓标志词：者也表判断、见/于表被动、之/是表前置。",
+    "pitfalls": [
+      "倒装句不识别导致翻译错",
+      "省略成分补不出"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0020",
+    "name": "文言翻译",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 6,
+    "definition": "考查直译为主、字字落实的翻译能力。",
+    "commonApproach": "先标出关键实词与特殊句式，逐字对应翻译，再调整语序使通顺。",
+    "pitfalls": [
+      "漏译省略成分",
+      "关键实词翻译不到位",
+      "只意译不落实字词"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0021",
+    "name": "文言断句",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 7,
+    "definition": "根据语法结构与语意停顿给文言文断句。",
+    "commonApproach": "先找主谓宾确定句子主干，再抓「曰、矣、也、乎」等标志词断句。",
+    "pitfalls": [
+      "按现代语感断句",
+      "忽略对偶与排比结构"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0022",
+    "name": "文言内容概括",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 8,
+    "definition": "对文言文段落或全文内容的分析与概括。",
+    "commonApproach": "按「人物 + 事件 + 结果 + 评价」四要素梳理，注意时间顺序。",
+    "pitfalls": [
+      "张冠李戴人物事件",
+      "时间顺序梳理错"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0023",
+    "name": "古代诗歌·意象与意境",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 9,
+    "definition": "通过意象组合把握诗歌营造的意境氛围。",
+    "commonApproach": "先列全诗意象，再用两个形容词概括意境，最后落到情感。",
+    "pitfalls": [
+      "只贴「思乡」「爱国」标签",
+      "意境概括与诗句不符"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0024",
+    "name": "古代诗歌·表达技巧",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 10,
+    "definition": "抒情方式（直接/间接）、修辞手法、表现手法与结构技巧。",
+    "commonApproach": "按「手法名称 + 诗句佐证 + 表达效果 + 情感」作答。",
+    "pitfalls": [
+      "手法与效果说反",
+      "把借景抒情与托物言志混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0025",
+    "name": "古代诗歌·语言风格",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 11,
+    "definition": "诗歌语言的清新、雄浑、婉约、含蓄、平淡等风格辨析。",
+    "commonApproach": "先找最能代表风格的诗句，再用一两个词概括风格，并说明依据。",
+    "pitfalls": [
+      "风格标签与诗歌不符",
+      "只概括不给依据"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0026",
+    "name": "古代诗歌·思想感情",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 12,
+    "definition": "诗歌的情感类型与情感变化过程。",
+    "commonApproach": "抓尾联与抒情句，注意情感的层次与转折。",
+    "pitfalls": [
+      "情感概括单一忽略变化",
+      "把诗人情感与他人的情感混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0027",
+    "name": "名篇名句默写",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0014",
+    "chapter": "古诗文阅读",
+    "orderIndex": 13,
+    "definition": "课标规定篇目的识记与理解性默写。",
+    "commonApproach": "按「理解提示 → 定位篇目 → 写出上下句」三步，写后专查同音字与形近字。",
+    "pitfalls": [
+      "同音字写错",
+      "只背不写导致笔画错",
+      "理解性默写答错句子"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0028",
+    "name": "语言文字运用",
+    "subject": "chinese",
+    "parentId": null,
+    "chapter": "语言文字运用",
+    "orderIndex": 0,
+    "definition": "语言文字运用考查字词基础、语法规范与语言表达的准确性、鲜明性、生动性。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0029",
+    "name": "字音辨析",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 1,
+    "definition": "多音字、形近字与易读错字的读音辨析。",
+    "commonApproach": "重点记多音字的「因义定音」与「因性定音」两类规律。",
+    "pitfalls": [
+      "多音字按常见读音套用",
+      "形近字读音混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0030",
+    "name": "字形辨析",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 2,
+    "definition": "同音字、形近字与易写错字的辨析。",
+    "commonApproach": "抓「形旁表义」原则，用义辨形而不是死记。",
+    "pitfalls": [
+      "同音字混用",
+      "形近字偏旁写错"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0031",
+    "name": "词语（含成语）使用",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 3,
+    "definition": "实词、虚词与成语的正确使用。",
+    "commonApproach": "成语抓「适用对象、褒贬色彩、语法功能、望文生义」四个易错点。",
+    "pitfalls": [
+      "成语望文生义",
+      "褒贬误用",
+      "适用对象搞错"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0032",
+    "name": "病句辨析",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 4,
+    "definition": "语序不当、搭配不当、成分残缺或赘余、结构混乱、表意不明、不合逻辑六类。",
+    "commonApproach": "先提取主干查搭配与成分，再看修饰语顺序与并列成分是否对应。",
+    "pitfalls": [
+      "只凭语感不查主干",
+      "把正确句子改出错"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0033",
+    "name": "病句修改",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 5,
+    "definition": "在辨析基础上进行规范修改。",
+    "commonApproach": "改后必须复查：原意不变、不产生新语病、改动尽量少。",
+    "pitfalls": [
+      "改后产生新语病",
+      "改动过多改变原意"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0034",
+    "name": "语句衔接",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 6,
+    "definition": "句子在语段中的位置选择与上下文衔接。",
+    "commonApproach": "抓「陈述对象一致、句式协调、语意连贯」三条标准。",
+    "pitfalls": [
+      "忽略陈述对象变化",
+      "不检查代词指代"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0035",
+    "name": "语句排序",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 7,
+    "definition": "多个句子的先后顺序排列。",
+    "commonApproach": "先定首句（引出话题）与尾句（总结），再用代词、关联词、重复词确定相邻关系。",
+    "pitfalls": [
+      "只按时间顺序排",
+      "忽略代词指代对象"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0036",
+    "name": "修辞手法辨识与效果",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 8,
+    "definition": "比喻、比拟、排比、对偶、夸张、反复、设问、反问等。",
+    "commonApproach": "答题按「手法 + 具体分析 + 表达效果 + 情感」四步。",
+    "pitfalls": [
+      "修辞效果只写「生动形象」",
+      "把比喻与比拟混淆"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0037",
+    "name": "句式变换",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 9,
+    "definition": "长短句互换、整散句互换、主动被动互换与语体变换。",
+    "commonApproach": "变换后检查：句子成分完整、语意不变、语体一致。",
+    "pitfalls": [
+      "变换后成分残缺",
+      "语体前后不一致"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0038",
+    "name": "仿写与扩展",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 10,
+    "definition": "按给定句式与修辞仿写句子，或对语句进行扩展。",
+    "commonApproach": "仿写要做到句式一致、修辞一致、语意连贯、格调统一。",
+    "pitfalls": [
+      "只求形似语意不通",
+      "句式结构不一致"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0039",
+    "name": "压缩语段",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0028",
+    "chapter": "语言文字运用",
+    "orderIndex": 11,
+    "definition": "提取语段核心信息进行概括压缩。",
+    "commonApproach": "按「谁 + 做什么 + 结果如何」提取主干，再按字数要求精简。",
+    "pitfalls": [
+      "遗漏关键信息",
+      "压缩后语句不通"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0040",
+    "name": "写作",
+    "subject": "chinese",
+    "parentId": null,
+    "chapter": "写作",
+    "orderIndex": 0,
+    "definition": "写作是语文分值最高的板块，考查审题立意、结构安排、论证分析与语言表达的综合能力。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0041",
+    "name": "审题与立意",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 1,
+    "definition": "从材料中提炼准确、集中、有新意的中心论点。",
+    "commonApproach": "圈出关键词与限定条件，用一句话写出「谁在什么条件下应该怎样」。",
+    "pitfalls": [
+      "脱离材料另起炉灶",
+      "立意过于宽泛",
+      "只抓一个词忽略整体倾向"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0042",
+    "name": "标题拟写",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 2,
+    "definition": "拟出准确、鲜明、有文采的议论文标题。",
+    "commonApproach": "标题要包含核心关键词，可用「观点式、比喻式、引用式、对比式」。",
+    "pitfalls": [
+      "标题与立意无关",
+      "标题过大过空"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0043",
+    "name": "议论文·并列式结构",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 3,
+    "definition": "分论点之间为并列关系的结构方式。",
+    "commonApproach": "分论点要「同质不同角」：围绕中心论点从不同侧面展开，互不交叉。",
+    "pitfalls": [
+      "分论点交叉重复",
+      "分论点与中心论点不匹配"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0044",
+    "name": "议论文·递进式结构",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 4,
+    "definition": "分论点之间层层深入的结构方式。",
+    "commonApproach": "常见的递进层次：是什么 → 为什么 → 怎么办，或现象 → 本质 → 对策。",
+    "pitfalls": [
+      "递进层次混乱",
+      "各层之间无逻辑推进"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0045",
+    "name": "议论文·对照式结构",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 5,
+    "definition": "通过正反对比展开论证的结构方式。",
+    "commonApproach": "正反两方要围绕同一标准对比，对比后必须有分析句点明差异根源。",
+    "pitfalls": [
+      "只摆正反不分析",
+      "对比标准前后不一"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0046",
+    "name": "议论文·素材剪裁",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 6,
+    "definition": "根据论点需要选取与剪裁事实论据。",
+    "commonApproach": "素材只保留与论点直接相关的部分，其余一律从简，避免以叙代议。",
+    "pitfalls": [
+      "大段讲故事",
+      "素材与论点脱节"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0047",
+    "name": "议论文·论证分析",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 7,
+    "definition": "在论点与论据之间建立逻辑联系的分析方法。",
+    "commonApproach": "每个例子后面必须写「这说明……」的分析句，把材料与观点勾连起来。",
+    "pitfalls": [
+      "只堆例子不分析",
+      "分析句空泛"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0048",
+    "name": "议论文·论证方法",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 8,
+    "definition": "举例、道理、对比、比喻、引用五种论证方法。",
+    "commonApproach": "根据论点需要选择方法，方法与论点之间要能说清「为什么能证明」。",
+    "pitfalls": [
+      "方法罗列不说明作用",
+      "方法与论点不匹配"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0049",
+    "name": "议论文·开头结尾",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 9,
+    "definition": "开头引题立论、结尾总结升华的技巧。",
+    "commonApproach": "开头三句话内必须出现中心论点；结尾要回扣论点并适度升华。",
+    "pitfalls": [
+      "开头铺垫过长不亮观点",
+      "结尾草率无升华"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0050",
+    "name": "记叙文·选材与细节",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 10,
+    "definition": "记叙文选材的典型性与细节描写的作用。",
+    "commonApproach": "选一件小事写透，用动作、语言、心理细节代替空洞抒情。",
+    "pitfalls": [
+      "选材大而空",
+      "只有概述没有细节"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0051",
+    "name": "记叙文·叙事顺序与线索",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 11,
+    "definition": "顺叙、倒叙、插叙与明暗双线索的运用。",
+    "commonApproach": "倒叙要有明确的过渡句，线索要贯穿全文不断线。",
+    "pitfalls": [
+      "倒叙过渡生硬",
+      "线索中途断掉"
+    ]
+  },
+  {
+    "id": "KP_CHINESE_0052",
+    "name": "语言表达与书写规范",
+    "subject": "chinese",
+    "parentId": "KP_CHINESE_0040",
+    "chapter": "写作",
+    "orderIndex": 12,
+    "definition": "表达的准确、鲜明、生动以及卷面书写规范。",
+    "commonApproach": "长短句结合，多用短句保证清晰；书写工整、标点规范、不涂改。",
+    "pitfalls": [
+      "整段长句读不断",
+      "标点一逗到底",
+      "卷面涂改过多"
+    ]
+  }
+]

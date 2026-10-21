@@ -75,8 +75,11 @@ class ReviewMaterialPdfWriter(
 
                 painter.finish()
 
+                // 先写 cacheDir 的临时文件：这是整个渲染过程的事务性落点，
+                // 写失败时不会在用户可见目录里留下半个 PDF。
+                // 真正的「发布到下载目录 + 生成可分享 Uri」由 ExportSink 负责。
                 val dir = File(context.cacheDir, PDF_DIR).apply { if (!exists()) mkdirs() }
-                val file = File(dir, "复习资料_" + System.currentTimeMillis() + ".pdf")
+                val file = File(dir, FILE_STEM + System.currentTimeMillis() + ".pdf")
                 file.outputStream().use { out -> doc.writeTo(out) }
                 doc.close()
                 PdfWriteResult.Success(file)
@@ -87,6 +90,9 @@ class ReviewMaterialPdfWriter(
 
     companion object {
         private const val PDF_DIR: String = "review_material"
+
+        /** 导出文件名前缀。 */
+        const val FILE_STEM: String = "考前复习资料_"
     }
 }
 

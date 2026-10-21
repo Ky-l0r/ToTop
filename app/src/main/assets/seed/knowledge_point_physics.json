@@ -1,0 +1,1224 @@
+[
+  {
+    "id": "KP_PHYSICS_0001",
+    "name": "运动的描述与匀变速运动",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 0,
+    "definition": "力学的基础语言，考查位移、速度、加速度等矢量概念与匀变速规律。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0002",
+    "name": "质点与参考系",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 1,
+    "definition": "理想化模型质点的条件与参考系的选择。",
+    "commonApproach": "当物体形状大小对研究问题影响可忽略时可视为质点；参考系不同运动描述不同。",
+    "pitfalls": [
+      "把转动的物体当质点",
+      "忘记说明参考系"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0003",
+    "name": "位移与路程",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 2,
+    "definition": "位移的矢量性与路程的标量性，二者的关系。",
+    "commonApproach": "位移只看初末位置，路程看实际轨迹长度，单向直线运动中二者大小相等。",
+    "pitfalls": [
+      "把路程当位移",
+      "往返运动中位移计算错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0004",
+    "name": "速度与速率",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 3,
+    "definition": "平均速度、瞬时速度、平均速率与瞬时速率。",
+    "commonApproach": "平均速度 = 位移/时间，平均速率 = 路程/时间，二者在曲线运动中不同。",
+    "pitfalls": [
+      "平均速率与平均速度混淆",
+      "瞬时速度方向判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0005",
+    "name": "加速度",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 4,
+    "definition": "加速度的定义、方向与对运动的影响。",
+    "commonApproach": "加速度方向与速度变化量同向；与速度同向加速、反向减速。",
+    "pitfalls": [
+      "加速度为负就认为减速",
+      "把加速度当速度变化量"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0006",
+    "name": "匀变速直线运动公式",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 5,
+    "definition": "速度公式、位移公式与速度位移关系式的应用。",
+    "commonApproach": "优先画 v-t 图，用图线斜率求加速度、面积求位移。",
+    "pitfalls": [
+      "乱套公式不看初速度方向",
+      "刹车问题不检验停止时间"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0007",
+    "name": "自由落体与竖直上抛",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 6,
+    "definition": "自由落体与竖直上抛运动的规律。",
+    "commonApproach": "两者加速度均为 g，竖直上抛要注意对称性与到达最高点的时间。",
+    "pitfalls": [
+      "把竖直上抛分段计算费时",
+      "忽略位移与路程差异"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0008",
+    "name": "运动图像",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0001",
+    "chapter": "运动的描述与匀变速运动",
+    "orderIndex": 7,
+    "definition": "x-t 图与 v-t 图的斜率、面积与交点含义。",
+    "commonApproach": "x-t 斜率是速度，v-t 斜率是加速度、面积是位移，交点表相遇或速度相等。",
+    "pitfalls": [
+      "图像斜率与面积含义搞反",
+      "交点含义判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0009",
+    "name": "相互作用与牛顿运动定律",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 0,
+    "definition": "力学的核心，考查受力分析与动力学两类基本问题。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0010",
+    "name": "重力与弹力",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 1,
+    "definition": "重力与弹力（含弹簧弹力）的产生条件、方向与大小。",
+    "commonApproach": "弹力方向始终垂直于接触面或沿绳、杆方向，弹簧弹力用胡克定律。",
+    "pitfalls": [
+      "弹力方向判断错",
+      "把接触当必然有弹力"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0011",
+    "name": "摩擦力",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 2,
+    "definition": "静摩擦力与滑动摩擦力的产生条件、方向与大小。",
+    "commonApproach": "先判断是静摩擦还是滑动摩擦：静摩擦用平衡条件求，滑动摩擦用 f=μN。",
+    "pitfalls": [
+      "漏画摩擦力",
+      "静摩擦力方向判断错",
+      "把正压力当重力"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0012",
+    "name": "力的合成与分解",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 3,
+    "definition": "平行四边形定则、三角形定则与正交分解法。",
+    "commonApproach": "三个以上共点力优先用正交分解，三个力平衡可用矢量三角形。",
+    "pitfalls": [
+      "合力范围判断错",
+      "正交分解方向选得不好"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0013",
+    "name": "共点力平衡",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 4,
+    "definition": "共点力作用下的静态与动态平衡问题。",
+    "commonApproach": "静态平衡用正交分解列平衡方程，动态平衡优先用矢量三角形或相似三角形。",
+    "pitfalls": [
+      "漏画某个力",
+      "动态平衡用错方法"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0014",
+    "name": "牛顿第一定律与惯性",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 5,
+    "definition": "惯性定律的内容与惯性的量度。",
+    "commonApproach": "惯性只与质量有关，与速度、受力无关。",
+    "pitfalls": [
+      "认为速度大惯性大",
+      "把惯性与力混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0015",
+    "name": "牛顿第二定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 6,
+    "definition": "F=ma 的矢量性、瞬时性与同体性。",
+    "commonApproach": "先受力分析求合力，再沿加速度方向列方程，注意力的瞬时对应关系。",
+    "pitfalls": [
+      "合力计算漏力",
+      "把加速度方向与合力方向分开考虑"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0016",
+    "name": "牛顿第三定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 7,
+    "definition": "作用力与反作用力的特点与区别。",
+    "commonApproach": "作用力反作用力等大反向共线、作用在两个物体上，与平衡力不同。",
+    "pitfalls": [
+      "把作用力反作用力当平衡力",
+      "认为质量大的物体施加的力更大"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0017",
+    "name": "连接体问题",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 8,
+    "definition": "多个物体组成的系统的动力学分析。",
+    "commonApproach": "先整体法求加速度，再隔离法求内力，注意绳与杆的弹力特点。",
+    "pitfalls": [
+      "整体法与隔离法混用",
+      "滑轮两侧加速度大小不相等"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0018",
+    "name": "超重与失重",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 9,
+    "definition": "超重、失重与完全失重的条件。",
+    "commonApproach": "看加速度方向：向上超重、向下失重、等于 g 向下则完全失重。",
+    "pitfalls": [
+      "超重失重判断反了",
+      "认为完全失重时重力消失"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0019",
+    "name": "动力学两类基本问题",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0009",
+    "chapter": "相互作用与牛顿运动定律",
+    "orderIndex": 10,
+    "definition": "已知力求运动与已知运动求力。",
+    "commonApproach": "受力分析 → 求合力 → 求加速度 → 用运动学公式求未知量，或反向推导。",
+    "pitfalls": [
+      "两类问题公式用错方向",
+      "忘记检验结果合理性"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0020",
+    "name": "曲线运动与万有引力",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 0,
+    "definition": "从直线到曲线，考查运动的合成分解、圆周运动与天体运动。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0021",
+    "name": "曲线运动的条件与特点",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 1,
+    "definition": "物体做曲线运动的条件与速度方向特点。",
+    "commonApproach": "合力方向与速度方向不在同一直线上；速度方向沿轨迹切线。",
+    "pitfalls": [
+      "速度方向画错",
+      "认为合力指向轨迹内侧但方向不确定"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0022",
+    "name": "运动的合成与分解",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 2,
+    "definition": "运动的独立性与合运动、分运动的关系。",
+    "commonApproach": "把实际运动分解到两个互相垂直的方向，分别用直线运动规律处理。",
+    "pitfalls": [
+      "合运动与分运动混淆",
+      "渡河问题两种最值搞混"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0023",
+    "name": "平抛运动",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 3,
+    "definition": "水平匀速与竖直自由落体的合成运动。",
+    "commonApproach": "两个方向分别列方程，用时间 t 作为桥梁联立，注意速度偏角与位移偏角关系。",
+    "pitfalls": [
+      "把平抛当自由落体",
+      "速度方向与位移方向混为一谈"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0024",
+    "name": "斜抛运动",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 4,
+    "definition": "斜抛运动的分解与射程、射高分析。",
+    "commonApproach": "分解为水平匀速与竖直上抛，用对称性简化计算。",
+    "pitfalls": [
+      "分解方向选择不当",
+      "忽略对称性导致计算复杂"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0025",
+    "name": "圆周运动的描述",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 5,
+    "definition": "线速度、角速度、周期、向心加速度的关系。",
+    "commonApproach": "抓 v=ωr 与 a=v²/r=ω²r 两套公式的适用场合。",
+    "pitfalls": [
+      "线速度与角速度关系记错",
+      "周期与转速换算错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0026",
+    "name": "向心力",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 6,
+    "definition": "向心力的来源与向心力方程。",
+    "commonApproach": "向心力是效果力，由实际的力提供；沿半径方向列方程，不额外加向心力。",
+    "pitfalls": [
+      "向心力多算一个力",
+      "半径找错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0027",
+    "name": "竖直平面内的圆周运动",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 7,
+    "definition": "轻绳模型与轻杆模型的临界条件。",
+    "commonApproach": "轻绳最高点有最小速度 √(gr)，轻杆最高点速度可以为零。",
+    "pitfalls": [
+      "轻绳与轻杆模型混淆",
+      "临界条件记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0028",
+    "name": "离心运动",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 8,
+    "definition": "离心现象的产生条件与应用。",
+    "commonApproach": "当提供的向心力不足时物体做离心运动，注意不是「受到离心力」。",
+    "pitfalls": [
+      "认为存在离心力"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0029",
+    "name": "开普勒三定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 9,
+    "definition": "行星运动的三大定律。",
+    "commonApproach": "第三定律 a³/T²=k 常用于比较不同轨道天体。",
+    "pitfalls": [
+      "半长轴与半径混用",
+      "周期单位不统一"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0030",
+    "name": "万有引力定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 10,
+    "definition": "万有引力定律的内容与引力常量。",
+    "commonApproach": "适用于质点间，均匀球体可视为质量集中于球心。",
+    "pitfalls": [
+      "距离用表面距离代替球心距"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0031",
+    "name": "天体质量与密度计算",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 11,
+    "definition": "利用环绕天体求中心天体质量与密度。",
+    "commonApproach": "核心方程是「万有引力提供向心力」，按已知量选择向心加速度表达式。",
+    "pitfalls": [
+      "把 g 当常量到处用",
+      "半径与轨道高度混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0032",
+    "name": "人造卫星与宇宙速度",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0020",
+    "chapter": "曲线运动与万有引力",
+    "orderIndex": 12,
+    "definition": "三个宇宙速度与卫星变轨。",
+    "commonApproach": "第一宇宙速度是最小发射速度与最大环绕速度，变轨要看加速还是减速。",
+    "pitfalls": [
+      "卫星变轨问题理解错",
+      "同步卫星与近地卫星混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0033",
+    "name": "机械能与动量",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "机械能与动量",
+    "orderIndex": 0,
+    "definition": "能量与动量是解决力学问题的两条主线，适用于过程复杂的综合题。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0034",
+    "name": "功",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 1,
+    "definition": "恒力做功、变力做功与总功的计算。",
+    "commonApproach": "恒力用 W=Fscosθ，变力优先用动能定理或 F-s 图像面积。",
+    "pitfalls": [
+      "功的正负判断错",
+      "变力直接套恒力公式"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0035",
+    "name": "功率",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 2,
+    "definition": "平均功率与瞬时功率，额定功率与实际功率。",
+    "commonApproach": "平均功率用 P=W/t，瞬时功率用 P=Fvcosθ，机车启动要分恒定功率与恒定牵引力。",
+    "pitfalls": [
+      "平均功率与瞬时功率混淆",
+      "机车启动两种方式混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0036",
+    "name": "动能与动能定理",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 3,
+    "definition": "动能定理的内容与应用。",
+    "commonApproach": "选取初末状态，列出所有做功的力（含摩擦力），注意功的正负号。",
+    "pitfalls": [
+      "漏掉某个力做功",
+      "把动能定理与机械能守恒混用"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0037",
+    "name": "重力势能与弹性势能",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 4,
+    "definition": "重力做功与路径无关、弹性势能与形变量的关系。",
+    "commonApproach": "重力势能要有零势能面，重力做功等于重力势能的减少量。",
+    "pitfalls": [
+      "零势能面选取前后不一致",
+      "重力做功与重力势能变化符号搞反"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0038",
+    "name": "机械能守恒定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 5,
+    "definition": "机械能守恒的条件与表达式。",
+    "commonApproach": "先验证守恒条件（只有重力或弹力做功），再列初末机械能相等。",
+    "pitfalls": [
+      "条件不满足仍用守恒",
+      "漏算某部分动能"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0039",
+    "name": "功能关系",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 6,
+    "definition": "除重力弹力外其他力做功与机械能变化的关系。",
+    "commonApproach": "摩擦生热 Q=f·Δs（相对位移），其他力做功等于机械能变化量。",
+    "pitfalls": [
+      "相对位移与对地位移混淆",
+      "功能关系对应错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0040",
+    "name": "动量与冲量",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 7,
+    "definition": "动量的矢量性与冲量的计算。",
+    "commonApproach": "动量是矢量，计算时要规定正方向；冲量 I=Ft 适用于恒力。",
+    "pitfalls": [
+      "动量计算忘方向",
+      "冲量与功混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0041",
+    "name": "动量定理",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 8,
+    "definition": "动量定理的内容与应用。",
+    "commonApproach": "合外力的冲量等于动量变化量，适用于变力时要取平均力。",
+    "pitfalls": [
+      "只算某个力的冲量",
+      "方向变化时未按矢量计算"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0042",
+    "name": "动量守恒定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 9,
+    "definition": "动量守恒的条件与表达式。",
+    "commonApproach": "先明确系统边界与正方向，再列动量守恒方程，注意碰撞的能量损失。",
+    "pitfalls": [
+      "系统选取错误",
+      "忽略方向导致符号错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0043",
+    "name": "碰撞",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 10,
+    "definition": "弹性碰撞、非弹性碰撞与完全非弹性碰撞。",
+    "commonApproach": "弹性碰撞同时满足动量守恒与动能守恒；完全非弹性碰撞碰后共速。",
+    "pitfalls": [
+      "弹性与非弹性碰撞混用",
+      "碰后速度方向判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0044",
+    "name": "反冲与爆炸",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0033",
+    "chapter": "机械能与动量",
+    "orderIndex": 11,
+    "definition": "反冲运动与爆炸过程的动量守恒。",
+    "commonApproach": "爆炸时间极短，可认为动量守恒，注意爆炸后动能增加。",
+    "pitfalls": [
+      "爆炸过程用机械能守恒"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0045",
+    "name": "静电场",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "静电场",
+    "orderIndex": 0,
+    "definition": "电场的力与能两条性质，是电磁学的基础。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0046",
+    "name": "电荷与库仑定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 1,
+    "definition": "电荷守恒、元电荷与库仑定律。",
+    "commonApproach": "库仑定律适用于点电荷，注意平方反比与方向沿连线。",
+    "pitfalls": [
+      "带电体直接当点电荷",
+      "库仑力方向判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0047",
+    "name": "电场强度",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 2,
+    "definition": "电场强度的定义、点电荷场强与场强叠加。",
+    "commonApproach": "E=F/q 是定义式，E=kQ/r² 是点电荷场强，叠加用平行四边形定则。",
+    "pitfalls": [
+      "定义式与决定式混淆",
+      "场强叠加忘记矢量性"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0048",
+    "name": "电场线",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 3,
+    "definition": "电场线的特点与常见电场的电场线分布。",
+    "commonApproach": "电场线疏密表强弱、切线表方向，不闭合、不相交。",
+    "pitfalls": [
+      "认为电场线是运动轨迹",
+      "把电场线与等势线混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0049",
+    "name": "电势与电势差",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 4,
+    "definition": "电势、电势差、电势能的定义与关系。",
+    "commonApproach": "沿电场线方向电势降低，Uab=φa-φb，W=qU。",
+    "pitfalls": [
+      "电势与电势能混淆",
+      "电场强度与电势无必然联系这点记不住"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0050",
+    "name": "等势面",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 5,
+    "definition": "等势面的特点与等势面与电场线的关系。",
+    "commonApproach": "等势面与电场线垂直，沿等势面移动电荷电场力不做功。",
+    "pitfalls": [
+      "等势面与电场线关系记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0051",
+    "name": "电势差与电场强度的关系",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 6,
+    "definition": "匀强电场中 U=Ed 的应用。",
+    "commonApproach": "d 是沿电场线方向的距离，非匀强电场只能定性判断。",
+    "pitfalls": [
+      "d 用两点间距离代替沿场强方向距离"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0052",
+    "name": "电容器",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 7,
+    "definition": "电容的定义、平行板电容器与动态变化分析。",
+    "commonApproach": "先判是电压不变（接电源）还是电量不变（断电源），再用 C=εS/4πkd 分析。",
+    "pitfalls": [
+      "两种情况判断错",
+      "电容与电量混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0053",
+    "name": "带电粒子在电场中的加速",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 8,
+    "definition": "带电粒子在电场中加速的问题。",
+    "commonApproach": "用动能定理 qU=½mv² 求解，不必关心中间过程。",
+    "pitfalls": [
+      "忽略初速度"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0054",
+    "name": "带电粒子在电场中的偏转",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0045",
+    "chapter": "静电场",
+    "orderIndex": 9,
+    "definition": "类平抛运动的分析方法。",
+    "commonApproach": "沿初速度方向匀速，沿电场方向匀加速，用类平抛规律处理。",
+    "pitfalls": [
+      "把偏转当平抛的位移公式用错",
+      "偏转位移与偏转角混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0055",
+    "name": "恒定电流与电路",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "恒定电流与电路",
+    "orderIndex": 0,
+    "definition": "电路分析是电学实验与计算的基础。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0056",
+    "name": "电流与电阻",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 1,
+    "definition": "电流的定义、欧姆定律与电阻定律。",
+    "commonApproach": "R=U/I 是定义式，R=ρL/S 是决定式，注意电阻率与温度的关系。",
+    "pitfalls": [
+      "定义式与决定式混淆",
+      "电阻率与电阻混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0057",
+    "name": "串联与并联",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 2,
+    "definition": "串并联电路的电流、电压、电阻规律。",
+    "commonApproach": "串联分压、并联分流，等效电阻按公式化简后逐步求解。",
+    "pitfalls": [
+      "并联电阻算成倒数之和"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0058",
+    "name": "电功与电功率",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 3,
+    "definition": "电功、电热与纯电阻、非纯电阻电路的区别。",
+    "commonApproach": "纯电阻电路 W=Q，非纯电阻电路 W>Q，注意电动机问题。",
+    "pitfalls": [
+      "非纯电阻用欧姆定律",
+      "电功与电热混用"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0059",
+    "name": "闭合电路欧姆定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 4,
+    "definition": "电动势、内阻与路端电压的关系。",
+    "commonApproach": "E=U外+U内，路端电压随外电阻增大而增大。",
+    "pitfalls": [
+      "忽略内阻",
+      "路端电压变化方向判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0060",
+    "name": "电路动态分析",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 5,
+    "definition": "滑动变阻器变化引起的电流电压变化。",
+    "commonApproach": "按「局部电阻变化 → 总电阻 → 总电流 → 路端电压 → 各支路」的顺序推导。",
+    "pitfalls": [
+      "动态分析时电源内阻忽略不当",
+      "串并联关系判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0061",
+    "name": "电表改装",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 6,
+    "definition": "电流表改装为电压表、电压表改装为电流表。",
+    "commonApproach": "串联分压改装成电压表，并联分流改装成电流表。",
+    "pitfalls": [
+      "串并联接法搞反",
+      "分压分流电阻计算错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0062",
+    "name": "伏安法测电阻",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0055",
+    "chapter": "恒定电流与电路",
+    "orderIndex": 7,
+    "definition": "电流表内外接法与误差分析。",
+    "commonApproach": "大电阻用内接法、小电阻用外接法，判断依据是「大内偏大、小外偏小」。",
+    "pitfalls": [
+      "内外接法选择错",
+      "误差方向分析错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0063",
+    "name": "磁场与电磁感应",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 0,
+    "definition": "磁场的力与电磁感应是电磁学的核心综合板块。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0064",
+    "name": "磁场与磁感应强度",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 1,
+    "definition": "磁场的描述与磁感应强度的定义。",
+    "commonApproach": "B=F/IL 要求导线垂直于磁场，磁感线疏密表强弱。",
+    "pitfalls": [
+      "磁感应强度定义条件漏掉",
+      "磁感线当真实曲线"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0065",
+    "name": "安培力",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 2,
+    "definition": "安培力的大小与方向（左手定则）。",
+    "commonApproach": "F=BIL 要求电流垂直于磁场，方向用左手定则判断。",
+    "pitfalls": [
+      "左手定则与右手定则混用",
+      "有效长度判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0066",
+    "name": "洛伦兹力",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 3,
+    "definition": "运动电荷在磁场中受力的方向与大小。",
+    "commonApproach": "洛伦兹力永远垂直于速度，不做功，只改变速度方向。",
+    "pitfalls": [
+      "认为洛伦兹力做功",
+      "正负电荷受力方向搞混"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0067",
+    "name": "带电粒子在磁场中的运动",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 4,
+    "definition": "圆周运动的圆心、半径与运动时间。",
+    "commonApproach": "用几何关系找圆心与半径，注意临界出射条件与对称性。",
+    "pitfalls": [
+      "圆心定位错",
+      "半径计算漏掉几何关系",
+      "忽略临界条件"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0068",
+    "name": "速度选择器与质谱仪",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 5,
+    "definition": "复合场中粒子选择与质量分析的原理。",
+    "commonApproach": "速度选择器中电场力与洛伦兹力平衡，质谱仪用半径反推比荷。",
+    "pitfalls": [
+      "平衡条件写错",
+      "半径与质量关系推导错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0069",
+    "name": "磁通量",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 6,
+    "definition": "磁通量的定义与正负。",
+    "commonApproach": "Φ=BS 要求 B 垂直于面，注意有效面积与正负号约定。",
+    "pitfalls": [
+      "有效面积判断错",
+      "磁通量与磁感应强度混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0070",
+    "name": "法拉第电磁感应定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 7,
+    "definition": "感应电动势的大小计算。",
+    "commonApproach": "E=nΔΦ/Δt 求平均值，E=BLv 求瞬时值，注意二者适用场合。",
+    "pitfalls": [
+      "平均电动势与瞬时电动势混用",
+      "匝数漏乘"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0071",
+    "name": "楞次定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 8,
+    "definition": "感应电流方向的判断。",
+    "commonApproach": "感应电流的磁场总要阻碍引起它的磁通量变化，注意「阻碍」不是「阻止」。",
+    "pitfalls": [
+      "楞次定律理解成「阻止」",
+      "增反减同判断错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0072",
+    "name": "右手定则",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 9,
+    "definition": "导体切割磁感线时感应电流方向的判断。",
+    "commonApproach": "右手定则只适用于导体切割磁感线的情形，其余用楞次定律。",
+    "pitfalls": [
+      "右手定则与安培定则混用"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0073",
+    "name": "自感与互感",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 10,
+    "definition": "自感现象、自感系数与互感现象。",
+    "commonApproach": "自感电动势阻碍电流变化，通电自感灯渐亮、断电自感灯闪亮。",
+    "pitfalls": [
+      "自感现象两种情形混淆"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0074",
+    "name": "电磁感应中的电路与图像",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 11,
+    "definition": "感应电动势作为电源的电路分析与图像问题。",
+    "commonApproach": "把切割部分看作电源，画出等效电路，再按闭合电路欧姆定律求解。",
+    "pitfalls": [
+      "等效电路画错",
+      "图像斜率与面积含义搞反"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0075",
+    "name": "电磁感应中的能量",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0063",
+    "chapter": "磁场与电磁感应",
+    "orderIndex": 12,
+    "definition": "安培力做功与电能转化的关系。",
+    "commonApproach": "克服安培力做的功等于产生的电能，用能量守恒列方程。",
+    "pitfalls": [
+      "把安培力做功与电能关系搞反"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0076",
+    "name": "热学与近代物理",
+    "subject": "physics",
+    "parentId": null,
+    "chapter": "热学与近代物理",
+    "orderIndex": 0,
+    "definition": "热学、光学与原子物理构成选考的重要板块。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0077",
+    "name": "分子动理论",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 1,
+    "definition": "分子热运动、分子力与分子势能。",
+    "commonApproach": "r=r0 时分子力为零、势能最小；r>r0 表现为引力，r<r0 表现为斥力。",
+    "pitfalls": [
+      "分子力与分子势能变化混淆",
+      "把布朗运动当分子运动"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0078",
+    "name": "内能",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 2,
+    "definition": "内能的决定因素与改变方式。",
+    "commonApproach": "内能由温度、体积与物质的量决定，改变方式有做功与热传递。",
+    "pitfalls": [
+      "认为内能只与温度有关"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0079",
+    "name": "气体实验定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 3,
+    "definition": "玻意耳定律、查理定律与盖-吕萨克定律。",
+    "commonApproach": "先确定气体状态参量变化，再选对应定律（等温/等容/等压）。",
+    "pitfalls": [
+      "温度必须用热力学温度却用摄氏度",
+      "三个实验定律适用条件记混"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0080",
+    "name": "理想气体状态方程",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 4,
+    "definition": "理想气体状态方程的综合应用。",
+    "commonApproach": "pV/T=C，多过程问题要分段找状态参量再联立。",
+    "pitfalls": [
+      "状态参量选取错误",
+      "单位不统一"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0081",
+    "name": "热力学第一定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 5,
+    "definition": "ΔU=W+Q 的符号规则与应用。",
+    "commonApproach": "外界对气体做功 W 为正，气体吸热 Q 为正。",
+    "pitfalls": [
+      "符号规则搞错",
+      "把做功与热传递方向弄反"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0082",
+    "name": "热力学第二定律",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 6,
+    "definition": "热现象的方向性与熵增原理。",
+    "commonApproach": "热量不能自发地从低温物体传到高温物体，效率不可能达到 100%。",
+    "pitfalls": [
+      "认为效率可以达到 100%"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0083",
+    "name": "光的折射",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 7,
+    "definition": "折射定律与折射率。",
+    "commonApproach": "n=sinθ1/sinθ2=c/v，注意光疏光密介质与偏折方向。",
+    "pitfalls": [
+      "光疏光密方向判断错",
+      "折射率与频率关系记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0084",
+    "name": "全反射",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 8,
+    "definition": "全反射的条件与临界角。",
+    "commonApproach": "光从光密射向光疏且入射角大于临界角，sinC=1/n。",
+    "pitfalls": [
+      "全反射条件漏判",
+      "临界角公式记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0085",
+    "name": "光的干涉与衍射",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 9,
+    "definition": "双缝干涉条纹间距与单缝衍射现象。",
+    "commonApproach": "双缝干涉 Δx=Lλ/d，衍射条纹中央宽两侧窄。",
+    "pitfalls": [
+      "干涉与衍射现象混淆",
+      "条纹间距公式记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0086",
+    "name": "光的波动性与粒子性",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 10,
+    "definition": "光电效应与光的波粒二象性。",
+    "commonApproach": "光电效应说明光具有粒子性，遏止电压与频率有关、与强度无关。",
+    "pitfalls": [
+      "光电效应中光照强度与频率作用混淆",
+      "遏止电压与频率关系记错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0087",
+    "name": "原子结构与能级",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 11,
+    "definition": "玻尔模型、能级跃迁与光谱。",
+    "commonApproach": "跃迁用 hν=ΔE，注意吸收与发射的方向。",
+    "pitfalls": [
+      "跃迁方向判断错",
+      "能级差计算错"
+    ]
+  },
+  {
+    "id": "KP_PHYSICS_0088",
+    "name": "原子核与核反应",
+    "subject": "physics",
+    "parentId": "KP_PHYSICS_0076",
+    "chapter": "热学与近代物理",
+    "orderIndex": 12,
+    "definition": "天然放射性、核反应方程与质能方程。",
+    "commonApproach": "核反应注意质量数与电荷数守恒，质能方程 E=Δmc²。",
+    "pitfalls": [
+      "核反应方程不配平",
+      "质量亏损与结合能混淆"
+    ]
+  }
+]

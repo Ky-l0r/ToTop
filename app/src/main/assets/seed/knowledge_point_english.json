@@ -1,0 +1,583 @@
+[
+  {
+    "id": "KP_ENGLISH_0001",
+    "name": "词法基础",
+    "subject": "english",
+    "parentId": null,
+    "chapter": "词法基础",
+    "orderIndex": 0,
+    "definition": "词法考查名词、冠词、代词、形容词、副词等词类的形式与用法。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0002",
+    "name": "名词与主谓一致",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 1,
+    "definition": "可数与不可数名词、名词所有格以及主谓一致的三条原则。",
+    "commonApproach": "先判名词可数性，再按「语法一致、意义一致、就近一致」三原则确定谓语形式。",
+    "pitfalls": [
+      "不可数名词加复数",
+      "集合名词主谓一致判断错",
+      "there be 就近原则忘记"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0003",
+    "name": "冠词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 2,
+    "definition": "不定冠词、定冠词与零冠词的用法及固定搭配。",
+    "commonApproach": "按「泛指用 a/an、特指用 the、固定搭配单独记」三档判断。",
+    "pitfalls": [
+      "固定搭配漏冠词",
+      "特指与泛指混淆"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0004",
+    "name": "代词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 3,
+    "definition": "人称代词、物主代词、反身代词、不定代词与 it 的用法。",
+    "commonApproach": "先确定代词指代对象，再按「指代一致、数一致、格一致」选择形式。",
+    "pitfalls": [
+      "反身代词与宾格混用",
+      "不定代词修饰语位置错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0005",
+    "name": "形容词与副词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 4,
+    "definition": "比较级、最高级、倍数表达与形容词副词的句法功能。",
+    "commonApproach": "比较级要保证比较对象同类，倍数为「倍数 + as…as」或「倍数 + 比较级 than」。",
+    "pitfalls": [
+      "比较对象不同类",
+      "倍数语序错",
+      "形容词修饰动词"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0006",
+    "name": "介词与介词短语",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 5,
+    "definition": "常见介词的用法辨析与介词短语的固定搭配。",
+    "commonApproach": "按「时间、地点、方式、原因」四类归纳，再逐个记固定搭配。",
+    "pitfalls": [
+      "时间介词 in/on/at 混用",
+      "固定搭配介词记错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0007",
+    "name": "数词与连词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0001",
+    "chapter": "词法基础",
+    "orderIndex": 6,
+    "definition": "基数词、序数词、分数表达与并列连词、从属连词的用法。",
+    "commonApproach": "分数表达「分子基数词 + 分母序数词」，连词要判断是并列还是从属关系。",
+    "pitfalls": [
+      "分数分母不复数",
+      "and/but/or 逻辑用错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0008",
+    "name": "动词与句法",
+    "subject": "english",
+    "parentId": null,
+    "chapter": "动词与句法",
+    "orderIndex": 0,
+    "definition": "动词是英语句子的核心，考查时态、语态、非谓语与各类从句。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0009",
+    "name": "一般时态",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 1,
+    "definition": "一般现在时、一般过去时、一般将来时与过去将来时。",
+    "commonApproach": "抓句中的时间状语与上下文时间参照点，主将从现是高频考点。",
+    "pitfalls": [
+      "主将从现记不住",
+      "一般过去时与现在完成时混用"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0010",
+    "name": "进行时态",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 2,
+    "definition": "现在进行时、过去进行时、将来进行时与现在完成进行时。",
+    "commonApproach": "进行时强调「某时刻正在进行」，完成进行时强调「持续到现在」。",
+    "pitfalls": [
+      "进行时与完成进行时混用",
+      "状态动词用进行时"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0011",
+    "name": "完成时态",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 3,
+    "definition": "现在完成时、过去完成时与将来完成时。",
+    "commonApproach": "现在完成时强调对现在的影响，过去完成时必须有过去的参照点。",
+    "pitfalls": [
+      "现在完成时与一般过去时混用",
+      "过去完成时缺参照点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0012",
+    "name": "被动语态",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 4,
+    "definition": "各时态的被动形式、被动语态的特殊用法与主动表被动。",
+    "commonApproach": "先定时态再定语态，注意被动语态中 be 动词的时态与主谓一致。",
+    "pitfalls": [
+      "被动语态漏 be 动词",
+      "含情态动词的被动形式写错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0013",
+    "name": "非谓语·不定式",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 5,
+    "definition": "不定式作主语、宾语、定语、状语与补语的用法。",
+    "commonApproach": "不定式多表示「将来的、具体的、一次性的」动作。",
+    "pitfalls": [
+      "不定式与动名词作宾语混用",
+      "不定式符号 to 省略判断错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0014",
+    "name": "非谓语·动名词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 6,
+    "definition": "动名词作主语、宾语与介词的宾语。",
+    "commonApproach": "记住只接动名词的动词（enjoy, mind, finish, avoid 等）与固定搭配。",
+    "pitfalls": [
+      "remember/forget 后接形式混用",
+      "介词后误用不定式"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0015",
+    "name": "非谓语·分词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 7,
+    "definition": "现在分词与过去分词作定语、状语、补语的区别。",
+    "commonApproach": "先判断逻辑主语与非谓语是主动还是被动关系：主动用 -ing，被动用 -ed。",
+    "pitfalls": [
+      "分词作状语逻辑主语不一致",
+      "现在分词与过去分词选错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0016",
+    "name": "定语从句",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 8,
+    "definition": "关系代词与关系副词引导的定语从句，限制性与非限制性。",
+    "commonApproach": "先看先行词，再看从句缺什么成分：缺主宾用关系代词，缺状语用关系副词。",
+    "pitfalls": [
+      "that 与 which 混用",
+      "关系副词与关系代词混淆",
+      "介词后关系代词选错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0017",
+    "name": "名词性从句",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 9,
+    "definition": "主语从句、宾语从句、表语从句与同位语从句。",
+    "commonApproach": "宾语从句用陈述语序，同位语从句用 that 且从句完整。",
+    "pitfalls": [
+      "宾语从句语序不倒装",
+      "同位语从句与定语从句混淆"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0018",
+    "name": "状语从句",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 10,
+    "definition": "时间、地点、原因、条件、让步、结果、目的、方式、比较状语从句。",
+    "commonApproach": "按引导词功能分类记忆，特别注意「主将从现」与倒装结构。",
+    "pitfalls": [
+      "让步状语从句倒装写错",
+      "so…that 与 such…that 混用"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0019",
+    "name": "虚拟语气",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 11,
+    "definition": "if 虚拟条件句、should 型虚拟、wish 与 would rather 后的虚拟。",
+    "commonApproach": "按「与现在相反用过去、与过去相反用过去完成、与将来相反用 were to do」套用。",
+    "pitfalls": [
+      "虚拟条件句时态错位",
+      "省略 if 时不倒装"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0020",
+    "name": "倒装与强调",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 12,
+    "definition": "部分倒装、完全倒装与 it 强调句。",
+    "commonApproach": "否定词或 only 置于句首要用部分倒装；强调句去掉 it is…that 后句子仍完整。",
+    "pitfalls": [
+      "否定词置句首不倒装",
+      "强调句与定语从句混淆"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0021",
+    "name": "主谓一致深化",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0008",
+    "chapter": "动词与句法",
+    "orderIndex": 13,
+    "definition": "并列主语、分数百分数、集合名词与「the + 形容词」作主语时的一致关系。",
+    "commonApproach": "先确定真正的主语中心词，再按语法一致与意义一致判断。",
+    "pitfalls": [
+      "就近原则与语法一致混用",
+      "分数修饰名词时谓语形式错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0022",
+    "name": "阅读理解",
+    "subject": "english",
+    "parentId": null,
+    "chapter": "阅读理解",
+    "orderIndex": 0,
+    "definition": "阅读理解占分最高，考查主旨、细节、推理、词义与篇章结构五类能力。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0023",
+    "name": "主旨大意题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 1,
+    "definition": "概括文章或段落中心思想，包括标题选择与写作目的。",
+    "commonApproach": "重点读首尾段与每段首句，排除以偏概全与只覆盖细节的选项。",
+    "pitfalls": [
+      "以偏概全",
+      "把细节当主旨",
+      "被绝对化措辞干扰"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0024",
+    "name": "细节理解题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 2,
+    "definition": "对文中具体信息的定位与理解，含图表与数据信息。",
+    "commonApproach": "先用题干关键词回原文定位，再逐项比对，注意同义替换与偷换概念。",
+    "pitfalls": [
+      "凭印象作答不回原文",
+      "忽略否定词",
+      "被同形不同义误导"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0025",
+    "name": "推理判断题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 3,
+    "definition": "基于原文信息进行合理推断。",
+    "commonApproach": "答案必须有原文依据但不能是原文原句，排除无依据的过度推断。",
+    "pitfalls": [
+      "把原文原句当推断答案",
+      "推断超出文章信息"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0026",
+    "name": "词义猜测题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 4,
+    "definition": "根据上下文推断生词或短语含义。",
+    "commonApproach": "看该词前后的定义、举例、对比与因果线索，再用代入法验证。",
+    "pitfalls": [
+      "只按构词法猜",
+      "忽略转折关系",
+      "代入后句子不通仍选"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0027",
+    "name": "作者态度与观点题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 5,
+    "definition": "判断作者对某一话题或人物所持的态度倾向。",
+    "commonApproach": "抓评价性形容词、转折词后的表述以及文章结尾的总结句。",
+    "pitfalls": [
+      "把客观陈述当作者态度",
+      "忽略转折词后的真实立场"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0028",
+    "name": "七选五",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 6,
+    "definition": "从七个选项中选出五个填入语篇空缺。",
+    "commonApproach": "先看空缺位置（段首/段中/段尾），再抓代词、连接词与重复词定位。",
+    "pitfalls": [
+      "只看单句不看上下文",
+      "忽略代词指代对象"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0029",
+    "name": "篇章结构题",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0022",
+    "chapter": "阅读理解",
+    "orderIndex": 7,
+    "definition": "分析文章的展开方式与段落之间的逻辑关系。",
+    "commonApproach": "给每段标一句「这段在讲什么」，再看是总分、并列还是递进。",
+    "pitfalls": [
+      "把并列说成递进",
+      "忽略段落功能"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0030",
+    "name": "完形填空与语法填空",
+    "subject": "english",
+    "parentId": null,
+    "chapter": "完形填空与语法填空",
+    "orderIndex": 0,
+    "definition": "这两类题型在语篇中综合考查词汇、语法与逻辑。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0031",
+    "name": "完形填空·词义辨析",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0030",
+    "chapter": "完形填空与语法填空",
+    "orderIndex": 1,
+    "definition": "同义词与近义词在语境中的辨析。",
+    "commonApproach": "先通读全文把握主旨与情感基调，再逐空作答，最后回读检查逻辑。",
+    "pitfalls": [
+      "逐句作答不看全文",
+      "近义词凭语感选"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0032",
+    "name": "完形填空·逻辑衔接",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0030",
+    "chapter": "完形填空与语法填空",
+    "orderIndex": 2,
+    "definition": "转折、因果、递进、并列等逻辑关系在完形中的体现。",
+    "commonApproach": "抓 however, therefore, besides, instead 等逻辑词，注意前后句语义方向。",
+    "pitfalls": [
+      "忽略转折与因果连词",
+      "同一段内时态不一致"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0033",
+    "name": "语法填空·有提示词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0030",
+    "chapter": "完形填空与语法填空",
+    "orderIndex": 3,
+    "definition": "给出词根的填空，考查词性转换、时态、语态与非谓语。",
+    "commonApproach": "先判断所给词的词性：给动词考虑时态语态与非谓语，给名词考虑单复数。",
+    "pitfalls": [
+      "词性转换拼写错误",
+      "非谓语形式选错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0034",
+    "name": "语法填空·无提示词",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0030",
+    "chapter": "完形填空与语法填空",
+    "orderIndex": 4,
+    "definition": "不给提示的填空，考查冠词、介词、代词、连词与关系词。",
+    "commonApproach": "先判断缺什么成分：缺连接两个句子用连词，缺修饰名词用冠词或关系词。",
+    "pitfalls": [
+      "冠词与介词混用",
+      "连词与关系词混淆"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0035",
+    "name": "写作",
+    "subject": "english",
+    "parentId": null,
+    "chapter": "写作",
+    "orderIndex": 0,
+    "definition": "写作考查应用文格式规范与读后续写的情节衔接和语言质量。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0036",
+    "name": "应用文·书信与邮件",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 1,
+    "definition": "书信与电子邮件的格式、称呼、正文与落款。",
+    "commonApproach": "先列要点清单保证全覆盖，再套用固定格式，最后检查语法与拼写。",
+    "pitfalls": [
+      "遗漏要点",
+      "格式不规范",
+      "称呼落款错"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0037",
+    "name": "应用文·通知与演讲稿",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 2,
+    "definition": "通知与演讲稿的格式与语体特征。",
+    "commonApproach": "通知要写清时间地点对象与事项；演讲稿要有称呼、开场与呼应。",
+    "pitfalls": [
+      "通知要素不全",
+      "演讲稿缺少称呼与互动"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0038",
+    "name": "读后续写·情节设计",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 3,
+    "definition": "根据所给段落开头续写两段，要求情节连贯合理。",
+    "commonApproach": "先梳理原文人物关系与伏笔，再让续写情节呼应开头句并收束主题。",
+    "pitfalls": [
+      "情节与原文脱节",
+      "两段之间不衔接"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0039",
+    "name": "读后续写·描写手法",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 4,
+    "definition": "动作、语言、心理、环境描写在续写中的运用。",
+    "commonApproach": "每段安排一到两处细节描写，用具体动作与感官细节代替空洞评价。",
+    "pitfalls": [
+      "只叙事不描写",
+      "描写与情节无关"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0040",
+    "name": "高级句式运用",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 5,
+    "definition": "定语从句、非谓语、倒装、强调句等提升表达层次。",
+    "commonApproach": "每段安排一到两个高级句式即可，避免通篇复杂句导致错误率上升。",
+    "pitfalls": [
+      "为用高级句式而堆砌",
+      "句式使用错误"
+    ]
+  },
+  {
+    "id": "KP_ENGLISH_0041",
+    "name": "衔接与连贯",
+    "subject": "english",
+    "parentId": "KP_ENGLISH_0035",
+    "chapter": "写作",
+    "orderIndex": 6,
+    "definition": "连接词、指代与段落过渡使文章连贯。",
+    "commonApproach": "按「首先、此外、然而、总之」等逻辑层次安排过渡词。",
+    "pitfalls": [
+      "连接词滥用",
+      "段落之间无过渡"
+    ]
+  }
+]

@@ -167,8 +167,13 @@ class SeedRepository
                         val pointEntities = validation.points.map { it.toEntity() }
                         val edgeEntities = validation.edges.map { it.toEntity() }
                         database.withTransaction {
-                            knowledgeDao.deleteAllEdges()
-                            knowledgeDao.deleteAllKnowledgePoints()
+                            // 按科目替换，而不是整表清空。
+                            //
+                            // 旧实现无条件 deleteAllKnowledgePoints()：asset 里只放数学时看不出问题，
+                            // 一旦加入物理、化学等第二科，每加载一科就把前面所有科目的知识点整表删掉，
+                            // 最后库里只剩下最后一个科目——表现为「只有数学有知识点」。
+                            knowledgeDao.deleteEdgesOfSubject(spec.subject)
+                            knowledgeDao.deleteKnowledgePointsOfSubject(spec.subject)
                             knowledgeDao.upsertKnowledgePoints(pointEntities)
                             knowledgeDao.upsertEdges(edgeEntities)
                             val now = System.currentTimeMillis()
@@ -243,13 +248,23 @@ class SeedRepository
                 SeedValidator.validate(points, edges, spec.subject)
             }
 
-        /** 清空知识点树（调试与「恢复内置数据」入口使用）。 */
+        /** 清空全部学科的知识点树（调试与「恢复内置数据」入口使用）。 */
         suspend fun clear() =
             withContext(ioDispatcher) {
                 database.withTransaction {
                     knowledgeDao.deleteAllEdges()
                     knowledgeDao.deleteAllKnowledgePoints()
-                    settingsDao.delete(versionKey(SeedSpec.MATH.subject))
+                    SeedSpec.ALL.forEach { settingsDao.delete(versionKey(it.subject)) }
+                }
+            }
+
+        /** 只清空某一个学科（重建该科数据时使用）。 */
+        suspend fun clearSubject(subject: String) =
+            withContext(ioDispatcher) {
+                database.withTransaction {
+                    knowledgeDao.deleteEdgesOfSubject(subject)
+                    knowledgeDao.deleteKnowledgePointsOfSubject(subject)
+                    settingsDao.delete(versionKey(subject))
                 }
             }
 

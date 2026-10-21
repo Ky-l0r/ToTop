@@ -38,7 +38,6 @@ import com.totop.app.ml.CameraCaptureError
 import com.totop.app.ml.CameraPreview
 import com.totop.app.ml.CameraPreviewState
 import com.totop.app.ml.rememberAlbumPicker
-import com.totop.app.ml.rememberCameraPermissionRequester
 
 /**
  * 全屏拍照页。
@@ -66,9 +65,6 @@ fun CaptureScreen(
     var lensFacing by remember { mutableStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
     val captureOnce = rememberCaptureOnce()
     val pickAlbum = rememberAlbumPicker(onPicked = onPickAlbum)
-    val requestPermission = rememberCameraPermissionRequester { granted ->
-        if (!granted) errorText = "没有相机权限。可以到系统设置里开启，或改用左下角「相册」导入。"
-    }
 
     Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
         CameraPreview(

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -40,11 +41,16 @@ import com.totop.app.util.NormalizedRect
  * 拍照后的照片预览与框选页。
  *
  * 承载三件事：
- * 1. **框选题目**：在照片上直接拖出选区，可重置为整图；
- * 2. **多页管理**：底部缩略图列表支持加拍、删除、拖动排序；
- * 3. **确认提交**：确认后由上层直接调用视觉模型，不再二次询问。
+ * 1. **框选题目**：在照片上直接拖出选区，松手后选区保留，可拖角调整；
+ * 2. **多页管理**：底部缩略图列表支持加拍、删除、调序；
+ * 3. **确认回填**：确认后回到对话页，照片挂在输入框上方等用户写思路——
+ *    **不会直接发送**。这一点是刻意改的：题目要不要解、思路写没写，
+ *    由用户自己决定，而不是拍完就替他提交。
  *
  * 离线记题入口同样在这里，但走的是本地保存分支，不调用模型。
+ *
+ * @param bitmap 用于框选的高清预览图（长边 [PREVIEW_LONG_SIDE]），
+ *   刻意不用列表缩略图：缩略图长边只有 320，放全屏会糊成一片，用户根本瞄不准要框哪一行。
  */
 @Composable
 fun PagePreviewScreen(
@@ -96,7 +102,15 @@ fun PagePreviewScreen(
                 )
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("正在打开照片…", color = Color.White.copy(alpha = 0.7f))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text("正在打开照片…", color = Color.White.copy(alpha = 0.7f))
+                    }
                 }
             }
             CropOverlay(
@@ -105,11 +119,18 @@ fun PagePreviewScreen(
             )
         }
 
-        // 框选操作
+        // 框选操作 + 明确的框选状态反馈
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            Text(
+                text = if (page?.hasCrop == true) "已框选：只上传框内的部分" else "未框选：上传整张图",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (page?.hasCrop == true) Color(0xFF9BE0B8) else Color.White.copy(alpha = 0.7f),
+                modifier = Modifier.weight(1f),
+            )
             OutlinedButton(onClick = onResetCrop, enabled = page?.hasCrop == true) {
                 Text("用整张图", color = Color.White)
             }
@@ -124,7 +145,7 @@ fun PagePreviewScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            itemsIndexed(draft.pages) { index, item ->
+            itemsIndexed(draft.pages) { index, _ ->
                 PageThumb(
                     pageNumber = index + 1,
                     selected = index == currentIndex,
@@ -158,7 +179,7 @@ fun PagePreviewScreen(
                 enabled = !loading && draft.pages.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(48.dp),
             ) {
-                Text(if (loading) "正在解题…" else "确认，开始解题")
+                Text(if (loading) "图片处理中…" else "确认，去写解题思路")
             }
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -214,3 +235,11 @@ private fun PageThumb(
         }
     }
 }
+
+/**
+ * 框选预览图的长边像素上限。
+ *
+ * 取值理由：框选是对着屏幕用手指画的，太糊看不清行，太大又会在低端机上 OOM。
+ * 1280 与上传图长边一致——预览里看到的就是最终上传的内容，所见即所得。
+ */
+const val PREVIEW_LONG_SIDE: Int = 1280

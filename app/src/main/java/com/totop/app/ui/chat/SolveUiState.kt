@@ -2,10 +2,19 @@ package com.totop.app.ui.chat
 
 import com.totop.app.data.remote.SolveEvent
 import com.totop.app.data.remote.TokenUsage
+import com.totop.app.data.repo.ChatTurn
+import com.totop.app.data.repo.SolveSession
+import com.totop.app.domain.model.AiQuestion
 import com.totop.app.domain.model.AiSolvedContent
 import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.ErrorType
+import com.totop.app.domain.model.FirstError
+import com.totop.app.domain.model.Question
+import com.totop.app.domain.model.StandardSolution
+import com.totop.app.domain.model.StudentStep
 import com.totop.app.domain.model.StudentStepStatus
+import com.totop.app.domain.model.Subjects
+import com.totop.app.domain.model.SummaryCard
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.util.NormalizedRect
 
@@ -17,81 +26,119 @@ enum class NetworkStatus(val label: String) {
 }
 
 /**
- * 解题页的主状态机。
+ * 解题页的输入阶段状态机。
  *
- * 状态迁移（单向，禁止跳级）：
- * <pre>
- *   Idle ──import/camera/text──> Ready ──send──> Solving ──完成──> Solved
- *     ^                            ^               |  \            |
- *     |                            |            失败|   \取消        |重新提问
- *     |                            |               v    v          v
- *     +────────reset───────────────+────────── Failed / Cancelled  Ready
- * </pre>
+ * 与旧版的差别：旧版把「会话内容」也塞进这个状态机（Idle/Ready/Solving/Solved/Failed），
+ * 导致「切换页面回来内容丢失」「发送后不能继续追问」两个问题无法根治——
+ * 因为状态机每次发送都从 Solved 回到 Ready，历史被覆盖掉了。
  *
- * - [Idle]：空态，等待用户导入题目；
- * - [Ready]：题目已就绪（OCR/手输完成），可发送；
- * - [Solving]：四阶段调用进行中，[stages] 记录各阶段进度，[streamText] 承载增量文本；
- * - [Solved]：拿到完整结构化结果，进入分块渲染；
- * - [Failed] / [Cancelled]：保留题目与已有增量，允许重试或重新提问。
+ * 现在这个状态机**只描述输入这一侧**（拍照 → 写思路 → 发送 → 等待），
+ * 会话内容由 [ConversationMessage] 列表承载并可持久化。
  */
-sealed class SolveUiState {
-    /** 空态：尚未导入任何题目。 */
-    data object Idle : SolveUiState()
+enum class ComposerPhase {
+    /** 还没有任何图片，也没有正在进行的解题。 */
+    EMPTY,
 
-    /** 题目已就绪，等待发送。 */
-    data class Ready(val question: PreparedQuestion) : SolveUiState()
+    /** 已经拍了图，等用户写思路并发送。 */
+    READY,
 
-    /** 调用进行中。 */
-    data class Solving(
-        val question: PreparedQuestion,
-        val stages: List<StageProgress>,
-        val streamText: String,
-        val startedAtUtc: Long,
-    ) : SolveUiState()
-
-    /** 已完成，可渲染全部结果分块。 */
-    data class Solved(
-        val question: PreparedQuestion,
-        val content: AiSolvedContent,
-        val warnings: List<String>,
-        val usage: TokenUsage,
-        /** 引导模式下已解锁的提示级别（0 表示尚未解锁任何提示）。 */
-        val unlockedHintLevel: Int,
-        /** 引导模式下学生是否已选择「我已想通，看全解」。 */
-        val fullSolutionRevealed: Boolean,
-        /** 三级提示；步骤不足时可能只有 1-2 级。 */
-        val hints: List<HintLevel> = emptyList(),
-        /** 落库后的错题 ID；未入库（例如未提供学生过程）时为 null。 */
-        val mistakeId: String? = null,
-        /** 落库失败原因（非致命，仅提示）。 */
-        val persistMessage: String? = null,
-    ) : SolveUiState()
-
-    /** 失败：可重试（可重试错误）或需改设置（不可重试错误）。 */
-    data class Failed(
-        val question: PreparedQuestion?,
-        val stage: AiStage,
-        val message: String,
-        val retryable: Boolean,
-        val technicalDetail: String? = null,
-        val warnings: List<String> = emptyList(),
-    ) : SolveUiState()
-
-    /** 用户主动停止，或页面离开导致中断。 */
-    data class Cancelled(
-        val question: PreparedQuestion,
-        val message: String = "已停止本次生成",
-        val hasPartialResult: Boolean = false,
-    ) : SolveUiState()
+    /** 正在解题（四阶段进行中）。 */
+    SOLVING,
 }
+
+/** 消息列表里的一条（UI 直接渲染）。 */
+data class ConversationMessage(
+    val id: String,
+    val fromStudent: Boolean,
+    val text: String,
+    /** 学生消息附带的图片路径（页序）。 */
+    val pages: List<String> = emptyList(),
+    /** 结构化解题结果；非 null 时渲染成解题气泡。 */
+    val solution: SolutionPayload? = null,
+    /** 非空表示这条 AI 回复失败，展示原因与重试。 */
+    val errorText: String? = null,
+    /** 是否还在流式生成中。 */
+    val streaming: Boolean = false,
+    /** 生成失败时的阶段（用于提示是哪一步出的问题）。 */
+    val failedStage: AiStage? = null,
+    /** 失败是否可重试。 */
+    val retryable: Boolean = false,
+    val createdAtUtc: Long = 0L,
+)
+
+/**
+ * 解题结果的展示快照。
+ *
+ * 刻意做成独立的不可变数据类，而不是直接复用 [AiSolvedContent]：
+ * 1. [AiSolvedContent] 含 Question / StandardSolution 等完整领域对象，
+ *    存进会话文件时字段太多且多数与展示无关；
+ * 2. 把「展示要什么」显式列出来，避免以后往里加字段时不小心把内部结构泄漏到存储格式。
+ */
+data class SolutionPayload(
+    val questionId: String,
+    val subjectCode: String,
+    val stem: String,
+    val known: List<String> = emptyList(),
+    val ask: String = "",
+    val steps: List<SolutionStepView> = emptyList(),
+    val finalAnswer: String = "",
+    val method: String = "",
+    val firstError: FirstErrorView? = null,
+    val kpoints: List<KpointView> = emptyList(),
+    val summary: SummaryView? = null,
+    /** 引导模式下已解锁的提示级别（0 表示尚未解锁）。 */
+    val unlockedHintLevel: Int = 0,
+    /** 引导模式下学生是否已选择「我已想通，看全解」。 */
+    val fullSolutionRevealed: Boolean = false,
+    /** 三级提示；步骤不足时可能只有 1-2 级。 */
+    val hints: List<HintLevel> = emptyList(),
+    /** 落库后的错题 ID；未入库时为 null。 */
+    val mistakeId: String? = null,
+    /** 落库失败原因（非致命，仅提示）。 */
+    val persistMessage: String? = null,
+) {
+    /** 科目中文名。 */
+    val subjectLabel: String get() = Subjects.label(subjectCode)
+
+    /** 是否定位到了错因。 */
+    val hasError: Boolean get() = firstError != null
+}
+
+/** 解答步骤的展示行。 */
+data class SolutionStepView(
+    val idx: Int,
+    val content: String,
+    val why: String = "",
+)
+
+/** 首个错误的展示行。 */
+data class FirstErrorView(
+    val stepIdx: Int,
+    val typeLabel: String,
+    val explain: String,
+    val correctThinking: String = "",
+)
+
+/** 知识点的展示行。 */
+data class KpointView(
+    val id: String,
+    val name: String,
+    val usage: String = "",
+)
+
+/** 摘要卡展示行。 */
+data class SummaryView(
+    val title: String,
+    val bullets: List<String> = emptyList(),
+)
 
 /** 单阶段进度。 */
 data class StageProgress(
     val stage: AiStage,
     val status: StageStatus,
-    /** 命中本地缓存时展示「命中缓存，0 token」。 */
+    /** 命中本地缓存时内部标记（界面不再展示「命中缓存 0 token」，属于内部实现细节）。 */
     val cached: Boolean = false,
-    /** 首个增量到达耗时（毫秒），用于「首字 < 3s」的自检展示。 */
+    /** 首个增量到达耗时（毫秒），内部性能观测用，不展示。 */
     val firstTokenMs: Long? = null,
     val summary: String = "",
 ) {
@@ -108,7 +155,7 @@ enum class StageStatus { PENDING, RUNNING, DONE }
 /**
  * 拍下的一页题目。
  *
- * @param imagePath 预处理后的主图路径（filesDir/images/<sha256>.jpg）
+ * @param imagePath 预处理后的主图路径（filesDir/images/&lt;sha256&gt;.jpg）
  * @param sha256 图片内容哈希，参与缓存键
  * @param cropRect 框选区域（归一化 0..1）；null 表示未框选、用整图
  * @param thumbnailPath 列表缩略图路径，可能为 null（缩略图失败不影响主流程）
@@ -129,7 +176,6 @@ data class PreparedPage(
  * @param stemText 题干文本（OCR 归一化或手输）；用视觉模型时可以为空
  * @param studentRawText 学生手写的解题过程
  * @param pages 拍下的页面列表。**顺序即页序**，第 1 页在首位。
- *   纯文字输入时为空列表。
  * @param avgConfidence OCR 平均置信度，低于阈值时自动改走视觉档
  */
 data class PreparedQuestion(
@@ -281,5 +327,183 @@ internal object StageProgressMapper {
                 item.stage == stage -> item.copy(status = StageStatus.DONE, summary = summary)
                 else -> item
             }
+        }
+}
+
+/**
+ * 领域结果 ↔ 展示快照的转换（纯函数，可单测）。
+ *
+ * 抽成独立对象的好处：落库与会话持久化两条路径共用同一份转换，
+ * 不会出现「界面上有错因、存下来却没有」这类两边不一致的问题。
+ */
+object SolutionMapper {
+    /** 领域聚合结果 -> 展示快照。 */
+    fun fromContent(
+        content: AiSolvedContent,
+        mode: TeachingMode,
+        mistakeId: String? = null,
+    ): SolutionPayload {
+        val hints =
+            com.totop.app.ui.chat.HintBuilder.build(
+                method = content.standardSolution.method,
+                stepContents = content.standardSolution.steps.map { it.content },
+            )
+        return SolutionPayload(
+            questionId = content.question.id,
+            subjectCode = content.question.subject,
+            stem = content.question.stemText,
+            known = content.question.known,
+            ask = content.question.ask,
+            steps =
+                content.standardSolution.steps.map { step ->
+                    SolutionStepView(idx = step.idx, content = step.content, why = step.why)
+                },
+            finalAnswer = content.standardSolution.finalAnswer,
+            method = content.standardSolution.method,
+            firstError =
+                content.firstError?.let { error ->
+                    FirstErrorView(
+                        stepIdx = error.stepIdx,
+                        typeLabel = error.type.label,
+                        explain = error.explain,
+                        correctThinking = error.correctThinking,
+                    )
+                },
+            kpoints =
+                content.kpointAssignments.map { kp ->
+                    KpointView(id = kp.kpointId, name = kp.name, usage = kp.usage)
+                },
+            summary =
+                content.summaryCard?.let { card ->
+                    SummaryView(title = card.title, bullets = card.bullets)
+                },
+            unlockedHintLevel = 0,
+            fullSolutionRevealed = mode == TeachingMode.DIRECT,
+            hints = hints,
+            mistakeId = mistakeId,
+        )
+    }
+
+    /** 展示快照 -> 领域聚合（仅用于追问上下文与重新落库，不含完整 Question 全字段）。 */
+    fun toContent(payload: SolutionPayload): AiSolvedContent =
+        AiSolvedContent(
+            question =
+                Question(
+                    id = payload.questionId,
+                    subject = payload.subjectCode,
+                    grade = "",
+                    stemText = payload.stem,
+                    known = payload.known,
+                    ask = payload.ask,
+                    createdAtUtc = System.currentTimeMillis(),
+                ),
+            standardSolution =
+                StandardSolution(
+                    steps =
+                        payload.steps.map {
+                            com.totop.app.domain.model.SolutionStep(idx = it.idx, content = it.content, why = it.why)
+                        },
+                    finalAnswer = payload.finalAnswer,
+                    method = payload.method,
+                ),
+            studentSteps = emptyList<StudentStep>(),
+            firstError =
+                payload.firstError?.let { error ->
+                    FirstError(
+                        stepIdx = error.stepIdx,
+                        type = ErrorType.ofLabel(error.typeLabel) ?: ErrorType.FALLBACK,
+                        explain = error.explain,
+                        correctThinking = error.correctThinking,
+                    )
+                },
+            kpointAssignments =
+                payload.kpoints.map {
+                    com.totop.app.domain.model.KpointAssignment(
+                        kpointId = it.id,
+                        name = it.name,
+                        confidence = 1.0,
+                        usage = it.usage,
+                    )
+                },
+            summaryCard = payload.summary?.let { SummaryCard(title = it.title, bullets = it.bullets) },
+            aiGenerated = true,
+        )
+
+    /** 阶段 A 的识题结果 -> 领域 Question（落库用，补上时间戳与图片信息）。 */
+    fun questionOf(
+        question: AiQuestion,
+        id: String,
+        imagePath: String?,
+        imageSha256: String?,
+        sourceType: com.totop.app.domain.model.QuestionSourceType,
+        createdAtUtc: Long,
+    ): Question =
+        Question(
+            id = id,
+            subject = question.subject ?: Subjects.GENERAL,
+            grade = question.grade ?: "未知",
+            stemText = question.stem.orEmpty(),
+            known = question.known,
+            ask = question.ask.orEmpty(),
+            options = question.options,
+            hasFigure = question.hasFigure,
+            imagePath = imagePath,
+            imageSha256 = imageSha256,
+            sourceType = sourceType,
+            createdAtUtc = createdAtUtc,
+        )
+}
+
+/** 会话持久化用的纯转换（可单测）。 */
+object SessionTurns {
+    /**
+     * 展示消息 -> 持久化消息。
+     *
+     * 解题气泡的正文由 [SolutionPayload] 决定，这里把正文压成一句话，
+     * 保证即使将来展示格式变了，历史里也还留着一份可读的文字。
+     */
+    fun toTurn(message: ConversationMessage): ChatTurn =
+        ChatTurn(
+            id = message.id,
+            fromStudent = message.fromStudent,
+            text = message.text,
+            pages = message.pages,
+            createdAtUtc = message.createdAtUtc,
+            errorText = message.errorText,
+            kind = if (message.solution != null) ChatTurn.KIND_SOLUTION else ChatTurn.KIND_CHAT,
+        )
+
+    /** 会话标题：优先学生说的第一句，其次题干首行。 */
+    fun titleOf(
+        turns: List<ConversationMessage>,
+        fallbackStem: String = "",
+    ): String {
+        val firstStudent = turns.firstOrNull { it.fromStudent }?.text?.trim().orEmpty()
+        val candidate =
+            firstStudent.takeIf { it.isNotEmpty() }
+                ?: fallbackStem.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
+        return candidate.take(30).ifBlank { "新对话" }
+    }
+
+    /** 副标题：科目 + 轮次。 */
+    fun subtitleOf(
+        subjectCode: String,
+        rounds: Int,
+    ): String {
+        val label = Subjects.label(subjectCode)
+        return label + " · " + rounds + " 轮对话"
+    }
+
+    /** 从会话记录还原展示消息（不含解题结构，历史里的解题气泡按纯文本渲染）。 */
+    fun toMessages(session: SolveSession): List<ConversationMessage> =
+        session.turns.map { turn ->
+            ConversationMessage(
+                id = turn.id,
+                fromStudent = turn.fromStudent,
+                text = turn.text,
+                pages = turn.pages,
+                errorText = turn.errorText,
+                createdAtUtc = turn.createdAtUtc,
+            )
         }
 }

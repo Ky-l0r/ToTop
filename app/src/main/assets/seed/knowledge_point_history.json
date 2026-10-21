@@ -1,0 +1,848 @@
+[
+  {
+    "id": "KP_HISTORY_0001",
+    "name": "中国古代史·先秦",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "中国古代史·先秦",
+    "orderIndex": 0,
+    "definition": "中华文明的起源与先秦时期的社会变革。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0002",
+    "name": "夏商周的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0001",
+    "chapter": "中国古代史·先秦",
+    "orderIndex": 1,
+    "definition": "王位世袭制、分封制与宗法制。",
+    "commonApproach": "分封制是政治制度、宗法制是血缘制度，二者相辅相成，家国同构。",
+    "pitfalls": [
+      "分封制与宗法制混淆",
+      "宗法制核心是嫡长子继承这点记错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0003",
+    "name": "先秦经济",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0001",
+    "chapter": "中国古代史·先秦",
+    "orderIndex": 2,
+    "definition": "井田制、铁犁牛耕与商业活动。",
+    "commonApproach": "春秋战国铁犁牛耕出现推动井田制瓦解，是社会经济变革的根本原因。",
+    "pitfalls": [
+      "井田制瓦解原因分析不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0004",
+    "name": "春秋战国的社会变革",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0001",
+    "chapter": "中国古代史·先秦",
+    "orderIndex": 3,
+    "definition": "各国变法与商鞅变法。",
+    "commonApproach": "商鞅变法按「废井田、开阡陌、重农抑商、奖励军功、推行县制」梳理。",
+    "pitfalls": [
+      "商鞅变法措施归类错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0005",
+    "name": "百家争鸣",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0001",
+    "chapter": "中国古代史·先秦",
+    "orderIndex": 4,
+    "definition": "儒家、道家、法家、墨家等学派的主张。",
+    "commonApproach": "按「政治主张、伦理观念、代表人物」三维度归纳各家。",
+    "pitfalls": [
+      "各家主张张冠李戴",
+      "儒家代表人物的时代confusion"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0006",
+    "name": "中国古代史·秦汉至隋唐",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 0,
+    "definition": "大一统国家的建立与繁荣。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0007",
+    "name": "秦朝中央集权制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 1,
+    "definition": "皇帝制度、三公九卿制与郡县制。",
+    "commonApproach": "郡县制是官僚政治取代贵族政治的标志，郡县长官由皇帝任免。",
+    "pitfalls": [
+      "郡县制与分封制区别说不清"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0008",
+    "name": "汉朝的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 2,
+    "definition": "内外朝制、推恩令、刺史制度与察举制。",
+    "commonApproach": "抓「削弱相权、削弱地方、加强思想控制」三条主线。",
+    "pitfalls": [
+      "推恩令与削藩混淆",
+      "察举制与科举制混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0009",
+    "name": "汉朝的经济与对外交往",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 3,
+    "definition": "重农抑商、盐铁官营与丝绸之路。",
+    "commonApproach": "重农抑商贯穿整个封建社会，注意其对商业发展的抑制。",
+    "pitfalls": [
+      "重农抑商的影响只答一面"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0010",
+    "name": "三国两晋南北朝",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 4,
+    "definition": "政权更迭、民族交融与江南开发。",
+    "commonApproach": "民族交融是这一时期的主线，北魏孝文帝改革是典型案例。",
+    "pitfalls": [
+      "孝文帝改革措施归类错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0011",
+    "name": "隋唐的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 5,
+    "definition": "三省六部制、科举制与道州县制。",
+    "commonApproach": "三省六部制抓「决策（中书）—审议（门下）—执行（尚书）」的分权制约。",
+    "pitfalls": [
+      "三省职责张冠李戴",
+      "科举制创立与完善时期混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0012",
+    "name": "隋唐的经济与文化",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 6,
+    "definition": "均田制、租庸调制、两税法与唐诗书法。",
+    "commonApproach": "两税法按「唯以资产为宗」打破人丁为主，是税制重大变革。",
+    "pitfalls": [
+      "租庸调制与两税法区别说不清"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0013",
+    "name": "唐朝的民族与外交",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0006",
+    "chapter": "中国古代史·秦汉至隋唐",
+    "orderIndex": 7,
+    "definition": "羁縻政策、都护府与中外交流。",
+    "commonApproach": "唐朝采取开明民族政策，与周边民族交往密切。",
+    "pitfalls": [
+      "民族政策与外交政策混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0014",
+    "name": "中国古代史·宋元明清",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 0,
+    "definition": "封建社会的继续发展与逐步衰落。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0015",
+    "name": "宋朝加强中央集权",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 1,
+    "definition": "收精兵、削实权、制钱谷与重文轻武。",
+    "commonApproach": "宋代措施的核心是「防止地方割据」，带来冗官冗兵冗费问题。",
+    "pitfalls": [
+      "宋代措施与唐代政治制度混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0016",
+    "name": "宋朝的商业革命",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 2,
+    "definition": "市坊界限突破、交子出现与海外贸易繁荣。",
+    "commonApproach": "商业革命的表现要能列举：时间场所限制放松、纸币出现、市民阶层壮大。",
+    "pitfalls": [
+      "商业革命表现列举不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0017",
+    "name": "元朝的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 3,
+    "definition": "行省制度、宣政院与驿站制度。",
+    "commonApproach": "行省制是中国省制的开端，要加强边疆管理这一角度理解。",
+    "pitfalls": [
+      "行省制影响表述不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0018",
+    "name": "明朝的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 4,
+    "definition": "废丞相设内阁、废行省设三司与厂卫制度。",
+    "commonApproach": "内阁不是法定中央一级行政机构，只是皇帝的侍从咨询机构。",
+    "pitfalls": [
+      "内阁与宰相混为一谈"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0019",
+    "name": "清朝的政治制度",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 5,
+    "definition": "军机处、密折制度与理藩院。",
+    "commonApproach": "军机处的设立标志君主专制达到顶峰。",
+    "pitfalls": [
+      "军机处职权表述夸大"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0020",
+    "name": "明清的经济",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 6,
+    "definition": "一条鞭法、摊丁入亩与资本主义萌芽。",
+    "commonApproach": "两税法、一条鞭法、摊丁入亩体现赋税由人丁向土地转变的趋势。",
+    "pitfalls": [
+      "各朝代税制改革混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0021",
+    "name": "明清的对外政策",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 7,
+    "definition": "郑和下西洋与闭关锁国。",
+    "commonApproach": "闭关锁国不是绝对禁止，而是严格限制对外贸易，仅留广州一口。",
+    "pitfalls": [
+      "闭关锁国理解绝对化"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0022",
+    "name": "明清的思想文化",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0014",
+    "chapter": "中国古代史·宋元明清",
+    "orderIndex": 8,
+    "definition": "陆王心学、明清之际活跃的儒家思想与小说戏曲。",
+    "commonApproach": "明清之际思想家已带有早期启蒙色彩，但未形成完整理论体系。",
+    "pitfalls": [
+      "明清思想家主张张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0023",
+    "name": "中国近代史",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "中国近代史",
+    "orderIndex": 0,
+    "definition": "列强侵略与中国人民的探索抗争。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0024",
+    "name": "鸦片战争",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 1,
+    "definition": "背景、过程与《南京条约》的影响。",
+    "commonApproach": "按「战争—条约—影响」三步记忆，中国开始沦为半殖民地半封建社会。",
+    "pitfalls": [
+      "条约内容张冠李戴",
+      "影响表述过于笼统"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0025",
+    "name": "第二次鸦片战争与甲午战争",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 2,
+    "definition": "两次战争的背景、过程与《马关条约》。",
+    "commonApproach": "甲午战争后列强侵华由商品输出转向资本输出。",
+    "pitfalls": [
+      "商品输出与资本输出混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0026",
+    "name": "八国联军侵华与《辛丑条约》",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 3,
+    "definition": "战争经过与条约内容及影响。",
+    "commonApproach": "《辛丑条约》后清政府完全成为列强的统治工具。",
+    "pitfalls": [
+      "条约内容记错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0027",
+    "name": "太平天国运动",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 4,
+    "definition": "背景、过程、纲领与评价。",
+    "commonApproach": "《天朝田亩制度》是农民阶级的理想蓝图，《资政新篇》是中国第一个发展资本主义的方案。",
+    "pitfalls": [
+      "两个纲领性质混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0028",
+    "name": "洋务运动",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 5,
+    "definition": "背景、内容与评价。",
+    "commonApproach": "洋务运动是器物层面的探索，只学技术不改制度，故不能成功。",
+    "pitfalls": [
+      "洋务运动与戊戌变法性质混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0029",
+    "name": "戊戌变法",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 6,
+    "definition": "背景、过程、内容与失败原因。",
+    "commonApproach": "维新变法由器物转向制度层面，失败说明改良道路在中国走不通。",
+    "pitfalls": [
+      "变法内容归类错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0030",
+    "name": "辛亥革命",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 7,
+    "definition": "同盟会、武昌起义、《中华民国临时约法》与评价。",
+    "commonApproach": "功绩在推翻帝制、建立共和；局限在未改变半殖民地半封建社会性质。",
+    "pitfalls": [
+      "辛亥革命功绩与局限表述不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0031",
+    "name": "新文化运动",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 8,
+    "definition": "背景、内容与影响。",
+    "commonApproach": "新文化运动高举民主与科学两面旗帜，由制度层面深入到思想层面。",
+    "pitfalls": [
+      "口号表述不准"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0032",
+    "name": "五四运动与中共成立",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 9,
+    "definition": "五四运动的背景、过程、意义与中共一大。",
+    "commonApproach": "五四运动是新民主主义革命的开端，工人阶级登上政治舞台。",
+    "pitfalls": [
+      "五四运动性质表述不准",
+      "新旧民主主义革命区别说不清"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0033",
+    "name": "国民革命与土地革命",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 10,
+    "definition": "国共合作、北伐战争、南昌起义与农村包围城市道路。",
+    "commonApproach": "农村包围城市道路的开辟是马克思主义中国化的重大成果。",
+    "pitfalls": [
+      "革命道路探索过程梳理错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0034",
+    "name": "抗日战争",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 11,
+    "definition": "日本侵华、正面战场与敌后战场、抗战胜利的意义。",
+    "commonApproach": "抗战胜利是近代以来中国反抗外来侵略的第一次完全胜利。",
+    "pitfalls": [
+      "正面战场与敌后战场作用表述片面"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0035",
+    "name": "解放战争",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0023",
+    "chapter": "中国近代史",
+    "orderIndex": 12,
+    "definition": "重庆谈判、战略反攻与三大战役。",
+    "commonApproach": "解放战争胜利的根本原因是人民群众的支持。",
+    "pitfalls": [
+      "战役顺序梳理错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0036",
+    "name": "中国现代史",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "中国现代史",
+    "orderIndex": 0,
+    "definition": "新中国的建立、社会主义建设与改革开放。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0037",
+    "name": "新中国的建立",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0036",
+    "chapter": "中国现代史",
+    "orderIndex": 1,
+    "definition": "新中国成立的意义与政权巩固措施。",
+    "commonApproach": "按「政治制度建立、经济恢复、外交开创」梳理建国初期。",
+    "pitfalls": [
+      "土地改革与三大改造混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0038",
+    "name": "社会主义制度的确立",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0036",
+    "chapter": "中国现代史",
+    "orderIndex": 2,
+    "definition": "三大改造与一五计划。",
+    "commonApproach": "1956 年三大改造完成标志社会主义制度基本建立。",
+    "pitfalls": [
+      "三大改造完成时间记错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0039",
+    "name": "社会主义建设的曲折探索",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0036",
+    "chapter": "中国现代史",
+    "orderIndex": 3,
+    "definition": "大跃进、人民公社化与文化大革命。",
+    "commonApproach": "失误的根源是对社会主义建设的规律认识不足。",
+    "pitfalls": [
+      "曲折探索的经验教训总结不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0040",
+    "name": "改革开放",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0036",
+    "chapter": "中国现代史",
+    "orderIndex": 4,
+    "definition": "十一届三中全会、经济体制改革与对外开放格局。",
+    "commonApproach": "改革开放的起点是十一届三中全会，改革从农村家庭联产承包责任制开始。",
+    "pitfalls": [
+      "改革开放起点与标志性事件混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0041",
+    "name": "中国特色社会主义新时代",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0036",
+    "chapter": "中国现代史",
+    "orderIndex": 5,
+    "definition": "新时代的主要成就与理论创新。",
+    "commonApproach": "按「经济、政治、文化、社会、生态」五位一体梳理成就。",
+    "pitfalls": [
+      "五位一体总体布局内容记不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0042",
+    "name": "世界古代史",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "世界古代史",
+    "orderIndex": 0,
+    "definition": "古希腊罗马与中古西欧。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0043",
+    "name": "古希腊民主政治",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0042",
+    "chapter": "世界古代史",
+    "orderIndex": 1,
+    "definition": "雅典民主政治的形成、内容与评价。",
+    "commonApproach": "雅典民主的前提是小国寡民，局限是少数人的民主（妇女、奴隶、外邦人无权）。",
+    "pitfalls": [
+      "雅典民主的局限答不出"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0044",
+    "name": "罗马法",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0042",
+    "chapter": "世界古代史",
+    "orderIndex": 2,
+    "definition": "从习惯法到成文法、从公民法到万民法。",
+    "commonApproach": "罗马法的发展是伴随版图扩大与商品经济发展而演进的。",
+    "pitfalls": [
+      "罗马法两个阶段混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0045",
+    "name": "中古西欧",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0042",
+    "chapter": "世界古代史",
+    "orderIndex": 3,
+    "definition": "封君封臣制、庄园经济与城市的兴起。",
+    "commonApproach": "封君封臣制以土地为纽带、以契约为约束，国王权力有限。",
+    "pitfalls": [
+      "封君封臣制特点表述不全"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0046",
+    "name": "世界近代史",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "世界近代史",
+    "orderIndex": 0,
+    "definition": "资本主义的兴起与世界市场的形成。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0047",
+    "name": "文艺复兴",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 1,
+    "definition": "背景、核心思想与代表人物。",
+    "commonApproach": "核心是人文主义，实质是新兴资产阶级的思想解放运动。",
+    "pitfalls": [
+      "文艺复兴与启蒙运动核心思想混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0048",
+    "name": "新航路开辟",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 2,
+    "definition": "背景、过程与影响。",
+    "commonApproach": "新航路开辟使世界由分散走向整体，同时开启殖民扩张。",
+    "pitfalls": [
+      "影响只答积极面"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0049",
+    "name": "宗教改革",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 3,
+    "definition": "背景、马丁·路德的主张与影响。",
+    "commonApproach": "因信称义否定了教皇权威，推动了民族国家的形成。",
+    "pitfalls": [
+      "因信称义内涵表述不准"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0050",
+    "name": "启蒙运动",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 4,
+    "definition": "背景、核心主张与代表性思想家。",
+    "commonApproach": "启蒙运动以理性为核心，为资产阶级革命提供理论基础。",
+    "pitfalls": [
+      "启蒙思想家主张张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0051",
+    "name": "英国资产阶级革命与君主立宪制",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 5,
+    "definition": "革命的进程与《权利法案》。",
+    "commonApproach": "君主立宪制确立议会主权，国王权力受法律限制。",
+    "pitfalls": [
+      "各国政体特点张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0052",
+    "name": "美国独立与联邦制",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 6,
+    "definition": "独立战争、《独立宣言》与 1787 年宪法。",
+    "commonApproach": "1787 年宪法确立三权分立与联邦制，但也保留了奴隶制。",
+    "pitfalls": [
+      "联邦制与邦联制混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0053",
+    "name": "法国大革命与共和制",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 7,
+    "definition": "大革命进程、《人权宣言》与法国共和制的确立。",
+    "commonApproach": "法国政体更替曲折，最终在 1875 年共和制确立。",
+    "pitfalls": [
+      "法国政体演变过程梳理错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0054",
+    "name": "工业革命",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 8,
+    "definition": "两次工业革命的背景、成就与影响。",
+    "commonApproach": "抓「生产力飞跃→生产关系调整→世界联系加强」三层影响。",
+    "pitfalls": [
+      "两次工业革命标志性成就混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0055",
+    "name": "资本主义世界市场",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0046",
+    "chapter": "世界近代史",
+    "orderIndex": 9,
+    "definition": "世界市场形成的过程与影响。",
+    "commonApproach": "世界市场的形成经历了新航路开辟、殖民扩张、工业革命三个关键阶段。",
+    "pitfalls": [
+      "世界市场形成阶段划分错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0056",
+    "name": "世界现代史",
+    "subject": "history",
+    "parentId": null,
+    "chapter": "世界现代史",
+    "orderIndex": 0,
+    "definition": "两次世界大战、冷战与世界多极化。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0057",
+    "name": "第一次世界大战",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 1,
+    "definition": "背景、进程与凡尔赛-华盛顿体系。",
+    "commonApproach": "凡尔赛-华盛顿体系未能消除矛盾，反而埋下二战隐患。",
+    "pitfalls": [
+      "两大战后体系混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0058",
+    "name": "俄国十月革命",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 2,
+    "definition": "背景、过程与意义。",
+    "commonApproach": "十月革命建立了世界上第一个社会主义国家。",
+    "pitfalls": [
+      "二月革命与十月革命性质混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0059",
+    "name": "苏联社会主义建设",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 3,
+    "definition": "战时共产主义、新经济政策、斯大林模式与改革。",
+    "commonApproach": "斯大林模式的弊端在于高度集中的政治经济体制。",
+    "pitfalls": [
+      "苏联几次改革内容混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0060",
+    "name": "1929年经济危机与罗斯福新政",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 4,
+    "definition": "危机的表现、原因与新政的措施和影响。",
+    "commonApproach": "新政的特点是加强国家干预经济，开创了国家垄断资本主义。",
+    "pitfalls": [
+      "新政措施归类错"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0061",
+    "name": "第二次世界大战",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 5,
+    "definition": "背景、进程与雅尔塔体系。",
+    "commonApproach": "雅尔塔体系奠定了两极格局的基础。",
+    "pitfalls": [
+      "两次世界大战影响混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0062",
+    "name": "冷战与两极格局",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 6,
+    "definition": "冷战的表现与两极格局的形成与结束。",
+    "commonApproach": "冷战表现按「政治、经济、军事、思想」四条分点作答。",
+    "pitfalls": [
+      "冷战表现与多极化趋势关系说不清"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0063",
+    "name": "世界多极化趋势",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 7,
+    "definition": "欧共体、日本崛起、不结盟运动与苏联解体。",
+    "commonApproach": "多极化趋势在冷战期间已出现，苏联解体后才形成「一超多强」。",
+    "pitfalls": [
+      "多极化与两极格局时间线混淆"
+    ]
+  },
+  {
+    "id": "KP_HISTORY_0064",
+    "name": "经济全球化与区域集团化",
+    "subject": "history",
+    "parentId": "KP_HISTORY_0056",
+    "chapter": "世界现代史",
+    "orderIndex": 8,
+    "definition": "战后资本主义经济体系、区域集团化与全球化。",
+    "commonApproach": "布雷顿森林体系与关贸总协定构成战后资本主义经济体系的两大支柱。",
+    "pitfalls": [
+      "国际组织名称与职能对应错"
+    ]
+  }
+]

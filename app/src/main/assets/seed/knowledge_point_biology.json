@@ -1,0 +1,1187 @@
+[
+  {
+    "id": "KP_BIOLOGY_0001",
+    "name": "细胞的基本结构",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "细胞的基本结构",
+    "orderIndex": 0,
+    "definition": "细胞是生命活动的基本单位，考查结构基础与功能联系。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0002",
+    "name": "细胞的多样性与统一性",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 1,
+    "definition": "原核细胞与真核细胞的区别与统一性。",
+    "commonApproach": "按「有无核膜包被的细胞核」区分，注意原核细胞也有核糖体与细胞膜。",
+    "pitfalls": [
+      "原核与真核细胞结构差异记混",
+      "认为原核细胞没有细胞器"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0003",
+    "name": "细胞中的元素与无机物",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 2,
+    "definition": "组成细胞的元素、水与无机盐的作用。",
+    "commonApproach": "自由水承担溶剂与运输功能，结合水是结构组分，无机盐参与维持渗透压与pH。",
+    "pitfalls": [
+      "自由水结合水作用记反",
+      "无机盐作用表述不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0004",
+    "name": "糖类与脂质",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 3,
+    "definition": "糖类的种类与功能、脂质的种类与功能。",
+    "commonApproach": "按「单糖-二糖-多糖」分类，脂质抓「脂肪储能、磷脂构成膜、固醇调节」。",
+    "pitfalls": [
+      "糖类与脂质功能混淆",
+      "把纤维素当储能物质"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0005",
+    "name": "蛋白质",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 4,
+    "definition": "蛋白质的组成、结构与功能及脱水缩合的计算。",
+    "commonApproach": "肽键数 = 氨基酸数 - 肽链数，注意环状多肽的特殊性。",
+    "pitfalls": [
+      "肽键与氨基羧基计算错误",
+      "忽略二硫键对分子量的影响"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0006",
+    "name": "核酸",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 5,
+    "definition": "DNA与RNA的组成、结构与功能。",
+    "commonApproach": "DNA特异在脱氧核糖与胸腺嘧啶，RNA在核糖与尿嘧啶。",
+    "pitfalls": [
+      "DNA与RNA的碱基混淆",
+      "核酸与核苷酸的概念层级混乱"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0007",
+    "name": "细胞膜",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 6,
+    "definition": "细胞膜的流动镶嵌模型与功能特性。",
+    "commonApproach": "流动性是结构特点、选择透过性是功能特性，载体具有专一性。",
+    "pitfalls": [
+      "流动性与选择透过性混淆",
+      "糖蛋白位置判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0008",
+    "name": "细胞器",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 7,
+    "definition": "各种细胞器的结构与功能及协调配合。",
+    "commonApproach": "按「双层膜、单层膜、无膜」三类归纳，分泌蛋白路线要能完整表述。",
+    "pitfalls": [
+      "细胞器功能张冠李戴",
+      "细胞器膜层数记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0009",
+    "name": "细胞核",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0001",
+    "chapter": "细胞的基本结构",
+    "orderIndex": 8,
+    "definition": "细胞核的结构与功能、核孔的作用。",
+    "commonApproach": "核孔实现核质间大分子交换，且具有选择性。",
+    "pitfalls": [
+      "核孔允许物质自由通过",
+      "染色质与染色体关系说错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0010",
+    "name": "细胞代谢",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "细胞代谢",
+    "orderIndex": 0,
+    "definition": "光合作用、细胞呼吸与酶、ATP是代谢的四大核心。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0011",
+    "name": "酶",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 1,
+    "definition": "酶的本质、特性与影响因素。",
+    "commonApproach": "高效性与专一性用对照实验验证，低温抑制、高温变性是实现区分关键。",
+    "pitfalls": [
+      "低温使酶失活与变性混淆",
+      "对照实验变量不单一"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0012",
+    "name": "ATP",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 2,
+    "definition": "ATP的结构、功能与ATP-ADP循环。",
+    "commonApproach": "抓「远离腺苷的高能磷酸键易断裂」，注意产生ATP的场所有多处。",
+    "pitfalls": [
+      "ATP与ADP转化场所记错",
+      "认为ATP是储能物质"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0013",
+    "name": "细胞的吸水和失水",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 3,
+    "definition": "渗透作用的原理与质壁分离及复原。",
+    "commonApproach": "条件是半透膜与浓度差，质壁分离看到的是原生质层收缩。",
+    "pitfalls": [
+      "把细胞壁当半透膜",
+      "质壁分离复原条件说错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0014",
+    "name": "物质跨膜运输的方式",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 4,
+    "definition": "被动运输、主动运输、胞吞与胞吐。",
+    "commonApproach": "先看是否需要载体、是否耗能、是否从高浓度到低浓度。",
+    "pitfalls": [
+      "协助扩散与主动运输混淆",
+      "胞吞胞吐不算跨膜运输这点记不住"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0015",
+    "name": "影响跨膜运输的因素",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 5,
+    "definition": "温度、氧气、浓度对运输速率的影响。",
+    "commonApproach": "画速率-O₂浓度曲线：只靠被动运输的曲线从原点起且后期持平。",
+    "pitfalls": [
+      "各运输方式的曲线特征混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0016",
+    "name": "光合作用的色素的与结构",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 6,
+    "definition": "叶绿体结构、色素的种类与吸收光谱。",
+    "commonApproach": "叶绿素主要吸收红光与蓝紫光，类胡萝卜素主要吸收蓝紫光。",
+    "pitfalls": [
+      "色素层析结果顺序记错",
+      "吸收光谱判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0017",
+    "name": "光合作用的过程",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 7,
+    "definition": "光反应与暗反应的场所、物质变化与能量变化。",
+    "commonApproach": "光反应抓「水的光解与ATP合成」，暗反应抓「CO₂固定与C₃还原」。",
+    "pitfalls": [
+      "光反应与暗反应场所混淆",
+      "物质变化表述不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0018",
+    "name": "影响光合作用的因素",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 8,
+    "definition": "光照强度、CO₂浓度、温度与多因素综合。",
+    "commonApproach": "在曲线上找限制因素：处于上升段时自变量是限制因素。",
+    "pitfalls": [
+      "把非限制因素当限制因素",
+      "改变条件后C₃C₅变化判断反了"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0019",
+    "name": "细胞呼吸·有氧呼吸",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 9,
+    "definition": "有氧呼吸三阶段的场所、反应物与产物。",
+    "commonApproach": "按「细胞质基质→线粒体基质→线粒体内膜」定位并记产物。",
+    "pitfalls": [
+      "有氧呼吸水参与与生成阶段记错",
+      "产生ATP最多的阶段记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0020",
+    "name": "细胞呼吸·无氧呼吸",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 10,
+    "definition": "无氧呼吸的两种途径与产物。",
+    "commonApproach": "产乳酸与产酒精两条途径要能对应到具体生物。",
+    "pitfalls": [
+      "无氧呼吸产乳酸与酒精分不清",
+      "无氧呼吸释放能量少原因说不清"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0021",
+    "name": "影响细胞呼吸的因素",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0010",
+    "chapter": "细胞代谢",
+    "orderIndex": 11,
+    "definition": "氧气浓度、温度对细胞呼吸的影响及应用。",
+    "commonApproach": "氧气浓度升高抑制无氧呼吸、促进有氧呼吸，储存蔬菜水果要低氧低温。",
+    "pitfalls": [
+      "低氧与无氧的区分错",
+      "呼吸作用应用实例判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0022",
+    "name": "细胞的生命历程",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "细胞的生命历程",
+    "orderIndex": 0,
+    "definition": "细胞增殖、分化、衰老、凋亡与癌变。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0023",
+    "name": "细胞周期",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 1,
+    "definition": "细胞周期的概念与阶段划分。",
+    "commonApproach": "只有连续分裂的细胞才有细胞周期，间期远长于分裂期。",
+    "pitfalls": [
+      "把分裂期当整个周期",
+      "高度分化的细胞还有细胞周期"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0024",
+    "name": "有丝分裂",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 2,
+    "definition": "有丝分裂各时期的特征与染色体、DNA数目变化。",
+    "commonApproach": "用「间期复制→前期出现→中期排列→后期分离→末期重建」记忆，并画数目变化曲线。",
+    "pitfalls": [
+      "染色体与DNA数目变化曲线混淆",
+      "后期着丝粒分裂后染色体数判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0025",
+    "name": "无丝分裂与减数分裂概述",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 3,
+    "definition": "无丝分裂的特点与减数分裂的适用范围。",
+    "commonApproach": "减数分裂只发生在有性生殖形成配子时，注意与有丝分裂的区别。",
+    "pitfalls": [
+      "减数分裂适用范围的判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0026",
+    "name": "减数分裂的过程",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 4,
+    "definition": "减数第一次与第二次分裂各时期的特征。",
+    "commonApproach": "MI 前期联会形成四分体、MI 后期同源染色体分离、MII 后期姐妹染色单体分离。",
+    "pitfalls": [
+      "MI 与 MII 特点混淆",
+      "交叉互换发生的时期记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0027",
+    "name": "减数分裂与遗传规律的联系",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 5,
+    "definition": "减数分裂如何体现分离定律与自由组合定律。",
+    "commonApproach": "同源染色体分离是分离定律的细胞学基础，非同源染色体自由组合对应自由组合定律。",
+    "pitfalls": [
+      "细胞学基础与定律对应错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0028",
+    "name": "细胞分化",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 6,
+    "definition": "细胞分化的概念、实质与意义。",
+    "commonApproach": "实质是基因的选择性表达，遗传物质不发生改变。",
+    "pitfalls": [
+      "把分化理解为遗传物质改变",
+      "分化与全能性关系说不清"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0029",
+    "name": "细胞的全能性",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 7,
+    "definition": "细胞全能性的概念与表达条件。",
+    "commonApproach": "受精卵全能性最高，植物细胞易表达、动物体细胞核有全能性。",
+    "pitfalls": [
+      "全能性大小比较错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0030",
+    "name": "细胞的衰老",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 8,
+    "definition": "细胞衰老的特征与原因。",
+    "commonApproach": "衰老细胞水分减少、酶活性降低、色素积累、膜通透性改变。",
+    "pitfalls": [
+      "衰老特征列举不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0031",
+    "name": "细胞的凋亡与坏死",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 9,
+    "definition": "细胞凋亡的意义与细胞坏死的区别。",
+    "commonApproach": "凋亡是基因控制的程序性死亡，坏死是病理性的被动死亡。",
+    "pitfalls": [
+      "细胞坏死与凋亡混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0032",
+    "name": "癌细胞",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0022",
+    "chapter": "细胞的生命历程",
+    "orderIndex": 10,
+    "definition": "癌细胞的特征与致癌因子。",
+    "commonApproach": "癌细胞能无限增殖、形态结构改变、表面糖蛋白减少易扩散。",
+    "pitfalls": [
+      "癌细胞特征列举不全",
+      "原癌基因与抑癌基因功能混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0033",
+    "name": "遗传的基本规律",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "遗传的基本规律",
+    "orderIndex": 0,
+    "definition": "孟德尔定律与伴性遗传是遗传学的基础。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0034",
+    "name": "分离定律",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0033",
+    "chapter": "遗传的基本规律",
+    "orderIndex": 1,
+    "definition": "一对相对性状的杂交实验、假说演绎与分离定律内容。",
+    "commonApproach": "先判断显隐性（自交后代出现性状分离则亲本为显性），再写基因型。",
+    "pitfalls": [
+      "显隐性判断错",
+      "自交与测交应用混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0035",
+    "name": "自由组合定律",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0033",
+    "chapter": "遗传的基本规律",
+    "orderIndex": 2,
+    "definition": "两对相对性状的杂交实验与自由组合定律内容。",
+    "commonApproach": "拆成一对一对分别计算，再用乘法定理组合。",
+    "pitfalls": [
+      "把自由组合当分离定律算",
+      "9:3:3:1 变式比例含义判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0036",
+    "name": "基因型与表现型的推断",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0033",
+    "chapter": "遗传的基本规律",
+    "orderIndex": 3,
+    "definition": "根据子代表现型推断亲本基因型与概率计算。",
+    "commonApproach": "用「隐性突破法」：隐性个体一定是纯合子，可反推亲本。",
+    "pitfalls": [
+      "概率计算漏乘性别概率",
+      "致死情况未考虑"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0037",
+    "name": "伴性遗传",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0033",
+    "chapter": "遗传的基本规律",
+    "orderIndex": 4,
+    "definition": "伴X显性、伴X隐性、伴Y遗传的特点与系谱图分析。",
+    "commonApproach": "先判显隐性，再判是否伴性，用「无中生有为隐性，隐性看女病，女病男正非伴性」检验。",
+    "pitfalls": [
+      "系谱图概率计算漏乘性别概率",
+      "伴Y遗传特点记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0038",
+    "name": "遗传系谱图分析",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0033",
+    "chapter": "遗传的基本规律",
+    "orderIndex": 5,
+    "definition": "综合分析多个家族成员的遗传病类型与概率。",
+    "commonApproach": "按「判显隐→判染色体→定基因型→算概率」四步走。",
+    "pitfalls": [
+      "步骤跳跃导致判断错",
+      "两种病并存时概率计算混乱"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0039",
+    "name": "遗传的分子基础",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "遗传的分子基础",
+    "orderIndex": 0,
+    "definition": "DNA是遗传物质的证据、结构与表达。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0040",
+    "name": "DNA是主要的遗传物质",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 1,
+    "definition": "肺炎双球菌转化实验与噬菌体侵染细菌实验。",
+    "commonApproach": "两个实验的设计思路都是「把DNA与蛋白质分开，单独观察各自作用」。",
+    "pitfalls": [
+      "实验结论表述不准确",
+      "同位素标记选择错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0041",
+    "name": "DNA的结构",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 2,
+    "definition": "DNA双螺旋结构的特点与碱基互补配对。",
+    "commonApproach": "抓「反向平行、磷酸脱氧核糖交替排列在外、碱基配对在内」三条。",
+    "pitfalls": [
+      "碱基配对规则记错",
+      "DNA与RNA结构混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0042",
+    "name": "DNA的复制",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 3,
+    "definition": "DNA复制的时间、场所、条件、特点与半保留复制。",
+    "commonApproach": "抓「边解旋边复制、半保留复制」，注意复制n次后含母链的DNA分子数为2。",
+    "pitfalls": [
+      "复制次数与含母链分子数换算错",
+      "复制与转录条件混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0043",
+    "name": "转录与翻译",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 4,
+    "definition": "基因表达的转录与翻译过程及碱基配对规则。",
+    "commonApproach": "按「DNA→mRNA→蛋白质」梳理信息流，注意转录与翻译的配对规则差异。",
+    "pitfalls": [
+      "转录与翻译场所混淆",
+      "密码子与反密码子对应错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0044",
+    "name": "基因对性状的控制",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 5,
+    "definition": "基因通过控制酶的合成或蛋白质结构控制性状。",
+    "commonApproach": "两条途径要能对应到具体实例（白化病与镰刀型细胞贫血症）。",
+    "pitfalls": [
+      "两条控制途径对应实例错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0045",
+    "name": "中心法则",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 6,
+    "definition": "中心法则的内容与补充。",
+    "commonApproach": "DNA→DNA、DNA→RNA、RNA→蛋白质，以及RNA的复制与逆转录。",
+    "pitfalls": [
+      "中心法则内容记不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0046",
+    "name": "基因突变",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 7,
+    "definition": "基因突变的概念、原因、特点与结果。",
+    "commonApproach": "突变结果是产生新基因，但不一定改变性状（密码子简并性）。",
+    "pitfalls": [
+      "把突变等同于性状改变",
+      "突变与基因重组的区别说不清"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0047",
+    "name": "基因重组",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 8,
+    "definition": "基因重组的类型与意义。",
+    "commonApproach": "包括自由组合、交叉互换与基因工程，注意交叉互换发生在减数第一次分裂前期。",
+    "pitfalls": [
+      "交叉互换属于基因重组这点记错",
+      "重组类型列举不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0048",
+    "name": "染色体变异",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 9,
+    "definition": "染色体结构变异与数目变异。",
+    "commonApproach": "结构变异有缺失、重复、倒位、易位四种，数目变异分整倍体与非整倍体。",
+    "pitfalls": [
+      "易位与交叉互换混淆",
+      "单倍体与一倍体概念混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0049",
+    "name": "育种方法",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0039",
+    "chapter": "遗传的分子基础",
+    "orderIndex": 10,
+    "definition": "杂交育种、诱变育种、单倍体育种、多倍体育种与基因工程育种。",
+    "commonApproach": "按「原理—方法—优缺点」三要素对比记忆五种育种方法。",
+    "pitfalls": [
+      "单倍体育种与多倍体育种过程混淆",
+      "各育种方法原理对应错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0050",
+    "name": "生物变异与进化",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "生物变异与进化",
+    "orderIndex": 0,
+    "definition": "变异是进化的原材料，自然选择决定进化方向。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0051",
+    "name": "自然选择学说",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0050",
+    "chapter": "生物变异与进化",
+    "orderIndex": 1,
+    "definition": "达尔文自然选择学说的主要内容与局限。",
+    "commonApproach": "抓「过度繁殖、生存斗争、遗传变异、适者生存」四点。",
+    "pitfalls": [
+      "用进废退与自然选择混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0052",
+    "name": "现代生物进化理论",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0050",
+    "chapter": "生物变异与进化",
+    "orderIndex": 2,
+    "definition": "种群是进化单位、突变与基因重组提供原材料、自然选择决定方向。",
+    "commonApproach": "进化的实质是种群基因频率的改变。",
+    "pitfalls": [
+      "把个体变化当进化",
+      "基因频率与基因型频率混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0053",
+    "name": "种群基因频率的计算",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0050",
+    "chapter": "生物变异与进化",
+    "orderIndex": 3,
+    "definition": "基因频率与基因型频率的相互计算。",
+    "commonApproach": "常染色体基因用「某基因数/总基因数」，伴X基因要注意男性只有一条X。",
+    "pitfalls": [
+      "伴X基因频率计算方法用错",
+      "杂合子基因频率计算漏乘2"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0054",
+    "name": "物种形成",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0050",
+    "chapter": "生物变异与进化",
+    "orderIndex": 4,
+    "definition": "隔离在物种形成中的作用。",
+    "commonApproach": "地理隔离可能导致生殖隔离，生殖隔离是物种形成的标志。",
+    "pitfalls": [
+      "生殖隔离与地理隔离混淆",
+      "物种形成必须经过地理隔离这点记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0055",
+    "name": "共同进化与生物多样性",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0050",
+    "chapter": "生物变异与进化",
+    "orderIndex": 5,
+    "definition": "共同进化与生物多样性形成的关系。",
+    "commonApproach": "生物多样性包括基因、物种与生态系统三个层次。",
+    "pitfalls": [
+      "生物多样性三个层次混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0056",
+    "name": "稳态与调节",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "稳态与调节",
+    "orderIndex": 0,
+    "definition": "神经、体液、免疫三大调节共同维持内环境稳态。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0057",
+    "name": "内环境的组成",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 1,
+    "definition": "血浆、组织液、淋巴的相互关系与成分差异。",
+    "commonApproach": "血浆与组织液双向交换，组织液单向进入毛细淋巴管形成淋巴。",
+    "pitfalls": [
+      "组织液与淋巴关系记错",
+      "内环境成分判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0058",
+    "name": "内环境的理化性质",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 2,
+    "definition": "渗透压、酸碱度与温度及其调节。",
+    "commonApproach": "血浆渗透压主要由无机盐与蛋白质决定，pH 靠缓冲物质维持。",
+    "pitfalls": [
+      "渗透压决定因素记不全",
+      "缓冲物质作用说不清"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0059",
+    "name": "神经调节的结构基础",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 3,
+    "definition": "神经元、反射与反射弧的组成。",
+    "commonApproach": "反射弧按「感受器→传入神经→神经中枢→传出神经→效应器」顺序。",
+    "pitfalls": [
+      "反射弧组成顺序错",
+      "把反射与反应混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0060",
+    "name": "兴奋在神经纤维上的传导",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 4,
+    "definition": "静息电位与动作电位的产生机制与传导特点。",
+    "commonApproach": "静息电位外正内负靠K⁺外流，动作电位外负内正靠Na⁺内流，传导是双向的。",
+    "pitfalls": [
+      "电位变化判断错",
+      "传导方向单向与双向混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0061",
+    "name": "兴奋在突触间的传递",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 5,
+    "definition": "突触结构、递质释放与单向传递的原因。",
+    "commonApproach": "递质只能由突触前膜释放作用于突触后膜，因此单向传递。",
+    "pitfalls": [
+      "突触传递单向性原因答不出",
+      "突触结构组成记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0062",
+    "name": "神经系统的分级调节与人脑功能",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 6,
+    "definition": "中枢神经系统的分级调节与人脑高级功能。",
+    "commonApproach": "低级中枢受高级中枢控制，言语区损伤表现要能对应。",
+    "pitfalls": [
+      "言语区各区域功能对应错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0063",
+    "name": "激素调节",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 7,
+    "definition": "激素调节的特点与主要内分泌腺及其激素。",
+    "commonApproach": "激素调节有微量高效、通过体液运输、作用于靶器官靶细胞三特点。",
+    "pitfalls": [
+      "激素调节特点列举不全",
+      "激素与酶混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0064",
+    "name": "血糖调节",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 8,
+    "definition": "血糖平衡的调节过程与糖尿病。",
+    "commonApproach": "抓「胰岛素降血糖、胰高血糖素升血糖」，注意反馈调节。",
+    "pitfalls": [
+      "胰岛素与胰高血糖素作用记反",
+      "反馈调节与分级调节混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0065",
+    "name": "体温调节与水盐调节",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 9,
+    "definition": "体温恒定的调节机制与水盐平衡的调节。",
+    "commonApproach": "体温调节中枢在下丘脑，水盐平衡靠抗利尿激素与醛固酮。",
+    "pitfalls": [
+      "调节中枢位置记错",
+      "抗利尿激素作用说反"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0066",
+    "name": "免疫系统的组成",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 10,
+    "definition": "免疫器官、免疫细胞与免疫活性物质。",
+    "commonApproach": "注意 T 细胞在胸腺成熟、B 细胞在骨髓成熟。",
+    "pitfalls": [
+      "T 细胞与 B 细胞成熟场所混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0067",
+    "name": "特异性免疫",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 11,
+    "definition": "体液免疫与细胞免疫的过程与相互关系。",
+    "commonApproach": "抓「B细胞→浆细胞→抗体」与「T细胞→效应T细胞」两条主线。",
+    "pitfalls": [
+      "浆细胞不能识别抗原这点记不住",
+      "二次免疫特点表述不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0068",
+    "name": "免疫失调与免疫应用",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0056",
+    "chapter": "稳态与调节",
+    "orderIndex": 12,
+    "definition": "过敏反应、自身免疫病、免疫缺陷病与免疫学应用。",
+    "commonApproach": "过敏反应是再次接触过敏原引起的，自身免疫病是攻击自身正常组织。",
+    "pitfalls": [
+      "过敏反应与自身免疫病混淆",
+      "疫苗原理表述错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0069",
+    "name": "生态系统与环境保护",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 0,
+    "definition": "种群、群落、生态系统三个层次与环境保护。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0070",
+    "name": "种群的特征",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 1,
+    "definition": "种群密度、出生率死亡率、迁入率迁出率、年龄组成与性别比例。",
+    "commonApproach": "年龄组成通过影响出生率死亡率间接影响密度，性别比例通过影响出生率影响。",
+    "pitfalls": [
+      "各特征之间的影响关系搞错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0071",
+    "name": "种群数量的变化",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 2,
+    "definition": "J型与S型增长曲线及增长率与增长速率。",
+    "commonApproach": "J型增长率不变、增长速率增大；S型增长速率先增后减、K/2 时最大。",
+    "pitfalls": [
+      "J型与S型增长速率变化判断错",
+      "K值与K/2应用混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0072",
+    "name": "群落的结构",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 3,
+    "definition": "群落的物种组成、种间关系与空间结构。",
+    "commonApproach": "种间关系抓「竞争、捕食、寄生、互利共生」四种并会对曲线。",
+    "pitfalls": [
+      "竞争与捕食的曲线特征混淆",
+      "垂直结构与水平结构混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0073",
+    "name": "群落的演替",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 4,
+    "definition": "初生演替与次生演替的过程与影响因素。",
+    "commonApproach": "初生演替从无到有（裸岩），次生演替保留土壤条件（弃耕农田）。",
+    "pitfalls": [
+      "初生演替与次生演替起点混淆",
+      "演替是群落取代而非物种取代这点记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0074",
+    "name": "生态系统的结构",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 5,
+    "definition": "生态系统的组成成分与营养结构。",
+    "commonApproach": "成分按「非生物物质能量、生产者、消费者、分解者」四类划分。",
+    "pitfalls": [
+      "分解者作用表述不全",
+      "食物链起点必须是生产者这点记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0075",
+    "name": "生态系统的能量流动",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 6,
+    "definition": "能量流动的过程、特点与传递效率。",
+    "commonApproach": "按「摄入→同化→呼吸散失/用于生长」，传递效率 10%~20%。",
+    "pitfalls": [
+      "能量传递效率与利用率混淆",
+      "摄入量与同化量混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0076",
+    "name": "生态系统的物质循环",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 7,
+    "definition": "碳循环等物质循环的特点。",
+    "commonApproach": "物质循环具全球性、循环往复，与能量流动单向递减不同。",
+    "pitfalls": [
+      "物质循环与能量流动特点记反"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0077",
+    "name": "生态系统的信息传递",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 8,
+    "definition": "物理、化学与行为信息及其作用。",
+    "commonApproach": "信息传递能维持生命活动、调节种间关系、维持生态系统稳定。",
+    "pitfalls": [
+      "信息类型判断错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0078",
+    "name": "生态系统的稳定性",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 9,
+    "definition": "抵抗力稳定性与恢复力稳定性。",
+    "commonApproach": "生态系统成分越复杂、营养结构越复杂，抵抗力稳定性越高。",
+    "pitfalls": [
+      "两种稳定性关系判断错",
+      "两者一定呈负相关这点记错"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0079",
+    "name": "生态环境的保护",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0069",
+    "chapter": "生态系统与环境保护",
+    "orderIndex": 10,
+    "definition": "全球性生态环境问题与生物多样性保护。",
+    "commonApproach": "保护生物多样性最有效的措施是就地保护。",
+    "pitfalls": [
+      "保护措施主次混淆",
+      "全球性问题列举不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0080",
+    "name": "生物技术实践与现代生物科技",
+    "subject": "biology",
+    "parentId": null,
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 0,
+    "definition": "选修内容，考查实验操作与前沿技术。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0081",
+    "name": "微生物的培养",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 1,
+    "definition": "培养基的配制、灭菌与接种方法。",
+    "commonApproach": "按「配制→灭菌→倒平板→接种→培养」顺序，注意无菌操作。",
+    "pitfalls": [
+      "灭菌与消毒混淆",
+      "平板划线与稀释涂布操作要区分"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0082",
+    "name": "微生物的分离与计数",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 2,
+    "definition": "选择培养基与计数方法。",
+    "commonApproach": "稀释涂布平板法计数结果偏小，显微镜直接计数结果偏大。",
+    "pitfalls": [
+      "两种计数方法误差方向搞反"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0083",
+    "name": "酶的应用",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 3,
+    "definition": "酶的固定化与加酶洗衣粉。",
+    "commonApproach": "固定化酶有利于重复使用与产物纯化，海藻酸钠常用于包埋法。",
+    "pitfalls": [
+      "包埋法与吸附法适用对象混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0084",
+    "name": "基因工程",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 4,
+    "definition": "基因工程的工具与操作步骤。",
+    "commonApproach": "按「目的基因获取→构建表达载体→导入受体→筛选检测」四步。",
+    "pitfalls": [
+      "限制酶与DNA连接酶作用混淆",
+      "载体必需条件记不全"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0085",
+    "name": "细胞工程",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 5,
+    "definition": "植物组织培养、动物细胞培养与细胞融合。",
+    "commonApproach": "植物组织培养体现细胞全能性，动物细胞融合可用灭活病毒诱导。",
+    "pitfalls": [
+      "植物体细胞杂交与动物细胞融合步骤混淆"
+    ]
+  },
+  {
+    "id": "KP_BIOLOGY_0086",
+    "name": "胚胎工程",
+    "subject": "biology",
+    "parentId": "KP_BIOLOGY_0080",
+    "chapter": "生物技术实践与现代生物科技",
+    "orderIndex": 6,
+    "definition": "体外受精、胚胎移植与胚胎分割。",
+    "commonApproach": "胚胎移植的实质是早期胚胎在相同生理环境中的转移。",
+    "pitfalls": [
+      "胚胎移植与胚胎分割技术要点混淆"
+    ]
+  }
+]

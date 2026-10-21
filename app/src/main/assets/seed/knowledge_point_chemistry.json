@@ -1,0 +1,922 @@
+[
+  {
+    "id": "KP_CHEMISTRY_0001",
+    "name": "物质的分类与化学计量",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 0,
+    "definition": "化学的基本语言与计算基础。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0002",
+    "name": "物质的分类",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 1,
+    "definition": "混合物与纯净物、单质与化合物、酸碱盐氧化物的分类。",
+    "commonApproach": "先按组成元素与物质类别定位，再用交叉分类法检验归属是否唯一。",
+    "pitfalls": [
+      "把胶体当溶液",
+      "碱性氧化物与金属氧化物混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0003",
+    "name": "分散系与胶体",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 2,
+    "definition": "溶液、胶体、浊液的区别与胶体的性质。",
+    "commonApproach": "胶体本质特征是分散质粒径 1~100nm，丁达尔效应是鉴别依据。",
+    "pitfalls": [
+      "认为胶体带电",
+      "把丁达尔效应当本质特征"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0004",
+    "name": "物质的变化",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 3,
+    "definition": "物理变化与化学变化、四种基本反应类型。",
+    "commonApproach": "有无新物质生成是唯一判据，注意同素异形体转化属化学变化。",
+    "pitfalls": [
+      "把同素异形体转化当物理变化"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0005",
+    "name": "物质的量",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 4,
+    "definition": "物质的量的定义与阿伏加德罗常数。",
+    "commonApproach": "所有换算先化成 mol，注意微粒种类（分子、原子、离子、电子）。",
+    "pitfalls": [
+      "微粒数与物质的量混淆",
+      "阿伏加德罗常数条件判断错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0006",
+    "name": "摩尔质量与气体摩尔体积",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 5,
+    "definition": "摩尔质量的计算与气体摩尔体积的使用条件。",
+    "commonApproach": "M=m/n，Vm=22.4L/mol 只在标准状况下适用于气体。",
+    "pitfalls": [
+      "标准状况条件判断错",
+      "非气体也用 Vm"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0007",
+    "name": "物质的量浓度",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 6,
+    "definition": "物质的量浓度的定义、配制与误差分析。",
+    "commonApproach": "c=n/V，V 是溶液体积不是溶剂体积；配制误差按「n 与 V 各自偏大偏小」分析。",
+    "pitfalls": [
+      "溶液体积用溶剂体积代替",
+      "定容仰视俯视误差方向搞反"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0008",
+    "name": "化学式计算",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0001",
+    "chapter": "物质的分类与化学计量",
+    "orderIndex": 7,
+    "definition": "根据化学式计算元素质量分数与物质组成。",
+    "commonApproach": "先把化学式化为物质的量之比，再按比例换算质量与分数。",
+    "pitfalls": [
+      "相对分子质量计算错误",
+      "结晶水合物漏算结晶水"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0009",
+    "name": "离子反应与氧化还原",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 0,
+    "definition": "溶液中反应的两大基本类型。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0010",
+    "name": "电解质与电离",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 1,
+    "definition": "强弱电解质、电离方程式与非电解质。",
+    "commonApproach": "强电解质完全电离用等号，弱电解质部分电离用可逆号。",
+    "pitfalls": [
+      "弱电解质写成等号",
+      "把难溶盐当弱电解质"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0011",
+    "name": "离子方程式书写",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 2,
+    "definition": "离子方程式的书写步骤与正误判断。",
+    "commonApproach": "写化学方程式 → 拆易溶强电解质 → 删相同离子 → 检查守恒。",
+    "pitfalls": [
+      "弱电解质不该拆却拆了",
+      "沉淀气体符号漏标",
+      "电荷与原子不守恒"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0012",
+    "name": "离子方程式正误判断",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 3,
+    "definition": "常见错误类型：拆分错误、守恒错误、反应条件错误、配比错误。",
+    "commonApproach": "逐项检查「拆得对不对、平不平、条件合不合、配比准不准」四点。",
+    "pitfalls": [
+      "忽略反应物配比",
+      "忽略少量过量的差别"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0013",
+    "name": "离子共存",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 4,
+    "definition": "判断给定离子组能否大量共存。",
+    "commonApproach": "依次检查沉淀、气体、弱电解质、氧化还原、双水解、颜色与酸碱性条件。",
+    "pitfalls": [
+      "忽略隐含条件如「无色」",
+      "漏判氧化还原型不共存"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0014",
+    "name": "氧化还原反应基本概念",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 5,
+    "definition": "氧化剂、还原剂、氧化产物、还原产物的判断。",
+    "commonApproach": "先标出变价元素的化合价，化合价升高被氧化、降低被还原。",
+    "pitfalls": [
+      "氧化剂还原剂判断反了",
+      "氧化产物还原产物混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0015",
+    "name": "氧化还原反应配平",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 6,
+    "definition": "化合价升降法与缺项配平。",
+    "commonApproach": "按「升降总数相等」配平，再补电荷与原子守恒。",
+    "pitfalls": [
+      "配平只配原子不配电荷",
+      "缺项配平补错物质"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0016",
+    "name": "电子转移计算",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0009",
+    "chapter": "离子反应与氧化还原",
+    "orderIndex": 7,
+    "definition": "转移电子数与物质的量、质量的换算。",
+    "commonApproach": "先确定每摩尔物质转移多少电子，再按比例换算。",
+    "pitfalls": [
+      "电子转移数与物质的量换算错",
+      "多步反应中间量漏算"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0017",
+    "name": "元素化合物·金属",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "元素化合物·金属",
+    "orderIndex": 0,
+    "definition": "钠铝铁铜等金属及其化合物的性质与转化。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0018",
+    "name": "钠及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0017",
+    "chapter": "元素化合物·金属",
+    "orderIndex": 1,
+    "definition": "钠、氧化钠、过氧化钠、氢氧化钠、碳酸钠与碳酸氢钠。",
+    "commonApproach": "抓住「钠的强还原性」与「碳酸钠/碳酸氢钠热稳定性与碱性差异」两条主线。",
+    "pitfalls": [
+      "过氧化钠与水反应产物记错",
+      "碳酸氢钠与碳酸钠鉴别方法混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0019",
+    "name": "铝及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0017",
+    "chapter": "元素化合物·金属",
+    "orderIndex": 2,
+    "definition": "铝的两性、氧化铝与氢氧化铝的两性以及铝热反应。",
+    "commonApproach": "铝及其化合物要会用「酸过量/碱过量」分别讨论。",
+    "pitfalls": [
+      "氢氧化铝两性方程式写错",
+      "铝热反应条件记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0020",
+    "name": "铁及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0017",
+    "chapter": "元素化合物·金属",
+    "orderIndex": 3,
+    "definition": "铁的二价三价转化、氢氧化铁胶体与铁离子的检验。",
+    "commonApproach": "重点掌握 Fe2+ 与 Fe3+ 的相互转化条件与检验方法。",
+    "pitfalls": [
+      "Fe3+ 检验用错试剂",
+      "氢氧化铁胶体与沉淀制备条件混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0021",
+    "name": "铜及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0017",
+    "chapter": "元素化合物·金属",
+    "orderIndex": 4,
+    "definition": "铜、氧化铜、氢氧化铜与铜盐的性质。",
+    "commonApproach": "铜与浓硫酸、稀硝酸反应是高频考点，注意产物差异。",
+    "pitfalls": [
+      "铜与稀硫酸反应误判",
+      "浓稀硝酸产物混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0022",
+    "name": "镁铝的冶炼与合金",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0017",
+    "chapter": "元素化合物·金属",
+    "orderIndex": 5,
+    "definition": "金属的冶炼方法、合金的性质。",
+    "commonApproach": "按金属活动性顺序选择冶炼方法，合金熔点低于成分金属。",
+    "pitfalls": [
+      "合金性能判断错",
+      "冶炼方法选错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0023",
+    "name": "元素化合物·非金属",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 0,
+    "definition": "氯硫氮硅碳等非金属及其化合物的性质与转化。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0024",
+    "name": "氯及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0023",
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 1,
+    "definition": "氯气、次氯酸、漂白粉与氯离子的检验。",
+    "commonApproach": "抓「氯气强氧化性」与「次氯酸漂白性、不稳定性」两条主线。",
+    "pitfalls": [
+      "次氯酸与次氯酸盐性质混淆",
+      "漂白粉成分记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0025",
+    "name": "硫及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0023",
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 2,
+    "definition": "硫、二氧化硫、硫酸及硫酸根离子的检验。",
+    "commonApproach": "浓硫酸三大特性（吸水性、脱水性、强氧化性）要逐条区分。",
+    "pitfalls": [
+      "二氧化硫漂白性与氯水漂白性混淆",
+      "浓硫酸强氧化性适用条件记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0026",
+    "name": "氮及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0023",
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 3,
+    "definition": "氮气、氨、硝酸及铵根离子的检验。",
+    "commonApproach": "抓「氨的碱性、硝酸的强氧化性」，浓稀硝酸产物不同。",
+    "pitfalls": [
+      "浓稀硝酸产物混淆",
+      "氨的实验室制法装置记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0027",
+    "name": "硅及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0023",
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 4,
+    "definition": "硅、二氧化硅、硅酸与硅酸盐。",
+    "commonApproach": "二氧化硅是酸性氧化物但只与氢氟酸反应，硅酸钠溶液俗称水玻璃。",
+    "pitfalls": [
+      "二氧化硅与酸反应条件判断错",
+      "新型无机非金属材料记混"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0028",
+    "name": "碳及其化合物",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0023",
+    "chapter": "元素化合物·非金属",
+    "orderIndex": 5,
+    "definition": "碳、一氧化碳、二氧化碳与碳酸盐。",
+    "commonApproach": "二氧化碳与碱反应要注意量的不同导致产物不同。",
+    "pitfalls": [
+      "CO2 过量少量产物混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0029",
+    "name": "化学反应原理",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "化学反应原理",
+    "orderIndex": 0,
+    "definition": "反应热、速率、平衡与溶液中的离子平衡，是化学的理论核心。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0030",
+    "name": "化学反应与能量变化",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 1,
+    "definition": "反应热、焓变、放热与吸热反应。",
+    "commonApproach": "ΔH<0 放热、ΔH>0 吸热，注意符号与化学计量数的对应。",
+    "pitfalls": [
+      "ΔH 符号判断反了",
+      "反应热与键能关系说错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0031",
+    "name": "热化学方程式",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 2,
+    "definition": "热化学方程式的书写与意义。",
+    "commonApproach": "必须标物质状态、ΔH 数值与计量数对应，正逆反应 ΔH 符号相反。",
+    "pitfalls": [
+      "热化学方程式漏标状态",
+      "ΔH 与计量数不对应"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0032",
+    "name": "盖斯定律",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 3,
+    "definition": "利用盖斯定律进行反应热叠加计算。",
+    "commonApproach": "把目标方程式拆成已知方程式的加减组合，ΔH 随之同样加减。",
+    "pitfalls": [
+      "方程式变形时 ΔH 未同步变化"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0033",
+    "name": "化学反应速率",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 4,
+    "definition": "反应速率的表示、计算与影响因素。",
+    "commonApproach": "速率之比等于化学计量数之比，分析图像先看斜率再看拐点。",
+    "pitfalls": [
+      "把速率当平衡移动",
+      "忽略固体纯液体不影响速率"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0034",
+    "name": "影响速率的因素",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 5,
+    "definition": "浓度、压强、温度、催化剂与接触面积。",
+    "commonApproach": "温度对任何反应都影响速率，催化剂同等程度改变正逆反应速率。",
+    "pitfalls": [
+      "把压强与浓度混淆",
+      "认为催化剂改变平衡"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0035",
+    "name": "化学平衡状态",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 6,
+    "definition": "化学平衡的特征与平衡状态判断。",
+    "commonApproach": "抓「逆、等、动、定、变」五种特征，判断依据必须指向变量不变。",
+    "pitfalls": [
+      "把不变量当判断依据",
+      "始终不变量误当平衡标志"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0036",
+    "name": "化学平衡常数",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 7,
+    "definition": "平衡常数的表达式、意义与计算。",
+    "commonApproach": "K 只与温度有关，表达式必须用各物质平衡浓度的化学计量数次幂。",
+    "pitfalls": [
+      "平衡常数只与温度有关这点记不住",
+      "纯固体纯液体代入表达式"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0037",
+    "name": "化学平衡移动",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 8,
+    "definition": "温度、浓度、压强改变引起平衡移动。",
+    "commonApproach": "按「改变条件 → 判断移动方向 → 判断新平衡量」三步走。",
+    "pitfalls": [
+      "移动方向与转化率变化混淆",
+      "勒夏特列原理适用范围记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0038",
+    "name": "等效平衡",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 9,
+    "definition": "恒温恒容与恒温恒压下等效平衡的判断。",
+    "commonApproach": "用「极限转化法」把投料量转化到同一边再比较。",
+    "pitfalls": [
+      "恒温恒容与恒温恒压条件混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0039",
+    "name": "弱电解质的电离",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 10,
+    "definition": "弱电解质的电离平衡与电离常数。",
+    "commonApproach": "稀释促进电离但离子浓度降低，Ka 只与温度有关。",
+    "pitfalls": [
+      "稀释时离子浓度变化判断错",
+      "电离常数随浓度变化"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0040",
+    "name": "水的电离与pH",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 11,
+    "definition": "水的离子积、pH 计算与溶液酸碱性判断。",
+    "commonApproach": "Kw 只与温度有关，pH=-lg[H⁺]，注意混合后溶液的体积为两者之和。",
+    "pitfalls": [
+      "强酸碱混合体积不累加",
+      "pH 与酸性强弱混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0041",
+    "name": "盐类水解",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 12,
+    "definition": "盐类水解的规律、影响因素与应用。",
+    "commonApproach": "按「有弱才水解、越弱越水解、谁强显谁性」判断溶液酸碱性。",
+    "pitfalls": [
+      "水解与电离混淆",
+      "盐溶液酸碱性判断错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0042",
+    "name": "离子浓度大小比较",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 13,
+    "definition": "溶液中离子浓度的比较与三大守恒。",
+    "commonApproach": "用电荷守恒、物料守恒、质子守恒三条守恒关系分析离子浓度排序。",
+    "pitfalls": [
+      "三大守恒写错",
+      "忽略水解与电离的程度差异"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0043",
+    "name": "沉淀溶解平衡",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 14,
+    "definition": "溶度积 Ksp 与沉淀的生成、溶解、转化。",
+    "commonApproach": "Ksp 只与温度有关，比较 Q 与 Ksp 判断沉淀是否生成。",
+    "pitfalls": [
+      "溶度积与溶解度混淆",
+      "沉淀转化方向判断错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0044",
+    "name": "原电池",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 15,
+    "definition": "原电池的工作原理与电极反应式。",
+    "commonApproach": "先判正负极（负极失电子），再写电极反应式并检查电荷守恒。",
+    "pitfalls": [
+      "原电池与电解池混淆",
+      "电极反应式电荷不守恒"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0045",
+    "name": "化学电源",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 16,
+    "definition": "一次电池、二次电池与燃料电池。",
+    "commonApproach": "燃料电池要注意介质不同导致产物不同（酸性/碱性）。",
+    "pitfalls": [
+      "燃料电池介质产物混淆",
+      "二次电池充放电电极反应写反"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0046",
+    "name": "电解池",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 17,
+    "definition": "电解原理、惰性电极与活性电极。",
+    "commonApproach": "先判阴阳极，按「阳极优先失电子、阴极优先得电子」写电极反应。",
+    "pitfalls": [
+      "离子放电顺序记错",
+      "活性电极作阳极时电极自身放电没考虑"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0047",
+    "name": "电镀与电解精炼",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0029",
+    "chapter": "化学反应原理",
+    "orderIndex": 18,
+    "definition": "电镀、电解精炼与氯碱工业的应用。",
+    "commonApproach": "电镀时镀层金属作阳极、待镀件作阴极，电镀液浓度不变。",
+    "pitfalls": [
+      "电镀与电解精炼阳极材质混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0048",
+    "name": "有机化学基础",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "有机化学基础",
+    "orderIndex": 0,
+    "definition": "有机物的结构、性质与相互转化。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0049",
+    "name": "有机物的结构与同分异构",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 1,
+    "definition": "碳骨架异构、位置异构、官能团异构与同分异构体计数。",
+    "commonApproach": "先写碳链异构，再写位置异构，最后写官能团异构，避免重复。",
+    "pitfalls": [
+      "同分异构体数漏数",
+      "重复计数"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0050",
+    "name": "有机物的命名",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 2,
+    "definition": "系统命名法与常见有机物俗名。",
+    "commonApproach": "按「选主链→编号→写取代基」三步，编号使取代基位次最小。",
+    "pitfalls": [
+      "主链选错",
+      "编号方向错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0051",
+    "name": "烷烃与烯烃",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 3,
+    "definition": "烷烃的取代反应与烯烃的加成、氧化反应。",
+    "commonApproach": "抓「取代需光照、加成需催化剂或常温」的条件差异。",
+    "pitfalls": [
+      "加成与取代反应条件混淆",
+      "烯烃的顺反异构忽略"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0052",
+    "name": "炔烃与芳香烃",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 4,
+    "definition": "炔烃的加成与苯及其同系物的性质。",
+    "commonApproach": "苯环易取代难加成，注意苯的同系物侧链被酸性高锰酸钾氧化。",
+    "pitfalls": [
+      "苯与烯烃性质混淆",
+      "苯的同系物氧化条件判断错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0053",
+    "name": "卤代烃",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 5,
+    "definition": "卤代烃的取代与消去反应。",
+    "commonApproach": "消去反应要求邻位碳上有氢，取代反应用 NaOH 水溶液加热。",
+    "pitfalls": [
+      "消去反应条件记错",
+      "不检验邻位碳是否有氢"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0054",
+    "name": "醇与酚",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 6,
+    "definition": "醇的取代、消去、氧化与酚的酸性和显色反应。",
+    "commonApproach": "醇的氧化要求连羟基的碳上有氢，酚的酸性弱于碳酸。",
+    "pitfalls": [
+      "醇氧化条件判断错",
+      "酚与醇性质混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0055",
+    "name": "醛与酮",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 7,
+    "definition": "醛的氧化与还原反应、银镜反应与斐林反应。",
+    "commonApproach": "银镜反应需碱性环境且水浴加热，醛基与酮基用银镜反应鉴别。",
+    "pitfalls": [
+      "银镜反应条件写错",
+      "银氨溶液配制不当"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0056",
+    "name": "羧酸与酯",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 8,
+    "definition": "羧酸的酸性、酯化反应与酯的水解。",
+    "commonApproach": "酯化反应「酸脱羟基醇脱氢」，要注意同位素标记法验证断键方式。",
+    "pitfalls": [
+      "酯化反应断键位置记错",
+      "酯水解条件记错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0057",
+    "name": "有机反应类型",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 9,
+    "definition": "取代、加成、消去、氧化、还原、聚合六大类型辨析。",
+    "commonApproach": "按「反应物与产物的组成差」判断反应类型，注意条件提示。",
+    "pitfalls": [
+      "反应类型判断错",
+      "加聚与缩聚混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0058",
+    "name": "有机合成路线设计",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0048",
+    "chapter": "有机化学基础",
+    "orderIndex": 10,
+    "definition": "根据目标产物逆推或正推合成路线。",
+    "commonApproach": "抓官能团的引入、转化与保护，注意碳骨架的构建方法。",
+    "pitfalls": [
+      "逆推时官能团位置对应错",
+      "忽略副反应"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0059",
+    "name": "化学实验",
+    "subject": "chemistry",
+    "parentId": null,
+    "chapter": "化学实验",
+    "orderIndex": 0,
+    "definition": "实验是化学高考的必考板块，考查仪器、操作、检验与探究。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0060",
+    "name": "常见仪器的使用",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 1,
+    "definition": "常见玻璃仪器、加热仪器与计量仪器的使用规范。",
+    "commonApproach": "按「能否加热、能否量取、如何检漏」三方面归纳仪器特点。",
+    "pitfalls": [
+      "量筒与容量瓶混用",
+      "分液漏斗与漏斗混淆"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0061",
+    "name": "化学实验基本操作",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 2,
+    "definition": "过滤、蒸发、蒸馏、萃取分液、焰色反应等。",
+    "commonApproach": "按「操作要点 + 注意事项 + 现象」三部分记忆每个操作。",
+    "pitfalls": [
+      "蒸馏温度计位置错",
+      "蒸发结晶与冷却结晶选择错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0062",
+    "name": "气体的制备与净化",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 3,
+    "definition": "常见气体的实验室制法与除杂、干燥、收集、尾气处理。",
+    "commonApproach": "按「发生装置→净化→干燥→收集→尾气处理」顺序搭装置，注意防倒吸。",
+    "pitfalls": [
+      "装置顺序颠倒",
+      "尾气处理漏做"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0063",
+    "name": "物质的检验与鉴别",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 4,
+    "definition": "常见离子的检验方法与物质鉴别。",
+    "commonApproach": "检验要写出「操作—现象—结论」三部分，且样本要代表性强。",
+    "pitfalls": [
+      "物质检验取样不当",
+      "只用一种试剂鉴别时思路受限"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0064",
+    "name": "物质的分离与提纯",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 5,
+    "definition": "蒸馏、萃取、结晶、过滤、升华与盐析。",
+    "commonApproach": "先看要分离的两者性质差异，再选对应的分离方法。",
+    "pitfalls": [
+      "分离方法选择不当",
+      "提纯时引入新杂质"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0065",
+    "name": "定量实验与误差分析",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 6,
+    "definition": "配制溶液、滴定、灼烧称量等定量实验与误差分析。",
+    "commonApproach": "误差分析按「哪一步导致 n 或 V 偏大偏小」逐项分析。",
+    "pitfalls": [
+      "误差方向分析错",
+      "滴定管读数估读位数错"
+    ]
+  },
+  {
+    "id": "KP_CHEMISTRY_0066",
+    "name": "实验方案设计与评价",
+    "subject": "chemistry",
+    "parentId": "KP_CHEMISTRY_0059",
+    "chapter": "化学实验",
+    "orderIndex": 7,
+    "definition": "实验方案的设计思路与可行性、安全性与环保性评价。",
+    "commonApproach": "按「目的—原理—装置—步骤—现象—结论」六要素组织答案。",
+    "pitfalls": [
+      "方案缺少对照实验",
+      "忽略干扰因素"
+    ]
+  }
+]

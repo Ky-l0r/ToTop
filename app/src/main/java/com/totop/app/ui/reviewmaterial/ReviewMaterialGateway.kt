@@ -24,6 +24,13 @@ sealed class ReviewMaterialResult {
     data class Success(val material: ReviewMaterial, val usage: TokenUsage) : ReviewMaterialResult()
 
     data class Failure(val error: com.totop.app.data.remote.LlmError) : ReviewMaterialResult()
+
+    /** 把解析后的结果补上真实 usage；失败结果原样返回。 */
+    fun withUsage(usage: TokenUsage): ReviewMaterialResult =
+        when (this) {
+            is Success -> copy(usage = usage)
+            is Failure -> this
+        }
 }
 
 /**
@@ -117,7 +124,9 @@ class ReviewMaterialGateway
                     return@channelFlow
                 }
                 val parsed = parse(raw, subjectLabel, mistakes)
-                send(parsed)
+                // 把真实 usage 传下去：旧实现固定返回 TokenUsage.EMPTY，
+                // 导致界面上的 token 统计永远是 0，用户无法判断这次花了多少。
+                send(parsed.withUsage(usage))
             }
 
         /** 解析模型输出；解析失败要给出明确原因而不是空资料。 */

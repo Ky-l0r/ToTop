@@ -1,0 +1,752 @@
+[
+  {
+    "id": "KP_GEOGRAPHY_0001",
+    "name": "地球与地图",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "地球与地图",
+    "orderIndex": 0,
+    "definition": "地理的基础工具与技能。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0002",
+    "name": "地球与经纬网",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0001",
+    "chapter": "地球与地图",
+    "orderIndex": 1,
+    "definition": "地球形状大小、经纬线特征与经纬网的应用。",
+    "commonApproach": "先定经纬度判方向，注意东西方向需取劣弧。",
+    "pitfalls": [
+      "经纬网定向搞错东西",
+      "劣弧定向忽略"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0003",
+    "name": "地图三要素",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0001",
+    "chapter": "地球与地图",
+    "orderIndex": 2,
+    "definition": "比例尺、方向与图例。",
+    "commonApproach": "比例尺越大内容越详细、范围越小，注意三种形式的换算。",
+    "pitfalls": [
+      "比例尺大小与内容详略关系判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0004",
+    "name": "等高线地形图",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0001",
+    "chapter": "地球与地图",
+    "orderIndex": 3,
+    "definition": "等高线的判读与地形类型的识别。",
+    "commonApproach": "等高线疏密判坡度、弯曲方向判山脊山谷、闭合判山顶盆地。",
+    "pitfalls": [
+      "等高线弯曲方向判读反了",
+      "陡崖高度计算错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0005",
+    "name": "地形剖面图",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0001",
+    "chapter": "地球与地图",
+    "orderIndex": 4,
+    "definition": "剖面图的绘制与判读。",
+    "commonApproach": "绘制时注意等高线间隔点与转折点的对应。",
+    "pitfalls": [
+      "剖面图与等高线对应错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0006",
+    "name": "地球运动",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "地球运动",
+    "orderIndex": 0,
+    "definition": "地球自转与公转及其地理意义。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0007",
+    "name": "地球自转的地理意义",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0006",
+    "chapter": "地球运动",
+    "orderIndex": 1,
+    "definition": "昼夜交替、时差与地转偏向力。",
+    "commonApproach": "时区计算按「东加西减」，注意过日界线时的日期变更。",
+    "pitfalls": [
+      "时区计算加减方向搞错",
+      "地转偏向方向记错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0008",
+    "name": "地球公转的地理意义",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0006",
+    "chapter": "地球运动",
+    "orderIndex": 2,
+    "definition": "昼夜长短、正午太阳高度与季节变化。",
+    "commonApproach": "太阳直射点在哪里，哪里正午太阳高度最大；夏至北半球昼最长。",
+    "pitfalls": [
+      "昼夜长短变化规律判断反了",
+      "正午太阳高度公式用错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0009",
+    "name": "光照图的判读",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0006",
+    "chapter": "地球运动",
+    "orderIndex": 3,
+    "definition": "日照图的判读与地方时、太阳高度的计算。",
+    "commonApproach": "先找直射点与晨昏线，再确定各点的地方时。",
+    "pitfalls": [
+      "光照图关键点定位错",
+      "晨昏线判断反"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0010",
+    "name": "大气",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "大气",
+    "orderIndex": 0,
+    "definition": "大气运动与天气气候。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0011",
+    "name": "大气的受热过程",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 1,
+    "definition": "太阳辐射、地面辐射与大气逆辐射。",
+    "commonApproach": "大气对太阳辐射削弱作用与对地面的保温作用，是气温变化的基础。",
+    "pitfalls": [
+      "大气受热过程环节对应错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0012",
+    "name": "热力环流",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 2,
+    "definition": "热力环流的形成与海陆风、山谷风、城市热岛环流。",
+    "commonApproach": "按「受热→上升→近地面低压」推导，注意高空与近地面气压相反。",
+    "pitfalls": [
+      "近地面与高空气压判断混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0013",
+    "name": "气压带与风带",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 3,
+    "definition": "三圈环流、气压带风带的分布与季节移动。",
+    "commonApproach": "按「赤道低压、副热带高压、副极地低压、极地高压」七压六风记忆。",
+    "pitfalls": [
+      "气压带风带季节移动规律记错",
+      "风带风向判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0014",
+    "name": "季风环流",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 4,
+    "definition": "东亚季风与南亚季风的成因与特点。",
+    "commonApproach": "东亚季风由海陆热力性质差异形成，南亚季风还受气压带风带移动影响。",
+    "pitfalls": [
+      "东亚与南亚季风成因混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0015",
+    "name": "常见天气系统",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 5,
+    "definition": "锋面、气旋与反气旋及其天气。",
+    "commonApproach": "冷锋过境后气温降气压升，暖锋过境后气温升气压降。",
+    "pitfalls": [
+      "冷锋与暖锋过境变化混淆",
+      "气旋反气旋天气判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0016",
+    "name": "气候类型的判读",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0010",
+    "chapter": "大气",
+    "orderIndex": 6,
+    "definition": "世界主要气候类型的成因、特征与分布。",
+    "commonApproach": "先看气温曲线判热量带，再看降水柱状判类型，最后核对半球。",
+    "pitfalls": [
+      "气候类型判断错",
+      "成因分析不全"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0017",
+    "name": "水与地表形态",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "水与地表形态",
+    "orderIndex": 0,
+    "definition": "水循环、洋流与地貌的塑造。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0018",
+    "name": "水循环",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 1,
+    "definition": "水循环的环节、类型与意义。",
+    "commonApproach": "按「蒸发、水汽输送、降水、径流」梳理，人类主要影响径流环节。",
+    "pitfalls": [
+      "水循环环节列举不全"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0019",
+    "name": "陆地水体的补给",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 2,
+    "definition": "河流的补给类型与水文特征。",
+    "commonApproach": "补给类型决定汛期，冰川融水补给随气温变化。",
+    "pitfalls": [
+      "补给类型与汛期对应错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0020",
+    "name": "洋流分布规律",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 3,
+    "definition": "洋流的成因与分布。",
+    "commonApproach": "按「中低纬北顺南逆、中高纬北逆南顺」记忆，注意季风洋流。",
+    "pitfalls": [
+      "洋流方向记错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0021",
+    "name": "洋流的地理意义",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 4,
+    "definition": "洋流对气候、渔场、航行与污染的影响。",
+    "commonApproach": "寒暖流交汇或上升流处易形成渔场，暖流增温增湿。",
+    "pitfalls": [
+      "寒暖流对沿岸气候影响说反",
+      "渔场成因分析不全"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0022",
+    "name": "内力作用与板块构造",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 5,
+    "definition": "地壳运动、岩浆活动与板块构造学说。",
+    "commonApproach": "六大板块交界处地壳活跃，注意生长边界与消亡边界的差异。",
+    "pitfalls": [
+      "板块边界类型判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0023",
+    "name": "外力作用与地貌",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 6,
+    "definition": "风化、侵蚀、搬运、堆积作用及对应地貌。",
+    "commonApproach": "先判内力还是外力，再按「侵蚀/搬运/堆积」确定具体地貌类型。",
+    "pitfalls": [
+      "流水作用与风力作用地貌混淆",
+      "侵蚀与堆积地貌混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0024",
+    "name": "地质构造与构造地貌",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0017",
+    "chapter": "水与地表形态",
+    "orderIndex": 7,
+    "definition": "褶皱、断层及其形成的地貌。",
+    "commonApproach": "背斜顶部受张力易侵蚀成谷，向斜槽部受挤压不易侵蚀成山。",
+    "pitfalls": [
+      "背斜向斜与地形倒置混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0025",
+    "name": "自然地理环境的整体性与差异性",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 0,
+    "definition": "自然带的分布规律与影响因素。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0026",
+    "name": "自然地理环境的整体性",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0025",
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 1,
+    "definition": "各要素相互联系相互制约形成整体。",
+    "commonApproach": "一个要素变化会引起其他要素乃至整体变化。",
+    "pitfalls": [
+      "整体性表现分析不全"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0027",
+    "name": "纬度地带性",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0025",
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 2,
+    "definition": "由赤道到两极的地域分异规律。",
+    "commonApproach": "以热量为基础，自然带沿纬度方向更替。",
+    "pitfalls": [
+      "地带性规律与垂直分异混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0028",
+    "name": "经度地带性",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0025",
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 3,
+    "definition": "由沿海到内陆的地域分异规律。",
+    "commonApproach": "以水分为基础，自然带沿经度方向更替。",
+    "pitfalls": [
+      "纬度与经度地带性混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0029",
+    "name": "垂直地带性",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0025",
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 4,
+    "definition": "山地垂直自然带的分布规律。",
+    "commonApproach": "垂直带谱与由赤道向两极的带谱相似，但更替更快、带谱更简单。",
+    "pitfalls": [
+      "垂直带谱规律判断错",
+      "雪线高低影响因素记错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0030",
+    "name": "非地带性现象",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0025",
+    "chapter": "自然地理环境的整体性与差异性",
+    "orderIndex": 5,
+    "definition": "地形、洋流、海陆分布引起的非地带性。",
+    "commonApproach": "先排除地带性因素，再找地形或洋流等特殊原因。",
+    "pitfalls": [
+      "非地带性成因分析不全"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0031",
+    "name": "人口与城市",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "人口与城市",
+    "orderIndex": 0,
+    "definition": "人文地理的核心，考查人口与城市的发展规律。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0032",
+    "name": "人口增长模式",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 1,
+    "definition": "原始型、传统型与现代型的特征与转变。",
+    "commonApproach": "按「出生率、死亡率、自然增长率」三率判读模式。",
+    "pitfalls": [
+      "人口增长模式判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0033",
+    "name": "人口迁移",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 2,
+    "definition": "影响人口迁移的因素与迁移的影响。",
+    "commonApproach": "因素分「推力」与「拉力」，影响分迁出地与迁入地两方面。",
+    "pitfalls": [
+      "迁移影响分析只答一面"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0034",
+    "name": "人口容量",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 3,
+    "definition": "环境人口容量与人口合理容量。",
+    "commonApproach": "环境人口容量是最大值，人口合理容量是适宜值。",
+    "pitfalls": [
+      "两种容量混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0035",
+    "name": "城市空间结构",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 4,
+    "definition": "城市功能分区与空间结构模式。",
+    "commonApproach": "功能区按「商业区、住宅区、工业区」的付租能力递减排布。",
+    "pitfalls": [
+      "功能区布局与付租能力对应错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0036",
+    "name": "城市等级与服务功能",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 5,
+    "definition": "城市等级、服务范围与服务种类。",
+    "commonApproach": "等级越高服务范围越大、服务种类越多、数量越少。",
+    "pitfalls": [
+      "城市等级与服务范围关系判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0037",
+    "name": "城市化",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0031",
+    "chapter": "人口与城市",
+    "orderIndex": 6,
+    "definition": "城市化的进程、特点与问题。",
+    "commonApproach": "城市化阶段按「初期、加速、后期（逆城市化）」划分。",
+    "pitfalls": [
+      "城市化不同阶段特征混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0038",
+    "name": "农业、工业与交通",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "农业、工业与交通",
+    "orderIndex": 0,
+    "definition": "产业区位与区域联系。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0039",
+    "name": "农业区位因素",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 1,
+    "definition": "自然因素与社会经济因素对农业的影响。",
+    "commonApproach": "区位分析按「自然 + 社会经济」分点，注意主导区位因素的判断。",
+    "pitfalls": [
+      "区位因素列举不全",
+      "主导区位因素判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0040",
+    "name": "农业地域类型",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 2,
+    "definition": "季风水田农业、商品谷物农业、大牧场放牧业等。",
+    "commonApproach": "按「分布、特点、区位条件」三方面对比记忆。",
+    "pitfalls": [
+      "地域类型特点张冠李戴"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0041",
+    "name": "工业区位因素",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 3,
+    "definition": "原料、动力、劳动力、市场、技术等区位因素。",
+    "commonApproach": "区位的选择要看「哪种投入成本占比最高」，据此定主导因素。",
+    "pitfalls": [
+      "主导区位因素判断错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0042",
+    "name": "工业地域与产业集聚",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 4,
+    "definition": "工业联系、工业集聚与工业分散。",
+    "commonApproach": "集聚为共享基础设施与协作，分散为寻求最优区位。",
+    "pitfalls": [
+      "集聚与分散原因混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0043",
+    "name": "交通运输方式与布局",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 5,
+    "definition": "五种运输方式的特点与交通线布局的影响因素。",
+    "commonApproach": "交通线布局按「自然障碍→技术保障→经济需求」分析。",
+    "pitfalls": [
+      "各种运输方式优缺点混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0044",
+    "name": "交通对区域发展的影响",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0038",
+    "chapter": "农业、工业与交通",
+    "orderIndex": 6,
+    "definition": "交通对聚落、商业与区域经济的影响。",
+    "commonApproach": "交通变化引起聚落形态变化，也改变商业网点布局。",
+    "pitfalls": [
+      "交通对区域影响只答有利面"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0045",
+    "name": "区域可持续发展",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "区域可持续发展",
+    "orderIndex": 0,
+    "definition": "区域生态环境、资源开发与经济发展。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0046",
+    "name": "区域生态环境建设",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0045",
+    "chapter": "区域可持续发展",
+    "orderIndex": 1,
+    "definition": "荒漠化、水土流失、湿地破坏的成因与治理。",
+    "commonApproach": "按「自然原因 + 人为原因」分析成因，治理措施对应成因逐条提出。",
+    "pitfalls": [
+      "成因与措施不对应",
+      "只答人为原因忽略自然背景"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0047",
+    "name": "流域综合开发",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0045",
+    "chapter": "区域可持续发展",
+    "orderIndex": 2,
+    "definition": "流域开发的条件、问题与综合治理。",
+    "commonApproach": "按「资源条件→开发方式→存在问题→持续发展措施」四步作答。",
+    "pitfalls": [
+      "开发条件与问题混为一谈"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0048",
+    "name": "资源跨区域调配",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0045",
+    "chapter": "区域可持续发展",
+    "orderIndex": 3,
+    "definition": "西气东输、南水北调等工程的原因与影响。",
+    "commonApproach": "影响要从调出地与调入地两方面分析。",
+    "pitfalls": [
+      "影响分析单向"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0049",
+    "name": "产业转移",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0045",
+    "chapter": "区域可持续发展",
+    "orderIndex": 4,
+    "definition": "产业转移的原因与影响。",
+    "commonApproach": "按「转出地推力 + 转入地拉力」分析，影响从两地双向作答。",
+    "pitfalls": [
+      "产业转移原因分析单向"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0050",
+    "name": "区域工业化与城市化",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0045",
+    "chapter": "区域可持续发展",
+    "orderIndex": 5,
+    "definition": "珠三角、长三角等区域的工业化城市化模式。",
+    "commonApproach": "抓「产业结构升级」这条主线，注意不同区域模式差异。",
+    "pitfalls": [
+      "工业化与城市化关系说不清"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0051",
+    "name": "地理信息技术与区域地理",
+    "subject": "geography",
+    "parentId": null,
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 0,
+    "definition": "技术手段与区域认知。",
+    "commonApproach": "先梳理本章概念与规律，再按题型专项练习，最后集中整理易错点。",
+    "pitfalls": [
+      "只背结论不理解成立条件",
+      "跨章节综合题找不到切入点"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0052",
+    "name": "遥感技术的应用",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0051",
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 1,
+    "definition": "RS 的原理与应用领域。",
+    "commonApproach": "RS 用于大范围信息获取与动态监测。",
+    "pitfalls": [
+      "三种技术功能混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0053",
+    "name": "全球定位系统的应用",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0051",
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 2,
+    "definition": "GPS 的原理与应用。",
+    "commonApproach": "GPS 用于精确定位与导航。",
+    "pitfalls": [
+      "GPS 与 GIS 功能混淆"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0054",
+    "name": "地理信息系统的应用",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0051",
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 3,
+    "definition": "GIS 的功能与在城市管理、灾害监测中的应用。",
+    "commonApproach": "GIS 用于数据管理、空间分析与可视化。",
+    "pitfalls": [
+      "GIS 功能理解片面"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0055",
+    "name": "中国地理概况",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0051",
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 4,
+    "definition": "中国的疆域、地形、气候与河流。",
+    "commonApproach": "按「地形三级阶梯、气候类型分布、外流区与内流区」梳理。",
+    "pitfalls": [
+      "中国地形阶梯分界记错"
+    ]
+  },
+  {
+    "id": "KP_GEOGRAPHY_0056",
+    "name": "世界地理概况",
+    "subject": "geography",
+    "parentId": "KP_GEOGRAPHY_0051",
+    "chapter": "地理信息技术与区域地理",
+    "orderIndex": 5,
+    "definition": "世界主要地区与国家的地理特征。",
+    "commonApproach": "先定位经纬度与海陆位置，再推导气候与农业特点。",
+    "pitfalls": [
+      "区域定位错误"
+    ]
+  }
+]

@@ -1,0 +1,458 @@
+[
+  {
+    "fromId": "KP_BIOLOGY_0002",
+    "toId": "KP_BIOLOGY_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0003",
+    "toId": "KP_BIOLOGY_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0004",
+    "toId": "KP_BIOLOGY_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0005",
+    "toId": "KP_BIOLOGY_0006",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0006",
+    "toId": "KP_BIOLOGY_0007",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0007",
+    "toId": "KP_BIOLOGY_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0008",
+    "toId": "KP_BIOLOGY_0009",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0011",
+    "toId": "KP_BIOLOGY_0012",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0012",
+    "toId": "KP_BIOLOGY_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0013",
+    "toId": "KP_BIOLOGY_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0014",
+    "toId": "KP_BIOLOGY_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0015",
+    "toId": "KP_BIOLOGY_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0016",
+    "toId": "KP_BIOLOGY_0017",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0017",
+    "toId": "KP_BIOLOGY_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0018",
+    "toId": "KP_BIOLOGY_0019",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0019",
+    "toId": "KP_BIOLOGY_0020",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0020",
+    "toId": "KP_BIOLOGY_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0009",
+    "toId": "KP_BIOLOGY_0011",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0023",
+    "toId": "KP_BIOLOGY_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0024",
+    "toId": "KP_BIOLOGY_0025",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0025",
+    "toId": "KP_BIOLOGY_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0026",
+    "toId": "KP_BIOLOGY_0027",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0027",
+    "toId": "KP_BIOLOGY_0028",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0028",
+    "toId": "KP_BIOLOGY_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0029",
+    "toId": "KP_BIOLOGY_0030",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0030",
+    "toId": "KP_BIOLOGY_0031",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0031",
+    "toId": "KP_BIOLOGY_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0021",
+    "toId": "KP_BIOLOGY_0023",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0034",
+    "toId": "KP_BIOLOGY_0035",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0035",
+    "toId": "KP_BIOLOGY_0036",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0036",
+    "toId": "KP_BIOLOGY_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0037",
+    "toId": "KP_BIOLOGY_0038",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0032",
+    "toId": "KP_BIOLOGY_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0040",
+    "toId": "KP_BIOLOGY_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0041",
+    "toId": "KP_BIOLOGY_0042",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0042",
+    "toId": "KP_BIOLOGY_0043",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0043",
+    "toId": "KP_BIOLOGY_0044",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0044",
+    "toId": "KP_BIOLOGY_0045",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0045",
+    "toId": "KP_BIOLOGY_0046",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0046",
+    "toId": "KP_BIOLOGY_0047",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0047",
+    "toId": "KP_BIOLOGY_0048",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0048",
+    "toId": "KP_BIOLOGY_0049",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0038",
+    "toId": "KP_BIOLOGY_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0051",
+    "toId": "KP_BIOLOGY_0052",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0052",
+    "toId": "KP_BIOLOGY_0053",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0053",
+    "toId": "KP_BIOLOGY_0054",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0054",
+    "toId": "KP_BIOLOGY_0055",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0049",
+    "toId": "KP_BIOLOGY_0051",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0057",
+    "toId": "KP_BIOLOGY_0058",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0058",
+    "toId": "KP_BIOLOGY_0059",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0059",
+    "toId": "KP_BIOLOGY_0060",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0060",
+    "toId": "KP_BIOLOGY_0061",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0061",
+    "toId": "KP_BIOLOGY_0062",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0062",
+    "toId": "KP_BIOLOGY_0063",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0063",
+    "toId": "KP_BIOLOGY_0064",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0064",
+    "toId": "KP_BIOLOGY_0065",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0065",
+    "toId": "KP_BIOLOGY_0066",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0066",
+    "toId": "KP_BIOLOGY_0067",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0067",
+    "toId": "KP_BIOLOGY_0068",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0055",
+    "toId": "KP_BIOLOGY_0057",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0070",
+    "toId": "KP_BIOLOGY_0071",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0071",
+    "toId": "KP_BIOLOGY_0072",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0072",
+    "toId": "KP_BIOLOGY_0073",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0073",
+    "toId": "KP_BIOLOGY_0074",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0074",
+    "toId": "KP_BIOLOGY_0075",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0075",
+    "toId": "KP_BIOLOGY_0076",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0076",
+    "toId": "KP_BIOLOGY_0077",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0077",
+    "toId": "KP_BIOLOGY_0078",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0078",
+    "toId": "KP_BIOLOGY_0079",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0068",
+    "toId": "KP_BIOLOGY_0070",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0081",
+    "toId": "KP_BIOLOGY_0082",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0082",
+    "toId": "KP_BIOLOGY_0083",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0083",
+    "toId": "KP_BIOLOGY_0084",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0084",
+    "toId": "KP_BIOLOGY_0085",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0085",
+    "toId": "KP_BIOLOGY_0086",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_BIOLOGY_0079",
+    "toId": "KP_BIOLOGY_0081",
+    "type": "prerequisite",
+    "weight": 1.0
+  }
+]

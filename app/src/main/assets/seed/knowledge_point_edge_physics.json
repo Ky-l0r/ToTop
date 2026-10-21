@@ -1,0 +1,476 @@
+[
+  {
+    "fromId": "KP_PHYSICS_0002",
+    "toId": "KP_PHYSICS_0003",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0003",
+    "toId": "KP_PHYSICS_0004",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0004",
+    "toId": "KP_PHYSICS_0005",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0005",
+    "toId": "KP_PHYSICS_0006",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0006",
+    "toId": "KP_PHYSICS_0007",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0007",
+    "toId": "KP_PHYSICS_0008",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0010",
+    "toId": "KP_PHYSICS_0011",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0011",
+    "toId": "KP_PHYSICS_0012",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0012",
+    "toId": "KP_PHYSICS_0013",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0013",
+    "toId": "KP_PHYSICS_0014",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0014",
+    "toId": "KP_PHYSICS_0015",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0015",
+    "toId": "KP_PHYSICS_0016",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0016",
+    "toId": "KP_PHYSICS_0017",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0017",
+    "toId": "KP_PHYSICS_0018",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0018",
+    "toId": "KP_PHYSICS_0019",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0008",
+    "toId": "KP_PHYSICS_0010",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0021",
+    "toId": "KP_PHYSICS_0022",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0022",
+    "toId": "KP_PHYSICS_0023",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0023",
+    "toId": "KP_PHYSICS_0024",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0024",
+    "toId": "KP_PHYSICS_0025",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0025",
+    "toId": "KP_PHYSICS_0026",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0026",
+    "toId": "KP_PHYSICS_0027",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0027",
+    "toId": "KP_PHYSICS_0028",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0028",
+    "toId": "KP_PHYSICS_0029",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0029",
+    "toId": "KP_PHYSICS_0030",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0030",
+    "toId": "KP_PHYSICS_0031",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0031",
+    "toId": "KP_PHYSICS_0032",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0019",
+    "toId": "KP_PHYSICS_0021",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0034",
+    "toId": "KP_PHYSICS_0035",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0035",
+    "toId": "KP_PHYSICS_0036",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0036",
+    "toId": "KP_PHYSICS_0037",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0037",
+    "toId": "KP_PHYSICS_0038",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0038",
+    "toId": "KP_PHYSICS_0039",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0039",
+    "toId": "KP_PHYSICS_0040",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0040",
+    "toId": "KP_PHYSICS_0041",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0041",
+    "toId": "KP_PHYSICS_0042",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0042",
+    "toId": "KP_PHYSICS_0043",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0043",
+    "toId": "KP_PHYSICS_0044",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0032",
+    "toId": "KP_PHYSICS_0034",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0046",
+    "toId": "KP_PHYSICS_0047",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0047",
+    "toId": "KP_PHYSICS_0048",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0048",
+    "toId": "KP_PHYSICS_0049",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0049",
+    "toId": "KP_PHYSICS_0050",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0050",
+    "toId": "KP_PHYSICS_0051",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0051",
+    "toId": "KP_PHYSICS_0052",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0052",
+    "toId": "KP_PHYSICS_0053",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0053",
+    "toId": "KP_PHYSICS_0054",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0044",
+    "toId": "KP_PHYSICS_0046",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0056",
+    "toId": "KP_PHYSICS_0057",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0057",
+    "toId": "KP_PHYSICS_0058",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0058",
+    "toId": "KP_PHYSICS_0059",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0059",
+    "toId": "KP_PHYSICS_0060",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0060",
+    "toId": "KP_PHYSICS_0061",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0061",
+    "toId": "KP_PHYSICS_0062",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0054",
+    "toId": "KP_PHYSICS_0056",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0064",
+    "toId": "KP_PHYSICS_0065",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0065",
+    "toId": "KP_PHYSICS_0066",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0066",
+    "toId": "KP_PHYSICS_0067",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0067",
+    "toId": "KP_PHYSICS_0068",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0068",
+    "toId": "KP_PHYSICS_0069",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0069",
+    "toId": "KP_PHYSICS_0070",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0070",
+    "toId": "KP_PHYSICS_0071",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0071",
+    "toId": "KP_PHYSICS_0072",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0072",
+    "toId": "KP_PHYSICS_0073",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0073",
+    "toId": "KP_PHYSICS_0074",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0074",
+    "toId": "KP_PHYSICS_0075",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0062",
+    "toId": "KP_PHYSICS_0064",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0077",
+    "toId": "KP_PHYSICS_0078",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0078",
+    "toId": "KP_PHYSICS_0079",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0079",
+    "toId": "KP_PHYSICS_0080",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0080",
+    "toId": "KP_PHYSICS_0081",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0081",
+    "toId": "KP_PHYSICS_0082",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0082",
+    "toId": "KP_PHYSICS_0083",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0083",
+    "toId": "KP_PHYSICS_0084",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0084",
+    "toId": "KP_PHYSICS_0085",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0085",
+    "toId": "KP_PHYSICS_0086",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0086",
+    "toId": "KP_PHYSICS_0087",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0087",
+    "toId": "KP_PHYSICS_0088",
+    "type": "prerequisite",
+    "weight": 1.0
+  },
+  {
+    "fromId": "KP_PHYSICS_0075",
+    "toId": "KP_PHYSICS_0077",
+    "type": "prerequisite",
+    "weight": 1.0
+  }
+]

@@ -1,0 +1,221 @@
+package com.totop.app.data.remote
+
+import com.totop.app.data.prefs.LlmCredentials
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/** 追问结果。 */
+sealed class FollowUpEvent {
+    /** 增量正文（流式渲染）。 */
+    data class Delta(val text: String) : FollowUpEvent()
+
+    /** 完成。 */
+    data class Completed(
+        val text: String,
+        val usage: TokenUsage,
+    ) : FollowUpEvent()
+
+    /** 失败（必然带可读原因）。 */
+    data class Failed(val error: LlmError) : FollowUpEvent()
+}
+
+/**
+ * 追问网关：在既有解题上下文上继续对话。
+ *
+ * 为什么必须单独一条链路，而不是再走一次四阶段：
+ * 四阶段是「把一道新题从图片解析到知识点」的完整流水线，产物是结构化 JSON。
+ * 用户的追问（「第二步为什么能这样移项？」「那我这样做错在哪？」）要的是
+ * **一段自然语言的回答**，再跑一遍四阶段既浪费 token，也会把已有上下文丢掉。
+ *
+ * 上下文怎么给：
+ * 把上一轮的题目、标准解答、错因结论压成一段结构化的「已知信息」文本，
+ * 连同用户本次追问一起作为 user 消息发送。这样模型回答时看得到原题与原解，
+ * 不会出现「答非所问」——这正是上一版最被诟病的地方（直接重跑整套流程）。
+ *
+ * 刻意不使用 response_format=json_object：追问的产物是给人读的话，不是结构化数据。
+ */
+@Singleton
+class FollowUpGateway
+    @Inject
+    constructor(
+        private val llmClient: LlmTransport,
+    ) {
+        /**
+         * 发起一次追问。
+         *
+         * @param history 之前的所有轮次（按时间正序，最后一条是本次追问）
+         * @param context 上一轮解题的结构化上下文（由 [buildSolveContext] 生成）
+         */
+        fun ask(
+            credentials: LlmCredentials,
+            context: String,
+            history: List<FollowUpTurn>,
+            registry: LlmCallRegistry?,
+            requestId: String,
+            maxTokens: Int = ChatRequestConfig.MAX_TOKENS_CONCISE,
+        ): Flow<FollowUpEvent> =
+            channelFlow {
+                if (!credentials.canCall) {
+                    send(
+                        FollowUpEvent.Failed(
+                            LlmError.Unknown(
+                                detail = "尚未配置模型（Base URL / API Key / 模型名），请到设置页填写",
+                            ),
+                        ),
+                    )
+                    return@channelFlow
+                }
+                val messages = ArrayList<ChatMessage>(history.size + 2)
+                messages += ChatMessage.system(systemPrompt(context))
+                history.forEach { turn ->
+                    val text = turn.text.trim()
+                    if (text.isEmpty()) return@forEach
+                    messages +=
+                        if (turn.fromStudent) {
+                            ChatMessage.user(text)
+                        } else {
+                            ChatMessage(ROLE_ASSISTANT_TEXT, text)
+                        }
+                }
+                if (messages.size <= 1) {
+                    send(FollowUpEvent.Failed(LlmError.Unknown(detail = "没有可发送的追问内容")))
+                    return@channelFlow
+                }
+                val config =
+                    ChatRequestConfig(
+                        model = credentials.effectiveTextModel,
+                        messages = messages,
+                        maxTokens = maxTokens,
+                        temperature = 0.3,
+                        // 追问要的是人话，不是 JSON；开着 json_object 反而会让模型
+                        // 把答案包成 {"answer": "..."} 这种没法直接读的东西
+                        jsonObject = false,
+                        includeUsage = true,
+                        stream = true,
+                        thinkingMode = ChatRequestConfig.THINKING_DISABLED,
+                    )
+                val buffer = StringBuilder()
+                var usage = TokenUsage.EMPTY
+                var streamError: LlmError? = null
+                try {
+                    llmClient.stream(credentials, config, requestId, registry, allowRetry = true)
+                        .collect { chunk ->
+                            when (chunk) {
+                                is LlmChunk.Delta -> {
+                                    buffer.append(chunk.text)
+                                    send(FollowUpEvent.Delta(chunk.text))
+                                }
+                                is LlmChunk.Finished -> usage = chunk.usage
+                                is LlmChunk.Failed -> streamError = chunk.error
+                                is LlmChunk.Reasoning -> Unit
+                            }
+                        }
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (exception: LlmException) {
+                    send(FollowUpEvent.Failed(exception.error))
+                    return@channelFlow
+                }
+                streamError?.let { error ->
+                    send(FollowUpEvent.Failed(error))
+                    return@channelFlow
+                }
+                val text = buffer.toString().trim()
+                if (text.isEmpty()) {
+                    send(
+                        FollowUpEvent.Failed(
+                            LlmError.EmptyCompletion(detail = "模型没有返回回答内容，可以再问一次"),
+                        ),
+                    )
+                    return@channelFlow
+                }
+                send(FollowUpEvent.Completed(text = text, usage = usage))
+            }
+
+        companion object {
+            /**
+             * assistant 角色的字面量。
+             *
+             * 刻意不写 `ChatMessage.ROLE_ASSISTANT`：追问链路复用同一条协议，
+             * 这里显式引用常量更不容易被误改成 user。
+             */
+            private const val ROLE_ASSISTANT_TEXT: String = ChatMessage.ROLE_ASSISTANT
+
+            /** 追问上下文的最大字符数，避免把整份解答原样塞进每次追问。 */
+            const val MAX_CONTEXT_CHARS: Int = 2400
+
+            /** 系统提示：把「你已经有这道题的答案」这件事讲清楚。 */
+            fun systemPrompt(context: String): String =
+                buildString {
+                    append("你是一名耐心的中学老师，正在微信式地一对一辅导一名学生。\n")
+                    append("学生已经问过下面这道题，并且已经看到过完整的标准解答。\n")
+                    append("现在学生要继续追问，请**回答这个具体问题**，不要重新讲一遍整道题。\n\n")
+                    append("要求：\n")
+                    append("1. 用中文口语化的讲解，像面对面说话，不要用 Markdown 标题和表格；\n")
+                    append("2. 直接回答学生的疑问，必要时引用原题的条件或某一步骤；\n")
+                    append("3. 如果学生问的是一道新题，就按新题独立作答；\n")
+                    append("4. 不要输出 JSON，不要说「作为 AI」之类的话。\n")
+                    if (context.isNotBlank()) {
+                        append("\n=== 这道题的已知信息 ===\n")
+                        append(context.take(MAX_CONTEXT_CHARS))
+                        append("\n=== 已知信息结束 ===\n")
+                    }
+                }
+        }
+    }
+
+/**
+ * 一轮追问消息。
+ *
+ * @param fromStudent true 表示学生说的，false 表示之前 AI 的回答
+ */
+data class FollowUpTurn(
+    val text: String,
+    val fromStudent: Boolean,
+)
+
+/**
+ * 把一次解题结果压成追问时用得上的上下文。
+ *
+ * 只保留「能被引用」的部分：题干、已知、所求、标准步骤、最终答案、首个错误。
+ * 不塞原始 JSON、不塞 token 统计、不塞知识点候选清单——这些对回答追问没有帮助，
+ * 还会挤占上下文预算。
+ */
+object SolveContextBuilder {
+    fun build(
+        stem: String,
+        known: List<String> = emptyList(),
+        ask: String = "",
+        steps: List<String> = emptyList(),
+        finalAnswer: String = "",
+        method: String = "",
+        errorTypeLabel: String = "",
+        errorExplain: String = "",
+        correctThinking: String = "",
+    ): String =
+        buildString {
+            if (stem.isNotBlank()) append("题目：").append(stem.trim()).append('\n')
+            if (known.isNotEmpty()) {
+                append("已知：").append(known.joinToString("；")).append('\n')
+            }
+            if (ask.isNotBlank()) append("求：").append(ask.trim()).append('\n')
+            if (method.isNotBlank()) append("解题方法：").append(method.trim()).append('\n')
+            if (steps.isNotEmpty()) {
+                append("标准解答步骤：\n")
+                steps.forEachIndexed { index, step -> append(index + 1).append(". ").append(step).append('\n') }
+            }
+            if (finalAnswer.isNotBlank()) append("最终答案：").append(finalAnswer.trim()).append('\n')
+            if (errorTypeLabel.isNotBlank()) append("学生的错因类型：").append(errorTypeLabel).append('\n')
+            if (errorExplain.isNotBlank()) append("错在哪：").append(errorExplain.trim()).append('\n')
+            if (correctThinking.isNotBlank()) append("下次这样想：").append(correctThinking.trim()).append('\n')
+        }
+}
+
+/** 追问正文里用于识别「这不是 JSON」的宽松小工具（保留给未来扩展）。 */
+internal fun parsePlainText(raw: String): String =
+    runCatching { (Json.parseToJsonElement(raw) as? JsonPrimitive)?.content }.getOrNull() ?: raw
