@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 13+ 主题图标单色图层，系统按壁纸取色 -->
+<!--
+  Android 13+ 主题图标单色图层（系统按壁纸取色）。
+  只保留箭头轮廓，不带阴影与渐变——系统会用自己的调色板渲染。
+  几何与 ic_launcher_foreground.xml 完全一致。
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,26 L74,52 L62,52 L62,78 L46,78 L46,52 L34,52 Z" />
+        android:pathData="M46.09,34.5 L61.91,34.5 L61.91,60.11 A7.91,7.91 0 0,1 54,68.02 A7.91,7.91 0 0,1 46.09,60.11 Z" />
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M32,84 L76,84 L76,88 L32,88 Z" />
+        android:pathData="M21.09,42 A7.91,7.91 0 1,1 36.91,42 L54,29.09 L54,18.91 L32.79,33.94 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M71.09,42 A7.91,7.91 0 1,1 86.91,42 L75.21,33.94 L54,18.91 L54,29.09 Z" />
 </vector>

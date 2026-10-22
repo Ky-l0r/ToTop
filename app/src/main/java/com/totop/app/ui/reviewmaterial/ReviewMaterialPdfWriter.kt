@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.roundToInt
 
 /**
  * 把复习资料排成可打印的 A4 PDF。
@@ -171,7 +170,7 @@ private class PagePainter(private val doc: PdfDocument) {
         ensureSpace(28f)
         y += 6f
         canvas?.drawText(text, marginX, y, headingPaint)
-        y += 18f
+        y += SECTION_GAP_PT
     }
 
     fun body(text: String) = writeWrapped(text, bodyPaint)
@@ -198,7 +197,7 @@ private class PagePainter(private val doc: PdfDocument) {
         paint: Paint,
     ) {
         val maxWidth = pageWidth - marginX * 2
-        val lineHeight = paint.textSize * 1.55f
+        val lineHeight = paint.textSize * LINE_HEIGHT_RATIO
         // 先按显式换行切段，再对每段做宽度折行
         text.split("\n").forEach { paragraph ->
             var rest = paragraph.ifBlank { " " }
@@ -215,5 +214,13 @@ private class PagePainter(private val doc: PdfDocument) {
 
     private fun ensureSpace(needed: Float) {
         if (y + needed > pageHeight - marginBottom) newPage()
+    }
+
+    private companion object {
+        /** 章节标题与前一段之间的竖向留白（磅）。 */
+        const val SECTION_GAP_PT: Float = 18f
+
+        /** 行高相对字号的倍数：1.55 在 A4 上中文不挤，行距也不松散。 */
+        const val LINE_HEIGHT_RATIO: Float = 1.55f
     }
 }

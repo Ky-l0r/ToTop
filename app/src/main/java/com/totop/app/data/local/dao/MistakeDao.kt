@@ -9,6 +9,12 @@ import com.totop.app.data.local.entity.MistakeKpointEntity
 import com.totop.app.data.local.entity.MistakeRecordEntity
 import kotlinx.coroutines.flow.Flow
 
+/** 按科目的错题计数投影。 */
+data class SubjectMistakeCount(
+    val subject: String,
+    val total: Int,
+)
+
 /**
  * `mistake_record` 与 `mistake_kpoint` 表访问对象。
  *
@@ -16,12 +22,6 @@ import kotlinx.coroutines.flow.Flow
  * 拆开会让「先写错题再写归属」的事务边界变得难以保证。
  * 事务由 Repository 通过 `AppDatabase.withTransaction` 组合这些方法完成。
  */
-/** 按科目的错题计数投影。 */
-data class SubjectMistakeCount(
-    val subject: String,
-    val total: Int,
-)
-
 @Dao
 interface MistakeDao {
     @Query("SELECT * FROM mistake_record WHERE id = :id LIMIT 1")

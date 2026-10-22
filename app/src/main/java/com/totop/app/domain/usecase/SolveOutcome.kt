@@ -14,7 +14,7 @@ sealed interface SolveOutcome {
     /**
      * 成功（已落库）。
      *
-     * @param view 按 [TeachingMode] 裁剪后的下发视图（GUIDED 无答案、SOCRATIC 只有引导）
+     * @param view 按 [TeachingMode] 裁剪后的下发视图（GUIDED 未揭示时无步骤、无答案）
      * @param question 已落库的题目
      * @param record 已落库的错题记录；学生全对时为 null（题目入库但不进错题本）
      * @param cacheHit 是否命中本地缓存（true 表示本次 0 token）

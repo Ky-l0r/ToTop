@@ -60,7 +60,10 @@ data class QuestionDraft(
     }
 
     /** 从 from 移到 to（用于拖拽排序）。 */
-    fun move(from: Int, to: Int): QuestionDraft {
+    fun move(
+        from: Int,
+        to: Int,
+    ): QuestionDraft {
         if (from !in pages.indices || to !in pages.indices || from == to) return this
         val mutable = pages.toMutableList()
         val item = mutable.removeAt(from)
@@ -69,7 +72,10 @@ data class QuestionDraft(
     }
 
     /** 替换某页（例如重新框选后覆盖）。 */
-    fun replaceAt(index: Int, page: QuestionPage): QuestionDraft {
+    fun replaceAt(
+        index: Int,
+        page: QuestionPage,
+    ): QuestionDraft {
         if (index !in pages.indices) return this
         return copy(pages = pages.toMutableList().also { it[index] = page })
     }

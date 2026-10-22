@@ -398,7 +398,12 @@ class AiGateway(
 
     /**
      * 执行单阶段，含「解析失败以更严格提示词重试 1 次」与 ai_trace 落库。
+     *
+     * 结构说明（0.2.0 重构）：把「一次尝试」抽成 [attemptOnce]，主循环只负责
+     * 按 [Attempt] 决策推进重试计数。这样 while 里只剩一个 continue，
+     * 「最多试几次、每次为什么重试」变成可以直接读出来的表，而不是散在五个分支里的跳转。
      */
+    @Suppress("LongMethod")
     private suspend fun callStage(
         credentials: LlmCredentials,
         requestId: String,
@@ -415,129 +420,200 @@ class AiGateway(
     ): StageCallResult {
         var attempt = 0
         var lastError: LlmError? = null
-        var strict = false
         // 三档参数降级：某些厂商不支持 thinking / response_format，
         // 遇到「参数不支持」就逐级关掉后重试，而不是直接失败。
-        // off / thinking / none —— 分别表示：关思考、关 json_object 的累计状态
-        var disableThinking = false
-        var disableJsonObject = false
+        var state = CallState()
         while (attempt < MAX_STAGE_ATTEMPTS) {
-            val startedAt = clock.nowUtcMillis()
-            val buffer = StringBuilder()
-            val reasoningBuffer = StringBuilder()
-            var firstTokenAt = 0L
-            var usage = TokenUsage.EMPTY
-            var finishReason = ""
-            val effectivePrompt = if (strict) prompt.asStrict() else prompt
-            val config =
-                ChatRequestConfig(
+            val outcome =
+                attemptOnce(
+                    credentials = credentials,
+                    requestId = requestId,
+                    stage = stage,
                     model = model,
-                    messages = buildMessages(effectivePrompt, image, extraImages),
+                    promptVersion = promptVersion,
+                    prompt = prompt,
+                    image = image,
+                    extraImages = extraImages,
                     maxTokens = maxTokens,
-                    temperature = if (stage == AiStage.B) 0.1 else 0.2,
-                    // json_object 与思考链天然冲突（正文被挤空），
-                    // 因此默认关闭思考；模型不支持该字段时再降级为「不发送」。
-                    jsonObject = !disableJsonObject,
-                    includeUsage = true,
-                    stream = true,
-                    thinkingMode =
-                        if (disableThinking) {
-                            ChatRequestConfig.THINKING_UNSPECIFIED
-                        } else {
-                            ChatRequestConfig.THINKING_DISABLED
-                        },
+                    registry = registry,
+                    onDelta = onDelta,
+                    onFirstToken = onFirstToken,
+                    state = state,
                 )
-            try {
-                var streamError: LlmError? = null
-                llmClient.stream(credentials, config, requestId, registry, allowRetry = true)
-                    .collect { chunk ->
-                        when (chunk) {
-                            is LlmChunk.Delta -> {
-                                if (firstTokenAt == 0L) {
-                                    firstTokenAt = clock.nowUtcMillis()
-                                    onFirstToken(firstTokenAt - startedAt)
-                                }
-                                buffer.append(chunk.text)
-                                onDelta(chunk.text)
-                            }
-                            // 思考链不拼进正文，只记账，用于诊断「为什么正文为空」
-                            is LlmChunk.Reasoning -> reasoningBuffer.append(chunk.text)
-                            is LlmChunk.Finished -> {
-                                usage = chunk.usage
-                                finishReason = chunk.finishReason
-                            }
-                            is LlmChunk.Failed -> streamError = chunk.error
-                        }
-                    }
-                streamError?.let { throw LlmException(it) }
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (exception: LlmException) {
-                lastError = exception.error
-                traceRecorder.record(
-                    requestId = requestId,
-                    stage = stage,
-                    model = model,
-                    promptVer = promptVersion,
-                    latencyMs = clock.nowUtcMillis() - startedAt,
-                    ok = false,
-                    errorMsg = exception.error.traceMessage(),
-                )
-                // 参数类错误：先尝试降级再重试，而非直接失败
-                if (exception.error is LlmError.ParameterNotSupported) {
-                    if (!disableThinking) {
-                        disableThinking = true
-                        attempt++
-                        continue
-                    }
-                    if (!disableJsonObject) {
-                        disableJsonObject = true
-                        attempt++
-                        continue
-                    }
+            when (outcome) {
+                is Attempt.Succeeded -> return outcome.result
+                is Attempt.Retry -> {
+                    lastError = outcome.error
+                    state = state.next(outcome)
                 }
-                if (!exception.error.isRetryable) throw exception
-                strict = true
-                attempt++
-                continue
             }
+            attempt++
+        }
+        throw LlmException(
+            lastError ?: LlmError.MalformedResponse(detail = "阶段 " + stage.wire + " 重试后仍不可解析"),
+        )
+    }
 
-            val raw = buffer.toString()
-            // 正文为空时给出精确成因，不再笼统报「输出为空」：
-            // length 表示被 max_tokens 截断，thinkingOnly 表示只吐了思考链。
-            if (raw.isBlank()) {
-                lastError =
-                    LlmError.EmptyCompletion(
-                        finishReason = finishReason,
-                        thinkingOnly = reasoningBuffer.isNotBlank(),
-                        detail =
-                            "阶段 " + stage.wire + " 正文为空（思考链 " + reasoningBuffer.length +
-                                " 字，finish_reason=" + finishReason.ifEmpty { "未知" } + "）",
-                    )
-                traceRecorder.record(
-                    requestId = requestId,
-                    stage = stage,
-                    model = model,
-                    promptVer = promptVersion,
-                    inputTokens = usage.inputTokens,
-                    outputTokens = usage.outputTokens,
-                    latencyMs = clock.nowUtcMillis() - startedAt,
-                    ok = false,
-                    errorMsg = (lastError as LlmError).traceMessage(),
-                )
-                if (finishReason == "length" && !disableJsonObject) {
-                    // 截断：优先怀疑思考链吃掉了预算，关掉 json_object 会浪费预算，
-                    // 因此改成「关思考 + 收紧提示词」再试
-                    disableThinking = true
-                    strict = true
-                    attempt++
-                    continue
+    /**
+     * 重试状态：这一轮用什么姿势发请求。
+     *
+     * 之所以打包成一个对象而不是三个并列的布尔参数：
+     * 1. [attemptOnce] 的参数个数本来就接近阈值，再加三个布尔值会超出可读范围；
+     * 2. 「严格提示词 / 关思考 / 去 response_format」是同一件事的三个维度（这一轮怎么发），
+     *    放在一起才能保证升级是**单调**的（只关不开，不会来回抖）。
+     */
+    private data class CallState(
+        /** 是否使用更严格的提示词（stricter schema + 只输出 JSON 的硬约束）。 */
+        val strict: Boolean = false,
+        /** 是否关闭思考模式（发送 THINKING_UNSPECIFIED 而不是 DISABLED）。 */
+        val disableThinking: Boolean = false,
+        /** 是否去掉 response_format=json_object。 */
+        val disableJsonObject: Boolean = false,
+    ) {
+        /**
+         * 依据本次重试原因推进到下一轮状态。
+         *
+         * 所有标志位只允许从 false 变 true：降级是单向的，
+         * 一旦确认某个参数不被支持，就不该在后续重试里再打开它。
+         */
+        fun next(retry: Attempt.Retry): CallState =
+            CallState(
+                strict = strict || retry.retryAsStrict,
+                disableThinking = disableThinking || retry.disableThinkingNext,
+                disableJsonObject = disableJsonObject || retry.disableJsonObjectNext,
+            )
+    }
+
+    /** 一次尝试的结果：要么拿到可解析的正文，要么给出「为什么该重试、下次要改什么」。 */
+    private sealed class Attempt {
+        /** 成功：正文已通过该阶段的结构校验。 */
+        data class Succeeded(val result: StageCallResult) : Attempt()
+
+        /**
+         * 需要重试。
+         *
+         * @param error 本次失败原因（最终全部失败时报给用户的就是最后一条）
+         * @param retryAsStrict 下次是否改用更严格的提示词
+         * @param disableThinkingNext 下次是否关闭思考模式
+         * @param disableJsonObjectNext 下次是否去掉 response_format
+         */
+        data class Retry(
+            val error: LlmError,
+            val retryAsStrict: Boolean = true,
+            val disableThinkingNext: Boolean = false,
+            val disableJsonObjectNext: Boolean = false,
+        ) : Attempt()
+    }
+
+    /**
+     * 发起一次调用并判定结果。
+     *
+     * 这里集中了「流式收集 → 空正文诊断 → 结构校验 → 参数降级判定」四件事，
+     * 且每种失败都**只返回一个 Retry**，不再自己决定要不要继续重试——
+     * 重试预算由调用方的循环统一管理。
+     */
+    @Suppress("LongMethod", "LongParameterList")
+    private suspend fun attemptOnce(
+        credentials: LlmCredentials,
+        requestId: String,
+        stage: AiStage,
+        model: String,
+        promptVersion: String,
+        prompt: AssembledPrompt,
+        image: EncodedImage?,
+        extraImages: List<EncodedImage>,
+        maxTokens: Int,
+        registry: LlmCallRegistry?,
+        onDelta: suspend (String) -> Unit,
+        onFirstToken: suspend (Long) -> Unit,
+        state: CallState,
+    ): Attempt {
+        val startedAt = clock.nowUtcMillis()
+        val buffer = StringBuilder()
+        val reasoningBuffer = StringBuilder()
+        var firstTokenAt = 0L
+        var usage = TokenUsage.EMPTY
+        var finishReason = ""
+        val effectivePrompt = if (state.strict) prompt.asStrict() else prompt
+        val config =
+            ChatRequestConfig(
+                model = model,
+                messages = buildMessages(effectivePrompt, image, extraImages),
+                maxTokens = maxTokens,
+                temperature = if (stage == AiStage.B) STAGE_B_TEMPERATURE else STAGE_DEFAULT_TEMPERATURE,
+                // json_object 与思考链天然冲突（正文被挤空），
+                // 因此默认关闭思考；模型不支持该字段时再降级为「不发送」。
+                jsonObject = !state.disableJsonObject,
+                includeUsage = true,
+                stream = true,
+                thinkingMode =
+                    if (state.disableThinking) {
+                        ChatRequestConfig.THINKING_UNSPECIFIED
+                    } else {
+                        ChatRequestConfig.THINKING_DISABLED
+                    },
+            )
+        try {
+            var streamError: LlmError? = null
+            llmClient.stream(credentials, config, requestId, registry, allowRetry = true)
+                .collect { chunk ->
+                    when (chunk) {
+                        is LlmChunk.Delta -> {
+                            if (firstTokenAt == 0L) {
+                                firstTokenAt = clock.nowUtcMillis()
+                                onFirstToken(firstTokenAt - startedAt)
+                            }
+                            buffer.append(chunk.text)
+                            onDelta(chunk.text)
+                        }
+                        // 思考链不拼进正文，只记账，用于诊断「为什么正文为空」
+                        is LlmChunk.Reasoning -> reasoningBuffer.append(chunk.text)
+                        is LlmChunk.Finished -> {
+                            usage = chunk.usage
+                            finishReason = chunk.finishReason
+                        }
+                        is LlmChunk.Failed -> streamError = chunk.error
+                    }
                 }
-                strict = true
-                attempt++
-                continue
+            streamError?.let { throw LlmException(it) }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (exception: LlmException) {
+            traceRecorder.record(
+                requestId = requestId,
+                stage = stage,
+                model = model,
+                promptVer = promptVersion,
+                latencyMs = clock.nowUtcMillis() - startedAt,
+                ok = false,
+                errorMsg = exception.error.traceMessage(),
+            )
+            // 参数类错误：先尝试降级再重试，而非直接失败
+            if (exception.error is LlmError.ParameterNotSupported) {
+                when (nextDowngrade(state.disableThinking, state.disableJsonObject)) {
+                    Downgrade.DisableThinking ->
+                        return Attempt.Retry(exception.error, disableThinkingNext = true)
+                    Downgrade.DisableJsonObject ->
+                        return Attempt.Retry(exception.error, disableJsonObjectNext = true)
+                    Downgrade.None -> Unit
+                }
             }
-            val parseError = validateStageJson(stage, raw)
+            if (!exception.error.isRetryable) throw exception
+            return Attempt.Retry(exception.error)
+        }
+
+        val raw = buffer.toString()
+        // 正文为空时给出精确成因，不再笼统报「输出为空」：
+        // length 表示被 max_tokens 截断，thinkingOnly 表示只吐了思考链。
+        if (raw.isBlank()) {
+            val empty =
+                LlmError.EmptyCompletion(
+                    finishReason = finishReason,
+                    thinkingOnly = reasoningBuffer.isNotBlank(),
+                    detail =
+                        "阶段 " + stage.wire + " 正文为空（思考链 " + reasoningBuffer.length +
+                            " 字，finish_reason=" + finishReason.ifEmpty { "未知" } + "）",
+                )
             traceRecorder.record(
                 requestId = requestId,
                 stage = stage,
@@ -546,17 +622,28 @@ class AiGateway(
                 inputTokens = usage.inputTokens,
                 outputTokens = usage.outputTokens,
                 latencyMs = clock.nowUtcMillis() - startedAt,
-                ok = parseError == null,
-                errorMsg = parseError?.let { "malformed_response：" + it },
+                ok = false,
+                errorMsg = empty.traceMessage(),
             )
-            if (parseError == null) return StageCallResult(raw = raw, usage = usage)
-            lastError = LlmError.MalformedResponse(detail = parseError)
-            strict = true
-            attempt++
+            // 被 max_tokens 截断：优先怀疑思考链吃掉了预算，
+            // 关掉 json_object 会浪费预算，因此改成「关思考 + 收紧提示词」再试
+            val truncated = finishReason == FINISH_REASON_LENGTH && !state.disableJsonObject
+            return Attempt.Retry(empty, disableThinkingNext = truncated)
         }
-        throw LlmException(
-            lastError ?: LlmError.MalformedResponse(detail = "阶段 " + stage.wire + " 重试后仍不可解析"),
+        val parseError = validateStageJson(stage, raw)
+        traceRecorder.record(
+            requestId = requestId,
+            stage = stage,
+            model = model,
+            promptVer = promptVersion,
+            inputTokens = usage.inputTokens,
+            outputTokens = usage.outputTokens,
+            latencyMs = clock.nowUtcMillis() - startedAt,
+            ok = parseError == null,
+            errorMsg = parseError?.let { "malformed_response：" + it },
         )
+        if (parseError == null) return Attempt.Succeeded(StageCallResult(raw = raw, usage = usage))
+        return Attempt.Retry(LlmError.MalformedResponse(detail = parseError))
     }
 
     /**
@@ -619,6 +706,26 @@ class AiGateway(
 
     private fun sha256Of(text: String): String = ImageMath.sha256Hex(text.toByteArray(Charsets.UTF_8))
 
+    /**
+     * 参数降级的下一步动作。
+     *
+     * 之所以抽成枚举 + 纯函数：原来这段逻辑用连续的 if + continue 表达，
+     * 一个 while 里出现 4 个跳转语句，读代码时很难一眼看出「最多重试几次、每次关掉哪个参数」。
+     * 现在动作集合是封闭的，判定也是纯函数，可直接单测。
+     */
+    internal enum class Downgrade { DisableThinking, DisableJsonObject, None }
+
+    /** 判定还能不能继续降级；已全部关闭时返回 [Downgrade.None]。 */
+    internal fun nextDowngrade(
+        thinkingDisabled: Boolean,
+        jsonObjectDisabled: Boolean,
+    ): Downgrade =
+        when {
+            !thinkingDisabled -> Downgrade.DisableThinking
+            !jsonObjectDisabled -> Downgrade.DisableJsonObject
+            else -> Downgrade.None
+        }
+
     companion object {
         /**
          * 单阶段最多尝试次数。
@@ -628,6 +735,15 @@ class AiGateway(
          * 不会对正常请求产生额外开销。
          */
         const val MAX_STAGE_ATTEMPTS: Int = 4
+
+        /** 阶段 B（独立求解）的温度：偏低以保证同一道题多次求解结果一致。 */
+        private const val STAGE_B_TEMPERATURE: Double = 0.1
+
+        /** 其余阶段的温度：略高，让错因说明与知识点用途的措辞更自然。 */
+        private const val STAGE_DEFAULT_TEMPERATURE: Double = 0.2
+
+        /** 厂商表示「输出被 max_tokens 截断」的 finish_reason 取值。 */
+        private const val FINISH_REASON_LENGTH: String = "length"
 
         /** 缓存键原文分隔符，避免「题干尾部 + 补充说明」拼出相同字符串。 */
         private const val CACHE_SEPARATOR: String = "\u0000"

@@ -3,9 +3,9 @@ package com.totop.app.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.repo.MistakeRepository
+import com.totop.app.domain.model.Subjects
 import com.totop.app.ui.mistakes.ReviewCandidate
 import com.totop.app.ui.mistakes.ReviewGateway
-import com.totop.app.domain.model.Subjects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,8 +78,9 @@ class HomeViewModel
                             .sortedByDescending { it.value }
                             .take(WEAK_LIMIT)
                             .mapNotNull { entry ->
-                                val point = catalog?.knowledgePoint(entry.key)
-                                    ?: return@mapNotNull null
+                                val point =
+                                    catalog?.knowledgePoint(entry.key)
+                                        ?: return@mapNotNull null
                                 WeakKpointItem(
                                     id = point.id,
                                     name = point.name,

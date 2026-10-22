@@ -3,8 +3,8 @@ package com.totop.app.ui.reviewmaterial
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,8 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -85,12 +85,13 @@ fun ReviewMaterialScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Tokens.Background)
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Tokens.Background)
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
         ) {
             Spacer(Modifier.height(12.dp))
 
@@ -211,9 +212,10 @@ private fun HintCard(
     line2: String,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
-            .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
-            .padding(16.dp),
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
+                .padding(16.dp),
     ) {
         Text(line1, style = MaterialTheme.typography.bodyMedium, color = Tokens.OnSurface)
         Text(line2, style = MaterialTheme.typography.bodySmall, color = Tokens.OnSurfaceVariant)
@@ -320,7 +322,11 @@ private fun MaterialContent(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onOpen, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
                     Text("  打开")
                 }
                 OutlinedButton(onClick = onShare, modifier = Modifier.weight(1f)) {

@@ -36,13 +36,13 @@ data class HintLevel(
  * 按讲解模式下发的解题结果（同一份落库数据，三种视角）。
  *
  * 这是「模式裁剪」的唯一出口：UI 只拿到这个对象，
- * 因此 GUIDE / SOCRATIC 不可能从其它字段里摸到答案。
+ * 因此 GUIDED 不可能从其它字段里摸到答案。
  *
- * @param solutionSteps DIRECT 为完整步骤，GUIDED 为空（答案与步骤都要逐级解锁），SOCRATIC 为空
- * @param finalAnswer 仅 DIRECT 有值；其余模式为 null
- * @param method 方法名：DIRECT / GUIDED 有值（属于「方向」，不算答案），SOCRATIC 也有值
+ * @param solutionSteps DIRECT 为完整步骤；GUIDED 为空，需学生主动揭示
+ * @param finalAnswer 仅 DIRECT 有值；GUIDED 为 null
+ * @param method 方法名：两档都有值（属于「方向」，不算答案）
  * @param hints 三级提示，仅 GUIDED 有值
- * @param guidance 引导提问，仅 SOCRATIC 有值（不给算式、不给答案）
+ * @param guidance 引导提问，仅 GUIDED 有值（不给算式、不给答案）
  */
 data class SolvedView(
     val mode: TeachingMode,
@@ -74,8 +74,7 @@ data class SolvedView(
  * | 模式 | 标准步骤 | finalAnswer | 三级提示 | 引导提问 |
  * | --- | --- | --- | --- | --- |
  * | DIRECT | 全量 | 有 | 无 | 无 |
- * | GUIDED | 无（逐级解锁） | 无 | 三级 | 无 |
- * | SOCRATIC | 无 | 无 | 无 | 有 |
+ * | GUIDED | 无（需学生点「看全解」） | 无 | 三级 | 有 |
  *
  * 注意：裁剪只影响**下发**，落库数据始终是完整的（captain 明确要求「标准答案照常落库」），
  * 因此用户点「我已想通，看全解」时可以从库里取全解，不必再花钱。
@@ -118,6 +117,11 @@ object TeachingModeTrimmer {
                     answerWithheld = false,
                 )
 
+            // 引导模式：步骤与答案都不下发，只给方向（method）、引导性问题与三级提示。
+            //
+            // 0.2.0 的变化：旧实现在这里下发完整 solutionSteps，
+            // 结果「提示引导」和「直接讲解」看起来一模一样，学生一进来就看到答案。
+            // 现在步骤必须由学生点「我已想通，看全解」才揭示（见 GuidePolicy.withholdsSolution）。
             TeachingMode.GUIDED ->
                 SolvedView(
                     mode = mode,
@@ -129,22 +133,6 @@ object TeachingModeTrimmer {
                     kpoints = kpoints,
                     summaryCard = summaryCard,
                     hints = buildHints(solution, firstError),
-                    guidance = emptyList(),
-                    aiGenerated = aiGenerated,
-                    answerWithheld = true,
-                )
-
-            TeachingMode.SOCRATIC ->
-                SolvedView(
-                    mode = mode,
-                    question = question,
-                    solutionSteps = emptyList(),
-                    finalAnswer = null,
-                    method = solution.method.takeIf { it.isNotBlank() },
-                    firstError = firstError,
-                    kpoints = kpoints,
-                    summaryCard = null,
-                    hints = emptyList(),
                     guidance = buildGuidance(question, solution, firstError),
                     aiGenerated = aiGenerated,
                     answerWithheld = true,
@@ -210,10 +198,15 @@ object TeachingModeTrimmer {
     }
 
     /**
-     * 由题目与错因派生引导提问（SOCRATIC：只给提问与方向，不给答案与算式）。
+     * 由题目与错因派生引导提问（只给提问与方向，不给答案与算式）。
      *
-     * 提问模板取自「本题应有的思考入口」，并追问「为什么学生思路走不通」，
-     * 这正是 FR-1.6 要求的对比说明，但改写成提问式而不给结论。
+     * 提问模板取自「本题应有的思考入口」，并追问「为什么原来的思路走不通」，
+     * 对应 FR-1.6 要求的对比说明，但改写成提问式而不给结论。
+     *
+     * 0.2.0 的措辞调整（对应真机反馈「表述怪怪的」）：
+     * 原来的写法混用了第三人称（「学生思路」「已知条件有 3 条」）和生硬的模板腔，
+     * 学生读起来像在看成人的分析报告。现在统一成**第二人称、对着学生说话**，
+     * 每条都落到一个能立刻回答的具体动作上。
      */
     fun buildGuidance(
         question: Question,
@@ -224,20 +217,20 @@ object TeachingModeTrimmer {
         val guidance = mutableListOf<String>()
         guidance +=
             if (ask.isNotEmpty()) {
-                "题目要求的是「" + ask + "」，你能先用一句话说明它属于哪类问题吗？"
+                "题目要你求的是「" + ask + "」。先用一句话说说：这属于哪一类问题？"
             } else {
-                "你能先用自己的话说一遍题目在问什么吗？"
+                "先用你自己的话说一遍：这道题到底在问什么？"
             }
         if (question.known.isNotEmpty()) {
-            guidance += "已知条件有 " + question.known.size + " 条，哪一条最可能决定解题方向？"
+            guidance += "题目给的条件里，你觉得哪一条最可能决定解题方向？挑一条说说理由。"
         }
         solution.method.takeIf { it.isNotBlank() }?.let { method ->
-            guidance += "如果考虑用「" + method + "」，第一步你会先写什么？"
+            guidance += "如果从「" + method + "」入手，你打算第一步先写什么？"
         }
         firstError?.correctThinking?.takeIf { it.isNotBlank() }?.let { thinking ->
-            guidance += "提示你一个思考入口：" + withholdConclusion(thinking) + " 对照一下，你原来的切入点差在哪里？"
+            guidance += "给你一个思考入口：" + withholdConclusion(thinking) + "。对照一下，你原来的切入点差在哪里？"
         }
-        if (guidance.size < SOCRATIC_MIN_QUESTIONS) {
+        if (guidance.size < MIN_GUIDANCE_QUESTIONS) {
             guidance += "把你现在的思路写下来，我们一步步看它卡在哪。"
         }
         return guidance
@@ -264,6 +257,6 @@ object TeachingModeTrimmer {
         return result.trimEnd('，', '。', ',', '.', '；', ';')
     }
 
-    /** SOCRATIC 至少给出这么多条引导，避免「只返回一句空话」。 */
-    const val SOCRATIC_MIN_QUESTIONS: Int = 2
+    /** 引导模式至少给出这么多条引导，避免「只返回一句空话」。 */
+    const val MIN_GUIDANCE_QUESTIONS: Int = 2
 }

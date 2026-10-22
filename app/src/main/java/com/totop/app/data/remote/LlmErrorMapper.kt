@@ -1,6 +1,5 @@
 package com.totop.app.data.remote
 
-import android.annotation.SuppressLint
 import android.os.NetworkOnMainThreadException
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
@@ -27,6 +26,12 @@ import javax.net.ssl.SSLException
 object LlmErrorMapper {
     /** 响应体折叠到 errorMsg 的最大长度。 */
     const val MAX_BODY_SNIPPET: Int = 240
+
+    /** HTTP 400：请求参数或请求体不合法。 */
+    const val BAD_REQUEST: Int = 400
+
+    /** HTTP 422：语义校验失败（多数厂商用它表达「参数值不被接受」）。 */
+    const val UNPROCESSABLE: Int = 422
 
     /** 额度类关键字：命中即视为余额问题而非限流。 */
     private val BALANCE_KEYWORDS =
@@ -159,7 +164,14 @@ object LlmErrorMapper {
 
             // 400 / 422：参数类错误。必须按响应体细分，否则界面只能显示「未归类问题」。
             // 阿里云百炼的「模型不存在」正是 400 + invalid_parameter_error（不是 404）。
-            400, 422 -> classifyBadRequest(body = body, model = model, status = status, pageCount = pageCount, snippet = snippet)
+            BAD_REQUEST, UNPROCESSABLE ->
+                classifyBadRequest(
+                    body = body,
+                    model = model,
+                    status = status,
+                    pageCount = pageCount,
+                    snippet = snippet,
+                )
 
             in 500..599 -> LlmError.ServerError(status = status, detail = snippet)
 
@@ -209,6 +221,7 @@ object LlmErrorMapper {
             else -> LlmError.Unknown(detail = detail ?: ("HTTP " + status + " 未识别的参数错误"), status = status)
         }
     }
+
     /** 从网络异常映射错误。 */
     fun fromThrowable(throwable: Throwable): LlmError =
         when (throwable) {
@@ -218,8 +231,9 @@ object LlmErrorMapper {
             // 否则会落进 Unknown 显示「未归类问题」，把真正的 bug 藏起来。
             is NetworkOnMainThreadException ->
                 LlmError.NetworkOnMainThread(
-                    detail = "NetworkOnMainThreadException：网络请求发生在界面线程，已由系统拦截。" +
-                        "该异常发生在发出请求之前，因此没有 HTTP 状态码。",
+                    detail =
+                        "NetworkOnMainThreadException：网络请求发生在界面线程，已由系统拦截。" +
+                            "该异常发生在发出请求之前，因此没有 HTTP 状态码。",
                 )
 
             is CancellationException -> LlmError.Cancelled(detail = throwable.message)

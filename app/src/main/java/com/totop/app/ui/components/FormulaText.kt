@@ -26,8 +26,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import kotlinx.coroutines.delay
@@ -202,7 +208,14 @@ fun FormulaText(
 ) {
     val content = remember(text) { FormulaParser.parse(text) }
     when (content) {
-        is FormulaContent.PlainText -> Text(text = content.text, modifier = modifier, style = style)
+        is FormulaContent.PlainText ->
+            // 没有 LaTeX 定界符：走「朴素数学记号」排版。
+            //
+            // 这一步是本次修复「x^2 直接显示成 x∧2」的关键：
+            // 模型给的步骤正文是中文自然语言夹朴素记号（2^x、x^2、x_{n+1}），
+            // 不含任何 $ 定界符，旧实现因此直接当纯文本渲染，
+            // 学生看到的就是课本上根本不存在的 ^ 与 _ 符号。
+            PlainMathText(text = content.text, modifier = modifier, style = style)
         is FormulaContent.Pieces ->
             FormulaRichContent(
                 pieces = content.pieces,
@@ -212,6 +225,66 @@ fun FormulaText(
             )
     }
 }
+
+/**
+ * 朴素数学记号排版：把 x^2 排成真正的上标，x_n 排成下标。
+ *
+ * 实现选择及其理由：
+ * - 用 [AnnotatedString] + BaselineShift，而不是再开一个 WebView 渲染：
+ *   这段文本每屏可能出现几十上百处（解答步骤、错因说明、知识点用途），
+ *   走 WebView 每条都要一次 JS 往返，列表滚动会直接掉帧；
+ * - BaselineShift 只影响基线位置与字号，不改变换行与测量逻辑，
+ *   因此长段落仍然由 Text 正常折行，不会出现「一行公式撑破卡片」。
+ *
+ * 不含任何上下标记号时直接返回普通 Text，零额外开销。
+ */
+@Composable
+private fun PlainMathText(
+    text: String,
+    modifier: Modifier,
+    style: TextStyle,
+) {
+    val segments = remember(text) { MathMarkup.parse(text) }
+    val hasScript =
+        remember(segments) {
+            segments.any { it is MathMarkup.Segment.Sup || it is MathMarkup.Segment.Sub }
+        }
+    if (!hasScript) {
+        Text(text = text, modifier = modifier, style = style)
+        return
+    }
+    val annotated =
+        remember(segments, style) {
+            buildAnnotatedString {
+                segments.forEach { segment ->
+                    when (segment) {
+                        is MathMarkup.Segment.Text -> append(segment.value)
+                        is MathMarkup.Segment.Sup ->
+                            withStyle(
+                                SpanStyle(
+                                    fontSize = scriptSizeOf(style),
+                                    baselineShift = BaselineShift.Superscript,
+                                ),
+                            ) { append(segment.value) }
+                        is MathMarkup.Segment.Sub ->
+                            withStyle(
+                                SpanStyle(
+                                    fontSize = scriptSizeOf(style),
+                                    baselineShift = BaselineShift.Subscript,
+                                ),
+                            ) { append(segment.value) }
+                    }
+                }
+            }
+        }
+    Text(text = annotated, modifier = modifier, style = style)
+}
+
+/** 上下标字号：正文的 0.72 倍，与课本排版习惯接近，同时保证小屏幕上仍可辨认。 */
+private fun scriptSizeOf(style: TextStyle): TextUnit = style.fontSize * SCRIPT_SCALE
+
+/** 上下标相对正文的缩放比例。 */
+private const val SCRIPT_SCALE: Float = 0.72f
 
 /**
  * 混排内容：文字 + 公式位图。

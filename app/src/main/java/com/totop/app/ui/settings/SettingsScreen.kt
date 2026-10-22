@@ -1,11 +1,7 @@
 package com.totop.app.ui.settings
 
-import androidx.compose.foundation.clickable
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Visibility
@@ -49,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -127,20 +126,27 @@ fun SettingsScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (!uiState.storageAvailable) {
-                WarningBox(text = "本机密钥存储不可用（可能是系统 Keystore 异常）。请重新填写 Key；" +
-                    "在修复前应用会以本地模式运行。")
+                WarningBox(
+                    text =
+                        "本机密钥存储不可用（可能是系统 Keystore 异常）。请重新填写 Key；" +
+                            "在修复前应用会以本地模式运行。",
+                )
             }
             if (uiState.localMode) {
-                WarningBox(text = "当前未配置 API Key，应用处于本地模式：解题与 AI 解读不可用，" +
-                    "错题本、复习、掌握度与周报仍可正常使用。")
+                WarningBox(
+                    text =
+                        "当前未配置 API Key，应用处于本地模式：解题与 AI 解读不可用，" +
+                            "错题本、复习、掌握度与周报仍可正常使用。",
+                )
             }
 
             ByokSection(uiState = uiState, viewModel = viewModel)
@@ -161,7 +167,10 @@ fun SettingsScreen(
 
 /** BYOK 表单。 */
 @Composable
-private fun ByokSection(uiState: SettingsUiState, viewModel: SettingsViewModel) {
+private fun ByokSection(
+    uiState: SettingsUiState,
+    viewModel: SettingsViewModel,
+) {
     var keyVisible by remember { mutableStateOf(false) }
     var templateMenuOpen by remember { mutableStateOf(false) }
     val form = uiState.form
@@ -220,11 +229,12 @@ private fun ByokSection(uiState: SettingsUiState, viewModel: SettingsViewModel) 
             isError = !form.baseUrlValid,
             supportingText = {
                 Text(
-                    text = if (!form.baseUrlValid) {
-                        "必须是 http(s) 地址；本应用会自动补 /chat/completions，不要重复填写该路径"
-                    } else {
-                        "填到 /v1 这一层即可，例如 https://dashscope.aliyuncs.com/compatible-mode/v1"
-                    },
+                    text =
+                        if (!form.baseUrlValid) {
+                            "必须是 http(s) 地址；本应用会自动补 /chat/completions，不要重复填写该路径"
+                        } else {
+                            "填到 /v1 这一层即可，例如 https://dashscope.aliyuncs.com/compatible-mode/v1"
+                        },
                 )
             },
         )
@@ -249,11 +259,12 @@ private fun ByokSection(uiState: SettingsUiState, viewModel: SettingsViewModel) 
             },
             supportingText = {
                 Text(
-                    text = if (form.apiKey.isBlank()) {
-                        "本地 Ollama 可留空；远端厂商必须填"
-                    } else {
-                        "当前：" + form.maskedKey
-                    },
+                    text =
+                        if (form.apiKey.isBlank()) {
+                            "本地 Ollama 可留空；远端厂商必须填"
+                        } else {
+                            "当前：" + form.maskedKey
+                        },
                 )
             },
         )
@@ -321,42 +332,55 @@ private fun ByokSection(uiState: SettingsUiState, viewModel: SettingsViewModel) 
 
 /** 连通性结果（分类提示）。 */
 @Composable
-private fun ConnectionSection(uiState: SettingsUiState, viewModel: SettingsViewModel) {
+private fun ConnectionSection(
+    uiState: SettingsUiState,
+    viewModel: SettingsViewModel,
+) {
     when (val connection = uiState.connection) {
         is ConnectionState.Idle -> Unit
-        is ConnectionState.Checking -> Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            Text(text = "  正在用 max_tokens=8 的最小请求校验…", style = MaterialTheme.typography.bodySmall)
-        }
-        is ConnectionState.Ok -> ResultBox(
-            ok = true,
-            title = "连接成功 · 模型 " + connection.model,
-            body = "耗时 " + connection.latencyMs + " ms。模型回复片段：" +
-                connection.replyPreview.take(40).ifBlank { "（空）" },
-        )
-        is ConnectionState.Failed -> ResultBox(
-            ok = false,
-            title = "连接失败 · " + connection.category,
-            body = connection.message + if (connection.retryable) {
-                "（该错误可重试，稍后点「校验连通性」再试一次）"
-            } else {
-                "（按提示修好后重新校验；也可以先保存，稍后再来）"
-            },
-            action = if (connection.retryable) {
-                { TextButton(onClick = viewModel::testConnection) { Text(text = "重新校验") } }
-            } else {
-                null
-            },
-        )
+        is ConnectionState.Checking ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                Text(text = "  正在用 max_tokens=8 的最小请求校验…", style = MaterialTheme.typography.bodySmall)
+            }
+        is ConnectionState.Ok ->
+            ResultBox(
+                ok = true,
+                title = "连接成功 · 模型 " + connection.model,
+                body =
+                    "耗时 " + connection.latencyMs + " ms。模型回复片段：" +
+                        connection.replyPreview.take(40).ifBlank { "（空）" },
+            )
+        is ConnectionState.Failed ->
+            ResultBox(
+                ok = false,
+                title = "连接失败 · " + connection.category,
+                body =
+                    connection.message +
+                        if (connection.retryable) {
+                            "（该错误可重试，稍后点「校验连通性」再试一次）"
+                        } else {
+                            "（按提示修好后重新校验；也可以先保存，稍后再来）"
+                        },
+                action =
+                    if (connection.retryable) {
+                        { TextButton(onClick = viewModel::testConnection) { Text(text = "重新校验") } }
+                    } else {
+                        null
+                    },
+            )
     }
 }
 
 /** 教学偏好。 */
 @Composable
-private fun PreferenceSection(uiState: SettingsUiState, viewModel: SettingsViewModel) {
+private fun PreferenceSection(
+    uiState: SettingsUiState,
+    viewModel: SettingsViewModel,
+) {
     val toggles = uiState.toggles
     SectionCard(title = "教学偏好", subtitle = "影响下一次对话，不改动已有记录") {
         Text(text = "默认讲解模式", style = MaterialTheme.typography.labelLarge)
@@ -377,8 +401,9 @@ private fun PreferenceSection(uiState: SettingsUiState, viewModel: SettingsViewM
 
         ToggleRow(
             title = "语音朗读（系统 TTS）",
-            subtitle = "离线朗读步骤；中文语音包状态：" +
-                uiState.ttsAvailabilityText.ifBlank { "未检测" },
+            subtitle =
+                "离线朗读步骤；中文语音包状态：" +
+                    uiState.ttsAvailabilityText.ifBlank { "未检测" },
             checked = toggles.ttsEnabled,
             onCheckedChange = viewModel::setTtsEnabled,
         )
@@ -493,10 +518,11 @@ private fun ResultBox(
 ) {
     val tone = if (ok) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(tone.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(tone.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -522,10 +548,11 @@ private fun ResultBox(
 @Composable
 private fun WarningBox(text: String) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.errorContainer, RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
         Text(
             text = text,
@@ -539,14 +566,16 @@ private fun WarningBox(text: String) {
 @Composable
 private fun DisclaimerBox() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
         Text(
-            text = stringResource(R.string.ai_disclaimer) +
-                "。本应用不内置任何 Key，也不提供自建后端；所有数据只保存在本机。",
+            text =
+                stringResource(R.string.ai_disclaimer) +
+                    "。本应用不内置任何 Key，也不提供自建后端；所有数据只保存在本机。",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -574,15 +603,17 @@ private fun SectionCard(
 ) {
     var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded }
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {

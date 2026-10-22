@@ -6,13 +6,13 @@ import com.totop.app.util.UtcClock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Call
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -316,11 +316,12 @@ class LlmClient(
                     latencyMs = latency,
                 )
             }
-            val source = response.body?.source()
-                ?: return ConnectivityResult.Failed(
-                    error = LlmError.MalformedResponse(detail = "响应体为空"),
-                    latencyMs = latency,
-                )
+            val source =
+                response.body?.source()
+                    ?: return ConnectivityResult.Failed(
+                        error = LlmError.MalformedResponse(detail = "响应体为空"),
+                        latencyMs = latency,
+                    )
 
             val parser = SseLineParser()
             val content = StringBuilder()
@@ -448,8 +449,9 @@ class LlmClient(
         val array =
             when (root) {
                 is kotlinx.serialization.json.JsonArray -> root
-                is JsonObject -> (root["data"] as? kotlinx.serialization.json.JsonArray)
-                    ?: (root["models"] as? kotlinx.serialization.json.JsonArray)
+                is JsonObject ->
+                    (root["data"] as? kotlinx.serialization.json.JsonArray)
+                        ?: (root["models"] as? kotlinx.serialization.json.JsonArray)
                 else -> null
             }
         array?.forEach { element ->
@@ -461,6 +463,7 @@ class LlmClient(
         }
         return ids.filter { it.isNotBlank() }.distinct().sorted()
     }
+
     companion object {
         /** 连通性校验用的最小提问：要求返回一个字符，尽量省 token。 */
         const val DEFAULT_PROBE_TEXT: String = "ping，请只回复 OK"

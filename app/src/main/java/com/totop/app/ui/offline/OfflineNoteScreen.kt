@@ -61,12 +61,13 @@ fun OfflineNoteScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Tokens.Background)
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Tokens.Background)
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
         ) {
             Spacer(Modifier.height(12.dp))
             Text(
@@ -93,10 +94,11 @@ fun OfflineNoteScreen(
             }
             if (state.items.isEmpty()) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
-                        .padding(20.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
+                            .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text("还没有离线记录", style = MaterialTheme.typography.bodyLarge, color = Tokens.OnSurface)

@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -88,12 +87,13 @@ fun KnowledgeScreen(
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                start = 14.dp,
-                end = 14.dp,
-                top = 8.dp,
-                bottom = 24.dp,
-            ),
+            contentPadding =
+                androidx.compose.foundation.layout.PaddingValues(
+                    start = 14.dp,
+                    end = 14.dp,
+                    top = 8.dp,
+                    bottom = 24.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item(key = "summary") { SummaryRow(uiState = uiState) }
@@ -164,10 +164,11 @@ fun KnowledgeScreen(
 @Composable
 private fun SummaryRow(uiState: KnowledgeUiState) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(10.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
@@ -194,10 +195,11 @@ private fun ChartCard(
     content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -220,15 +222,17 @@ private fun ChapterHeatCard(
 ) {
     var expanded by rememberSaveable(group.chapter) { mutableStateOf(group.mistakeTotal > 0) }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -253,10 +257,11 @@ private fun ChapterHeatCard(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 group.rows.forEach { row ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenKnowledgePoint(row.kpointId) }
-                            .padding(vertical = 3.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onOpenKnowledgePoint(row.kpointId) }
+                                .padding(vertical = 3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         HeatBar(row = row, modifier = Modifier.weight(1f))
@@ -269,7 +274,10 @@ private fun ChapterHeatCard(
 
 /** 错误态。 */
 @Composable
-private fun ErrorRow(message: String, onRetry: () -> Unit) {
+private fun ErrorRow(
+    message: String,
+    onRetry: () -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onRetry) { Text(text = "重试") }

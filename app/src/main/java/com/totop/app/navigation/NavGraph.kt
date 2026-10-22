@@ -1,5 +1,7 @@
 package com.totop.app.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -10,28 +12,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.navArgument
+import com.totop.app.ui.home.HomeScreen
 import com.totop.app.ui.hub.HubScreen
 import com.totop.app.ui.knowledge.KnowledgePointDetailScreen
 import com.totop.app.ui.knowledge.KnowledgeScreen
 import com.totop.app.ui.mistakes.MistakesScreen
-import com.totop.app.ui.offline.OfflineNoteScreen
 import com.totop.app.ui.mistakes.ReviewScreen
+import com.totop.app.ui.offline.OfflineNoteScreen
 import com.totop.app.ui.report.ReportScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
 import com.totop.app.ui.settings.SettingsScreen
-import com.totop.app.ui.home.HomeScreen
 
 /**
  * 应用外壳：Scaffold + 底部三项导航 + 导航宿主。
@@ -154,7 +153,25 @@ fun ToTopNavHost(
         composable(route = Routes.MISTAKES) {
             MistakesScreen(
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
-                onOpenMistake = { navController.navigate(Routes.REVIEW) },
+                // 点一道错题 -> 打开「回顾」页，而不是复习页。
+                //
+                // 旧实现两个入口都跳到 Routes.REVIEW，学生想「看看我当时错在哪」
+                // 却被丢进做题流程，这是真机反馈里最直接的一条不满。
+                // 回顾是只读的，复习才是有交互的，两者必须分开。
+                onOpenMistake = { mistakeId -> navController.navigate(Routes.mistakeDetail(mistakeId)) },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
+        composable(
+            route = Routes.MISTAKE_DETAIL,
+            arguments =
+                listOf(
+                    navArgument(Routes.MISTAKE_DETAIL_ARG) { type = NavType.StringType },
+                ),
+        ) { entry ->
+            com.totop.app.ui.mistakes.MistakeDetailScreen(
+                mistakeId = entry.arguments?.getString(Routes.MISTAKE_DETAIL_ARG).orEmpty(),
                 onBack = { navController.popBackStack() },
             )
         }

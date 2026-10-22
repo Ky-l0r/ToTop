@@ -1,7 +1,6 @@
 package com.totop.app.ui.hub
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -76,9 +75,10 @@ fun HubScreen(
         )
 
     Column(
-        modifier = modifier.fillMaxSize().background(Tokens.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+        modifier =
+            modifier.fillMaxSize().background(Tokens.Background)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
     ) {
         Spacer(Modifier.height(16.dp))
         Text(

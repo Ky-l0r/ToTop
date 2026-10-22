@@ -150,9 +150,8 @@ data class SettingsToggles(
     val modeDescription: String
         get() =
             when (mode) {
-                TeachingMode.DIRECT -> "直接给完整步骤与答案，适合已经想通、只想核对写法"
-                TeachingMode.GUIDED -> "先给三级提示逐级解锁，答案不会提前出现（推荐）"
-                TeachingMode.SOCRATIC -> "只给提问与方向，逼自己想"
+                TeachingMode.DIRECT -> "完整步骤与答案一次给全，适合已经想通、只想核对写法"
+                TeachingMode.GUIDED -> "先只给方向和一个问题，想不通再逐级要提示，答案不会提前出现（推荐）"
             }
 }
 

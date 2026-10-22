@@ -1,5 +1,6 @@
 package com.totop.app.data.remote
 
+import com.totop.app.data.prefs.LlmCredentials
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import com.totop.app.data.prefs.LlmCredentials
 
 /**
  * 连通性校验（probe）的行为回归测试。
@@ -47,7 +47,8 @@ class LlmProbeContractTest {
                     .setBody(
                         sse(
                             "{\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}",
-                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":1}}",
+                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]," +
+                                "\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":1}}",
                             "[DONE]",
                         ),
                     ),
@@ -66,7 +67,8 @@ class LlmProbeContractTest {
                     .setBody(
                         sse(
                             "{\"choices\":[{\"delta\":{\"reasoning_content\":\"hmm thinking\"}}]}",
-                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":40}}",
+                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]," +
+                                "\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":40}}",
                             "[DONE]",
                         ),
                     ),
@@ -86,7 +88,8 @@ class LlmProbeContractTest {
                 MockResponse().setResponseCode(200)
                     .setBody(
                         sse(
-                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":64}}",
+                            "{\"choices\":[{\"delta\":{},\"finish_reason\":\"length\"}]," +
+                                "\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":64}}",
                             "[DONE]",
                         ),
                     ),

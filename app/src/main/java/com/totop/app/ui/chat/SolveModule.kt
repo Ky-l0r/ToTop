@@ -59,7 +59,6 @@ object SolveModule {
         return LlmModule.create(context = context, cacheStore = cacheStore, traceStore = traceStore).gateway
     }
 
-
     /**
      * 传输层本体。
      *

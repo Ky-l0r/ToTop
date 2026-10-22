@@ -8,6 +8,7 @@ package com.totop.app.navigation
  */
 object Routes {
     // 顶层导航（底部栏可见，最多 3 项）
+
     /** 首页：启动即进入。 */
     const val HOME = "home"
 
@@ -33,7 +34,13 @@ object Routes {
 
     // 带参数页面
     const val KPOINT_DETAIL_ARG = "kpointId"
+
+    /** 错题回顾详情（只读回看，不进入复习流程）。 */
+    const val MISTAKE_DETAIL_ARG = "mistakeId"
+    const val MISTAKE_DETAIL = "mistake_detail/{$MISTAKE_DETAIL_ARG}"
     const val KPOINT_DETAIL = "kpoint_detail/{$KPOINT_DETAIL_ARG}"
 
     fun kpointDetail(kpointId: String): String = "kpoint_detail/" + kpointId
+
+    fun mistakeDetail(mistakeId: String): String = "mistake_detail/" + mistakeId
 }

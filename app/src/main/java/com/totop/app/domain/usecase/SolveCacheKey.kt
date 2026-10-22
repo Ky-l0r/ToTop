@@ -10,7 +10,7 @@ import com.totop.app.domain.model.TeachingMode
  * - promptVersion 保证「提示词一改，旧缓存立刻失效」，否则会把旧版提示词的结果当成新结果；
  * - model 保证「换模型不串用」。
  *
- * 额外把 [mode] 纳入键：同一题在 DIRECT / GUIDED / SOCRATIC 下下发的字段不同，
+ * 额外把 [mode] 纳入键：同一题在 DIRECT / GUIDED 下下发的字段不同，
  * 若共用一个缓存，切换模式后就会泄漏答案（GUIDED 拿到 DIRECT 的结果）。
  * 注意：**落库的标准答案与模式无关**，模式只影响下发裁剪，因此这只影响缓存粒度，不影响数据正确性。
  */

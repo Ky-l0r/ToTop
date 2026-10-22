@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test
 /**
  * 引导模式的展示策略与提示生成。
  *
- * 这两组规则直接对应 FR-2 的硬约束：
- * 「GUIDED 严禁提前渲染 finalAnswer」「SOCRATIC 只渲染提问与方向」，
+ * 这些规则直接对应 FR-2 的硬约束与 0.2.0 的模式合并：
+ * 「GUIDED 未揭示前既不展示步骤也不展示答案」，
  * 因此必须有断言把它们钉死，任何改动都要先改测试。
  */
 class GuidePolicyTest {
@@ -26,22 +26,42 @@ class GuidePolicyTest {
     }
 
     @Test
-    @DisplayName("GUIDED 未看全解前绝不展示答案")
-    fun guidedHidesAnswerUntilRevealed() {
+    @DisplayName("GUIDED 未揭示前既不展示步骤也不展示答案")
+    fun guidedHidesEverythingUntilRevealed() {
+        // 这是 0.2.0 最关键的一条不变式：旧实现 GUIDED 会直接渲染标准步骤，
+        // 观感与「直接讲解」没差别，真机反馈因此要求合并两档。
         assertFalse(GuidePolicy.showsFinalAnswer(TeachingMode.GUIDED, revealed = false))
-        assertTrue(GuidePolicy.showsFinalAnswer(TeachingMode.GUIDED, revealed = true))
-        assertTrue(GuidePolicy.showsSolutionSteps(TeachingMode.GUIDED))
+        assertFalse(GuidePolicy.showsSolutionSteps(TeachingMode.GUIDED))
+        assertTrue(GuidePolicy.withholdsSolution(TeachingMode.GUIDED, revealed = false))
+        assertTrue(GuidePolicy.showsHints(TeachingMode.GUIDED))
         assertTrue(GuidePolicy.showsRevealAction(TeachingMode.GUIDED, revealed = false))
+    }
+
+    @Test
+    @DisplayName("GUIDED 揭示后步骤与答案同时放开")
+    fun guidedRevealsEverything() {
+        assertTrue(GuidePolicy.showsFinalAnswer(TeachingMode.GUIDED, revealed = true))
+        assertFalse(GuidePolicy.withholdsSolution(TeachingMode.GUIDED, revealed = true))
         assertFalse(GuidePolicy.showsRevealAction(TeachingMode.GUIDED, revealed = true))
     }
 
     @Test
-    @DisplayName("SOCRATIC 不展示步骤与答案")
-    fun socraticHidesEverything() {
-        assertFalse(GuidePolicy.showsFinalAnswer(TeachingMode.SOCRATIC, revealed = true))
-        assertFalse(GuidePolicy.showsSolutionSteps(TeachingMode.SOCRATIC))
-        assertFalse(GuidePolicy.showsHints(TeachingMode.SOCRATIC))
-        assertTrue(GuidePolicy.showsGuidingOnly(TeachingMode.SOCRATIC))
+    @DisplayName("DIRECT 不受揭示状态影响，不展示提示")
+    fun directNeverWithholds() {
+        assertFalse(GuidePolicy.withholdsSolution(TeachingMode.DIRECT, revealed = false))
+        assertFalse(GuidePolicy.showsHints(TeachingMode.DIRECT))
+        assertFalse(GuidePolicy.showsRevealAction(TeachingMode.DIRECT, revealed = false))
+    }
+
+    @Test
+    @DisplayName("模式只剩两档，旧的 SOCRATIC 被归到 GUIDED")
+    fun legacySocraticFoldsIntoGuided() {
+        assertEquals(listOf("DIRECT", "GUIDED"), TeachingMode.entries.map { it.wire })
+        assertEquals(TeachingMode.GUIDED, TeachingMode.fromWire("SOCRATIC"))
+        assertEquals(TeachingMode.GUIDED, TeachingMode.fromWire("socratic"))
+        assertEquals(TeachingMode.GUIDED, TeachingMode.fromWireOrNull("SOCRATIC"))
+        assertTrue(TeachingMode.isLegacy("SOCRATIC"))
+        assertFalse(TeachingMode.isLegacy("GUIDED"))
     }
 
     @Test
@@ -65,12 +85,13 @@ class GuidePolicyTest {
     fun hintsShrinkWithFewSteps() {
         val hints = HintBuilder.build(method = "", stepContents = listOf("只有一步"))
         assertEquals(2, hints.size)
-        assertTrue(hints[0].text.contains("先把题目条件"))
+        // 没给方法名时用兜底方向，措辞是「先把题目给了什么、要求什么逐条写下来」
+        assertTrue(hints[0].text.contains("先把题目给了什么"))
         assertNull(HintBuilder.levelOf(hints, 3))
     }
 
     @Test
-    @DisplayName("模式元信息覆盖三档")
+    @DisplayName("模式元信息覆盖全部档位")
     fun modeMetaCoversAll() {
         TeachingMode.entries.forEach { mode ->
             assertTrue(ModeMeta.titleOf(mode).isNotBlank())

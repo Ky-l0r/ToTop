@@ -19,7 +19,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -30,11 +32,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.QuestionDraft
+import com.totop.app.ui.theme.Tokens
 import com.totop.app.util.NormalizedRect
 
 /**
@@ -119,22 +123,52 @@ fun PagePreviewScreen(
             )
         }
 
-        // 框选操作 + 明确的框选状态反馈
+        // 框选操作 + 明确的框选状态反馈。
+        //
+        // 状态用**颜色 + 图标 + 文案**三重表达，而不是只改一行浅灰小字：
+        // 学生框完题目抬头找确认，如果只是底部一行灰字变了，很容易漏看，
+        // 结果就是「我都不知道自己有没有框上」。
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val cropped = page?.hasCrop == true
+            Box(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(Tokens.RadiusMedium))
+                        .background(if (cropped) Color(0xFF2E7D5B) else Color.White.copy(alpha = 0.14f))
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (cropped) Icons.Filled.CheckCircle else Icons.Filled.CropFree,
+                        contentDescription = null,
+                        tint = if (cropped) Color.White else Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = if (cropped) "已框选：只上传框内的部分" else "未框选：将上传整张图",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White,
+                    )
+                }
+            }
+            OutlinedButton(onClick = onResetCrop, enabled = cropped) {
+                Text("用整张图", color = Color.White)
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = if (page?.hasCrop == true) "已框选：只上传框内的部分" else "未框选：上传整张图",
-                style = MaterialTheme.typography.labelMedium,
-                color = if (page?.hasCrop == true) Color(0xFF9BE0B8) else Color.White.copy(alpha = 0.7f),
-                modifier = Modifier.weight(1f),
-            )
-            OutlinedButton(onClick = onResetCrop, enabled = page?.hasCrop == true) {
-                Text("用整张图", color = Color.White)
+            OutlinedButton(onClick = onRetake, modifier = Modifier.weight(1f)) {
+                Text("重拍这页", color = Color.White)
             }
-            OutlinedButton(onClick = onRetake) { Text("重拍这页", color = Color.White) }
         }
 
         Spacer(Modifier.height(10.dp))
@@ -150,10 +184,24 @@ fun PagePreviewScreen(
                     pageNumber = index + 1,
                     selected = index == currentIndex,
                     onClick = { onSelectPage(index) },
-                    onDelete = if (draft.pageCount > 1) { { onDeletePage(index) } } else null,
-                    onMoveLeft = if (index > 0) { { onMovePage(index, index - 1) } } else null,
+                    onDelete =
+                        if (draft.pageCount > 1) {
+                            { onDeletePage(index) }
+                        } else {
+                            null
+                        },
+                    onMoveLeft =
+                        if (index > 0) {
+                            { onMovePage(index, index - 1) }
+                        } else {
+                            null
+                        },
                     onMoveRight =
-                        if (index < draft.pageCount - 1) { { onMovePage(index, index + 1) } } else null,
+                        if (index < draft.pageCount - 1) {
+                            { onMovePage(index, index + 1) }
+                        } else {
+                            null
+                        },
                 )
             }
             item {
@@ -221,7 +269,12 @@ private fun PageThumb(
                         .clickable(onClick = delete),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Filled.Close, contentDescription = "删除这一页", tint = Color.White, modifier = Modifier.size(12.dp))
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "删除这一页",
+                    tint = Color.White,
+                    modifier = Modifier.size(12.dp),
+                )
             }
         }
         // 排序：左右移动按钮比拖拽更可靠（低端机拖拽易误触）

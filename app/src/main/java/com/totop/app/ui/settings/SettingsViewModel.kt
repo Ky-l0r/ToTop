@@ -213,7 +213,12 @@ class SettingsViewModel
                                     detail =
                                         listOfNotNull(
                                             modelFailure.detail,
-                                            if (available.isEmpty()) null else "该端点可用模型：" + available.take(20).joinToString("、"),
+                                            if (available.isEmpty()) {
+                                                null
+                                            } else {
+                                                "该端点可用模型：" +
+                                                    available.take(PROBE_PREVIEW_MODELS).joinToString("、")
+                                            },
                                         ).joinToString("；"),
                                 ),
                         )
@@ -493,6 +498,9 @@ class SettingsViewModel
             throwable?.message?.takeIf { it.isNotBlank() } ?: throwable?.javaClass?.simpleName ?: "未知原因"
 
         companion object {
+            /** 探测结果里最多预览多少个模型名：再多界面也放不下，而且读不完。 */
+            private const val PROBE_PREVIEW_MODELS: Int = 20
+
             /** 图片根目录（与 ml 层 PreprocessPaths.IMAGE_DIR 一致）。 */
             const val IMAGE_DIR_ROOT: String = "images"
 

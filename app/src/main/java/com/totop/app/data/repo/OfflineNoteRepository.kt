@@ -81,7 +81,9 @@ class OfflineNoteRepository
         /** 读取全部记录，按时间倒序。文件不存在或损坏时返回空列表而不是抛异常。 */
         suspend fun all(): List<OfflineNote> =
             withContext(ioDispatcher) {
-                val raw = runCatching { file.takeIf { it.exists() }?.readText() }.getOrNull() ?: return@withContext emptyList()
+                val raw =
+                    runCatching { file.takeIf { it.exists() }?.readText() }.getOrNull()
+                        ?: return@withContext emptyList()
                 if (raw.isBlank()) return@withContext emptyList()
                 runCatching { json.decodeFromString(ListSerializer(OfflineNote.serializer()), raw) }
                     .getOrDefault(emptyList())

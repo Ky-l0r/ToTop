@@ -105,8 +105,17 @@ object HintBuilder {
     /** 上限三级。 */
     const val MAX_LEVEL: Int = 3
 
+    /** 没有方法名时的兜底方向（不涉及任何具体算式）。 */
+    private const val FALLBACK_METHOD = "先把题目给了什么、要求什么逐条写下来"
+
     /**
      * 生成三级提示。
+     *
+     * 0.2.0 的调整（对应真机反馈「提示用小字呈现，不易读，提示应该为主体强调」）：
+     * 提示文本改成**独立成句、可直接读出来的中文**，不再是「想一想：配方法」这种半截话；
+     * 界面侧由 MessageList 用正文级字号与高对比呈现，不再塞进小字注脚。
+     *
+     * 每级都遵守一条硬约束：**不含最终答案**。
      *
      * @param method 解题方法名（可空）
      * @param stepContents 标准步骤的「做什么」文本
@@ -116,17 +125,31 @@ object HintBuilder {
         stepContents: List<String>,
     ): List<HintLevel> {
         val hints = ArrayList<HintLevel>(MAX_LEVEL)
-        val methodText = method.trim().ifEmpty { "先把题目条件与所求逐条列出来" }
-        hints.add(HintLevel(level = 1, text = "想一想：" + methodText))
+        val methodText = method.trim().ifEmpty { FALLBACK_METHOD }
+        hints.add(
+            HintLevel(
+                level = 1,
+                text =
+                    "这道题的主线是「" + methodText + "」。先别动笔算，" +
+                        "想一想题目给了哪些条件、要你求什么，再往下看下一步。",
+            ),
+        )
         val first = stepContents.getOrNull(0)?.trim().orEmpty()
         if (first.isNotEmpty()) {
-            hints.add(HintLevel(level = 2, text = "下一步该做的是：" + first))
+            hints.add(HintLevel(level = 2, text = "接下来你要做的是：" + first))
         }
         // 第 3 级必须是「展开顺序」，只有一步时它和第 2 级重复，因此直接不生成
         val twoSteps = stepContents.take(2).map { it.trim() }.filter { it.isNotEmpty() }
         if (twoSteps.size >= 2) {
             val numbered = twoSteps.mapIndexed { index, text -> (index + 1).toString() + ". " + text }
-            hints.add(HintLevel(level = 3, text = "按这个顺序展开：\n" + numbered.joinToString("\n")))
+            hints.add(
+                HintLevel(
+                    level = 3,
+                    text =
+                        "把这两步按顺序做一遍，结果自己算出来（答案我不给，算完可以对一下）：\n" +
+                            numbered.joinToString("\n"),
+                ),
+            )
         }
         return hints
     }
@@ -145,14 +168,12 @@ object ModeMeta {
         when (mode) {
             TeachingMode.DIRECT -> "直接讲解"
             TeachingMode.GUIDED -> "提示引导"
-            TeachingMode.SOCRATIC -> "纯引导"
         }
 
     /** 模式一句话说明。 */
     fun descriptionOf(mode: TeachingMode): String =
         when (mode) {
-            TeachingMode.DIRECT -> "给出完整步骤与最终答案，适合已经想通只想核对写法"
-            TeachingMode.GUIDED -> "先给三级提示逐级解锁，想通后自己点开全解，答案不会提前出现"
-            TeachingMode.SOCRATIC -> "只给提问与方向，不展示步骤与答案，适合逼自己想"
+            TeachingMode.DIRECT -> "完整步骤与最终答案一次给全，适合已经想通只想核对写法"
+            TeachingMode.GUIDED -> "先只给方向和一个问题，想不通再逐级要提示，想通了点开全解"
         }
 }

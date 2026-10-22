@@ -86,11 +86,12 @@ fun ReportScreen(
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PeriodSelector(
@@ -104,41 +105,45 @@ fun ReportScreen(
             OfflineBanner()
 
             when {
-                uiState.loading -> Row(
-                    modifier = Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                }
+                uiState.loading ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    }
 
-                uiState.errorMessage != null -> ErrorCard(
-                    message = uiState.errorMessage.orEmpty(),
-                    onRetry = viewModel::regenerate,
-                )
-
-                uiState.noDataMessage != null -> NoDataCard(
-                    message = uiState.noDataMessage.orEmpty(),
-                    onRetry = viewModel::regenerate,
-                )
-
-                else -> uiState.stats?.let { stats ->
-                    StatsOverview(stats = stats, period = uiState.period)
-                    RecurringKpoints(stats = stats)
-                    ErrorTypeBreakdown(stats = stats)
-                    AiCommentCard(
-                        aiComment = uiState.aiComment,
-                        aiDegraded = uiState.aiDegraded,
-                        aiEnabled = uiState.aiEnabled,
-                        statusText = uiState.aiStatusText,
-                        statusTip = uiState.exportTip,
+                uiState.errorMessage != null ->
+                    ErrorCard(
+                        message = uiState.errorMessage.orEmpty(),
+                        onRetry = viewModel::regenerate,
                     )
-                    ExportCard(
-                        state = uiState.exportState,
-                        onExportPng = { viewModel.export(ReportExportFormat.PNG) },
-                        onExportPdf = { viewModel.export(ReportExportFormat.PDF) },
-                        onDismiss = viewModel::dismissExport,
+
+                uiState.noDataMessage != null ->
+                    NoDataCard(
+                        message = uiState.noDataMessage.orEmpty(),
+                        onRetry = viewModel::regenerate,
                     )
-                }
+
+                else ->
+                    uiState.stats?.let { stats ->
+                        StatsOverview(stats = stats, period = uiState.period)
+                        RecurringKpoints(stats = stats)
+                        ErrorTypeBreakdown(stats = stats)
+                        AiCommentCard(
+                            aiComment = uiState.aiComment,
+                            aiDegraded = uiState.aiDegraded,
+                            aiEnabled = uiState.aiEnabled,
+                            statusText = uiState.aiStatusText,
+                            statusTip = uiState.exportTip,
+                        )
+                        ExportCard(
+                            state = uiState.exportState,
+                            onExportPng = { viewModel.export(ReportExportFormat.PNG) },
+                            onExportPdf = { viewModel.export(ReportExportFormat.PDF) },
+                            onDismiss = viewModel::dismissExport,
+                        )
+                    }
             }
         }
     }
@@ -206,10 +211,11 @@ private fun PeriodSelector(
 @Composable
 private fun OfflineBanner() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
         Text(
             text = "离线统计 · 报告数字全部由本机 daily_stats 汇总生成，不上传任何数据。",
@@ -221,12 +227,16 @@ private fun OfflineBanner() {
 
 /** 六项指标总览。 */
 @Composable
-private fun StatsOverview(stats: ReportStats, period: ReportPeriod) {
+private fun StatsOverview(
+    stats: ReportStats,
+    period: ReportPeriod,
+) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
@@ -248,7 +258,10 @@ private fun StatsOverview(stats: ReportStats, period: ReportPeriod) {
 
 /** 单行指标。 */
 @Composable
-private fun MetricRow(label: String, value: String) {
+private fun MetricRow(
+    label: String,
+    value: String,
+) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
             text = label,
@@ -315,16 +328,18 @@ private fun ErrorTypeBreakdown(stats: ReportStats) {
                     modifier = Modifier.size(width = 96.dp, height = 20.dp),
                 )
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .size(height = 10.dp, width = 0.dp)
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(5.dp)),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .size(height = 10.dp, width = 0.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(5.dp)),
                 ) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(item.count.toFloat() / max.toFloat())
-                            .size(height = 10.dp, width = 0.dp)
-                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(5.dp)),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth(item.count.toFloat() / max.toFloat())
+                                .size(height = 10.dp, width = 0.dp)
+                                .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(5.dp)),
                     )
                 }
                 Text(
@@ -360,21 +375,24 @@ private fun AiCommentCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            aiDegraded -> Text(
-                text = statusTip.ifBlank { "AI 解读失败，已输出纯统计版。" },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-            )
-            !aiEnabled -> Text(
-                text = "AI 解读已关闭：本报告只有数字，不消耗任何 token。可以在上方开关按需打开。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            else -> Text(
-                text = "正在生成 AI 解读…",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            aiDegraded ->
+                Text(
+                    text = statusTip.ifBlank { "AI 解读失败，已输出纯统计版。" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            !aiEnabled ->
+                Text(
+                    text = "AI 解读已关闭：本报告只有数字，不消耗任何 token。可以在上方开关按需打开。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            else ->
+                Text(
+                    text = "正在生成 AI 解读…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
         }
     }
 }
@@ -413,31 +431,34 @@ private fun ExportCard(
         }
         when (state) {
             is ReportExportState.Idle -> Unit
-            is ReportExportState.Running -> Text(
-                text = "正在本机渲染…",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            is ReportExportState.Done -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            is ReportExportState.Running ->
                 Text(
-                    text = "已生成：" + state.report.file.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    text = state.report.format.label + " · " + formatSize(state.report.sizeBytes),
-                    style = MaterialTheme.typography.labelSmall,
+                    text = "正在本机渲染…",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                TextButton(onClick = onDismiss) { Text(text = "知道了") }
-            }
-            is ReportExportState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = state.message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                TextButton(onClick = onDismiss) { Text(text = "知道了") }
-            }
+            is ReportExportState.Done ->
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = "已生成：" + state.report.file.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = state.report.format.label + " · " + formatSize(state.report.sizeBytes),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = onDismiss) { Text(text = "知道了") }
+                }
+            is ReportExportState.Failed ->
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    TextButton(onClick = onDismiss) { Text(text = "知道了") }
+                }
         }
     }
 }
@@ -452,7 +473,10 @@ private fun formatSize(bytes: Long): String {
 
 /** 无数据。 */
 @Composable
-private fun NoDataCard(message: String, onRetry: () -> Unit) {
+private fun NoDataCard(
+    message: String,
+    onRetry: () -> Unit,
+) {
     SectionCard(title = "这一周期还没有学习记录") {
         Text(text = message, style = MaterialTheme.typography.bodyMedium)
         Text(
@@ -466,7 +490,10 @@ private fun NoDataCard(message: String, onRetry: () -> Unit) {
 
 /** 错误。 */
 @Composable
-private fun ErrorCard(message: String, onRetry: () -> Unit) {
+private fun ErrorCard(
+    message: String,
+    onRetry: () -> Unit,
+) {
     SectionCard(title = "生成失败") {
         Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onRetry) { Text(text = "重试") }
@@ -481,10 +508,11 @@ private fun SectionCard(
     content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)

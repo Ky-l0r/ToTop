@@ -153,7 +153,10 @@ class ExportSink(
         }.getOrElse { PublishResult.Failure(it.message ?: "导出失败") }
 
     /** 分享意图：把文件发给其它 App（微信、邮箱、打印机）。 */
-    fun shareIntent(info: ExportArtifactInfo, mimeType: String): Intent? {
+    fun shareIntent(
+        info: ExportArtifactInfo,
+        mimeType: String,
+    ): Intent? {
         val uri = parseUri(info.contentUri) ?: return null
         val intent =
             Intent(Intent.ACTION_SEND).apply {
@@ -165,7 +168,10 @@ class ExportSink(
     }
 
     /** 打开意图：用系统 PDF 阅读器或图片查看器直接打开。 */
-    fun openIntent(info: ExportArtifactInfo, mimeType: String): Intent? {
+    fun openIntent(
+        info: ExportArtifactInfo,
+        mimeType: String,
+    ): Intent? {
         val uri = parseUri(info.contentUri) ?: return null
         val intent =
             Intent(Intent.ACTION_VIEW).apply {
@@ -187,8 +193,10 @@ class ExportSink(
      * 用户在分享面板里选择已安装的打印服务（系统打印、HP、Epson 等），
      * 这些 App 自己会处理 A4 排版，兼容性反而更好。
      */
-    fun printIntent(info: ExportArtifactInfo, mimeType: String): Intent? =
-        shareIntent(info, mimeType)
+    fun printIntent(
+        info: ExportArtifactInfo,
+        mimeType: String,
+    ): Intent? = shareIntent(info, mimeType)
 
     /** 把字符串 Uri 解析成可用 Uri；file:// 与绝对路径都转成 FileProvider Uri。 */
     private fun parseUri(raw: String): Uri? {

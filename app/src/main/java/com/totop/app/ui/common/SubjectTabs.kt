@@ -1,6 +1,7 @@
 package com.totop.app.ui.common
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.Subjects
 import com.totop.app.ui.theme.Tokens
-import androidx.compose.foundation.clickable
 
 /** 「全部」的固定标识，避免与真实科目代码混淆。 */
 const val ALL_SUBJECTS: String = "__all__"
@@ -40,10 +40,11 @@ fun SubjectTabs(
     modifier: Modifier = Modifier,
     showAll: Boolean = true,
 ) {
-    val codes = buildList {
-        if (showAll) add(ALL_SUBJECTS)
-        addAll(Subjects.ORDER)
-    }
+    val codes =
+        buildList {
+            if (showAll) add(ALL_SUBJECTS)
+            addAll(Subjects.ORDER)
+        }
 
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
@@ -86,9 +87,10 @@ private fun SubjectChip(
         text = if (enabled) label else label + "（暂无）",
         style = MaterialTheme.typography.labelLarge,
         color = textColor,
-        modifier = Modifier
-            .background(background, RoundedCornerShape(50))
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 7.dp),
+        modifier =
+            Modifier
+                .background(background, RoundedCornerShape(50))
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 7.dp),
     )
 }

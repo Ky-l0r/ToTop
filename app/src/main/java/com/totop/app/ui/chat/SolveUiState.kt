@@ -1,7 +1,6 @@
 package com.totop.app.ui.chat
 
 import com.totop.app.data.remote.SolveEvent
-import com.totop.app.data.remote.TokenUsage
 import com.totop.app.data.repo.ChatTurn
 import com.totop.app.data.repo.SolveSession
 import com.totop.app.domain.model.AiQuestion
@@ -209,11 +208,14 @@ data class PreparedQuestion(
 /**
  * 引导模式的展示策略（纯函数，可单测）。
  *
- * 规则来自 FR-2：
+ * 规则（0.2.0 合并为两档后）：
  * - DIRECT：直接展示全部步骤与最终答案；
- * - GUIDED：展示标准步骤，但**严禁提前渲染 finalAnswer**；需逐级解锁三级提示，
- *   或点击「我已想通，看全解」后才展示答案；
- * - SOCRATIC：只渲染提问与方向，不展示步骤内容与答案。
+ * - GUIDED：**不展示步骤与答案**，只给方向与引导性问题；需逐级解锁三级提示，
+ *   或点击「我已想通，看全解」后才展示完整解答。
+ *
+ * 关键不变式（有单测守着）：GUIDED 且未揭示时，
+ * [showsSolutionSteps] 与 [showsFinalAnswer] 必须同时为 false。
+ * 任何一处遗漏都会让学生绕过「自己先想」这一步，等于把引导模式退化成直接讲解。
  */
 object GuidePolicy {
     /** 该模式下是否展示完整答案。 */
@@ -224,28 +226,44 @@ object GuidePolicy {
         when (mode) {
             TeachingMode.DIRECT -> true
             TeachingMode.GUIDED -> revealed
-            TeachingMode.SOCRATIC -> false
         }
 
-    /** 该模式下是否展示标准步骤的正文。 */
-    fun showsSolutionSteps(mode: TeachingMode): Boolean =
-        when (mode) {
-            TeachingMode.DIRECT -> true
-            TeachingMode.GUIDED -> true
-            TeachingMode.SOCRATIC -> false
-        }
+    /**
+     * 该模式下是否展示标准步骤的正文。
+     *
+     * GUIDED 从 0.2.0 起改为 **false**：
+     * 旧实现在引导模式下照样渲染整份标准步骤，学生一进来就看到完整解答，
+     * 「提示引导」与「直接讲解」在观感上完全没有区别——这正是真机反馈指出的问题。
+     * 现在引导模式首屏只给方向与引导问题，步骤要学生主动点「看全解」才出现。
+     */
+    fun showsSolutionSteps(mode: TeachingMode): Boolean = mode == TeachingMode.DIRECT
 
     /** 该模式下是否展示三级提示卡。 */
-    fun showsHints(mode: TeachingMode): Boolean = mode != TeachingMode.SOCRATIC
+    fun showsHints(mode: TeachingMode): Boolean = mode == TeachingMode.GUIDED
 
-    /** 该模式下是否展示「我已想通，看全解」入口。 */
+    /**
+     * 引导模式下是否展示「我已想通，看全解」入口。
+     *
+     * 只要还没揭示就展示：这是学生主动索取答案的唯一入口，
+     * 藏起来会让「想通了想核对」的学生无路可走。
+     */
     fun showsRevealAction(
         mode: TeachingMode,
         revealed: Boolean,
     ): Boolean = mode == TeachingMode.GUIDED && !revealed
 
-    /** SOCRATIC 模式下是否只展示提问与方向（此时隐藏错因对比与摘要卡细节）。 */
-    fun showsGuidingOnly(mode: TeachingMode): Boolean = mode == TeachingMode.SOCRATIC
+    /**
+     * 该模式是否属于「引导式」（需要学生先自己想）。
+     *
+     * 这里只描述模式本身的性质，不再表示「只显示提问」。
+     */
+    fun isGuided(mode: TeachingMode): Boolean = mode == TeachingMode.GUIDED
+
+    /** 引导模式下，学生还没揭示全解时是否应隐藏步骤与答案（答案拦截的唯一判定入口）。 */
+    fun withholdsSolution(
+        mode: TeachingMode,
+        revealed: Boolean,
+    ): Boolean = isGuided(mode) && !revealed
 }
 
 /**
@@ -271,6 +289,23 @@ data class HintLevel(
                 1 -> "第 1 级：给方向"
                 2 -> "第 2 级：给下一步"
                 else -> "第 3 级：给到关键式子"
+            }
+
+    /** 级别徽标（用于提示卡左上角的小圆标，不用长句占位）。 */
+    val badge: String get() = level.toString()
+
+    /**
+     * 该级别一句话在做什么。
+     *
+     * 与 [title] 的区别：[title] 是给提示卡当小标题的完整句，
+     * 这里是可以放在徽标旁、扫一眼就懂的短语。
+     */
+    val purpose: String
+        get() =
+            when (level) {
+                1 -> "先想方向"
+                2 -> "看关键一步"
+                else -> "就差这一步"
             }
 }
 
@@ -482,7 +517,7 @@ object SessionTurns {
         val candidate =
             firstStudent.takeIf { it.isNotEmpty() }
                 ?: fallbackStem.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
-        return candidate.take(30).ifBlank { "新对话" }
+        return candidate.take(TITLE_MAX_CHARS).ifBlank { "新对话" }
     }
 
     /** 副标题：科目 + 轮次。 */
@@ -493,6 +528,9 @@ object SessionTurns {
         val label = Subjects.label(subjectCode)
         return label + " · " + rounds + " 轮对话"
     }
+
+    /** 会话标题最多取多少个字符（列表一行放得下，且能看出是哪道题）。 */
+    const val TITLE_MAX_CHARS: Int = 30
 
     /** 从会话记录还原展示消息（不含解题结构，历史里的解题气泡按纯文本渲染）。 */
     fun toMessages(session: SolveSession): List<ConversationMessage> =

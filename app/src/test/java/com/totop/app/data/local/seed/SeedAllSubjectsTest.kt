@@ -126,12 +126,20 @@ class SeedAllSubjectsTest {
     fun specCountIsTen() {
         assertEquals(10, SeedSpec.ALL.size)
         val subjects = SeedSpec.ALL.map { it.subject }.toSet()
-        listOf(
-            "chinese", "math", "english", "physics", "chemistry",
-            "biology", "politics", "history", "geography", "technology",
-        ).forEach { expected ->
-            assertTrue(subjects.contains(expected), "缺少科目：" + expected)
-        }
+        val expected =
+            setOf(
+                "chinese",
+                "math",
+                "english",
+                "physics",
+                "chemistry",
+                "biology",
+                "politics",
+                "history",
+                "geography",
+                "technology",
+            )
+        assertEquals(expected, subjects, "科目集合应恰好是这十科")
     }
 
     private companion object {

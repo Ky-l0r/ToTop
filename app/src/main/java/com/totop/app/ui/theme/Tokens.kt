@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
  */
 object Tokens {
     // ---------- 主色 ----------
+
     /** 主色：淡紫。 */
     val Primary = Color(0xFF6D5BD0)
 
@@ -32,6 +33,7 @@ object Tokens {
     val OnPrimaryContainer = Color(0xFF2B2450)
 
     // ---------- 背景与表面 ----------
+
     /** 页面背景：纯白。 */
     val Background = Color(0xFFFFFFFF)
 

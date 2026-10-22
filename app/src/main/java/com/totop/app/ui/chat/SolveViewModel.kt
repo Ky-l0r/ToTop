@@ -21,7 +21,6 @@ import com.totop.app.data.repo.SettingsRepository
 import com.totop.app.data.repo.SolveSession
 import com.totop.app.data.repo.SolveSessionRepository
 import com.totop.app.domain.model.AiSolvedContent
-import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.ErrorType
 import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
@@ -110,12 +109,12 @@ class SolveViewModel
         val draftPages: StateFlow<QuestionDraft> = _draftPages.asStateFlow()
 
         /** 最近的图片来源，落库时写进 question.sourceType。 */
-        private val _lastSourceType = MutableStateFlow(QuestionSourceType.CAMERA)
+        private val lastSourceType = MutableStateFlow(QuestionSourceType.CAMERA)
 
         /** 本轮主图的路径与哈希，落库时写进 question。 */
-        private val _lastImagePath = MutableStateFlow<String?>(null)
+        private val lastImagePath = MutableStateFlow<String?>(null)
 
-        private val _lastImageSha256 = MutableStateFlow<String?>(null)
+        private val lastImageSha256 = MutableStateFlow<String?>(null)
 
         /** 当前正在预览/框选第几页。 */
         private val _activePage = MutableStateFlow(0)
@@ -162,6 +161,15 @@ class SolveViewModel
 
         /** 本轮的页面级告警（框选失败、某页丢失等），合并进最终提示。 */
         private val pageWarnings = mutableListOf<String>()
+
+        /**
+         * 最近一次真正发出去的题目。
+         *
+         * 为什么需要留存：发送后输入区会立刻清空（图片与文字都进了消息流），
+         * 但「重试」还需要那份图片与题干才能重发。若继续从草稿读，
+         * 重试就会拿到一份已经被清空的输入，直接失败。
+         */
+        private var lastSentQuestion: PreparedQuestion? = null
 
         private var solveJob: Job? = null
 
@@ -232,6 +240,7 @@ class SolveViewModel
                 _phase.value = ComposerPhase.EMPTY
                 _stages.value = emptyList()
                 _streamText.value = ""
+                lastSentQuestion = null
             }
         }
 
@@ -258,6 +267,7 @@ class SolveViewModel
                 _phase.value = ComposerPhase.EMPTY
                 _stages.value = emptyList()
                 _streamText.value = ""
+                lastSentQuestion = null
                 refreshSessions()
             }
         }
@@ -283,15 +293,6 @@ class SolveViewModel
                 runCatching { sessionRepository.setArchived(id, archived) }
                 refreshSessions()
             }
-        }
-
-        /** 确保存在当前会话；返回会话 ID。 */
-        private suspend fun ensureSession(title: String): String {
-            val existing = _sessionId.value
-            if (existing != null) return existing
-            val created = sessionRepository.create(title = title)
-            _sessionId.value = created.id
-            return created.id
         }
 
         /** 把当前消息流整体落盘（失败只提示，不打断阅读）。 */
@@ -355,7 +356,7 @@ class SolveViewModel
             preprocess: suspend () -> PreprocessResult,
         ) {
             // 记录本页来源，落库时写进 question.sourceType（相册/拍照/手输可区分）
-            _lastSourceType.value = source
+            lastSourceType.value = source
             _processing.value = true
             try {
                 when (val result = preprocess()) {
@@ -509,7 +510,7 @@ class SolveViewModel
         /**
          * 切换讲解模式（会话内临时覆盖，不写回设置表）。
          *
-         * 从 DIRECT 切回 GUIDED / SOCRATIC 时重置「已看全解」标记，防止答案残留泄漏。
+         * 从 DIRECT 切回 GUIDED 时重置「已看全解」标记，防止答案残留泄漏。
          */
         fun setMode(newMode: TeachingMode) {
             if (_mode.value == newMode) return
@@ -550,12 +551,10 @@ class SolveViewModel
         }
 
         /** 当前会话里是否已经有解答。 */
-        private fun hasSolutionInConversation(): Boolean =
-            _messages.value.any { it.solution != null }
+        private fun hasSolutionInConversation(): Boolean = _messages.value.any { it.solution != null }
 
         /** 取最近一次解答的上下文。 */
-        private fun latestSolution(): SolutionPayload? =
-            _messages.value.lastOrNull { it.solution != null }?.solution
+        private fun latestSolution(): SolutionPayload? = _messages.value.lastOrNull { it.solution != null }?.solution
 
         /**
          * 追问。
@@ -649,7 +648,11 @@ class SolveViewModel
                         throw cancellation
                     } catch (error: LlmException) {
                         updateMessage(replyId) {
-                            it.copy(streaming = false, errorText = error.error.userMessage, retryable = error.error.isRetryable)
+                            it.copy(
+                                streaming = false,
+                                errorText = error.error.userMessage,
+                                retryable = error.error.isRetryable,
+                            )
                         }
                     } catch (throwable: Throwable) {
                         updateMessage(replyId) {
@@ -715,9 +718,14 @@ class SolveViewModel
                 sendFollowUp(studentBefore.text)
                 return
             }
-            val question = buildQuestionFromDraft()
+            // 解题失败重试：优先用「上一次真正发出去的那份题目」。
+            //
+            // 为什么不能只读草稿：发送成功后输入区已按设计清空（图片与文字都进了消息流），
+            // 此时从草稿组装必然得到一份空题目，重试会直接提示「题目内容为空」——
+            // 用户看到的是「明明拍了题却说我什么都没拍」。
+            val question = lastSentQuestion?.takeIf { it.canSolve } ?: buildQuestionFromDraft()
             if (!question.canSolve) {
-                showToast("题目内容为空，先拍一张照片或写下题干")
+                showToast("没有可以重试的题目，请重新拍一张或写下题干")
                 return
             }
             _messages.update { list -> list.filterNot { it.id == lastFailed.id } }
@@ -783,12 +791,21 @@ class SolveViewModel
                     createdAtUtc = System.currentTimeMillis(),
                 )
             _messages.update { it + studentMessage + replyMessage }
+            // 发送后立刻清空输入区。
+            //
+            // 这是真机反馈「发送后图片还在输入框上面，看起来就像没有被发送」的直接修法：
+            // 图片已经作为消息的一部分进入对话流（下面 persistAndLink 还会把它写进错题本），
+            // 再在输入框里留一份，用户会误以为这次发送失败了、或者以为会重复上传。
+            // 文字同理——旧版只清文字不清图片，观感上是「半发送」状态。
+            lastSentQuestion = question
             _draft.update { it.copy(studentProcess = "") }
+            _draftPages.value = QuestionDraft.EMPTY
+            _activePage.value = 0
             _phase.value = ComposerPhase.SOLVING
             _stages.value = StageProgressMapper.initial()
             pageWarnings.clear()
-            _lastImagePath.value = question.imagePath
-            _lastImageSha256.value = question.imageSha256
+            lastImagePath.value = question.imagePath
+            lastImageSha256.value = question.imageSha256
 
             requestId = UUID.randomUUID().toString()
             val credentials = secretStore.read()
@@ -918,7 +935,11 @@ class SolveViewModel
                 is SolveEvent.Routed -> Unit
                 is SolveEvent.StageStarted ->
                     _stages.value =
-                        StageProgressMapper.start(_stages.value.takeIf { it.isNotEmpty() } ?: StageProgressMapper.initial(), event.stage, event.cached)
+                        StageProgressMapper.start(
+                            _stages.value.takeIf { it.isNotEmpty() } ?: StageProgressMapper.initial(),
+                            event.stage,
+                            event.cached,
+                        )
                 is SolveEvent.FirstToken ->
                     _stages.value = StageProgressMapper.firstToken(_stages.value, event.stage, event.elapsedMs)
                 is SolveEvent.Delta -> {
@@ -950,21 +971,41 @@ class SolveViewModel
             val warnings = ArrayList<String>(event.warnings)
             warnings.addAll(pageWarnings)
             pageWarnings.clear()
-            // 把「步骤 B 完成」等信息落成气泡正文，方便会话持久化与历史回顾
+            // 气泡正文（同时是会话持久化的内容）。
+            //
+            // 历史回顾时只拿得到这段纯文本，所以它必须自身可读：
+            // 分段加小标题、步骤之间空行、每段前留出「已知 / 求 / 解答」的结构。
+            // 旧实现把所有内容用单换行糊在一起，回顾时像一段没有段落的短信，
+            // 这也是真机反馈「原题没有排版看着难受」的一部分。
             val summaryText =
                 buildString {
-                    if (payload.stem.isNotBlank()) append(payload.stem).append('\n')
-                    payload.steps.forEach { step ->
-                        append(step.idx).append(". ").append(step.content).append('\n')
-                        if (step.why.isNotBlank()) append("   为什么：").append(step.why).append('\n')
+                    if (payload.stem.isNotBlank()) {
+                        append("【原题】\n").append(payload.stem).append('\n')
                     }
-                    if (payload.finalAnswer.isNotBlank()) append("答案：").append(payload.finalAnswer)
+                    if (payload.known.isNotEmpty()) {
+                        append("\n【已知】\n")
+                        payload.known.forEach { append("· ").append(it).append('\n') }
+                    }
+                    if (payload.ask.isNotBlank()) {
+                        append("\n【求】").append(payload.ask).append('\n')
+                    }
                     payload.firstError?.let { error ->
-                        append("\n\n第 ").append(error.stepIdx).append(" 步 · ").append(error.typeLabel)
-                        append("\n").append(error.explain)
+                        append("\n【错在哪里】\n")
+                        append("第 ").append(error.stepIdx).append(" 步 · ").append(error.typeLabel).append('\n')
+                        append(error.explain).append('\n')
                         if (error.correctThinking.isNotBlank()) {
-                            append("\n下次这样想：").append(error.correctThinking)
+                            append("下次这样想：").append(error.correctThinking).append('\n')
                         }
+                    }
+                    if (payload.steps.isNotEmpty()) {
+                        append("\n【标准解答】\n")
+                        payload.steps.forEach { step ->
+                            append(step.idx).append(". ").append(step.content).append('\n')
+                            if (step.why.isNotBlank()) append("   为什么：").append(step.why).append('\n')
+                        }
+                    }
+                    if (payload.finalAnswer.isNotBlank()) {
+                        append("\n【答案】").append(payload.finalAnswer)
                     }
                 }.trim()
             updateMessage(replyId) {
@@ -1038,11 +1079,11 @@ class SolveViewModel
                             // 多页题目只把第 1 页作为「主图」写入 question 表，
                             // 其余页随本次结果一起丢弃：错题本展示的是题干与错因，
                             // 多页原图不属于错题的必需属性，避免为此新增表与迁移。
-                            imagePath = _lastImagePath.value,
+                            imagePath = lastImagePath.value,
                             // 必须写入 sha256，否则 saveDeduplicated 的按图去重永远失效，
                             // 同一张图重解一次就会在错题本里多出一条重复记录。
-                            imageSha256 = _lastImageSha256.value,
-                            sourceType = _lastSourceType.value,
+                            imageSha256 = lastImageSha256.value,
+                            sourceType = lastSourceType.value,
                             createdAtUtc = content.question.createdAtUtc,
                         ),
                     )
@@ -1067,7 +1108,14 @@ class SolveViewModel
                 val assignments =
                     content.kpointAssignments
                         .filter { it.hasControlledId }
-                        .map { KpointAssignment(kpointId = it.kpointId, name = it.name, confidence = it.confidence, usage = it.usage) }
+                        .map {
+                            KpointAssignment(
+                                kpointId = it.kpointId,
+                                name = it.name,
+                                confidence = it.confidence,
+                                usage = it.usage,
+                            )
+                        }
                 val stored =
                     mistakeRepository.save(
                         record = record,

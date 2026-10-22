@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test
  * SolveQuestionUseCase 编排单测。
  *
  * 重点断言三件事：
- * 1. 三档模式的裁剪：GUIDED 不返回 finalAnswer、SOCRATIC 只返回引导；
+ * 1. 两档模式的裁剪：GUIDED 不返回 finalAnswer 且不给步骤，DIRECT 全量；
  * 2. 失败不入库：FakeSolvedWriter.persistCount 必须为 0；
  * 3. 缓存命中 0 token 且不再调用 OCR / 网关。
  */
@@ -88,7 +88,7 @@ class SolveQuestionUseCaseTest {
             }
 
         @Test
-        fun `GUIDED 不返回 finalAnswer 与步骤_只给三级提示`() =
+        fun `GUIDED 不返回 finalAnswer 与步骤_只给提示与引导提问`() =
             runTest {
                 val writer = FakeSolvedWriter()
                 val outcome = useCase(writer = writer).solve(request(TeachingMode.GUIDED))
@@ -100,28 +100,34 @@ class SolveQuestionUseCaseTest {
                 assertEquals(3, view.hints.size)
                 assertEquals(listOf(1, 2, 3), view.hints.map { it.level })
                 assertTrue(view.hints.none { it.hint.contains("递增区间为") }, "提示中不得出现最终答案")
-                assertTrue(view.guidance.isEmpty())
+                // 两档合并后 GUIDED 也带引导提问（原先只有 SOCRATIC 有）
+                assertTrue(view.guidance.isNotEmpty(), "引导模式应给出可回答的引导提问")
+                assertTrue(view.guidance.none { it.contains("递增区间为") }, "引导中不得出现答案")
                 assertEquals(1, writer.persistCount)
                 assertEquals("递增区间为 (1,+∞)", writer.drafts.single().mistake?.finalAnswer)
             }
 
         @Test
-        fun `SOCRATIC 只返回引导_无答案无步骤无提示`() =
+        fun `引导模式同时给出提示与引导提问_但都不含答案`() =
             runTest {
-                val outcome = useCase().solve(request(TeachingMode.SOCRATIC))
+                val outcome = useCase().solve(request(TeachingMode.GUIDED))
                 assertTrue(outcome is SolveOutcome.Success)
                 val view = (outcome as SolveOutcome.Success).view
                 assertNull(view.finalAnswer)
                 assertTrue(view.solutionSteps.isEmpty())
-                assertTrue(view.hints.isEmpty())
                 assertTrue(view.answerWithheld)
-                assertTrue(view.guidance.size >= TeachingModeTrimmer.SOCRATIC_MIN_QUESTIONS)
+                // 合并两档后 GUIDED 既给可解锁的提示，也给引导性提问
+                assertTrue(view.hints.isNotEmpty())
+                assertTrue(view.guidance.size >= TeachingModeTrimmer.MIN_GUIDANCE_QUESTIONS)
                 assertTrue(view.guidance.none { it.contains("递增区间为") }, "引导中不得出现答案")
+                view.hints.forEach { hint ->
+                    assertFalse(hint.hint.contains("递增区间为"), "提示中不得出现答案")
+                }
                 assertFalse(view.hasFullSolution)
             }
 
         @Test
-        fun `三种模式下错因与知识点都正常下发`() =
+        fun `每种模式下错因与知识点都正常下发`() =
             runTest {
                 TeachingMode.values().forEach { mode ->
                     val outcome = useCase().solve(request(mode))

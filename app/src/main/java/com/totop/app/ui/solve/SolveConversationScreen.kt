@@ -25,18 +25,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -56,7 +52,6 @@ import com.totop.app.data.repo.SolveSession
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ui.chat.ComposerPhase
 import com.totop.app.ui.chat.ConversationMessage
-import com.totop.app.ui.chat.GuidePolicy
 import com.totop.app.ui.chat.ModeMeta
 import com.totop.app.ui.chat.SolveDraft
 import com.totop.app.ui.theme.Tokens
@@ -131,55 +126,63 @@ fun SolveConversationScreen(
         if (count > 0) listState.animateScrollToItem(count - 1)
     }
 
-    Column(modifier = modifier.fillMaxSize().background(Tokens.Background)) {
-        ConversationTopBar(
-            title = sessions.firstOrNull { it.id == currentSessionId }?.displayTitle ?: "拍题答疑",
-            onOpenHistory = { historyOpen = true },
-            onStartNewSession = onStartNewSession,
-        )
-        ConversationList(
-            messages = messages,
-            mode = mode,
-            listState = listState,
-            onOpenSettings = onOpenSettings,
-            onRetry = onRetry,
-            onSetMode = onSetMode,
-            onOpenKnowledgePoint = onOpenKnowledgePoint,
-            onUnlockHint = onUnlockHint,
-            onRevealSolution = onRevealSolution,
-            modifier = Modifier.weight(1f),
-        )
-        if (!networkOnline) OfflineHint()
-        message?.let { text ->
-            InlineHint(text = text, onDismiss = onDismissMessage)
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(Tokens.Background)) {
+            ConversationTopBar(
+                title = sessions.firstOrNull { it.id == currentSessionId }?.displayTitle ?: "拍题答疑",
+                onOpenHistory = { historyOpen = true },
+                onStartNewSession = onStartNewSession,
+            )
+            ConversationList(
+                messages = messages,
+                mode = mode,
+                listState = listState,
+                onOpenSettings = onOpenSettings,
+                onRetry = onRetry,
+                onSetMode = onSetMode,
+                onOpenKnowledgePoint = onOpenKnowledgePoint,
+                onUnlockHint = onUnlockHint,
+                onRevealSolution = onRevealSolution,
+                modifier = Modifier.weight(1f),
+            )
+            if (!networkOnline) OfflineHint()
+            message?.let { text ->
+                InlineHint(text = text, onDismiss = onDismissMessage)
+            }
+            Composer(
+                draft = draft,
+                pages = pages,
+                pageCount = pageCount,
+                processing = processing,
+                isSolving = isSolving,
+                onDraftChange = onDraftChange,
+                onSend = onSend,
+                onStop = onStop,
+                onOpenCamera = onOpenCamera,
+                onOpenAlbum = onOpenAlbum,
+                onRemovePage = onRemovePage,
+                onOpenPage = onOpenPage,
+            )
         }
-        Composer(
-            draft = draft,
-            pages = pages,
-            pageCount = pageCount,
-            processing = processing,
-            isSolving = isSolving,
-            onDraftChange = onDraftChange,
-            onSend = onSend,
-            onStop = onStop,
-            onOpenCamera = onOpenCamera,
-            onOpenAlbum = onOpenAlbum,
-            onRemovePage = onRemovePage,
-            onOpenPage = onOpenPage,
-        )
-    }
 
-    if (historyOpen) {
-        SessionHistoryDialog(
-            sessions = sessions,
-            currentSessionId = currentSessionId,
-            onOpen = { id ->
-                onOpenSession(id)
-                historyOpen = false
-            },
-            onDelete = onDeleteSession,
-            onDismiss = { historyOpen = false },
-        )
+        // 侧边栏从左侧覆盖在对话之上，而不是把对话挤走：
+        // 挤走会让消息区重新测量、滚动位置跳一下，切回来找不到刚才读到哪儿。
+        if (historyOpen) {
+            SessionDrawer(
+                sessions = sessions,
+                currentSessionId = currentSessionId,
+                onOpen = { id ->
+                    onOpenSession(id)
+                    historyOpen = false
+                },
+                onDelete = onDeleteSession,
+                onStartNew = {
+                    onStartNewSession()
+                    historyOpen = false
+                },
+                onDismiss = { historyOpen = false },
+            )
+        }
     }
 }
 
@@ -195,116 +198,27 @@ private fun ConversationTopBar(
             Modifier
                 .fillMaxWidth()
                 .background(Tokens.Surface)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // 左上角的菜单键：主流对话客户端的会话列表入口都在这里。
+        IconButton(onClick = onOpenHistory) {
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = "打开会话列表",
+                tint = Tokens.OnSurface,
+            )
+        }
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = Tokens.OnSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).padding(start = 8.dp),
+            modifier = Modifier.weight(1f).padding(start = 2.dp),
         )
-        IconButton(onClick = onOpenHistory) {
-            Icon(Icons.Filled.History, contentDescription = "历史对话", tint = Tokens.OnSurfaceVariant)
-        }
         IconButton(onClick = onStartNewSession) {
             Icon(Icons.Filled.Add, contentDescription = "开始新对话", tint = Tokens.Primary)
-        }
-    }
-}
-
-/**
- * 历史对话列表。
- *
- * 这是用户明确要求的「像 DeepSeek 客户端那样的多对话管理」：
- * 可以回到之前任何一次问答继续回顾，也可以删掉不要的记录。
- */
-@Composable
-private fun SessionHistoryDialog(
-    sessions: List<SolveSession>,
-    currentSessionId: String?,
-    onOpen: (String) -> Unit,
-    onDelete: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("历史对话") },
-        text = {
-            if (sessions.isEmpty()) {
-                Text(
-                    text = "还没有历史对话。拍一道题、问一句，这里就会有记录。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tokens.OnSurfaceVariant,
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    items(sessions.size) { index ->
-                        val session = sessions[index]
-                        SessionRow(
-                            session = session,
-                            selected = session.id == currentSessionId,
-                            onOpen = { onOpen(session.id) },
-                            onDelete = { onDelete(session.id) },
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("关闭") }
-        },
-    )
-}
-
-@Composable
-private fun SessionRow(
-    session: SolveSession,
-    selected: Boolean,
-    onOpen: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Tokens.RadiusMedium))
-                .background(if (selected) Tokens.PrimaryContainer else Tokens.SurfaceVariant)
-                .clickable(onClick = onOpen)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = session.displayTitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) Tokens.Primary else Tokens.OnSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text =
-                    if (session.subtitle.isNotBlank()) {
-                        session.subtitle
-                    } else {
-                        if (session.archived) "已结束" else session.roundCount.toString() + " 轮对话"
-                    },
-                style = MaterialTheme.typography.labelSmall,
-                color = Tokens.OnSurfaceVariant,
-            )
-        }
-        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-            Icon(
-                Icons.Filled.Delete,
-                contentDescription = "删除这条对话",
-                tint = Tokens.OnSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
         }
     }
 }
@@ -364,14 +278,16 @@ private fun EmptyConversationHint() {
             color = Tokens.OnSurface,
         )
         Text(
-            text = "拍完可以在下面写你是怎么想的。有了你的思路，我才能指出第一个错在哪一步；" +
-                "不写也能给标准解答。",
+            text =
+                "拍完可以在下面写你是怎么想的。有了你的思路，我才能指出第一个错在哪一步；" +
+                    "不写也能给标准解答。",
             style = MaterialTheme.typography.bodyMedium,
             color = Tokens.OnSurfaceVariant,
         )
         Text(
-            text = "题目跨页就接着拍，多张会当作同一道题来看。" +
-                "解答之后还能继续追问，聊聊已经问过的这道题。",
+            text =
+                "题目跨页就接着拍，多张会当作同一道题来看。" +
+                    "解答之后还能继续追问，聊聊已经问过的这道题。",
             style = MaterialTheme.typography.bodySmall,
             color = Tokens.OnSurfaceVariant,
         )
@@ -448,44 +364,6 @@ private fun OfflineHint() {
             text = "当前没有网络，发送会失败",
             style = MaterialTheme.typography.bodySmall,
             color = Tokens.Warning,
-        )
-    }
-}
-
-@Composable
-private fun TextAction(
-    text: String,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(Tokens.SurfaceVariant)
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 7.dp),
-    ) {
-        Text(text = text, style = MaterialTheme.typography.labelMedium, color = Tokens.OnSurfaceVariant)
-    }
-}
-
-@Composable
-private fun SettingsEntry(onOpenSettings: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Tokens.RadiusMedium))
-                .background(Tokens.WarningContainer)
-                .clickable(onClick = onOpenSettings)
-                .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "需要先配置模型才能解题，点这里去设置",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Tokens.OnSurface,
-            modifier = Modifier.weight(1f),
         )
     }
 }

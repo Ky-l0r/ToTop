@@ -24,15 +24,26 @@ object KnowledgeIdConvention {
     /** 序号上界（四位数字）。 */
     const val MAX_SERIAL: Int = 9999
 
-    /** 目前内置知识点树覆盖的科目段（可扩充，但必须保持为大写字母）。 */
+    /**
+     * 目前内置知识点树覆盖的科目段（可扩充，但必须保持为大写字母）。
+     *
+     * 0.2.0 补齐到十科：知识点树已按语文/数学/英语/物理/化学/生物/政治/历史/地理/技术
+     * 各建一份种子数据，这里的名单必须与之同步——否则 [isKnownSubject] 会把
+     * 政治、历史、地理、技术四个科目的合法 ID 判成非法，阶段 D 抽到的知识点
+     * 会被 [com.totop.app.domain.model.AiSolveResultMapper] 当噪声丢弃。
+     */
     val KNOWN_SUBJECTS: List<String> =
         listOf(
+            "CHINESE",
             "MATH",
+            "ENGLISH",
             "PHYSICS",
             "CHEMISTRY",
             "BIOLOGY",
-            "CHINESE",
-            "ENGLISH",
+            "POLITICS",
+            "HISTORY",
+            "GEOGRAPHY",
+            "TECHNOLOGY",
         )
 
     private val SUBJECT_TOKEN = Regex("^[A-Z]{2,12}$")

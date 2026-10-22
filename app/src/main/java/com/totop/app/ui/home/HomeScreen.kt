@@ -60,9 +60,10 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
-        modifier = modifier.fillMaxSize().background(Tokens.Background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
+        modifier =
+            modifier.fillMaxSize().background(Tokens.Background)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
     ) {
         Spacer(Modifier.height(16.dp))
 
@@ -93,8 +94,9 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    modifier = Modifier.size(44.dp)
-                        .background(Tokens.Primary, RoundedCornerShape(12.dp)),
+                    modifier =
+                        Modifier.size(44.dp)
+                            .background(Tokens.Primary, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = Color.White)
@@ -241,11 +243,12 @@ private fun WeakKpointRow(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {

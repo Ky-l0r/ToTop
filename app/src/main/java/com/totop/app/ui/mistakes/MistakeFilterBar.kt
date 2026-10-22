@@ -3,6 +3,7 @@ package com.totop.app.ui.mistakes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
@@ -22,13 +25,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +37,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.ErrorType
 
@@ -84,46 +88,53 @@ fun MistakeFilterBar(
             keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSearch = { onSearchSubmit() }),
         )
 
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            FilterPicker(
+        // 筛选条件改为**一行一项**的下拉，不再横向滚动叠放。
+        //
+        // 真机反馈的原话是「最好让用户一个一个条件进行筛选，不然我点一下知识点
+        // 就会出来一堆东西」。横向滚动 + 四个 chip 挤在一起的问题是：
+        // 手指点哪个都像点到了一半，下拉菜单又没有分组，一打开就是一长串。
+        // 现在每个条件独占一行（标签在左、当前值在右），点开的菜单也只在
+        // 当前条件下展开——一眼就能看出「我现在在筛什么」。
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            FilterRow(
                 label = "科目",
-                selectedLabel = filter.subject?.let { subjectLabelOf(it) } ?: "全部",
+                valueLabel = filter.subject?.let { subjectLabelOf(it) } ?: "全部科目",
                 active = filter.subject != null,
                 options = subjectOptions.map { it to subjectLabelOf(it) },
                 onSelect = onSubjectChange,
             )
-            FilterPicker(
+            FilterRow(
                 label = "知识点",
-                selectedLabel =
+                valueLabel =
                     filter.kpointId?.let { id -> kpointOptions.firstOrNull { it.id == id }?.name ?: id }
-                        ?: "全部",
+                        ?: if (filter.subject == null) "全部知识点" else "本科目的全部知识点",
                 active = filter.kpointId != null,
                 options = kpointOptions.map { it.id to it.label() },
                 onSelect = onKpointChange,
+                // 知识点候选已按科目收敛，这里说明一下，避免用户以为漏了内容
+                hint =
+                    if (filter.subject == null) {
+                        "先选科目可以缩小范围"
+                    } else {
+                        "只显示「" + subjectLabelOf(filter.subject) + "」的知识点"
+                    },
             )
-            FilterPicker(
+            FilterRow(
                 label = "错因",
-                selectedLabel = filter.errorType?.label ?: "全部",
+                valueLabel = filter.errorType?.label ?: "全部错因",
                 active = filter.errorType != null,
                 options = ErrorType.FIXED.map { it.code to it.label },
                 onSelect = { code -> onErrorTypeChange(code?.let { ErrorType.ofCode(it) }) },
             )
-            FilterPicker(
+            FilterRow(
                 label = "时间",
-                selectedLabel = filter.timeWindow.label,
+                valueLabel = filter.timeWindow.label,
                 active = filter.timeWindow != TimeWindow.ALL,
                 options = TimeWindow.entries.map { it.name to it.label },
                 onSelect = { name ->
                     onTimeWindowChange(TimeWindow.entries.firstOrNull { it.name == name } ?: TimeWindow.ALL)
                 },
             )
-            if (filter.isActive) {
-                TextButton(onClick = onClear) { Text(text = "清除筛选") }
-            }
         }
 
         ActiveFilterChips(filter = filter, onClear = onClear, onKeywordCleared = { onKeywordChange("") })
@@ -131,25 +142,68 @@ fun MistakeFilterBar(
 }
 
 /**
- * 通用下拉筛选器：一个 FilterChip + 一个 DropdownMenu。
+ * 一行筛选器：左侧固定标签，右侧当前值 + 下拉箭头，点整行展开菜单。
  *
- * @param options (值, 展示名) 列表；第一项固定为「全部」，对应值 null
+ * @param options (值, 展示名) 列表；菜单第一项固定为「全部」，对应值 null
+ * @param hint 可选的一行说明，用于解释「这里的候选为什么减少了」
  */
 @Composable
-private fun FilterPicker(
+private fun FilterRow(
     label: String,
-    selectedLabel: String,
+    valueLabel: String,
     active: Boolean,
     options: List<Pair<String, String>>,
     onSelect: (String?) -> Unit,
+    hint: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        FilterChip(
-            selected = active,
-            onClick = { expanded = true },
-            label = { Text(text = label + "：" + selectedLabel) },
-        )
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(if (active) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
+                    .clickable { expanded = true }
+                    .padding(horizontal = 10.dp, vertical = 9.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(56.dp),
+                )
+                Text(
+                    text = valueLabel,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color =
+                        if (active) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
+                    fontWeight = if (active) FontWeight.Medium else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+            if (hint != null && active.not()) {
+                Text(
+                    text = hint,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(start = 56.dp, top = 1.dp),
+                )
+            }
+        }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(text = "全部") },
@@ -257,21 +311,36 @@ fun MistakeCard(
                 card.recurrenceBadge?.let { badge ->
                     RecurrenceBadge(text = badge)
                 }
-                IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(28.dp)) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "更多操作",
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text(text = "删除这道错题") },
-                        onClick = {
-                            menuExpanded = false
-                            onDelete()
-                        },
-                    )
+                // 删除收进三点菜单。
+                //
+                // 这是真机反馈明确指出的问题：以前「删除这道错题」是一个悬在
+                // 卡片左上方的独立浮层，既不像按钮也不属于任何一组操作，
+                // 还容易被误触（删错题是不可撤销的）。
+                // 现在它是三点菜单里的一项，需要两步才能删掉，误触概率降到很低。
+                Box {
+                    IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(28.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "更多操作",
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(
+                            text = { Text(text = "打开回顾") },
+                            onClick = {
+                                menuExpanded = false
+                                onClick()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(text = "删除这道错题", color = MaterialTheme.colorScheme.error) },
+                            onClick = {
+                                menuExpanded = false
+                                onDelete()
+                            },
+                        )
+                    }
                 }
             }
 

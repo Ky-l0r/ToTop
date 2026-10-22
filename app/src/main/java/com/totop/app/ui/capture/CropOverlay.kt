@@ -54,6 +54,7 @@ fun CropOverlay(
     modifier: Modifier = Modifier,
     dimColor: Color = Color.Black.copy(alpha = 0.5f),
     borderColor: Color = Color.White,
+    accentColor: Color = Color(0xFF6D5BD0),
 ) {
     val density = LocalDensity.current
     val handleTouchPx = with(density) { HANDLE_TOUCH_DP.dp.toPx() }
@@ -132,9 +133,13 @@ fun CropOverlay(
                             working = null
                             baseRect = null
                             if (current != null) {
-                                val normalized = toNormalized(current)
-                                // 太小的框视为误触：原本有框就保留原框，原本没框就保持整图
-                                onRectChanged(normalized ?: rect)
+                                val normalized = toNormalized(current, viewWidth, viewHeight)
+                                // 太小的框视为误触：原本有框就保留原框，原本没框就保持整图。
+                                //
+                                // 注意这里只在「真的框到了东西」时才回调：
+                                // 传 null 的语义是「用户明确要求用整张图」，
+                                // 误触绝不能等同于取消框选，否则松手就丢框。
+                                if (normalized != null) onRectChanged(normalized)
                             }
                         },
                         onDragCancel = {
@@ -187,24 +192,44 @@ fun CropOverlay(
                 )
                 drawCircle(color = borderColor, radius = handleRadiusPx, center = corner)
             }
-        }
-
-        // 空态提示：给用户一个明确的「怎么开始」的引导
-        if (rect == null && working == null) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 16.dp)
-                        .background(Color.Black.copy(alpha = 0.45f), MaterialTheme.shapes.small)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                Text(
-                    text = "用手指框出这道题（不框就用整张图）",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.White,
+            // 角把手内侧再描一圈主色，让「可以拖我」这件事在浅色照片上也看得清
+            listOf(
+                Offset(left, top),
+                Offset(left + boxWidth, top),
+                Offset(left, top + boxHeight),
+                Offset(left + boxWidth, top + boxHeight),
+            ).forEach { corner ->
+                drawCircle(
+                    color = accentColor,
+                    radius = handleRadiusPx * 0.45f,
+                    center = corner,
                 )
             }
+        }
+
+        // 顶部状态提示：明确告诉用户「现在框到了什么」。
+        //
+        // 这是真机反馈「框选完毕后，用户一松手框就没了，没有反馈」的正面修法：
+        // 除了让框留在屏幕上，还要用文字确认「已经框上了」，
+        // 因为照片本身可能有深浅，只靠边框有时看不清。
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 12.dp)
+                    .background(Color.Black.copy(alpha = 0.55f), MaterialTheme.shapes.small)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            Text(
+                text =
+                    when {
+                        working != null -> "松开手指完成框选"
+                        rect != null -> "已框选 · 拖动四角可以微调，拖动框内可整体移动"
+                        else -> "用手指框出这道题（不框就用整张图）"
+                    },
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+            )
         }
     }
 }
@@ -285,14 +310,29 @@ private fun clampInside(
     )
 }
 
-/** 像素矩形 -> 归一化矩形；太小返回 null（视为误触）。 */
-private fun toNormalized(rect: Rect): NormalizedRect? {
+/**
+ * 像素矩形 -> 归一化矩形；太小返回 null（视为误触）。
+ *
+ * **必须除以画布尺寸**。这个函数曾经漏掉除法，直接把像素坐标 coerce 到 0..1，
+ * 后果是：任何超过 1 像素的坐标都被夹成 1.0，于是 left == right == 1.0，
+ * 判定「宽高为 0」后返回 null，调用方把 null 当「用户取消了框选」写回状态——
+ * 用户看到的就是「画完一松手，框立刻消失，而且没有任何反馈」。
+ *
+ * @param canvasWidth 框选层自身的像素宽度（不是图片的，图片是 Fit 进去的）
+ * @param canvasHeight 框选层自身的像素高度
+ */
+private fun toNormalized(
+    rect: Rect,
+    canvasWidth: Float,
+    canvasHeight: Float,
+): NormalizedRect? {
+    if (canvasWidth <= 0f || canvasHeight <= 0f) return null
     val ordered = orderRect(rect.left, rect.top, rect.right, rect.bottom)
     if (ordered.width < MIN_SIZE_PX || ordered.height < MIN_SIZE_PX) return null
-    val left = ordered.left.coerceIn(0f, 1f)
-    val top = ordered.top.coerceIn(0f, 1f)
-    val right = ordered.right.coerceIn(left, 1f)
-    val bottom = ordered.bottom.coerceIn(top, 1f)
+    val left = (ordered.left / canvasWidth).coerceIn(0f, 1f)
+    val top = (ordered.top / canvasHeight).coerceIn(0f, 1f)
+    val right = (ordered.right / canvasWidth).coerceIn(left, 1f)
+    val bottom = (ordered.bottom / canvasHeight).coerceIn(top, 1f)
     if (right <= left || bottom <= top) return null
     return NormalizedRect(left = left, top = top, right = right, bottom = bottom)
 }

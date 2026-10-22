@@ -55,7 +55,8 @@ class LlmErrorClassificationTest {
             LlmErrorMapper.fromHttp(
                 status = 400,
                 body =
-                    "{\"error\":{\"message\":\"parameter.enable_thinking must be set to false for non-streaming calls\"}}",
+                    "{\"error\":{\"message\":\"parameter.enable_thinking must be set to " +
+                        "false for non-streaming calls\"}}",
             )
         assertTrue(error is LlmError.ParameterNotSupported, "实际类型：" + error::class.simpleName)
         assertTrue(error.isRetryable, "参数类错误应允许降级重试")

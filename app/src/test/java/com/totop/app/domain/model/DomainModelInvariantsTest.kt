@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * 枚举与领域模型不变量单测：三档模式、步骤状态、边类型、自评、非法值拒绝、UTC 时间戳。
+ * 枚举与领域模型不变量单测：两档模式（含旧值兼容）、步骤状态、边类型、自评、非法值拒绝、UTC 时间戳。
  */
 class DomainModelInvariantsTest {
     private val now = UtcTime.EPOCH_2024_01_01
@@ -18,12 +18,24 @@ class DomainModelInvariantsTest {
     @DisplayName("枚举契约")
     inner class Enums {
         @Test
-        fun `讲解模式固定为三档且默认提示引导`() {
-            assertEquals(listOf("DIRECT", "GUIDED", "SOCRATIC"), TeachingMode.values().map { it.wire })
+        fun `讲解模式为两档且默认不提前给答案`() {
+            // 0.2.0 把原「提示引导」与「纯引导」合并：两者在真机上表现几乎一致，
+            // 差别只剩「给不给最终解答」，而这件事 DIRECT/GUIDED 已经表达清楚了。
+            assertEquals(listOf("DIRECT", "GUIDED"), TeachingMode.values().map { it.wire })
             assertEquals(TeachingMode.GUIDED, TeachingMode.DEFAULT)
-            assertEquals(TeachingMode.SOCRATIC, TeachingMode.fromWire("socratic"))
             assertEquals(TeachingMode.DEFAULT, TeachingMode.fromWire("unknown"))
             assertEquals(null, TeachingMode.fromWireOrNull("unknown"))
+        }
+
+        @Test
+        fun `已废弃的纯引导按提示引导读取_不丢失历史数据`() {
+            // 旧版本会把 SOCRATIC 写进设置表与错题记录，读的时候必须有确定归宿，
+            // 否则用户升级后要么模式重置、要么历史记录读不出来。
+            assertEquals(TeachingMode.GUIDED, TeachingMode.fromWire("SOCRATIC"))
+            assertEquals(TeachingMode.GUIDED, TeachingMode.fromWire("socratic"))
+            assertEquals(TeachingMode.GUIDED, TeachingMode.fromWireOrNull("SOCRATIC"))
+            assertTrue(TeachingMode.isLegacy("SOCratic"))
+            assertFalse(TeachingMode.isLegacy("GUIDED"))
         }
 
         @Test

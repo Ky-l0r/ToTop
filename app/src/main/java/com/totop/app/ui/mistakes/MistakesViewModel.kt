@@ -28,7 +28,10 @@ data class MistakesUiState(
     val total: Int = 0,
     val filter: MistakeFilter = MistakeFilter(),
     val subjectOptions: List<String> = emptyList(),
+    /** 当前科目下可选的知识点（随科目变化级联收敛）。 */
     val kpointOptions: List<KpointOption> = emptyList(),
+    /** 全量知识点（未按科目收敛）；切换科目时用它在内存里重新收敛，避免重复查库。 */
+    val allKpoints: List<com.totop.app.domain.model.KnowledgePoint> = emptyList(),
     val loading: Boolean = true,
     val loadingMore: Boolean = false,
     val errorMessage: String? = null,
@@ -95,9 +98,30 @@ class MistakesViewModel
 
         // ---------- 筛选 ----------
 
-        /** 切换科目。 */
+        /**
+         * 切换科目。
+         *
+         * 同时把知识点候选收敛到该科目，并在「已选的知识点不属于新科目」时清掉它。
+         * 不清掉会出现「科目=物理、知识点=文言文虚词」这种必然零结果的组合，
+         * 用户看到的是一片空白却不知道为什么。
+         */
         fun setSubject(subject: String?) {
-            applyFilter(_uiState.value.filter.withSubject(subject))
+            val current = _uiState.value
+            val options = kpointOptionsFor(current.allKpoints, subject)
+            val keptKpoint =
+                current.filter.kpointId?.takeIf { id -> options.any { it.id == id } }
+            val filter =
+                current.filter
+                    .withSubject(subject)
+                    .let { if (it.kpointId == keptKpoint) it else it.withKpoint(keptKpoint) }
+            _uiState.value =
+                _uiState.value.copy(
+                    filter = filter,
+                    items = emptyList(),
+                    total = 0,
+                    kpointOptions = options,
+                )
+            reload()
         }
 
         /** 切换知识点。 */
@@ -115,9 +139,16 @@ class MistakesViewModel
             applyFilter(_uiState.value.filter.withTimeWindow(window))
         }
 
-        /** 清除全部筛选。 */
+        /** 清除全部筛选（知识点候选同时恢复为全部科目）。 */
         fun clearFilter() {
-            applyFilter(MistakeFilter())
+            _uiState.value =
+                _uiState.value.copy(
+                    filter = MistakeFilter(),
+                    items = emptyList(),
+                    total = 0,
+                    kpointOptions = kpointOptionsFor(_uiState.value.allKpoints, null),
+                )
+            reload()
         }
 
         /**
@@ -239,14 +270,18 @@ class MistakesViewModel
 
         private suspend fun loadOptions() {
             val subjects = runCatching { gateway.subjects() }.getOrDefault(emptyList())
-            val kpoints =
+            val all =
                 runCatching {
                     knowledgeRepository.catalogEnsuringSeeded().allKnowledgePoints()
                         .filter { it.parentId != null }
                         .sortedWith(compareBy({ it.chapter }, { it.orderIndex }))
-                        .map { KpointOption(id = it.id, name = it.name) }
                 }.getOrDefault(emptyList())
-            _uiState.value = _uiState.value.copy(subjectOptions = subjects, kpointOptions = kpoints)
+            _uiState.value =
+                _uiState.value.copy(
+                    subjectOptions = subjects,
+                    kpointOptions = kpointOptionsFor(all, null),
+                    allKpoints = all,
+                )
         }
 
         private fun describe(throwable: Throwable): String =
@@ -270,6 +305,31 @@ class MistakesViewModel
                 merged += existing
                 incoming.forEach { card -> if (seen.add(card.mistakeId)) merged += card }
                 return merged
+            }
+
+            /**
+             * 按当前科目收敛知识点候选（纯函数，可单测）。
+             *
+             * 修复的问题：以前知识点下拉永远是**全部十科混在一起**，
+             * 选完「数学」再点知识点，列表里照样出现文言文、化学方程式这些节点，
+             * 学生点进去必然一条都查不到，只会以为筛选坏了。
+             *
+             * @param all 全量知识点（已过滤掉章节根节点）
+             * @param subject 当前选中的科目代码；null 表示不限
+             */
+            fun kpointOptionsFor(
+                all: List<com.totop.app.domain.model.KnowledgePoint>,
+                subject: String?,
+            ): List<KpointOption> {
+                val scoped =
+                    if (subject.isNullOrBlank()) {
+                        all
+                    } else {
+                        all.filter { it.subject.equals(subject, ignoreCase = true) }
+                    }
+                return scoped
+                    .sortedWith(compareBy({ it.subject }, { it.chapter }, { it.orderIndex }))
+                    .map { KpointOption(id = it.id, name = it.name) }
             }
         }
     }

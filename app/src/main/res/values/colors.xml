@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#1F6F5C</color>
+    <!-- 自适应图标背景：与品牌图标的紫色渐变中点一致 -->
+    <color name="ic_launcher_background">#C4B0F8</color>
     <color name="window_background">#FBFBF8</color>
     <color name="status_bar">#FBFBF8</color>
 </resources>

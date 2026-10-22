@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
@@ -27,8 +27,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -60,7 +60,7 @@ import com.totop.app.R
  * 列表用 key = mistakeId，滚动位置在筛选变化时才重置。
  *
  * @param onOpenReview 进入复习流程（FR-4.2）
- * @param onOpenMistake 打开一道错题的详情（当前复用知识点详情页）
+ * @param onOpenMistake 打开一道错题的**回顾页**（只读回看，不进入复习流程）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,9 +115,10 @@ fun MistakesScreen(
     ) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -149,51 +150,53 @@ fun MistakesScreen(
                 when {
                     uiState.loading && uiState.items.isEmpty() -> LoadingBlock()
 
-                    uiState.isEmpty -> EmptyBlock(
-                        message = uiState.emptyMessage,
-                        filterActive = uiState.filter.isActive,
-                        onClear = viewModel::clearFilter,
-                        onRetry = viewModel::reload,
-                    )
+                    uiState.isEmpty ->
+                        EmptyBlock(
+                            message = uiState.emptyMessage,
+                            filterActive = uiState.filter.isActive,
+                            onClear = viewModel::clearFilter,
+                            onRetry = viewModel::reload,
+                        )
 
-                    else -> LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        items(items = uiState.items, key = { it.mistakeId }) { card ->
-                            MistakeCard(
-                                card = card,
-                                nowUtcMillis = nowUtcMillis,
-                                onClick = { onOpenMistake(card.mistakeId) },
-                                onDelete = { viewModel.deleteMistake(card.mistakeId) },
-                            )
-                        }
-                        if (uiState.loadingMore) {
-                            item(key = "loading-more") {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(18.dp),
-                                        strokeWidth = 2.dp,
+                    else ->
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            items(items = uiState.items, key = { it.mistakeId }) { card ->
+                                MistakeCard(
+                                    card = card,
+                                    nowUtcMillis = nowUtcMillis,
+                                    onClick = { onOpenMistake(card.mistakeId) },
+                                    onDelete = { viewModel.deleteMistake(card.mistakeId) },
+                                )
+                            }
+                            if (uiState.loadingMore) {
+                                item(key = "loading-more") {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                    ) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp,
+                                        )
+                                    }
+                                }
+                            }
+                            if (!uiState.hasMore && uiState.items.isNotEmpty()) {
+                                item(key = "list-end") {
+                                    Text(
+                                        text = "已经到底了 · 共 " + uiState.total + " 道错题",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                                     )
                                 }
                             }
                         }
-                        if (!uiState.hasMore && uiState.items.isNotEmpty()) {
-                            item(key = "list-end") {
-                                Text(
-                                    text = "已经到底了 · 共 " + uiState.total + " 道错题",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
