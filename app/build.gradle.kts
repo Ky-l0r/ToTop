@@ -51,6 +51,18 @@ val releaseStorePassword: String? = localProperties.getProperty("RELEASE_STORE_P
 val releaseKeyAlias: String? = localProperties.getProperty("RELEASE_KEY_ALIAS")
 val releaseKeyPassword: String? = localProperties.getProperty("RELEASE_KEY_PASSWORD")
 
+// 把 RELEASE_STORE_FILE 展开成候选路径列表（按优先级排序）。
+// 相对路径有两种合理语义，都要保留：
+// 1. 相对模块目录 app/：与 local.properties.example 的 ../keystore/release.jks 一致；
+// 2. 相对仓库根目录：CI 把 release.jks 落在根目录，local.properties 里写的是裸文件名。
+// 必须在顶层先算好：android {} 块里的 file() 以模块目录为基准，
+// 旧写法因此把根目录的 release.jks 拼成了 app/release.jks，assembleRelease 静默产出 unsigned 包。
+val releaseStoreFileCandidates: List<File> =
+    releaseStoreFile?.let { raw ->
+        val candidate = File(raw)
+        if (candidate.isAbsolute) listOf(candidate) else listOf(File(projectDir, raw), File(rootDir, raw))
+    } ?: emptyList()
+
 android {
     namespace = "com.totop.app"
     compileSdk = 34
@@ -74,8 +86,18 @@ android {
         if (releaseStoreFile != null && releaseStorePassword != null &&
             releaseKeyAlias != null && releaseKeyPassword != null
         ) {
+            // 签名文件不存在时立刻失败：旧写法只调用 file(...) 而不校验存在性，
+            // assembleRelease 会静默产出 unsigned 包，直到 CI 的产物校验才暴露成另一条报错。
+            val storeFileResolved = releaseStoreFileCandidates.firstOrNull { it.exists() }
+            if (storeFileResolved == null) {
+                throw GradleException(
+                    "签名文件不存在。已尝试：" +
+                        releaseStoreFileCandidates.joinToString("、") { it.absolutePath } +
+                        "。请检查 local.properties 的 RELEASE_STORE_FILE 或 CI Secrets。",
+                )
+            }
             create("release") {
-                storeFile = file(releaseStoreFile)
+                storeFile = storeFileResolved
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
                 keyPassword = releaseKeyPassword

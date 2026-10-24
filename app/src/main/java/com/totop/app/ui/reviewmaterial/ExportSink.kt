@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +75,14 @@ class ExportSink(
             publishToExternalFiles(source, displayName)
         }
 
-    /** MediaStore.Downloads：Android 10+ 无需任何存储权限即可落到用户可见位置。 */
+    /**
+     * MediaStore.Downloads：Android 10+ 无需任何存储权限即可落到用户可见位置。
+     *
+     * [MediaStore.Downloads.getContentUri] 与 [MediaStore.VOLUME_EXTERNAL_PRIMARY] 都是 API 29 才引入的，
+     * 调用点 [publish] 已经用 SDK_INT 判定拦住低版本；这里显式标注以免 Lint 只看本函数体时误判
+     * （本函数是私有方法，Lint 不做跨函数的版本推断）。
+     */
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun publishToDownloads(
         source: File,
         mimeType: String,
