@@ -114,6 +114,17 @@ class ReviewReminderWorker
         }
 
         private fun notify(count: Int) {
+            // 权限判定必须在「发通知的同一个方法」里可见：调用方 doWork 的那次 canNotify()
+            // 属于跨方法推断，Lint 的 MissingPermission 只看本函数体，看不到就判成漏检。
+            // 两处判定语义完全一致，重复一次是为了让静态检查与真实运行行为对齐。
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.POST_NOTIFICATIONS,
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
             val manager =
                 applicationContext.getSystemService(
                     Context.NOTIFICATION_SERVICE,
