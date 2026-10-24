@@ -15,7 +15,7 @@ jobs:
     name: 构建并发布 Release APK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # git 在 Windows 上不记录文件的可执行位（core.fileMode=false），
       # 仓库中的 gradlew 因此以 100644 入库，Linux runner 直接执行会得到
