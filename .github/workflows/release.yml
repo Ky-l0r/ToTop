@@ -87,7 +87,7 @@ jobs:
       # 完整演练构建、签名与体积门禁，但不创建 Release。
       - name: 创建 Release 并上传 APK
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: app/build/outputs/apk/release/app-release.apk
           generate_release_notes: true
