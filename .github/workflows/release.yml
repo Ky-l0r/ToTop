@@ -40,8 +40,33 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          # 未配置 Secret 时 secrets 上下文解析为空字符串，base64 -d 会产出 0 字节文件，
+          # 之后的 packageRelease 只会抛 "Tag number over 30 is not supported"，
+          # 完全看不出真实原因。这里先做空值检查，把诊断信息说清楚。
+          # 注意：不用 "cond && assign" 的简写，GitHub Actions 以 bash -e 运行，
+          # 条件为假时整条命令返回非零会让脚本在此处直接退出。
+          missing=""
+          for name in RELEASE_STORE_BASE64 RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::以下 Secrets 未配置或为空：$missing"
+            echo "请在仓库 Settings - Secrets and variables - Actions 中补齐后再重跑。"
+            exit 1
+          fi
           # 签名材料只存在于 Secrets，落盘后立即在后续步骤中删除
           echo "$RELEASE_STORE_BASE64" | base64 -d > release.jks
+          if [ ! -s release.jks ]; then
+            echo "::error::RELEASE_STORE_BASE64 解码后为空文件，请确认它是 keystore 的 base64 编码"
+            exit 1
+          fi
+          # 提前校验密钥库可读，避免等到 R8 打包数分钟后才在 packageRelease 暴露
+          if ! keytool -list -keystore release.jks -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error::无法用给定密码与别名读取 release.jks，请核对 RELEASE_STORE_PASSWORD 与 RELEASE_KEY_ALIAS"
+            exit 1
+          fi
           {
             echo "RELEASE_STORE_FILE=release.jks"
             echo "RELEASE_STORE_PASSWORD=$RELEASE_STORE_PASSWORD"
