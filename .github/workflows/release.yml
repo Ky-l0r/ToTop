@@ -82,7 +82,11 @@ jobs:
           # 防止签名信息残留在构建缓存与工作区
           find . -name "*.jks" -delete || true
 
+      # workflow_dispatch 没有 tag 上下文，action-gh-release 此时拿不到 GITHUB_REF 里的 tag，
+      # 必然失败。加条件后，手动触发的语义才与文件开头的注释一致：
+      # 完整演练构建、签名与体积门禁，但不创建 Release。
       - name: 创建 Release 并上传 APK
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: app/build/outputs/apk/release/app-release.apk
