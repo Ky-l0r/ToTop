@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ 的系统启动画面（SplashScreen API）。
+
+  系统默认会用 windowBackground 铺满 + 应用图标居中。本应用换成品牌淡紫底，
+  与图标底色同色，启动时不会出现「深色底 + 亮色图标」的割裂感。
+  这里不引入 androidx.core:core-splashscreen，只用系统属性：
+  minSdk 24 上的设备本来就吃不到这个 API，引入库只为覆盖新系统并不划算。
+-->
+<resources>
+    <style name="Theme.ToTop" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@color/status_bar</item>
+        <item name="android:navigationBarColor">@color/window_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+    </style>
+</resources>

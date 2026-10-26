@@ -11,6 +11,23 @@ data class WeakKpointItem(
 )
 
 /**
+ * 首页的一个「学习概览」指标块。
+ *
+ * 为什么做成数据而不是在界面里写死四个格子：
+ * 数值、单位、说明文字、是否已完成都会随数据变化（例如「今天已完成复习」），
+ * 把这些拼装留在 ViewModel 里，界面只负责画，测起来也只看这个列表。
+ */
+data class HomeMetric(
+    val key: String,
+    val label: String,
+    val value: String,
+    /** 一行补充说明，例如「比上周少 2 题」。 */
+    val caption: String = "",
+    /** 0..1 的完成度；为 null 时不画进度条。 */
+    val progress: Float? = null,
+)
+
+/**
  * 首页状态。
  *
  * 所有字段都已经「翻译成人话」：
@@ -26,6 +43,12 @@ data class HomeUiState(
     val weakCount: Int = 0,
     /** 今天待复习的条目数。 */
     val dueReviewCount: Int = 0,
+    /** 最近 7 天新增的错题数（首页概览用）。 */
+    val weekMistakeCount: Int = 0,
+    /** 已掌握的知识点数（掌握度 >= 70）。 */
+    val masteredCount: Int = 0,
+    /** 今日复习完成度 0..1；没有待复习时按 1 处理。 */
+    val todayProgress: Float = 0f,
     /** 一句人话总结，例如「最近 7 天你在这 3 个知识点上错得较多」。 */
     val overviewHint: String = "",
     /** 需要多练的知识点列表（最多 3 条）。 */
@@ -33,4 +56,38 @@ data class HomeUiState(
     val loading: Boolean = true,
     /** 加载失败时展示可读原因，绝不留白。 */
     val error: String? = null,
-)
+) {
+    /** 顶部指标块：都用图标 + 数字 + 说明表达，避免首页只剩几行字。 */
+    val metrics: List<HomeMetric>
+        get() =
+            listOf(
+                HomeMetric(
+                    key = "due",
+                    label = "今天待复习",
+                    value = dueReviewCount.toString(),
+                    caption = if (dueReviewCount == 0) "今天的复习已经清空" else "做完就少一题",
+                    progress = todayProgress,
+                ),
+                HomeMetric(
+                    key = "week",
+                    label = "近七天错题",
+                    value = weekMistakeCount.toString(),
+                    caption = "这一周新进来的题",
+                ),
+                HomeMetric(
+                    key = "weak",
+                    label = "还要多练",
+                    value = weakCount.toString(),
+                    caption = "反复出错的知识点",
+                ),
+                HomeMetric(
+                    key = "mastered",
+                    label = "已掌握",
+                    value = masteredCount.toString(),
+                    caption = "掌握度 70 以上",
+                ),
+            )
+
+    /** 是否是完全的新用户（没有任何学习记录）。 */
+    val isBlank: Boolean get() = !loading && mistakeCount == 0 && masteredCount == 0 && dueReviewCount == 0
+}

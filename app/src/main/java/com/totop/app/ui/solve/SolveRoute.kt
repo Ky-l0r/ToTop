@@ -19,6 +19,7 @@ import com.totop.app.ui.capture.PREVIEW_LONG_SIDE
 import com.totop.app.ui.capture.PagePreviewScreen
 import com.totop.app.ui.chat.NetworkStatus
 import com.totop.app.ui.chat.SolveViewModel
+import com.totop.app.util.NormalizedRect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -98,9 +99,19 @@ fun SolveRoute(
     }
 
     val bitmaps = rememberPreviewBitmaps(draftPages.pages)
+    // 输入框上方的缩略图必须**和实际上传的内容一致**。
+    //
+    // 旧实现直接把整页原图挂上去：用户明明框选了一小块，
+    // 抬头看到的还是没裁过的整页照片，自然会怀疑「框选到底生效没有」。
+    // 这里把每页按框选区域重解码（缓存键带上 cropRect），缩略图即所见即所得。
+    val cropKeys = draftPages.pages.map { it.cropRect }
+    val croppedBitmaps = rememberCropBitmaps(draftPages.pages, cropKeys)
     val composerPages =
         draftPages.pages.mapIndexed { index, page ->
-            ComposerPage(thumbnail = bitmaps.getOrNull(index), cropped = page.cropRect != null)
+            ComposerPage(
+                thumbnail = if (page.hasCrop) croppedBitmaps.getOrNull(index) else bitmaps.getOrNull(index),
+                cropped = page.hasCrop,
+            )
         }
 
     if (cameraOpen) {
@@ -217,6 +228,43 @@ private fun rememberPreviewBitmaps(pages: List<QuestionPage>): List<Bitmap?> {
             }
     }
     return bitmaps
+}
+
+/**
+ * 把各页按框选区域裁成小图，供输入框上方的缩略图直接展示。
+ *
+ * 只在「路径或框选区域变化」时重解码：拖动框选时每次松手才提交一次，
+ * 不会因为手势过程中的高频重组而反复解码。
+ */
+@Composable
+private fun rememberCropBitmaps(
+    pages: List<QuestionPage>,
+    cropKeys: List<NormalizedRect?>,
+): List<Bitmap?> {
+    val keys = pages.map { it.imagePath } to cropKeys
+    var bitmaps by remember(keys) {
+        mutableStateOf<List<Bitmap?>>(List(pages.size) { null })
+    }
+    LaunchedEffect(keys) {
+        bitmaps =
+            withContext(Dispatchers.IO) {
+                pages.map { page -> decodeCropped(page.imagePath, page.cropRect) }
+            }
+    }
+    return bitmaps
+}
+
+/** 解码并裁剪出一页的缩略图；未框选或失败时回退到整图缩略。 */
+private fun decodeCropped(
+    path: String,
+    rect: NormalizedRect?,
+): Bitmap? {
+    val full = decodePreview(path) ?: return null
+    if (rect == null || rect.isEmpty) return full
+    return runCatching {
+        val pixel = rect.toPixelRect(full.width, full.height)
+        Bitmap.createBitmap(full, pixel.left, pixel.top, pixel.width, pixel.height)
+    }.getOrElse { full }
 }
 
 /** 按长边 1280 解码，兼顾清晰度与内存。 */

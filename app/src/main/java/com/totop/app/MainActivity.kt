@@ -32,7 +32,8 @@ private fun ToTopRoot() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background,
         ) {
-            // 导航图入口：8 条路由见 navigation/NavGraph.kt
+            // 导航图入口：路由见 navigation/NavGraph.kt
+            // 启动分流（是否先看引导）在 ToTopApp 内部完成，这里不持有任何业务状态。
             ToTopApp()
         }
     }

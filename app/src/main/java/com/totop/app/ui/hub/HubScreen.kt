@@ -49,6 +49,7 @@ fun HubScreen(
     onOpenOffline: () -> Unit,
     onOpenReview: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCompanion: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val groups =
@@ -58,6 +59,7 @@ fun HubScreen(
                     HubEntry("错题本", "按科目和知识点翻看做过错的题", onOpenMistakes),
                     HubEntry("还需要多练的知识点", "看看哪些地方反复出错", onOpenKnowledge),
                     HubEntry("复习打卡", "安排今天该复习的题", onOpenReview),
+                    HubEntry("陪伴作业", "写作业时用：每题先自己想五分钟", onOpenCompanion),
                 ),
             "考前冲刺" to
                 listOf(

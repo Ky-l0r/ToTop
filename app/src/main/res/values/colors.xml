@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 自适应图标背景：与品牌图标的紫色渐变中点一致 -->
-    <color name="ic_launcher_background">#C4B0F8</color>
-    <color name="window_background">#FBFBF8</color>
-    <color name="status_bar">#FBFBF8</color>
+    <!-- 自适应图标背景层兜底色：与新图标的淡紫底一致 -->
+    <color name="ic_launcher_background">#C2B6EE</color>
+
+    <!-- 窗口与状态栏背景：淡紫白，与界面背景同族，
+         冷启动第一帧不会出现「黑底闪一下」 -->
+    <color name="window_background">#F4F1FC</color>
+    <color name="status_bar">#F4F1FC</color>
 </resources>

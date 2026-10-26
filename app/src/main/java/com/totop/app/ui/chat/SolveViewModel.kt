@@ -295,9 +295,25 @@ class SolveViewModel
             }
         }
 
-        /** 把当前消息流整体落盘（失败只提示，不打断阅读）。 */
+        /**
+         * 把当前消息流整体落盘（失败只提示，不打断阅读）。
+         *
+         * 会话 ID 在这里**按需生成**。
+         *
+         * 这是「历史对话列表永远是空的」的根因修复：旧实现只读取 [_sessionId]，
+         * 全类没有任何一处给它赋值，于是每次落盘都停在第一行 return，
+         * 会话文件一个都没写出来，侧边栏自然什么都不显示；
+         * 用户新建对话后同样不会多出任何一条记录。
+         */
         private suspend fun persistSession(subjectCode: String = "") {
-            val id = _sessionId.value ?: return
+            if (_messages.value.isEmpty()) return
+            val id =
+                _sessionId.value
+                    ?: runCatching { sessionRepository.create() }
+                        .getOrNull()
+                        ?.also { created -> _sessionId.value = created.id }
+                        ?.id
+                    ?: return
             val turns = _messages.value.map { SessionTurns.toTurn(it) }
             val title = SessionTurns.titleOf(_messages.value)
             val rounds = _messages.value.count { it.fromStudent }
@@ -497,10 +513,29 @@ class SolveViewModel
             if (draft.isEmpty) return
             if (_draft.value.stem.isNotBlank()) return
             viewModelScope.launch {
-                val first = draft.pages.firstOrNull() ?: return@launch
-                when (val ocr = ocrRecognizer.recognizeFile(first.imagePath)) {
-                    is OcrOutcome.Success -> _draft.update { it.copy(stem = ocr.result.text) }
-                    is OcrOutcome.Failure -> Unit
+                val texts = ArrayList<String>(draft.pageCount)
+                draft.pages.forEachIndexed { index, page ->
+                    when (val ocr = ocrRecognizer.recognizeFile(page.imagePath)) {
+                        is OcrOutcome.Success -> {
+                            val text = ocr.result.text.trim()
+                            if (text.isNotBlank()) {
+                                // 多页时必须标出页序：只写一段拼接文本，
+                                // 模型会以为是两道题，或把第 2 页的条件当成第 1 页的续写。
+                                texts.add(
+                                    if (draft.isMultiPage) {
+                                        "【第 " + (index + 1) + "/" + draft.pageCount + " 页】\n" + text
+                                    } else {
+                                        text
+                                    },
+                                )
+                            }
+                        }
+                        // 某一页识别失败不影响其余页：视觉档仍然会看到原图
+                        is OcrOutcome.Failure -> Unit
+                    }
+                }
+                if (texts.isNotEmpty()) {
+                    _draft.update { it.copy(stem = texts.joinToString("\n\n")) }
                 }
             }
         }

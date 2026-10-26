@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
+import com.totop.app.ui.common.ALL_SUBJECTS
+import com.totop.app.ui.common.SubjectTabs
 
 /**
  * 知识点掌握度页（FR-3，M4）。
@@ -143,7 +145,22 @@ fun KnowledgeScreen(
                 )
             }
 
-            if (uiState.heatGroups.isEmpty() && !uiState.loading) {
+            // 科目切换：十科不能平铺，先用一排可滚动的科目页签收敛范围，
+            // 下面的章节只属于当前科目。
+            if (uiState.subjectGroups.isNotEmpty()) {
+                item(key = "subject-tabs") {
+                    SubjectTabs(
+                        available = uiState.subjectGroups.filter { it.hasData }.map { it.subject }.toSet(),
+                        selected = uiState.selectedSubject ?: ALL_SUBJECTS,
+                        onSelect = { code ->
+                            viewModel.selectSubject(if (code == ALL_SUBJECTS) null else code)
+                        },
+                    )
+                }
+            }
+
+            val visible = uiState.visibleSubjectGroups
+            if (visible.isEmpty() && !uiState.loading) {
                 item(key = "heat-empty") {
                     Text(
                         text = "还没有知识点数据。首次启动会从内置知识点树载入，若长时间为空请检查安装包是否完整。",
@@ -153,8 +170,12 @@ fun KnowledgeScreen(
                 }
             }
 
-            items(items = uiState.heatGroups, key = { it.chapter }) { group ->
-                ChapterHeatCard(group = group, onOpenKnowledgePoint = onOpenKnowledgePoint)
+            items(items = visible, key = { it.subject }) { subjectGroup ->
+                SubjectHeatSection(
+                    group = subjectGroup,
+                    expandedByDefault = uiState.selectedSubject != null || subjectGroup.hasData,
+                    onOpenKnowledgePoint = onOpenKnowledgePoint,
+                )
             }
         }
     }
@@ -214,13 +235,70 @@ private fun ChartCard(
     }
 }
 
+/**
+ * 一个科目的热力区：科目头 + 科目内的章节折叠卡。
+ *
+ * 科目头显示该科目的平均掌握度与错题数，学生一眼能看出「哪科最弱」，
+ * 而不是在一张跨十科的扁平列表里自己心算。
+ */
+@Composable
+private fun SubjectHeatSection(
+    group: SubjectHeatGroup,
+    expandedByDefault: Boolean,
+    onOpenKnowledgePoint: (String) -> Unit,
+) {
+    var expanded by rememberSaveable(group.subject) { mutableStateOf(expandedByDefault) }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = group.subjectLabel,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text =
+                    if (group.scoredCount == 0) {
+                        "待练习 · 错 " + group.mistakeTotal
+                    } else {
+                        "均 " + Math.round(group.averageScore) + " · 错 " + group.mistakeTotal
+                    },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Icon(
+                imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                contentDescription = if (expanded) "折叠" else "展开",
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        if (expanded) {
+            group.chapters.forEach { chapter ->
+                ChapterHeatCard(group = chapter, onOpenKnowledgePoint = onOpenKnowledgePoint)
+            }
+        }
+    }
+}
+
 /** 章节折叠卡：默认展开错题最多的前两章。 */
 @Composable
 private fun ChapterHeatCard(
     group: ChapterHeatGroup,
     onOpenKnowledgePoint: (String) -> Unit,
 ) {
-    var expanded by rememberSaveable(group.chapter) { mutableStateOf(group.mistakeTotal > 0) }
+    // key 带上科目：不同科目完全可能同名章节（例如「函数」），
+    // 只用章节名做 saveable key 会让两个科目的展开状态互相覆盖。
+    var expanded by rememberSaveable(group.subject + "/" + group.chapter) { mutableStateOf(group.mistakeTotal > 0) }
     Column(
         modifier =
             Modifier

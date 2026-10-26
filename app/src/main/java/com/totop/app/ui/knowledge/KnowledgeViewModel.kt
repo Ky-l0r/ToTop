@@ -7,6 +7,7 @@ import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.data.repo.UtcDay
 import com.totop.app.domain.model.KnowledgePoint
 import com.totop.app.domain.model.Mastery
+import com.totop.app.domain.model.Subjects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +16,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** 科目分组（知识点页的顶层分类）。 */
+data class SubjectHeatGroup(
+    /** 科目代码，例如 math。 */
+    val subject: String,
+    /** 科目中文名。 */
+    val subjectLabel: String,
+    /** 该科目下的章节分组。 */
+    val chapters: List<ChapterHeatGroup>,
+    /** 该科目有数据的知识点数量。 */
+    val scoredCount: Int,
+    /** 该科目平均掌握度（只统计已有数据的知识点）。 */
+    val averageScore: Double,
+    /** 该科目错题合计。 */
+    val mistakeTotal: Int,
+) {
+    /** 是否有任何数据；没有数据的科目默认折叠，避免首屏被十科空列表淹没。 */
+    val hasData: Boolean get() = scoredCount > 0 || mistakeTotal > 0
+}
+
 /** 章节树热力分组（一个章节一行折叠区）。 */
 data class ChapterHeatGroup(
+    /** 所属科目代码；空表示未知。 */
+    val subject: String = "",
     val chapter: String,
     val rows: List<HeatRow>,
     /** 该章节平均掌握度（只统计已有数据的行）。 */
@@ -39,7 +61,10 @@ data class KnowledgeUiState(
     val loading: Boolean = true,
     val errorMessage: String? = null,
     val radar: RadarData = RadarData(emptyList(), 0.0),
-    val heatGroups: List<ChapterHeatGroup> = emptyList(),
+    /** 按科目分组的章节热力（顺序与 Subjects.ORDER 一致）。 */
+    val subjectGroups: List<SubjectHeatGroup> = emptyList(),
+    /** 当前选中的科目；null 表示「全部科目」。 */
+    val selectedSubject: String? = null,
     val trend: TrendData = TrendData(emptyList(), 0.0, 0.0, 0),
     val pie: PieData = PieData(emptyList(), 0),
     /** 已统计的知识点数量（有掌握度记录）。 */
@@ -55,6 +80,16 @@ data class KnowledgeUiState(
 ) {
     /** 是否完全没有掌握度数据（需要引导先去解题）。 */
     val hasNoMastery: Boolean get() = !loading && masteredKpointCount == 0 && mistakeTotal == 0
+
+    /** 当前筛选后要展示的科目分组。 */
+    val visibleSubjectGroups: List<SubjectHeatGroup>
+        get() = selectedSubject?.let { code -> subjectGroups.filter { it.subject == code } } ?: subjectGroups
+
+    /** 顶部的科目筛选项：(科目代码或 null, 展示名, 知识点数)。 */
+    val subjectTabs: List<Pair<String?, String>>
+        get() =
+            listOf<Pair<String?, String>>(null to "全部") +
+                subjectGroups.map { it.subject to it.subjectLabel }
 
     /** 顶部摘要文案。 */
     val summaryText: String
@@ -108,7 +143,15 @@ class KnowledgeViewModel
 
                     val radar = KnowledgeCharts.radar(masteryById, nameById, mistakeCounts)
                     val heatRows = KnowledgeCharts.heatRows(points, masteryById, mistakeCounts)
-                    val heatGroups = groupByChapter(heatRows)
+                    // 先按科目分组，再在科目内按章节分组。
+                    //
+                    // 旧实现把十科七百多个知识点混在一张扁平列表里，
+                    // 学生看到的是一眼望不到头的「章节热力」，根本不知道自己在看哪一科。
+                    // 科目是第一层的筛选维度，章节只能是科目内部的第二层。
+                    val subjectOfRow: Map<String, String> = points.associate { it.id to it.subject }
+                    val subjectGroups = groupBySubject(heatRows, subjectOfRow)
+                    // 无数据科目一律折叠（见 SubjectHeatGroup.hasData），
+                    // 这里不再单独维护一份扁平列表。
                     val merged = KnowledgeCharts.mergeHistory(masteries)
                     val trend = KnowledgeCharts.trend(merged)
                     val pie = KnowledgeCharts.pie(runCatching { errorDistribution() }.getOrDefault(emptyMap()))
@@ -118,7 +161,8 @@ class KnowledgeViewModel
                             loading = false,
                             errorMessage = null,
                             radar = radar,
-                            heatGroups = heatGroups,
+                            subjectGroups = subjectGroups,
+                            selectedSubject = _uiState.value.selectedSubject,
                             trend = trend,
                             pie = pie,
                             masteredKpointCount = masteries.size,
@@ -149,13 +193,40 @@ class KnowledgeViewModel
             return runCatching { mistakeRepository.errorTypeDistribution(0L, to) }.getOrDefault(emptyMap())
         }
 
-        /** 按章节分组，章节内按掌握度升序（最需要补的排前面）。 */
-        private fun groupByChapter(rows: List<HeatRow>): List<ChapterHeatGroup> =
+        /** 按科目分组：科目顺序固定（Subjects.ORDER），科目内部再按章节分组。 */
+        private fun groupBySubject(
+            rows: List<HeatRow>,
+            subjectOfRow: Map<String, String>,
+        ): List<SubjectHeatGroup> =
+            rows
+                .groupBy { subjectOfRow[it.kpointId].orEmpty() }
+                .map { (subject, list) ->
+                    val scored = list.filter { !it.untouched }
+                    SubjectHeatGroup(
+                        subject = subject,
+                        subjectLabel = Subjects.label(subject),
+                        chapters = groupByChapter(subject, list),
+                        scoredCount = scored.size,
+                        averageScore = if (scored.isEmpty()) 0.0 else scored.sumOf { it.score } / scored.size,
+                        mistakeTotal = list.sumOf { it.mistakeCount },
+                    )
+                }
+                .sortedBy { group ->
+                    // 未知科目排到最后，其余严格按界面展示顺序
+                    Subjects.ORDER.indexOf(group.subject).let { if (it < 0) Subjects.ORDER.size else it }
+                }
+
+        /** 科目内部按章节分组，章节内按掌握度升序（最需要补的排前面）。 */
+        private fun groupByChapter(
+            subject: String,
+            rows: List<HeatRow>,
+        ): List<ChapterHeatGroup> =
             rows
                 .groupBy { it.chapter.ifBlank { "未分章" } }
                 .map { (chapter, list) ->
                     val scored = list.filter { !it.untouched }
                     ChapterHeatGroup(
+                        subject = subject,
                         chapter = chapter,
                         rows = list.sortedWith(compareBy({ it.untouched }, { it.score })),
                         averageScore = if (scored.isEmpty()) 0.0 else scored.sumOf { it.score } / scored.size,
@@ -164,10 +235,16 @@ class KnowledgeViewModel
                 }
                 .sortedWith(compareByDescending<ChapterHeatGroup> { it.mistakeTotal }.thenBy { it.averageScore })
 
+        /** 切换科目筛选；传 null 表示看全部科目。 */
+        fun selectSubject(subject: String?) {
+            _uiState.value = _uiState.value.copy(selectedSubject = subject)
+        }
+
         /** 知识点名称（图表点击后用）。 */
         fun nameOf(kpointId: String): String? =
-            _uiState.value.heatGroups
+            _uiState.value.subjectGroups
                 .asSequence()
+                .flatMap { it.chapters.asSequence() }
                 .flatMap { it.rows.asSequence() }
                 .firstOrNull { it.kpointId == kpointId }
                 ?.name

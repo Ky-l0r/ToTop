@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -90,24 +93,37 @@ private fun StudentBubble(message: ConversationMessage) {
                     .padding(horizontal = 14.dp, vertical = 10.dp),
         ) {
             if (message.pages.isNotEmpty()) {
-                Row(
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.7f))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+                // 已经发出去的题目必须**看得见**。
+                //
+                // 旧实现只在气泡里写一行「共 N 页题目」：学生消息发出去后找不到图，
+                // 分不清到底传没传、传了几页，只能靠再发一遍确认。
+                // 这里直接把图片按页序横向排出来，与输入框上方的缩略图一一对应。
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    itemsIndexed(message.pages) { index, path ->
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(72.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.White.copy(alpha = 0.7f)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            coil.compose.AsyncImage(
+                                model = java.io.File(path),
+                                contentDescription = "已发送的第 " + (index + 1) + " 页题目",
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+                }
+                if (message.pages.size > 1) {
                     Text(
-                        text =
-                            if (message.pages.size > 1) {
-                                "共 " + message.pages.size + " 页题目"
-                            } else {
-                                "已拍题 1 页"
-                            },
-                        style = MaterialTheme.typography.labelMedium,
+                        text = "共 " + message.pages.size + " 页题目",
+                        style = MaterialTheme.typography.labelSmall,
                         color = Tokens.Primary,
                         fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp),
                     )
                 }
                 if (message.text.isNotBlank()) Spacer(Modifier.height(8.dp))

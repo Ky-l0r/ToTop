@@ -51,13 +51,34 @@ class HomeViewModel
                             0
                         }
 
+                val now = clock.nowUtcMillis()
+
                 // 待复习：本机已排期且今天到期的条目数（零 token，纯本地排期）
                 val due: List<ReviewCandidate> =
                     runCatching {
-                        reviewGateway.dueCandidates(nowUtc = clock.nowUtcMillis())
+                        reviewGateway.dueCandidates(nowUtc = now)
                     }.getOrElse { failure ->
                         errors.add("复习计划读取失败：" + describe(failure))
                         emptyList()
+                    }
+
+                // 近七天新增错题：首页要能看出「这周到底做了多少」，
+                // 只给一个历史总数没法反映最近的状态。
+                val weekMistakes =
+                    runCatching {
+                        mistakes.countCreatedBetween(fromUtc = now - WEEK_MILLIS, toUtc = now + 1L)
+                    }.getOrElse {
+                        errors.add("近七天错题统计失败：" + describe(it))
+                        0
+                    }
+
+                // 已掌握：掌握度 >= 70 的知识点数，用的是与知识点页同一个阈值常量。
+                val mastered =
+                    runCatching {
+                        knowledgeRepository.allMastery().count { it.score >= MASTERED_THRESHOLD }
+                    }.getOrElse {
+                        errors.add("掌握度读取失败：" + describe(it))
+                        0
                     }
 
                 // 需要多练：按知识点统计错题次数，取前 3。
@@ -100,6 +121,12 @@ class HomeViewModel
                         mistakeCount = total,
                         weakCount = weak.size,
                         dueReviewCount = due.size,
+                        weekMistakeCount = weekMistakes,
+                        masteredCount = mastered,
+                        // 今日完成度：完全没有待复习就是 1（今天已经清空），
+                        // 有到期任务但还没动就是 0。只看「有没有到期」，不做比率推测，
+                        // 避免估算出一个学生自己解释不了的百分比。
+                        todayProgress = if (due.isEmpty()) 1f else 0f,
                         overviewHint = buildHint(total, weak.size, due.size),
                         weakKpoints = weak,
                         loading = false,
@@ -129,5 +156,11 @@ class HomeViewModel
         companion object {
             /** 首页最多展示几个需要多练的知识点。 */
             const val WEAK_LIMIT: Int = 3
+
+            /** 一周的毫秒数（近七天统计用）。 */
+            const val WEEK_MILLIS: Long = 7L * 24 * 60 * 60 * 1000
+
+            /** 「已掌握」阈值，与知识点页保持一致（掌握度 >= 70）。 */
+            const val MASTERED_THRESHOLD: Double = 70.0
         }
     }

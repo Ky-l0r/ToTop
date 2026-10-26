@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  通知栏小图标（Android 要求纯白剪影，系统会按主题着色）。
+
+  不能复用启动器图标：启动器前景是位图，带渐变与彩色，在通知栏里会变成一团色块。
+  这里用与品牌一致的「T + 竖杆」轮廓，26dp 安全区内绘制。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6,4 L18,4 L18,7 L6,7 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.5,4 L13.5,4 L13.5,12 L10.5,12 Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.5,15 L13.5,15 L13.5,20 L10.5,20 Z" />
+</vector>

@@ -9,7 +9,10 @@ package com.totop.app.navigation
 object Routes {
     // 顶层导航（底部栏可见，最多 3 项）
 
-    /** 首页：启动即进入。 */
+    /** 首次使用引导：仅在尚未看过引导时作为启动页。 */
+    const val ONBOARDING = "onboarding"
+
+    /** 首页：启动即进入（看过引导后）。 */
     const val HOME = "home"
 
     /** 拍题/对话主入口。 */
@@ -31,6 +34,23 @@ object Routes {
     // 二级页面（底部栏隐藏）
     const val REVIEW = "review"
     const val BACKUP = "backup"
+
+    /** 陪伴作业模式（每道题先自己写五分钟）。 */
+    const val COMPANION = "companion"
+
+    // 设置的子页面：进入即是一个独立页，而不是长列表里的折叠面板
+
+    /** 模型与连接（BYOK）。 */
+    const val SETTINGS_MODEL = "settings_model"
+
+    /** 教学偏好。 */
+    const val SETTINGS_TEACHING = "settings_teaching"
+
+    /** 存储与数据（缓存、备份、导出、清空）。 */
+    const val SETTINGS_STORAGE = "settings_storage"
+
+    /** 关于与帮助（重看引导、免责声明）。 */
+    const val SETTINGS_ABOUT = "settings_about"
 
     // 带参数页面
     const val KPOINT_DETAIL_ARG = "kpointId"

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 仅作为 Compose 宿主主题：无 ActionBar，不含任何模糊/动画装饰 -->
+    <!--
+      仅作为 Compose 宿主主题：无 ActionBar，不含任何模糊/动画装饰。
+
+      启动窗口（冷启动第一帧）用的就是这里的 windowBackground。
+      旧值 #FBFBF8 在深色模式下会被 values-night 覆盖成 #121614，
+      于是「黑底 + 亮色图标」在启动瞬间闪一下——本应用强制浅色主题，
+      启动窗口必须与之保持一致，见 values-night/themes.xml。
+    -->
     <style name="Theme.ToTop" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/window_background</item>
         <item name="android:statusBarColor">@color/status_bar</item>

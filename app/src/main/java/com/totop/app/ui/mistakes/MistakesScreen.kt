@@ -1,7 +1,6 @@
 package com.totop.app.ui.mistakes
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -113,90 +112,98 @@ fun MistakesScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = uiState.countText,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                )
-                if (uiState.loading) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+        // 计数行与筛选栏**放进同一个 LazyColumn 里**，跟着列表一起滚走。
+        //
+        // 旧实现把它们固定在顶部：搜索框 + 四行筛选 + 条件回显常驻占掉半屏，
+        // 手机上真正能看错题的区域只剩一小条——真机反馈的
+        // 「下拉后筛选还是固定在上面，可查看空间变小」说的就是这件事。
+        // 滚走之后想再筛，往回拨一下即可；筛选条件本身不会丢。
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item(key = "count-row") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = uiState.countText,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (uiState.loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    }
                 }
             }
 
-            MistakeFilterBar(
-                filter = uiState.filter,
-                subjectOptions = uiState.subjectOptions,
-                kpointOptions = uiState.kpointOptions,
-                onKeywordChange = viewModel::setKeyword,
-                onSearchSubmit = viewModel::submitSearch,
-                onSubjectChange = viewModel::setSubject,
-                onKpointChange = viewModel::setKpoint,
-                onErrorTypeChange = viewModel::setErrorType,
-                onTimeWindowChange = viewModel::setTimeWindow,
-                onClear = viewModel::clearFilter,
-                modifier = Modifier.padding(horizontal = 14.dp),
-            )
+            item(key = "filter-bar") {
+                MistakeFilterBar(
+                    filter = uiState.filter,
+                    subjectOptions = uiState.subjectOptions,
+                    kpointOptions = uiState.kpointOptions,
+                    onKeywordChange = viewModel::setKeyword,
+                    onSearchSubmit = viewModel::submitSearch,
+                    onSubjectChange = viewModel::setSubject,
+                    onKpointChange = viewModel::setKpoint,
+                    onErrorTypeChange = viewModel::setErrorType,
+                    onTimeWindowChange = viewModel::setTimeWindow,
+                    onClear = viewModel::clearFilter,
+                )
+            }
 
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    uiState.loading && uiState.items.isEmpty() -> LoadingBlock()
+            when {
+                uiState.loading && uiState.items.isEmpty() ->
+                    item(key = "loading") {
+                        LoadingBlock()
+                    }
 
-                    uiState.isEmpty ->
+                uiState.isEmpty ->
+                    item(key = "empty") {
                         EmptyBlock(
                             message = uiState.emptyMessage,
                             filterActive = uiState.filter.isActive,
                             onClear = viewModel::clearFilter,
                             onRetry = viewModel::reload,
                         )
+                    }
 
-                    else ->
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 8.dp, bottom = 24.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            items(items = uiState.items, key = { it.mistakeId }) { card ->
-                                MistakeCard(
-                                    card = card,
-                                    nowUtcMillis = nowUtcMillis,
-                                    onClick = { onOpenMistake(card.mistakeId) },
-                                    onDelete = { viewModel.deleteMistake(card.mistakeId) },
+                else -> {
+                    items(items = uiState.items, key = { it.mistakeId }) { card ->
+                        MistakeCard(
+                            card = card,
+                            nowUtcMillis = nowUtcMillis,
+                            onClick = { onOpenMistake(card.mistakeId) },
+                            onDelete = { viewModel.deleteMistake(card.mistakeId) },
+                        )
+                    }
+                    if (uiState.loadingMore) {
+                        item(key = "loading-more") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
                                 )
                             }
-                            if (uiState.loadingMore) {
-                                item(key = "loading-more") {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(18.dp),
-                                            strokeWidth = 2.dp,
-                                        )
-                                    }
-                                }
-                            }
-                            if (!uiState.hasMore && uiState.items.isNotEmpty()) {
-                                item(key = "list-end") {
-                                    Text(
-                                        text = "已经到底了 · 共 " + uiState.total + " 道错题",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                                    )
-                                }
-                            }
                         }
+                    }
+                    if (!uiState.hasMore && uiState.items.isNotEmpty()) {
+                        item(key = "list-end") {
+                            Text(
+                                text = "已经到底了 · 共 " + uiState.total + " 道错题",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -206,8 +213,10 @@ fun MistakesScreen(
 /** 加载骨架：静态灰块，不做闪烁动画（方案 7.1）。 */
 @Composable
 private fun LoadingBlock() {
+    // 放在 LazyColumn 的 item 里，不能再用 fillMaxSize：
+    // item 的高度是无界测量，fillMaxSize 会让它撑不住并触发测量异常。
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         repeat(4) {
@@ -234,7 +243,7 @@ private fun EmptyBlock(
     onRetry: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

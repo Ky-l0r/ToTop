@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Android 13+ 主题图标单色图层（系统按壁纸取色）。
-  只保留箭头轮廓，不带阴影与渐变——系统会用自己的调色板渲染。
-  几何与 ic_launcher_foreground.xml 完全一致。
+
+  图形与品牌图标一致：一个「T」加下方一竖，是图标里「T」与竖杆的简化。
+  TOTOP 字样在单色图层里会被缩到不可辨认，因此不画；
+  系统会用自己的调色板渲染，这里只提供轮廓。
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,13 +12,18 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- 横杠 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M46.09,34.5 L61.91,34.5 L61.91,60.11 A7.91,7.91 0 0,1 54,68.02 A7.91,7.91 0 0,1 46.09,60.11 Z" />
+        android:pathData="M38,30 L70,30 L70,38 L38,38 Z" />
+
+    <!-- 竖杆（与横杠连成 T） -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M21.09,42 A7.91,7.91 0 1,1 36.91,42 L54,29.09 L54,18.91 L32.79,33.94 Z" />
+        android:pathData="M50,30 L58,30 L58,54 L50,54 Z" />
+
+    <!-- 下方独立竖条 -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M71.09,42 A7.91,7.91 0 1,1 86.91,42 L75.21,33.94 L54,18.91 L54,29.09 Z" />
+        android:pathData="M50,60 L58,60 L58,76 L50,76 Z" />
 </vector>

@@ -2,14 +2,16 @@
 <!--
   Android 8.0+ 自适应图标。
 
-  背景层用渐变位图（mipmap-*&#47;ic_launcher_background.png）而不是纯色，
-  这样桌面上的观感与品牌图标一致；纯色在深色壁纸上会显得很平。
-  前景层用矢量（ic_launcher_foreground.xml），任何裁切形状下都锐利。
+  前景层用位图（mipmap-*&#47;ic_launcher_foreground.png），
+  因为品牌图标是「T / 竖杆 / TOTOP」字样组合，矢量化字标做不到一比一，
+  且矢量字体在不同启动器字体回退下会变形。
+  位图前景按 108dp 画布、66dp 安全区绘制，任何遮罩（圆形 / squircle / 方形）都切不到字标。
 
+  背景层是与字标同色的淡紫渐变，两者融为一体，不会出现白边。
   API 24-25 不支持自适应图标，会自动回落到 mipmap-*&#47;ic_launcher.png。
 -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@mipmap/ic_launcher_background" />
-    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
     <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

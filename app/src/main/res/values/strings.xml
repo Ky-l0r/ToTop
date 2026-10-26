@@ -10,6 +10,9 @@
     <string name="nav_knowledge">知识点</string>
     <string name="nav_report">学情报告</string>
     <string name="nav_settings">设置</string>
+    <string name="nav_settings_model">模型与连接</string>
+    <string name="nav_settings_about">关于与帮助</string>
+    <string name="nav_companion">陪伴作业</string>
     <string name="nav_review">复习</string>
     <string name="nav_backup">备份与恢复</string>
     <string name="nav_kpoint_detail">知识点详情</string>

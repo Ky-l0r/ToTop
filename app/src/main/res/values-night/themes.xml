@@ -1,10 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  深色模式下的宿主主题。
+
+  刻意与日间保持一致：本应用的主题强制浅色（ToTopTheme 的 darkTheme 默认 false），
+  界面从头到尾都是淡紫配白底。若这里仍用深色 windowBackground，
+  系统在冷启动时先画一帧深色窗口，Compose 起来后再切成白底，
+  观感就是「黑底闪过、亮色图标刺眼」——真机反馈的正是这一条。
+  保持同一份浅色窗口背景，启动过渡才是连续的。
+-->
 <resources>
-    <style name="Theme.ToTop" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#121614</item>
-        <item name="android:statusBarColor">#121614</item>
-        <item name="android:navigationBarColor">#121614</item>
-        <item name="android:windowLightStatusBar">false</item>
+    <style name="Theme.ToTop" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@color/status_bar</item>
+        <item name="android:navigationBarColor">@color/window_background</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowActionModeOverlay">true</item>
     </style>
 </resources>

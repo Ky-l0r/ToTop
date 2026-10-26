@@ -5,7 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,9 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Visibility
@@ -47,7 +48,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,15 +73,22 @@ import com.totop.app.ml.TtsSpeed
  *
  * 安全约定：Key 输入默认掩码显示，任何提示与日志都不回显明文。
  *
- * @param onOpenBackup 进入本地备份与恢复
- * @param onOpenExport 进入导出（Markdown / CSV / Anki）
+ * 页面本身只是**目录**：每个条目跳到一个独立子页面。
+ * 备份/导出等具体动作都在「存储与数据」子页面里，本页不再直接持有它们的回调。
+ *
+ * @param onOpenModel 模型与连接（BYOK 表单 + 连通性校验）
+ * @param onOpenTeaching 教学偏好
+ * @param onOpenStorage 存储与数据（缓存、备份、导出、清空）
+ * @param onOpenAbout 关于与帮助（重看引导、数据去向）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onOpenBackup: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenExport: () -> Unit = {},
+    onOpenModel: () -> Unit = {},
+    onOpenTeaching: () -> Unit = {},
+    onOpenStorage: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
     onBack: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -125,6 +132,12 @@ fun SettingsScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
+        // 设置本身只做「目录」：一屏四五个条目，点进去是独立的子页面。
+        //
+        // 旧版把所有分组塞在一个长列表里，且「模型与连接」默认展开，
+        // 每次进设置第一眼都是十几个输入框，真正想改的东西反而要往下翻很久。
+        // 现在每个条目只显示一行摘要（例如「已配置 / 未配置」），
+        // 具体表单在子页面里，进得去也退得出。
         Column(
             modifier =
                 Modifier
@@ -149,25 +162,82 @@ fun SettingsScreen(
                 )
             }
 
-            ByokSection(uiState = uiState, viewModel = viewModel)
-            ConnectionSection(uiState = uiState, viewModel = viewModel)
-            PreferenceSection(uiState = uiState, viewModel = viewModel)
-            StorageSection(
-                uiState = uiState,
-                onClearCache = viewModel::clearCache,
-                onRefreshCache = viewModel::refreshCacheStats,
-                onOpenBackup = onOpenBackup,
-                onOpenExport = onOpenExport,
-                onRequestClearAll = viewModel::requestClearAll,
-            )
+            SettingsGroup(title = "模型") {
+                SettingsEntry(
+                    title = "模型与连接",
+                    subtitle =
+                        if (uiState.keyStored) {
+                            (uiState.form.visionModel.ifBlank { uiState.form.model }).ifBlank { "已保存 Key" }
+                        } else {
+                            "未配置：点进去填 Base URL、Key 与模型名"
+                        },
+                    status = if (uiState.keyStored) "已配置" else "未配置",
+                    statusOk = uiState.keyStored,
+                    onClick = onOpenModel,
+                )
+            }
+
+            SettingsGroup(title = "学习") {
+                SettingsEntry(
+                    title = "教学偏好",
+                    subtitle = "讲解模式、朗读、周报解读与练习题",
+                    onClick = onOpenTeaching,
+                )
+            }
+
+            SettingsGroup(title = "数据") {
+                SettingsEntry(
+                    title = "存储与数据",
+                    subtitle = "缓存占用 " + uiState.cacheStats.displayText + "、备份、导出、清空",
+                    onClick = onOpenStorage,
+                )
+                SettingsEntry(
+                    title = "关于与帮助",
+                    subtitle = "重新查看新手引导、数据去向说明",
+                    onClick = onOpenAbout,
+                )
+            }
+
             DisclaimerBox()
         }
     }
 }
 
+/**
+ * 子页面内部的普通卡片容器：标题 + 说明 + 内容，始终展开。
+ *
+ * 子页面进来就是为了改这一件事，再折叠只会多一次点击。
+ */
+@Composable
+internal fun ContentCard(
+    title: String,
+    subtitle: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Column {
+            Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        content()
+    }
+}
+
 /** BYOK 表单。 */
 @Composable
-private fun ByokSection(
+internal fun ByokSection(
     uiState: SettingsUiState,
     viewModel: SettingsViewModel,
 ) {
@@ -175,155 +245,156 @@ private fun ByokSection(
     var templateMenuOpen by remember { mutableStateOf(false) }
     val form = uiState.form
 
-    SectionCard(
-        title = "模型与连接",
-        subtitle = "填自己的 API Key 直连厂商；Key 只存本机加密存储",
-        initiallyExpanded = true,
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box {
-                OutlinedButton(onClick = { templateMenuOpen = true }) { Text(text = "选择厂商模板") }
-                DropdownMenu(expanded = templateMenuOpen, onDismissRequest = { templateMenuOpen = false }) {
-                    uiState.templates.forEach { template ->
-                        DropdownMenuItem(
-                            text = {
-                                Column {
-                                    Text(text = template.displayName, style = MaterialTheme.typography.bodyMedium)
-                                    Text(
-                                        text = template.baseUrl,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                            onClick = {
-                                templateMenuOpen = false
-                                viewModel.applyTemplate(template.id)
-                            },
-                        )
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ContentCard(
+            title = "填自己的 Key 直连厂商",
+            subtitle = "Key 只存本机加密存储，不经过开发者服务器",
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box {
+                    OutlinedButton(onClick = { templateMenuOpen = true }) { Text(text = "选择厂商模板") }
+                    DropdownMenu(expanded = templateMenuOpen, onDismissRequest = { templateMenuOpen = false }) {
+                        uiState.templates.forEach { template ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(text = template.displayName, style = MaterialTheme.typography.bodyMedium)
+                                        Text(
+                                            text = template.baseUrl,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    templateMenuOpen = false
+                                    viewModel.applyTemplate(template.id)
+                                },
+                            )
+                        }
                     }
                 }
-            }
-            if (uiState.keyStored) {
-                Icon(
-                    imageVector = Icons.Filled.CheckCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp),
-                )
-                Text(
-                    text = "已保存 Key",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-        }
-
-        OutlinedTextField(
-            value = form.baseUrl,
-            onValueChange = viewModel::updateBaseUrl,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(text = "Base URL") },
-            placeholder = { Text(text = "https://api.deepseek.com/v1") },
-            isError = !form.baseUrlValid,
-            supportingText = {
-                Text(
-                    text =
-                        if (!form.baseUrlValid) {
-                            "必须是 http(s) 地址；本应用会自动补 /chat/completions，不要重复填写该路径"
-                        } else {
-                            "填到 /v1 这一层即可，例如 https://dashscope.aliyuncs.com/compatible-mode/v1"
-                        },
-                )
-            },
-        )
-
-        OutlinedTextField(
-            value = form.apiKey,
-            onValueChange = viewModel::updateApiKey,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(text = "API Key") },
-            placeholder = { Text(text = "sk-…（只保存在本机，不会上传）") },
-            visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            leadingIcon = { Icon(Icons.Filled.Key, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            trailingIcon = {
-                IconButton(onClick = { keyVisible = !keyVisible }) {
+                if (uiState.keyStored) {
                     Icon(
-                        imageVector = if (keyVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                        contentDescription = if (keyVisible) "隐藏 Key" else "显示 Key",
-                        modifier = Modifier.size(18.dp),
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "已保存 Key",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
-            },
-            supportingText = {
-                Text(
-                    text =
-                        if (form.apiKey.isBlank()) {
-                            "本地 Ollama 可留空；远端厂商必须填"
-                        } else {
-                            "当前：" + form.maskedKey
-                        },
-                )
-            },
-        )
-
-        OutlinedTextField(
-            value = form.model,
-            onValueChange = viewModel::updateModel,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(text = "模型名") },
-            placeholder = { Text(text = "deepseek-chat / qwen-plus / moonshot-v1-8k") },
-        )
-
-        OutlinedTextField(
-            value = form.textModel,
-            onValueChange = viewModel::updateTextModel,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(text = "文本档模型（可选）") },
-            supportingText = { Text(text = "留空则与上面的模型名相同；纯文本阶段用这个更省钱") },
-        )
-
-        OutlinedTextField(
-            value = form.visionModel,
-            onValueChange = viewModel::updateVisionModel,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text(text = "视觉档模型（可选）") },
-            supportingText = { Text(text = "含图 / 手写 / 低置信度时使用；留空则回退到模型名") },
-        )
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Switch(
-                checked = form.localOnlyAcknowledged,
-                onCheckedChange = viewModel::setLocalOnlyAcknowledged,
-            )
-            Text(
-                text = "  我已了解：填写 Key 后，题干与图片会直接发送给我选择的模型厂商，不经过开发者服务器。",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.weight(1f),
-            )
-        }
-
-        form.validationMessage?.let { validation ->
-            Text(
-                text = validation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = viewModel::testConnection, enabled = !uiState.busy) { Text(text = "校验连通性") }
-            OutlinedButton(onClick = viewModel::saveCredentials, enabled = form.dirty || !uiState.keyStored) {
-                Text(text = "保存")
             }
-            if (uiState.keyStored) {
-                TextButton(onClick = viewModel::clearApiKey) {
-                    Text(text = "清除 Key", color = MaterialTheme.colorScheme.error)
+
+            OutlinedTextField(
+                value = form.baseUrl,
+                onValueChange = viewModel::updateBaseUrl,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(text = "Base URL") },
+                placeholder = { Text(text = "https://api.deepseek.com/v1") },
+                isError = !form.baseUrlValid,
+                supportingText = {
+                    Text(
+                        text =
+                            if (!form.baseUrlValid) {
+                                "必须是 http(s) 地址；本应用会自动补 /chat/completions，不要重复填写该路径"
+                            } else {
+                                "填到 /v1 这一层即可，例如 https://dashscope.aliyuncs.com/compatible-mode/v1"
+                            },
+                    )
+                },
+            )
+
+            OutlinedTextField(
+                value = form.apiKey,
+                onValueChange = viewModel::updateApiKey,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(text = "API Key") },
+                placeholder = { Text(text = "sk-…（只保存在本机，不会上传）") },
+                visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                leadingIcon = { Icon(Icons.Filled.Key, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                trailingIcon = {
+                    IconButton(onClick = { keyVisible = !keyVisible }) {
+                        Icon(
+                            imageVector = if (keyVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = if (keyVisible) "隐藏 Key" else "显示 Key",
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                },
+                supportingText = {
+                    Text(
+                        text =
+                            if (form.apiKey.isBlank()) {
+                                "本地 Ollama 可留空；远端厂商必须填"
+                            } else {
+                                "当前：" + form.maskedKey
+                            },
+                    )
+                },
+            )
+
+            OutlinedTextField(
+                value = form.model,
+                onValueChange = viewModel::updateModel,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(text = "模型名") },
+                placeholder = { Text(text = "deepseek-chat / qwen-plus / moonshot-v1-8k") },
+            )
+
+            OutlinedTextField(
+                value = form.textModel,
+                onValueChange = viewModel::updateTextModel,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(text = "文本档模型（可选）") },
+                supportingText = { Text(text = "留空则与上面的模型名相同；纯文本阶段用这个更省钱") },
+            )
+
+            OutlinedTextField(
+                value = form.visionModel,
+                onValueChange = viewModel::updateVisionModel,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(text = "视觉档模型（可选）") },
+                supportingText = { Text(text = "含图 / 手写 / 低置信度时使用；留空则回退到模型名") },
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Switch(
+                    checked = form.localOnlyAcknowledged,
+                    onCheckedChange = viewModel::setLocalOnlyAcknowledged,
+                )
+                Text(
+                    text = "  我已了解：填写 Key 后，题干与图片会直接发送给我选择的模型厂商，不经过开发者服务器。",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            form.validationMessage?.let { validation ->
+                Text(
+                    text = validation,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = viewModel::testConnection, enabled = !uiState.busy) { Text(text = "校验连通性") }
+                OutlinedButton(onClick = viewModel::saveCredentials, enabled = form.dirty || !uiState.keyStored) {
+                    Text(text = "保存")
+                }
+                if (uiState.keyStored) {
+                    TextButton(onClick = viewModel::clearApiKey) {
+                        Text(text = "清除 Key", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
@@ -375,14 +446,38 @@ private fun ConnectionSection(
     }
 }
 
-/** 教学偏好。 */
+/** 教学偏好（独立子页面）。 */
+@Composable
+fun TeachingSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) { viewModel.bootstrap() }
+    LaunchedEffect(uiState.message) {
+        val message = uiState.message ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeMessage()
+    }
+    SettingsSubScreen(
+        title = "教学偏好",
+        onBack = onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+    ) {
+        PreferenceSection(uiState = uiState, viewModel = viewModel)
+    }
+}
+
 @Composable
 private fun PreferenceSection(
     uiState: SettingsUiState,
     viewModel: SettingsViewModel,
 ) {
     val toggles = uiState.toggles
-    SectionCard(title = "教学偏好", subtitle = "影响下一次对话，不改动已有记录") {
+    ContentCard(title = "讲解偏好", subtitle = "影响下一次对话，不改动已有记录") {
         Text(text = "默认讲解模式", style = MaterialTheme.typography.labelLarge)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TeachingMode.entries.forEach { mode ->
@@ -443,7 +538,60 @@ private fun PreferenceSection(
     }
 }
 
-/** 存储与数据。 */
+/** 存储与数据（独立子页面）。 */
+@Composable
+fun StorageSettingsScreen(
+    onOpenBackup: () -> Unit,
+    onOpenExport: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        viewModel.bootstrap()
+        viewModel.refreshCacheStats()
+    }
+    LaunchedEffect(uiState.message) {
+        val message = uiState.message ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeMessage()
+    }
+
+    if (uiState.confirmClearAll) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissClearAll,
+            title = { Text(text = DangerCopy.CLEAR_ALL_TITLE) },
+            text = { Text(text = DangerCopy.CLEAR_ALL_BODY) },
+            confirmButton = {
+                TextButton(onClick = viewModel::clearAllData) {
+                    Text(text = "确认清除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissClearAll) { Text(text = "取消") }
+            },
+        )
+    }
+
+    SettingsSubScreen(
+        title = "存储与数据",
+        onBack = onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+    ) {
+        StorageSection(
+            uiState = uiState,
+            onClearCache = viewModel::clearCache,
+            onRefreshCache = viewModel::refreshCacheStats,
+            onOpenBackup = onOpenBackup,
+            onOpenExport = onOpenExport,
+            onRequestClearAll = viewModel::requestClearAll,
+        )
+    }
+}
+
 @Composable
 private fun StorageSection(
     uiState: SettingsUiState,
@@ -453,7 +601,7 @@ private fun StorageSection(
     onOpenExport: () -> Unit,
     onRequestClearAll: () -> Unit,
 ) {
-    SectionCard(title = "存储与数据", subtitle = "全部数据只在本机；换机请用备份") {
+    ContentCard(title = "本机存储", subtitle = "全部数据只在本机；换机请用备份") {
         Text(
             text = uiState.cacheStats.displayText,
             style = MaterialTheme.typography.bodyMedium,
@@ -562,6 +710,96 @@ private fun WarningBox(text: String) {
     }
 }
 
+/**
+ * 「模型与连接」独立子页面。
+ *
+ * 从设置目录点进来才展开表单：设置目录本身保持一屏干净，
+ * 低频配置（Base URL / 多模型名 / 连通性校验）不再占据首屏。
+ */
+@Composable
+fun ModelSettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) { viewModel.bootstrap() }
+    LaunchedEffect(uiState.message) {
+        val message = uiState.message ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        viewModel.consumeMessage()
+    }
+
+    SettingsSubScreen(
+        title = stringResource(R.string.nav_settings_model),
+        onBack = onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+    ) {
+        if (!uiState.storageAvailable) {
+            WarningBox(
+                text =
+                    "本机密钥存储不可用（可能是系统 Keystore 异常）。请重新填写 Key；" +
+                        "在修复前应用会以本地模式运行。",
+            )
+        }
+        ByokSection(uiState = uiState, viewModel = viewModel)
+        ConnectionSection(uiState = uiState, viewModel = viewModel)
+        Text(
+            text =
+                "说明：Key 只写进本机的加密存储，任何提示、日志与导出文件里都不会出现明文；" +
+                    "题目图片只会发给你在这里填的那家厂商。",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * 「关于与帮助」独立子页面。
+ *
+ * 除了免责声明，这里提供「重新看一遍新手引导」的入口：
+ * 引导只会在首次启动自动出现，用户后来想再翻一遍（例如忘了怎么框选）
+ * 必须有一个固定的落脚点，否则只能卸载重装。
+ */
+@Composable
+fun AboutSettingsScreen(
+    onBack: () -> Unit,
+    onReplayOnboarding: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SettingsSubScreen(
+        title = stringResource(R.string.nav_settings_about),
+        onBack = onBack,
+        modifier = modifier,
+    ) {
+        ContentCard(title = "新手引导", subtitle = "一页一页介绍怎么用") {
+            Text(
+                text = "只在第一次打开时自动出现。想再翻一遍可以点下面这个按钮。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onReplayOnboarding) { Text(text = "重新查看新手引导") }
+        }
+        ContentCard(title = "你的数据在哪", subtitle = "这一节没有可操作项") {
+            Text(
+                text =
+                    "错题、图片、掌握度、对话记录、设置全部存在本机应用目录里，没有开发者服务器，" +
+                        "也没有任何统计或埋点 SDK。",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text =
+                    "题目图片与题干只会在你拍题求解时，发送给你自己配置的那家模型厂商；" +
+                        "不填 Key 时应用以本地模式运行，不发出任何请求。",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        DisclaimerBox()
+    }
+}
+
 /** 合规声明。 */
 @Composable
 private fun DisclaimerBox() {
@@ -583,65 +821,130 @@ private fun DisclaimerBox() {
 }
 
 /**
- * 可展开/折叠的设置分组面板。
+ * 设置分组容器：一个浅底圆角块，内部若干条目，条目之间有细分隔线。
  *
- * 为什么改成折叠：设置项数量已经超过一屏，全部展开时用户需要滚很久才能找到
- * 「模型与连接」这类低频但关键的配置；折叠后标题本身就是目录，扫一眼就能定位。
- *
- * 交互约定：
- * - 默认折叠，点击标题行展开；
- * - 展开状态用 rememberSaveable 记住，旋转屏幕或返回本页不会丢；
- * - 折叠时不组合内容（而非隐藏），避免展开时集中创建大量组件造成卡顿。
+ * 与旧的折叠面板的区别：这里**不折叠**。设置页已经退化成纯目录，
+ * 每条只占一行；再给目录套一层折叠，用户要「展开分组 -> 再点条目」两步才能进去，
+ * 而这两步没有任何信息增益。
  */
 @Composable
-private fun SectionCard(
+private fun SettingsGroup(
     title: String,
-    subtitle: String,
     modifier: Modifier = Modifier,
-    initiallyExpanded: Boolean = false,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
-    ) {
-        Row(
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 6.dp, bottom = 6.dp),
+        )
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Icon(
-                imageVector =
-                    if (expanded) {
-                        Icons.Filled.ExpandLess
-                    } else {
-                        Icons.Filled.ExpandMore
-                    },
-                contentDescription = if (expanded) "收起" else "展开",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
+            content = content,
+        )
+    }
+}
+
+/**
+ * 设置条目：标题 + 一句话说明 + 右侧状态与箭头，整行可点。
+ *
+ * @param status 右侧状态文案（例如「已配置」）；为空时不显示
+ * @param statusOk 状态是否属于「正常」色（主色），否则用警示色
+ */
+@Composable
+private fun SettingsEntry(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    status: String? = null,
+    statusOk: Boolean = true,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (expanded) {
-            Column(
-                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                content()
-            }
+        if (status != null) {
+            Text(
+                text = status,
+                style = MaterialTheme.typography.labelSmall,
+                color =
+                    if (statusOk) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+            )
+            Spacer(Modifier.size(6.dp))
         }
+        Icon(
+            imageVector = Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+/**
+ * 设置子页面的统一外壳：返回箭头 + 标题 + 可滚动内容。
+ *
+ * 每个子页面（模型 / 教学偏好 / 存储 / 关于）都套这一层，
+ * 保证返回位置、标题字号、边距完全一致，不需要各写一套 Scaffold。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsSubScreen(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(text = title) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    }
+                },
+            )
+        },
+        snackbarHost = { snackbarHostState?.let { SnackbarHost(hostState = it) } },
+    ) { innerPadding ->
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            content = content,
+        )
     }
 }

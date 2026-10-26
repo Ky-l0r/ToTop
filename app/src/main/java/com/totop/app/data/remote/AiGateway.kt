@@ -140,7 +140,11 @@ class AiGateway(
 
             try {
                 // ---------- 路由 ----------
-                val decision = router.route(request.ocr)
+                // 本次是否带了题目图片交给路由决定档位：
+                // 只按 OCR 置信度判断会把「图里才有的条件」整包丢掉，
+                // 多页题目的第 2 页起更是一张都不会被看到。
+                val hasImages = request.image != null || request.extraImages.isNotEmpty()
+                val decision = router.route(request.ocr, hasImages = hasImages)
                 send(SolveEvent.Routed(decision))
 
                 // ---------- 阶段 A：结构化识题 ----------
@@ -170,8 +174,9 @@ class AiGateway(
                             promptVersion = identifyPrompt.promptVersion,
                             prompt = identifyPrompt,
                             image = if (decision.attachImage) request.image else null,
-                            // 多页题目：只有阶段 A（识题）需要看全部页面，
-                            // B/C/D 只处理已结构化的题干文本，无需重复上传图片。
+                            // 多页题目：阶段 A（识题）必须一次看到全部页面。
+                            // 只传第 1 页的话，续页里的第 (2) 问、附加条件、图形全部丢失，
+                            // 学生看到的就是「拍了很多页，AI 只认得第一张」。
                             extraImages = if (decision.attachImage) request.extraImages else emptyList(),
                             maxTokens = request.maxTokens,
                             registry = registry,

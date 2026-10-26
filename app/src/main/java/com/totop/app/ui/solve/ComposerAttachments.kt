@@ -81,8 +81,8 @@ fun ComposerAttachments(
 data class ComposerPage(
     /** 缩略图位图；解码未完成时为 null。 */
     val thumbnail: android.graphics.Bitmap?,
-    /** 是否已经框选过（用于显示小角标）。 */
-    val cropped: Boolean,
+    /** 是否已经框选过（用于显示「已框选」角标）。 */
+    val cropped: Boolean = false,
 )
 
 @Composable
@@ -116,6 +116,25 @@ private fun AttachmentThumb(
                     text = "载入中",
                     style = MaterialTheme.typography.labelSmall,
                     color = Tokens.OnSurfaceVariant,
+                )
+            }
+        }
+
+        // 「已框选」角标：缩略图已经是框选后的画面，
+        // 但用户需要一眼看出「上传的只是框内这一块」，而不是整页。
+        if (page.cropped) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .padding(3.dp)
+                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 4.dp, vertical = 1.dp),
+            ) {
+                Text(
+                    text = "已框选",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White,
                 )
             }
         }

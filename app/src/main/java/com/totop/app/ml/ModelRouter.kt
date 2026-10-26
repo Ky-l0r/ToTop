@@ -92,9 +92,22 @@ class ModelRouter(
     private val visionAvailable: Boolean = true,
 ) {
     /** 根据 OCR 快照决定档位与模型。 */
-    fun route(snapshot: OcrSnapshot): RouteDecision {
+    fun route(snapshot: OcrSnapshot): RouteDecision = route(snapshot, hasImages = false)
+
+    /**
+     * 带「是否附了题目图片」的路由。
+     *
+     * 为什么需要这个入参：学生拍的是照片，题目条件、几何图、表格往往只在图上，
+     * OCR 文本并不完整。旧实现只按 OCR 置信度判断，印刷体清晰时一律走文本档，
+     * 于是图片被整包丢掉——多页题目自然变成「模型只看到一个题目，其余页像是没上传」。
+     * 只要这次请求带了图片，就必须走视觉档。
+     */
+    fun route(
+        snapshot: OcrSnapshot,
+        hasImages: Boolean,
+    ): RouteDecision {
         policy?.invoke(snapshot, modelPool)?.let { return it }
-        return decideWith(snapshot, modelPool, visionAvailable)
+        return decideWith(snapshot, modelPool, visionAvailable, hasImages)
     }
 
     /** 便捷重载：直接用散装参数路由。 */
@@ -121,6 +134,7 @@ class ModelRouter(
          * 纯函数路由决策（无状态，可任意组合与断言）。
          *
          * 判定顺序（先命中先返回，顺序即优先级，禁止调换）：
+         * 0. 本次请求带了题目图片 -> 视觉（图片里可能有 OCR 读不到的条件与图形）；
          * 1. 手写体 -> 视觉；
          * 2. 含图 -> 视觉；
          * 3. 置信度 < 0.80 -> 视觉；
@@ -131,12 +145,17 @@ class ModelRouter(
             snapshot: OcrSnapshot,
             pool: ModelPool,
             visionAvailable: Boolean = true,
+            hasImages: Boolean = false,
         ): RouteDecision {
             val visionModel = pool.visionModel.ifBlank { pool.textModel }
             val confidence = snapshot.normalizedConfidence
 
             val reasonIfVision =
                 when {
+                    // 只要这次请求带了图片就必须看图。
+                    // 判在第一位：题目常跨页，第 2 页之后的内容只存在于图片里，
+                    // 走文本档等于让学生「拍了一堆，模型只看了一张」。
+                    hasImages -> "本次拍了题目照片，直接用视觉模型看原图（含多页）"
                     snapshot.isHandwritten -> "手写体，OCR 不可靠，改用视觉模型看原图"
                     snapshot.hasFigure -> "题干含几何图/函数图，文字无法完整表达，改用视觉模型"
                     confidence < CONFIDENCE_THRESHOLD ->
