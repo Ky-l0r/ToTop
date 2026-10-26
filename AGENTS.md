@@ -56,11 +56,12 @@ git add <明确路径>        # 仅当上面输出里没有意外文件时，才
 git commit -m "docs: 新增 AGENTS.md 规范 AI 代理行为"
 git fetch origin
 git status -sb            # 确认领先/落后关系
-git push origin HEAD
+git push origin HEAD      # 本机若报证书吊销错误，改用：git -c http.sslBackend=schannel push origin HEAD
 git log --oneline -1
 git status -sb            # 确认无 ahead / behind
 ```
 
+- 本机当前的推送通道有已知问题，见 3.5.1；报错先对号入座，不要盲试。
 - 远端领先且本地没有未推送冲突时，用 `git pull --rebase origin <branch>` 后再推。
 - 推送成功以 `git status -sb` 显示 `## <branch>...origin/<branch>` 且无 ahead 为准。
 
@@ -82,14 +83,42 @@ git status -sb            # 确认无 ahead / behind
 | 网络不可用 | 停止，说明提交已在本地、网络恢复后再推 |
 | 推送后 CI 变红 | 在下一轮优先修复；不得把这轮改动当作已完成 |
 
-本机实测（2026-10-27）：`github.com:443` 直连不可达时，`git push` 表现为
+### 3.5.1 本机推送通道实测（2026-10-27）
+
+推送失败的报错有**两种**，成因与解法完全不同。先看报错文本再动手，不要一律当成"网络不通"。
+
+**一、证书吊销检查失败（本机当前的主因）**
+
+    fatal: unable to access 'https://github.com/Ky-l0r/ToTop.git/':
+    schannel: next InitializeSecurityContext failed: CRYPT_E_NO_REVOCATION_CHECK (0x80092012)
+
+`github.com:443` 的 TCP 是通的，卡在 TLS 握手的证书吊销列表查询。改凭据、改 remote、
+配代理、配 SSH key 都无效。本机实测结论：
+
+| 命令 | 结果 |
+| --- | --- |
+| `git push`（默认） | 失败 |
+| `git -c http.schannelCheckRevoke=false push` | 失败（全局 gitconfig 里已有的该项不起作用） |
+| `git -c http.sslBackend=schannel push` | **成功**，可稳定复现 |
+| 改用系统 `C:\Program Files\Git\cmd\git.exe` | 成功 |
+
+所以本机执行推送用：
+
+    git -c http.sslBackend=schannel push origin HEAD
+
+代价是不再查询证书吊销状态，证书链本身仍会校验。这是本机的临时绕过，
+根因应在环境侧修（统一 git 版本或补齐 CA），**不是仓库该承担的配置**，
+因此不要把它写进 `.git/config` 提交上去。
+
+**二、连接超时（网络确实不通）**
 
     error: RPC failed; curl 28 Failed to connect to github.com:443 after 21052 ms
     fatal: expected flush after ref listing
 
-这不是权限问题，而是网络不通，改凭据、改 remote 地址都没用。**停止重试**，
-把提交留在本地并向用户说明：需要开启代理，或配置 SSH key 后改用 SSH 远端。
-不要为了"推上去"去改 `.git/config` 的 remote、不要写死代理地址、不要把 token 塞进 URL。
+这才是真·网络不通，解法是开代理或配 SSH key。
+
+两种情况的共同要求：**失败就停下来说明原因**，把提交留在本地。
+不要反复重试同一命令，不要改 `.git/config` 的 remote、不要写死代理地址、不要把 token 塞进 URL。
 
 ### 3.6 分支现状
 
@@ -373,7 +402,8 @@ git status --short && git diff --stat
 
 # 提交并推送（第三章规定流程）
 git add <路径> && git commit -m "fix(scope): 中文简述"
-git fetch origin && git status -sb && git push origin HEAD
+git fetch origin && git status -sb
+git -c http.sslBackend=schannel push origin HEAD   # 本机必需，见 3.5.1
 
 # 门禁
 ./gradlew :app:ktlintCheck :app:detekt :app:testDebugUnitTest
