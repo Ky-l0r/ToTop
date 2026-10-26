@@ -2,6 +2,7 @@
 
 感谢参与 To Top。本文说明分支策略、提交规范、代码要求与扩展方式。
 所有参与者请先阅读 [README.md](README.md) 与 [docs/工程规范与构建说明.md](docs/工程规范与构建说明.md)。
+使用 AI 编码代理（DSH、Claude Code、Codex 等）时，代理必须同时遵守 [AGENTS.md](AGENTS.md)。
 
 ## 一、硬性约束（不接受妥协）
 
