@@ -8,6 +8,14 @@ package com.totop.app.domain.model
 data class FirstError(
     /** 出错的步骤序号，对应 studentSteps.idx。 */
     val stepIdx: Int,
+    /**
+     * 出错步骤所属的小问编号（1 起），对应标准解答里 `(1)` `(2)` 的编号。
+     *
+     * [stepIdx] 是**学生步骤**的序号，标准步骤是另一套编号，两者只在「同一问内步序大致对应」时
+     * 才凑巧一致；提示要按标准步骤切段，所以需要这个字段独立表达「属于哪一问」。
+     * 为 null 表示整题不分问或模型未能判断，调用方应退回按 [stepIdx] 推算的旧行为。
+     */
+    val subQuestion: Int? = null,
     /** 错因类型（固定七类之一）。 */
     val type: ErrorType,
     /** 错因解释。 */

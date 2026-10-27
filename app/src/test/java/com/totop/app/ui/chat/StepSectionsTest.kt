@@ -91,6 +91,58 @@ class StepSectionsTest {
     }
 
     @Test
+    @DisplayName("有小问号时按小问定位，不再受学生步序号影响")
+    fun startIndexPrefersSubQuestion() {
+        val steps =
+            listOf(
+                step(1, "(1) 求解析式"),
+                step(2, "(1) 代点求 a"),
+                step(3, "(1) 写出解析式"),
+                step(4, "(2) 设 A 点坐标"),
+                step(5, "(2) 联立方程"),
+            )
+        // 学生把第 (1) 问压成 2 步，他自己的第 3 步就是第 (2) 问的开头；
+        // 按序号推算会落到第 (1) 问（返回 0），这正是 subQuestion 要修掉的错位
+        assertEquals(0, StepSections.startIndexOf(steps, 3))
+        assertEquals(3, StepSections.startIndexOf(steps, 3, subQuestion = 2))
+        // 小问号是权威信息：即使没有 stepIdx 也能定位
+        assertEquals(3, StepSections.startIndexOf(steps, null, subQuestion = 2))
+    }
+
+    @Test
+    @DisplayName("小问号在标准步骤里找不到时退回按序号推算")
+    fun startIndexFallsBackWhenSubQuestionMissing() {
+        val steps =
+            listOf(
+                step(1, "(1) 求解析式"),
+                step(2, "(1) 代点"),
+                step(3, "(2) 设坐标"),
+            )
+        // 模型给了第 3 问，但标准步骤只切出两问：不猜，退回旧行为
+        assertEquals(2, StepSections.startIndexOf(steps, 3, subQuestion = 3))
+
+        val plain =
+            listOf(
+                step(1, "列式"),
+                step(2, "求解"),
+            )
+        // 整道题没有小问标记，问号无处可落，仍然是整题一段
+        assertEquals(0, StepSections.startIndexOf(plain, 1, subQuestion = 1))
+    }
+
+    @Test
+    @DisplayName("切段结果携带小问编号")
+    fun sectionsCarrySubQuestionNumber() {
+        val steps =
+            listOf(
+                step(1, "(1) 求解析式"),
+                step(2, "(2) 设 A 点坐标"),
+            )
+        assertEquals(listOf(1, 2), StepSections.group(steps).map { it.number })
+        assertEquals(listOf(null), StepSections.group(listOf(step(1, "列式"), step(2, "求解"))).map { it.number })
+    }
+
+    @Test
     @DisplayName("没有错因、越界或整题无小问时退回从第一步起")
     fun startIndexFallsBackToZero() {
         val marked =

@@ -221,8 +221,12 @@ AI 输出必须经严格反序列化校验（`AiSolveResultCodec`）：
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | studentSteps | object[] | idx、content、status（correct/wrong/missing）、alignTo |
-| firstError | object 或 null | stepIdx、type、explain、correctThinking |
+| firstError | object 或 null | stepIdx、subQuestion、type、explain、correctThinking |
 | summaryCard | object | title 与 bullets |
+
+`subQuestion` 是 1 起的小问编号，指 `stepIdx` 那条学生步骤属于第几问，与阶段 B 标准步骤里
+`(1)` `(2)` 的编号一致；整题不分问或判断不出时取 `null`。客户端只用它定位「提示从哪一问开始给」，
+不再把 `stepIdx`（学生步骤序号）当标准步骤下标使用——两套编号只在同一问内步序大致对应时才碰巧一致。
 
 错因类型为固定七类枚举，禁止扩展：
 审题理解、概念混淆、公式误用、计算失误、方法选择不当、步骤缺失、书写规范。
@@ -251,9 +255,10 @@ AI 输出必须经严格反序列化校验（`AiSolveResultCodec`）：
         "firstError": {
           "type": ["object", "null"],
           "additionalProperties": false,
-          "required": ["stepIdx", "type", "explain", "correctThinking"],
+          "required": ["stepIdx", "subQuestion", "type", "explain", "correctThinking"],
           "properties": {
             "stepIdx": { "type": "integer", "minimum": 1 },
+            "subQuestion": { "type": ["integer", "null"], "minimum": 1 },
             "type": {
               "type": "string",
               "enum": ["审题理解", "概念混淆", "公式误用", "计算失误", "方法选择不当", "步骤缺失", "书写规范"]
@@ -330,7 +335,7 @@ name 必须与清单中该编号的名称完全一致；禁止自造编号。
       },
       "studentSteps": [{ "idx": 1, "content": "...", "status": "correct" }],
       "firstError": {
-        "stepIdx": 3, "type": "公式误用",
+        "stepIdx": 3, "subQuestion": 2, "type": "公式误用",
         "explain": "...", "correctThinking": "本题应从...切入，因为..."
       },
       "knowledgePoints": [

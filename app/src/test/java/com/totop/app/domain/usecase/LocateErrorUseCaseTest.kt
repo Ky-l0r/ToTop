@@ -133,6 +133,42 @@ class LocateErrorUseCaseTest {
         }
 
         @Test
+        fun `小问号随错因一起落地`() {
+            val outcome =
+                useCase().align(
+                    studentStepsFromModel =
+                        listOf(
+                            AiStudentStep(1, "对的", "correct"),
+                            AiStudentStep(2, "设 A 点坐标", "wrong"),
+                        ),
+                    rawFirstError =
+                        AiFirstError(
+                            stepIdx = 2,
+                            subQuestion = 2,
+                            type = "方法选择不当",
+                            explain = "没有把平行转成纵坐标相等",
+                            correctThinking = "先由平行得到纵坐标相等",
+                        ),
+                )
+            assertEquals(2, outcome.firstError?.stepIdx)
+            assertEquals(2, outcome.firstError?.subQuestion)
+        }
+
+        @Test
+        fun `非法小问号被丢弃并告警`() {
+            val warnings = mutableListOf<String>()
+            val outcome =
+                useCase().align(
+                    studentStepsFromModel = listOf(AiStudentStep(1, "错的", "wrong")),
+                    rawFirstError =
+                        AiFirstError(stepIdx = 1, subQuestion = 0, type = "计算失误", explain = "", correctThinking = ""),
+                    warnings = warnings,
+                )
+            assertNull(outcome.firstError?.subQuestion)
+            assertTrue(warnings.any { it.contains("小问号") })
+        }
+
+        @Test
         fun `学生全对时不硬凑错因`() {
             val outcome =
                 useCase().align(
@@ -251,7 +287,13 @@ class LocateErrorUseCaseTest {
         @Test
         fun `标记首个错误行`() {
             val studentSteps = listOf(StudentStep(1, "a", StudentStepStatus.WRONG))
-            val firstError = com.totop.app.domain.model.FirstError(1, ErrorType.CALCULATION_ERROR, "e", "t")
+            val firstError =
+                com.totop.app.domain.model.FirstError(
+                    stepIdx = 1,
+                    type = ErrorType.CALCULATION_ERROR,
+                    explain = "e",
+                    correctThinking = "t",
+                )
             val rows = useCase().alignment(solution, studentSteps, firstError)
             assertTrue(rows.first { it.position == 1 }.isFirstError)
         }

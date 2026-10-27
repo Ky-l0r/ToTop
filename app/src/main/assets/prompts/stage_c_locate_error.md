@@ -34,6 +34,12 @@
 
 1. 先看学生写到了第几问。如果 (1) 完整、 (2) 只开了头，卡点就在 (2) 的第一处；
 2. `firstError.stepIdx` 指向**该小问的第一个出错或未完成的步骤**，而不是整道题的第一处不严谨；
+2.1 `firstError.subQuestion` 必须同时标出这个步骤**属于第几问**：整数、1 起，
+   与标准解答里 `(1)` `(2)` 的编号一致；
+2.2 整道题没有小问、或确实无法判断属于哪一问时，`subQuestion` 取 `null`。**宁可给 `null` 也不要猜**：
+   客户端用它决定提示从哪一问开始给，猜错会把提示指到不相干的小问，比退回「整题一段」更糟；
+2.3 `subQuestion` 必须与 `stepIdx` 指向的那条学生步骤属于同一问。客户端不再用
+   `stepIdx` 去推算是哪一问，这两个字段自相矛盾时以 `subQuestion` 为准，你的定位会因此失真；
 3. `explain` 开头必须点明这是哪一问，例如「第 (2) 问你写出了设 A 点坐标，但没有把
    'AB 与 x 轴平行' 转成纵坐标相等」；
 4. `correctThinking` 要给出**这一问的入口**，并且如果这一问依赖上一问的结论，
@@ -41,6 +47,15 @@
 5. 如果学生只写了 (1) 且完全正确、之后的问一个字没写，说明他不是"不会"而是
    **没有继续做**：此时 `firstError.type` 取 `步骤缺失`，`explain` 说明「(2)(3) 未作答」，
    `correctThinking` 指到 (2) 的第一个抓手。
+
+多小问的定位示范（题目分 (1)(2)(3)，学生写完 (1)、在 (2) 开头卡住）：
+
+```json
+{ "stepIdx": 3, "subQuestion": 2, "type": "方法选择不当", "explain": "第 (2) 问你写出了设 A 点坐标，但没有把「AB 与 x 轴平行」转成纵坐标相等……" }
+```
+
+两个数字不同是正常的：`stepIdx` 是**学生第几步**（学生一共只写了 3 步），`subQuestion` 是**这步属于标准解答的第几问**。
+不要为了「看起来一致」把 `subQuestion` 写成 3——客户端只按 `subQuestion` 找小问起点，写错就会指到别的小问。
 
 同一道题里**只报第一个**卡点：后面的小问由客户端按教学模式逐问引导，不需要在这里全部列出。
 
@@ -51,7 +66,7 @@
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | studentSteps | object[] | 学生步骤切分结果，每步含 `idx`（从 1 开始）、`content`（尽量保留学生原文）、`status`（`correct` / `wrong` / `missing`）、`alignTo`（对齐到的标准步骤 `idx`，无对应时为 `null`） |
-| firstError | object 或 null | 第一个错误，含 `stepIdx`（第一个出错或缺失的学生步骤序号）、`type`（错因类型枚举）、`explain`（具体错在哪里，要引用学生原文）、`correctThinking`（本题应有的思考入口，以及为何学生思路走不通） |
+| firstError | object 或 null | 第一个错误，含 `stepIdx`（第一个出错或缺失的学生步骤序号）、`subQuestion`（该步属于第几问，整题不分问时为 `null`）、`type`（错因类型枚举）、`explain`（具体错在哪里，要引用学生原文）、`correctThinking`（本题应有的思考入口，以及为何学生思路走不通） |
 | summaryCard | object | 小结卡，含 `title`（不超过 30 字）与 `bullets`（2 到 4 条要点） |
 
 `type` 只能取以下七个值之一，禁止新增、改写或合并：
@@ -66,6 +81,7 @@
 3. 禁止直接下发最终答案：`explain` 与 `correctThinking` 只解释错在哪里与如何切入，不写完整解题过程；答案由客户端按教学模式裁剪下发；
 4. 禁止改写学生的步骤原文去「美化」错误，`content` 必须能让学生认出这是自己写的；
 5. 禁止因为结果正确就跳过错误步骤：过程有误但侥幸得对，仍要标出第一个错误步骤；
+5.1 禁止猜测 `subQuestion`：判断不出属于哪一问时取 `null`，不要拿 `stepIdx` 的值填进去；
 6. 禁止使用 emoji，禁止输出 Markdown 表格之外的解释段落。
 
 ## 五、JSON Schema
@@ -93,9 +109,10 @@
     "firstError": {
       "type": ["object", "null"],
       "additionalProperties": false,
-      "required": ["stepIdx", "type", "explain", "correctThinking"],
+      "required": ["stepIdx", "subQuestion", "type", "explain", "correctThinking"],
       "properties": {
         "stepIdx": { "type": "integer", "minimum": 1 },
+        "subQuestion": { "type": ["integer", "null"], "minimum": 1 },
         "type": { "type": "string", "enum": ["审题理解", "概念混淆", "公式误用", "计算失误", "方法选择不当", "步骤缺失", "书写规范"] },
         "explain": { "type": "string", "minLength": 1 },
         "correctThinking": { "type": "string", "minLength": 1 }
@@ -135,6 +152,7 @@
   ],
   "firstError": {
     "stepIdx": 3,
+    "subQuestion": null,
     "type": "步骤缺失",
     "explain": "学生由 x-2=0 得到 x=2 后就结束了，漏掉了另一个因式 x-3=0 对应的根 x=3。两个因式乘积为零，只能推出至少一个因式为零，不能只取其中一个。",
     "correctThinking": "看到两个因式相乘等于零，应从「每个因式都可能为零」切入，分别解 x-2=0 与 x-3=0，再合并所有解；学生的思路在第二个因式处中断，因此答案只剩一半。"
@@ -183,6 +201,7 @@
   ],
   "firstError": {
     "stepIdx": 3,
+    "subQuestion": null,
     "type": "步骤缺失",
     "explain": "学生写出 x=2 后即结束，遗漏了由 x-3=0 得到的另一个根，属于分类讨论未穷尽。",
     "correctThinking": "两个因式乘积为零时应分别讨论每个因式为零的情形，再合并所有解；学生的思路在第二个因式处中断。"

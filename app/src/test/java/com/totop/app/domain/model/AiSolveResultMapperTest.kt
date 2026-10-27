@@ -114,6 +114,36 @@ class AiSolveResultMapperTest {
         }
 
         @Test
+        fun `小问号原样透传`() {
+            val warnings = mutableListOf<String>()
+            val error =
+                AiSolveResultMapper.mapFirstError(
+                    AiFirstError(stepIdx = 3, subQuestion = 2, type = "方法选择不当", explain = "e", correctThinking = "t"),
+                    listOf(
+                        StudentStep(1, "a", StudentStepStatus.CORRECT),
+                        StudentStep(3, "c", StudentStepStatus.WRONG),
+                    ),
+                    warnings,
+                )!!
+            assertEquals(3, error.stepIdx)
+            assertEquals(2, error.subQuestion)
+            assertTrue(warnings.isEmpty())
+        }
+
+        @Test
+        fun `非法小问号被丢弃并告警`() {
+            val warnings = mutableListOf<String>()
+            val error =
+                AiSolveResultMapper.mapFirstError(
+                    AiFirstError(stepIdx = 1, subQuestion = 0, type = "计算失误", explain = "e", correctThinking = "t"),
+                    listOf(StudentStep(1, "a", StudentStepStatus.WRONG)),
+                    warnings,
+                )!!
+            assertNull(error.subQuestion)
+            assertTrue(warnings.single().contains("subQuestion"))
+        }
+
+        @Test
         fun `未知错因落兜底并产生告警`() {
             val warnings = mutableListOf<String>()
             val error =
@@ -182,7 +212,8 @@ class AiSolveResultMapperTest {
                             method = "导数法",
                         ),
                     studentSteps = listOf(AiStudentStep(1, "代入", "wrong")),
-                    firstError = AiFirstError(1, "公式误用", "e", "t"),
+                    firstError =
+                        AiFirstError(stepIdx = 1, type = "公式误用", explain = "e", correctThinking = "t"),
                     knowledgePoints = listOf(AiKnowledgePoint("KP_MATH_0312", "导数与单调性", 0.92, "u")),
                     summaryCard = AiSummaryCard("t", listOf("b")),
                     aiGenerated = true,

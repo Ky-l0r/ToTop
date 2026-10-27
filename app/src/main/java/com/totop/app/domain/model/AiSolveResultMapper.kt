@@ -82,7 +82,8 @@ object AiSolveResultMapper {
      * 映射首个错误。
      * - 错因未命中固定七类时归入 [ErrorType.FALLBACK] 并记录告警；
      * - [AiFirstError.stepIdx] 缺失时取学生第一步；
-     * - stepIdx 不在学生步骤中时保留原值并记录告警（由用例层决定是否丢弃）。
+     * - stepIdx 不在学生步骤中时保留原值并记录告警（由用例层决定是否丢弃）；
+     * - subQuestion 小于 1 是非法的问号（1 起），丢弃并告警，让提示起点退回按序号推算的旧逻辑。
      */
     fun mapFirstError(
         dto: AiFirstError?,
@@ -98,8 +99,13 @@ object AiSolveResultMapper {
         if (dto.stepIdx != null && studentSteps.none { it.idx == dto.stepIdx }) {
             warnings.add("firstError.stepIdx=" + dto.stepIdx + " 不在 studentSteps 中")
         }
+        val subQuestion = dto.subQuestion
+        if (subQuestion != null && subQuestion < 1) {
+            warnings.add("firstError.subQuestion=" + subQuestion + " 不是合法的问号，已忽略")
+        }
         return FirstError(
             stepIdx = stepIdx,
+            subQuestion = subQuestion?.takeIf { it >= 1 },
             type = mapping.errorType,
             explain = dto.explain?.trim().orEmpty(),
             correctThinking = dto.correctThinking?.trim().orEmpty(),

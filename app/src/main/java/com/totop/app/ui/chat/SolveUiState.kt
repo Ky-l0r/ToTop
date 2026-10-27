@@ -144,6 +144,13 @@ data class FirstErrorView(
     val typeLabel: String,
     val explain: String,
     val correctThinking: String = "",
+    /**
+     * 出错步骤所属的小问编号（1 起）。
+     *
+     * 0.3.x 之前没有这个字段，提示起点只能拿 [stepIdx]（学生步骤序号）去猜标准步骤的位置，
+     * 学生跳步时会把提示指到上一问。旧会话文件里没有该字段，默认为 null 且自动退回旧行为。
+     */
+    val subQuestion: Int? = null,
 )
 
 /** 解答步骤按小问分组后的一段。 */
@@ -151,6 +158,8 @@ internal data class StepSection(
     /** 小问标题；整道题没有小问时为空串（不显示标题）。 */
     val title: String,
     val steps: List<SolutionStepView>,
+    /** 该段对应的小问编号；整题不分问时为 null。 */
+    val number: Int? = null,
 )
 
 /**
@@ -198,7 +207,7 @@ internal object StepSections {
 
         fun flush() {
             if (current.isNotEmpty()) {
-                sections.add(StepSection(title = title, steps = current.toList()))
+                sections.add(StepSection(title = title, steps = current.toList(), number = currentNumber))
                 current.clear()
             }
         }
@@ -221,21 +230,38 @@ internal object StepSections {
     /**
      * 卡点所在小问的**首个步骤下标**（0 起），提示从这一步开始给。
      *
+     * 两级判定：
+     * 1. 有 [subQuestion] 时直接按小问号找段起点。这是阶段 C 契约里的权威信息，
+     *    不再借学生步骤序号推位置，因此学生跳步、压缩步骤都不会把提示指错问；
+     * 2. 没有 [subQuestion]（旧会话、整题不分问、模型给不出）或标准步骤里找不到该问时，
+     *    退回按 [stepIdx] 推算的旧行为：把学生步序号当作位置去找所属段。
+     *
      * @param stepIdx [FirstErrorView.stepIdx]，1 起的学生步骤序号。
-     * @return 该步所在小问的起始下标；没有小问标记、越界或 [stepIdx] 为空时返回 0，
-     *   退化为「从第一步给提示」，与旧行为一致。
+     * @param subQuestion [FirstErrorView.subQuestion]，1 起的小问号。
+     * @return 该步所在小问的起始下标；没有小问标记、越界或两者都为空时返回 0，
+     *   退化为「从第一步给提示」。
      */
     fun startIndexOf(
         steps: List<SolutionStepView>,
         stepIdx: Int?,
+        subQuestion: Int? = null,
     ): Int {
-        if (stepIdx == null || steps.isEmpty()) return 0
+        if (steps.isEmpty()) return 0
+        val sections = group(steps)
+        if (subQuestion != null) {
+            var cursor = 0
+            sections.forEach { section ->
+                if (section.number == subQuestion) return cursor
+                cursor += section.steps.size
+            }
+            // 找不到该小问说明模型给的问号与标准步骤对不上（阶段 B 没标小问、或模型猜了一个），
+            // 这时不猜「大概在附近」，落到下面的序号推算，最差也是旧行为。
+        }
+        if (stepIdx == null || stepIdx < 1 || stepIdx > steps.size) return 0
         // 越界说明这个序号与标准步骤对不上（stepIdx 来自学生步骤），
         // 此时不猜「大概在最后一问」——猜错会把提示指到不相干的小问，
         // 退化成整题一段反而更安全。
-        if (stepIdx < 1 || stepIdx > steps.size) return 0
         val position = stepIdx - 1
-        val sections = group(steps)
         var cursor = 0
         sections.forEach { section ->
             val endExclusive = cursor + section.steps.size
@@ -520,9 +546,14 @@ object SolutionMapper {
         //
         // 一道 (1)(2)(3) 的大题，标准步骤有十几步；若永远从第 1 问开始给提示，
         // 学生说「我不会第 (3) 问」时拿到的却是「先配方」——那不是他的卡点。
-        // firstError.stepIdx 指向他出错/未作答的那一步，据此定位小问起点；
-        // 整道题没有小问标记时 startIndexOf 返回 0，行为与旧版一致。
-        val hintFrom = StepSections.startIndexOf(steps, content.firstError?.stepIdx)
+        // firstError 里的 subQuestion 说明卡在第几问（1 起，与标准步骤的 (1)(2) 同编号），
+        // 直接据此定位小问起点；缺该字段时退回按 stepIdx 推算，整道题没有小问标记时返回 0。
+        val hintFrom =
+            StepSections.startIndexOf(
+                steps = steps,
+                stepIdx = content.firstError?.stepIdx,
+                subQuestion = content.firstError?.subQuestion,
+            )
         val hints =
             com.totop.app.ui.chat.HintBuilder.build(
                 method = content.standardSolution.method,
@@ -545,6 +576,7 @@ object SolutionMapper {
                         typeLabel = error.type.label,
                         explain = error.explain,
                         correctThinking = error.correctThinking,
+                        subQuestion = error.subQuestion,
                     )
                 },
             kpoints =
@@ -590,6 +622,7 @@ object SolutionMapper {
                 payload.firstError?.let { error ->
                     FirstError(
                         stepIdx = error.stepIdx,
+                        subQuestion = error.subQuestion,
                         type = ErrorType.ofLabel(error.typeLabel) ?: ErrorType.FALLBACK,
                         explain = error.explain,
                         correctThinking = error.correctThinking,

@@ -47,6 +47,13 @@ data class AiStudentStep(
 @Serializable
 data class AiFirstError(
     val stepIdx: Int? = null,
+    /**
+     * 出错步骤所属的小问编号（1 起，与标准解答里 `(1)` `(2)` 的编号一致）。
+     *
+     * 阶段 C 契约新增字段：`stepIdx` 只能说明「学生第几步错」，说不出「属于哪一问」，
+     * 而提示要按标准步骤的小问切段。为 null 时按旧逻辑用 stepIdx 推算。
+     */
+    val subQuestion: Int? = null,
     /** 错因中文名或机器码，由 ErrorTypeMapper 归一为固定七类。 */
     val type: String? = null,
     val explain: String? = null,
@@ -78,7 +85,7 @@ data class AiSummaryCard(
  *   "question": {"subject","grade","stem","known","ask","options","hasFigure"},
  *   "standardSolution": {"steps":[{"idx","content","why"}],"finalAnswer","method"},
  *   "studentSteps": [{"idx","content","status"}],
- *   "firstError": {"stepIdx","type","explain","correctThinking"},
+ *   "firstError": {"stepIdx","subQuestion","type","explain","correctThinking"},
  *   "knowledgePoints": [{"id","name","confidence","usage"}],
  *   "summaryCard": {"title","bullets"},
  *   "aiGenerated": true

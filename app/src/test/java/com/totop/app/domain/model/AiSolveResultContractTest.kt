@@ -5,6 +5,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test
  * 4. 服务商返回的代码块包裹 JSON 也能被宽松解析。
  */
 class AiSolveResultContractTest {
-    /** 与开发方案 6.4 文档完全一致的示例 JSON。 */
+    /** 与契约文档一致的示例 JSON（阶段 C 输出已含 subQuestion）。 */
     private val contractJson =
         """
         {
@@ -31,7 +32,7 @@ class AiSolveResultContractTest {
              "steps":[{"idx":1,"content":"求导","why":"导数符号决定单调性"}],
              "finalAnswer":"递增区间为 (-∞,-1) 与 (1,+∞)","method":"导数法"},
           "studentSteps": [{"idx":1,"content":"直接代入 x=0","status":"wrong"}],
-          "firstError": {"stepIdx":1, "type":"公式误用", "explain":"没有先求导",
+          "firstError": {"stepIdx":1, "subQuestion":null, "type":"公式误用", "explain":"没有先求导",
                          "correctThinking":"本题应从求导切入，因为单调性由导数符号决定"},
           "knowledgePoints": [{"id":"KP_MATH_0312","name":"导数与单调性",
                                "confidence":0.92,"usage":"用导数符号判断增减区间"}],
@@ -72,11 +73,22 @@ class AiSolveResultContractTest {
             assertEquals("wrong", result.studentSteps.single().status)
             assertEquals("公式误用", result.firstError?.type)
             assertEquals(1, result.firstError?.stepIdx)
+            // 整题不分问时模型给 null，序列化会因 explicitNulls=false 省略该键
+            assertNull(result.firstError?.subQuestion)
             assertEquals("KP_MATH_0312", result.knowledgePoints.single().id)
             assertEquals(0.92, result.knowledgePoints.single().confidence!!, 1e-9)
             assertEquals("单调性判断三步走", result.summaryCard?.title)
             assertEquals(3, result.summaryCard?.bullets?.size)
             assertTrue(result.aiGenerated)
+        }
+
+        @Test
+        @DisplayName("多小问号可解析并随序列化保留")
+        fun subQuestionRoundTrip() {
+            val json = contractJson.replace("\"subQuestion\":null", "\"subQuestion\":2")
+            val result = AiSolveResultCodec.decode(json).getOrThrow()
+            assertEquals(2, result.firstError?.subQuestion)
+            assertTrue(AiSolveResultCodec.encode(result).contains("\"subQuestion\":2"))
         }
 
         @Test

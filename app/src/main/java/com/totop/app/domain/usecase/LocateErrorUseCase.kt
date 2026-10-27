@@ -194,7 +194,9 @@ class LocateErrorUseCase(
      * 规则：
      * - 模型没给 firstError -> null（学生全对 / 未定位到）；
      * - 错因字符串经 [ErrorTypeMapper] 归一；未知值落 [ErrorType.FALLBACK] 并告警（固定七类，不得新增）；
-     * - stepIdx 缺失或越界时，回退到第一个 wrong 步骤，其次第一个 missing 步骤；都没有则视为无错因。
+     * - stepIdx 缺失或越界时，回退到第一个 wrong 步骤，其次第一个 missing 步骤；都没有则视为无错因；
+     * - subQuestion 小于 1 时丢弃并告警：提示起点会退回按 stepIdx 推算的旧逻辑，
+     *   这比让一个非法问号把提示指到不存在的小问上要安全。
      */
     fun alignFirstError(
         rawFirstError: AiFirstError?,
@@ -222,8 +224,13 @@ class LocateErrorUseCase(
             warnings += "学生步骤中没有错误或缺失步骤，已忽略首个错误"
             return null
         }
+        val declaredSub = rawFirstError.subQuestion
+        if (declaredSub != null && declaredSub < 1) {
+            warnings += "错因所属小问号 " + declaredSub + " 非法，已忽略"
+        }
         return FirstError(
             stepIdx = resolvedIdx,
+            subQuestion = declaredSub?.takeIf { it >= 1 },
             type = mapping.errorType,
             explain = rawFirstError.explain?.trim().orEmpty(),
             correctThinking = rawFirstError.correctThinking?.trim().orEmpty(),
