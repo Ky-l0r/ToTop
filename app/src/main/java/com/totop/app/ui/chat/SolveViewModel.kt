@@ -175,8 +175,14 @@ class SolveViewModel
 
         private var requestId: String = ""
 
-        /** 初始化：读设置默认模式 + 刷新网络 + 载入会话列表 + 恢复最近会话。 */
-        fun bootstrap() {
+        /**
+         * 初始化：读设置默认模式 + 刷新网络 + 载入会话列表 + 恢复最近会话。
+         *
+         * @param resumeLastSession 是否恢复最近一次会话。
+         *   陪伴作业的「问一下 AI」进来时传 false——那种场景下用户的意图是问一道新题，
+         *   恢复旧会话会让他看到上一道题的解答，误以为这次提问没生效。
+         */
+        fun bootstrap(resumeLastSession: Boolean = true) {
             refreshNetworkStatus()
             viewModelScope.launch {
                 val stored = settingsRepository.get(SettingsRepository.Keys.MODE)
@@ -184,6 +190,11 @@ class SolveViewModel
                     _mode.value = TeachingMode.fromWire(stored)
                 }
                 refreshSessions()
+                if (!resumeLastSession) {
+                    // 不恢复旧会话，同时保证输入区是干净的
+                    startNewSession()
+                    return@launch
+                }
                 // 冷启动恢复最近一次会话：用户从别的页面回来时，看到的应该是
                 // 上次那一道题，而不是一片空白。这也是「切换窗口回来内容丢失」的正面修法。
                 if (_sessionId.value == null) {
@@ -220,11 +231,9 @@ class SolveViewModel
         /**
          * 打开一条历史会话回顾。
          *
-         * 历史里的解题气泡按纯文本渲染（[SessionTurns.toMessages]）：
-         * 会话文件只存 [ChatTurn]，不存完整的 [SolutionPayload] 结构，
-         * 因此重开后看到的是完整文字记录，而不是可交互的分块卡片。
-         * 这是刻意取舍——把结构化结果也存下来会让会话文件体积翻倍，
-         * 而回顾场景需要的是「我当时问了什么、AI 当时怎么说的」。
+         * 历史里的解题气泡靠 [ChatTurn.solutionJson] 还原成结构化卡片，
+         * 因此重开后仍有「这题考什么 / 错在哪 / 知识点」，也能直接接着追问；
+         * 老版本写下的会话没有这个快照，此时退回纯文本渲染（内容仍可读）。
          */
         fun openSession(id: String) {
             viewModelScope.launch {
@@ -572,8 +581,15 @@ class SolveViewModel
                 showToast("先拍一张题，或者写下你的问题")
                 return
             }
-            // 已经解过题：走追问
-            if (hasSolutionInConversation() && hasPages.not() && text.isNotEmpty()) {
+            // 判定顺序（这也是用户能自己总结出来的规则）：
+            // 1. 这一轮**带了新图片** -> 当成新题重新解（换了题就是换题）；
+            // 2. 没带图、但会话里已经有解答 -> 就是在问这道题，走追问。
+            //
+            // 旧实现的条件写成 `hasPages.not()`，看起来对，但**拍完题不重新发图**
+            // 才是追问的常态；而一旦用户复用输入区里残留的图片（例如想再问一句），
+            // 就会被判成新题、从头再解一遍——这就是「再次打字询问，AI 又按新题重解」。
+            // 现在只有明确附加了新图片才重新解题。
+            if (hasSolutionInConversation() && !hasPages && text.isNotEmpty()) {
                 sendFollowUp(text)
                 return
             }
@@ -636,15 +652,32 @@ class SolveViewModel
                         return@launch
                     }
                     val context = solution?.let(::contextOfSolution).orEmpty()
+                    // 追问的历史只带**最近几轮对话**，不带整份记录。
+                    //
+                    // 省钱的关键在这里：解题气泡的正文是一整份结构化解答
+                    // （原题 + 已知 + 求 + 错因 + 标准解答 + 答案），动辄一两千字。
+                    // 旧实现把它放进每一次追问的 messages 里，于是第三问、第四问的输入
+                    // 会成倍增长，而模型真正需要的只是「刚才聊到哪」。
+                    // 完整题目信息已经由 context 单独给出一次，不必在历史里重复。
                     val history =
                         _messages.value
                             .filter { it.id != replyId && it.streaming.not() }
+                            .takeLast(FOLLOW_UP_HISTORY_TURNS)
                             .mapNotNull { message ->
-                                val body = message.text.ifBlank { message.solution?.stem.orEmpty() }
+                                // 解题气泡整条丢掉：它的内容就是 context，
+                                // 再进历史等于把同一份解答付两次钱。
+                                val body =
+                                    when {
+                                        message.solution != null -> ""
+                                        else -> message.text.trim()
+                                    }
                                 if (body.isBlank()) {
                                     null
                                 } else {
-                                    FollowUpTurn(text = body, fromStudent = message.fromStudent)
+                                    FollowUpTurn(
+                                        text = body.take(FOLLOW_UP_TURN_MAX_CHARS),
+                                        fromStudent = message.fromStudent,
+                                    )
                                 }
                             }
                     val buffer = StringBuilder()
@@ -789,12 +822,25 @@ class SolveViewModel
         /** 引导模式：解锁下一级提示，并通过 domain 的 HintLog + Repository 写 hint_log。 */
         fun unlockNextHint(messageId: String) {
             updateSolution(messageId) { payload ->
-                val next = payload.unlockedHintLevel + 1
-                if (next > payload.hints.size || next > HintBuilder.MAX_LEVEL) {
+                // 第一次点直接给到第 2 级。
+                //
+                // 第 1 级只有方法名（「这道题的主线是配方法」），学生看完往往还得再点一次；
+                // 第 2 级才是「下一步做什么」，才是真正能让人动笔的那一级。
+                // 逐级点等于逼他多点一次废话，这也是真机反馈「提示总是分三次给」的来源。
+                // 但第 3 级（具体式子与展开顺序）仍然要再点一次：那是接近答案的内容，
+                // 提前塞给他会把「自己先想」这一步彻底跳过。
+                val target =
+                    if (payload.unlockedHintLevel == 0) {
+                        // 只有 1 级提示时（步骤太少）也直接给到第 1 级，不做无意义停顿
+                        minOf(2, payload.hints.size)
+                    } else {
+                        payload.unlockedHintLevel + 1
+                    }
+                if (target <= payload.unlockedHintLevel || target > payload.hints.size) {
                     payload
                 } else {
-                    recordHint(payload.mistakeId, next)
-                    payload.copy(unlockedHintLevel = next)
+                    recordHint(payload.mistakeId, target)
+                    payload.copy(unlockedHintLevel = target)
                 }
             }
         }
@@ -1251,6 +1297,17 @@ class SolveViewModel
             const val NOT_CONFIGURED_MESSAGE: String =
                 "尚未配置模型（Base URL / API Key / 模型名）。请到设置页填写后再试：" +
                     "本应用不内置任何 Key，全部由你自己填写，也不经过开发者服务器。"
+
+            /**
+             * 追问时最多带几轮历史。
+             *
+             * 6 轮足以覆盖「老师你刚才说到哪」这类指代，再多只是在为上下文付费。
+             * 完整题目信息由 context 单独给出，历史里不重复。
+             */
+            const val FOLLOW_UP_HISTORY_TURNS: Int = 6
+
+            /** 单条历史消息的字符上限，防止某个超长回答把预算吃光。 */
+            const val FOLLOW_UP_TURN_MAX_CHARS: Int = 400
         }
     }
 

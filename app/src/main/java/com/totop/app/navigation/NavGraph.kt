@@ -214,6 +214,18 @@ fun ToTopNavHost(
         composable(route = Routes.COMPANION) {
             com.totop.app.ui.companion.CompanionScreen(
                 onBack = { navController.popBackStack() },
+                onAskAi = {
+                    // 陪伴作业里的求助 = 新开一次拍题对话。
+                    //
+                    // 刻意不把当前内容带过去：陪伴模式里并没有在解某一道题，
+                    // 硬塞上下文只会让模型拿到一份错位的题干。
+                    navController.navigate(Routes.SOLVE_NEW) {
+                        // 清掉已有的拍题页，保证进去是干净的一轮
+                        popUpTo(Routes.SOLVE) { inclusive = true }
+                        launchSingleTop = true
+                        restoreState = false
+                    }
+                },
             )
         }
 
@@ -237,6 +249,19 @@ fun ToTopNavHost(
                     navController.navigate(Routes.kpointDetail(kpointId))
                 },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+            )
+        }
+
+        // 同一个界面，但进去时**强制开一条新对话**（陪伴作业的求助入口用）。
+        // 单独一条路由而不是加参数：cleanNew 是「进入这一页时的初始动作」，
+        // 用参数表达会让同一个路由在重建时反复重新开局，把用户刚拍的题清掉。
+        composable(route = Routes.SOLVE_NEW) {
+            com.totop.app.ui.solve.SolveRoute(
+                onOpenKnowledgePoint = { kpointId ->
+                    navController.navigate(Routes.kpointDetail(kpointId))
+                },
+                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                startFresh = true,
             )
         }
 

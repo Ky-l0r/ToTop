@@ -62,6 +62,8 @@ import com.totop.app.ui.theme.Tokens
 @Composable
 fun CompanionScreen(
     onBack: () -> Unit,
+    /** 点「问一下 AI」时新开一条拍题对话（不复用当前会话）。 */
+    onAskAi: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: CompanionViewModel = hiltViewModel(),
 ) {
@@ -188,7 +190,14 @@ fun CompanionScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = viewModel::recordHint) {
+                        Button(
+                            onClick = {
+                                // 先记账再跳转：跳过去之后这一页可能被回收，
+                                // 回来时求助次数必须已经算进去了。
+                                viewModel.recordHint()
+                                onAskAi()
+                            },
+                        ) {
                             Icon(Icons.Filled.Lightbulb, contentDescription = null, modifier = Modifier.size(16.dp))
                             Text(text = "  问一下 AI")
                         }

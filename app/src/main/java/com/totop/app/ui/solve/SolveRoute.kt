@@ -43,6 +43,13 @@ fun SolveRoute(
     onOpenKnowledgePoint: (String) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * 进入时是否强制开一条新对话。
+     *
+     * 陪伴作业点「问一下 AI」走的是这条路径：那一刻用户的意图是「问一道新题」，
+     * 若沿用上一次的会话，他会看到上一道题的解答，误以为这次提问没生效。
+     */
+    startFresh: Boolean = false,
     viewModel: SolveViewModel = hiltViewModel(),
 ) {
     val messages by viewModel.messages.collectAsStateWithLifecycle()
@@ -84,7 +91,15 @@ fun SolveRoute(
             },
         )
 
-    LaunchedEffect(Unit) { viewModel.bootstrap() }
+    LaunchedEffect(Unit) {
+        // 只在这一页第一次组合时执行一次；后续重组（如旋转屏幕）不能重复清，
+        // 否则用户刚拍的题会被清掉。
+        //
+        // startFresh 通过 bootstrap 的参数控制，而不是先 bootstrap 再 startNewSession：
+        // 后者是两段异步操作，恢复旧会话与清空新会话存在竞态，
+        // 先恢复后清空时用户会短暂看到旧题。
+        viewModel.bootstrap(resumeLastSession = !startFresh)
+    }
 
     // 图片处理完成（页数增加）且用户正在等框选时，自动打开框选页。
     //

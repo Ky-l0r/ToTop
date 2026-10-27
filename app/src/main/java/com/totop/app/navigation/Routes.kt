@@ -18,6 +18,9 @@ object Routes {
     /** 拍题/对话主入口。 */
     const val SOLVE = "solve"
 
+    /** 拍题并强制新开一条对话（陪伴作业的「问一下 AI」用它）。 */
+    const val SOLVE_NEW = "solve_new"
+
     /** 功能中心（原错题/知识点/学情/设置的聚合入口）。 */
     const val HUB = "hub"
 

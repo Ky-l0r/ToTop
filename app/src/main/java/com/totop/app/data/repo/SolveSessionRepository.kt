@@ -32,6 +32,18 @@ data class ChatTurn(
     val createdAtUtc: Long = 0L,
     val errorText: String? = null,
     val kind: String = KIND_CHAT,
+    /**
+     * 结构化解题结果的 JSON 快照（仅 [KIND_SOLUTION] 有值）。
+     *
+     * 为什么存字符串而不是直接存结构体：
+     * 仓储层属于 data，展示模型属于 ui，data 不能反向依赖 ui（分层硬约束）。
+     * 由 ui 层负责序列化与反序列化，仓储只当不透明的一段文本搬运。
+     *
+     * 为什么必须存：历史会话重新打开时，若只有纯文本正文，
+     * 这条气泡就退化成「普通 AI 消息」——追问上下文拿不到原题与原解，
+     * 用户打字追问会被当成新题重解一遍。这正是老版本的表现。
+     */
+    val solutionJson: String? = null,
 ) {
     /** 是否是一条「解题报告」消息（由四阶段结构化结果渲染）。 */
     val isSolution: Boolean get() = kind == KIND_SOLUTION

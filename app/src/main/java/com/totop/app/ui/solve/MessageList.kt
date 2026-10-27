@@ -36,6 +36,7 @@ import com.totop.app.ui.chat.ConversationMessage
 import com.totop.app.ui.chat.GuidePolicy
 import com.totop.app.ui.chat.HintLevel
 import com.totop.app.ui.chat.SolutionPayload
+import com.totop.app.ui.chat.StepSections
 import com.totop.app.ui.components.FormulaText
 import com.totop.app.ui.theme.Tokens
 
@@ -255,6 +256,34 @@ private fun SolutionBubble(
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
+                // 选项必须渲染出来。
+                //
+                // 多选题最容易出的错是「只给一个选项」，而用户在界面上连选项都看不到，
+                // 既没法核对答案，也没法判断模型是不是漏选了。
+                if (payload.options.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = "选项",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Tokens.OnSurfaceVariant,
+                        )
+                        payload.options.forEach { option ->
+                            FormulaText(
+                                text = option,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                }
+                // 多选题的答案要是只写了一个字母，就地提示一句，
+                // 比让学生自己猜「是不是漏选了」更有用。
+                if (payload.options.size >= 4 && payload.answerLooksSingleChoice()) {
+                    Text(
+                        text = "这道题看起来是多选，但答案只给了一个选项。可以追问「其他选项为什么不对」。",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.Warning,
+                    )
+                }
             }
         }
 
@@ -384,11 +413,21 @@ private fun SubjectLine(payload: SolutionPayload) {
 /**
  * 提示卡：**主体级强调**（对应真机反馈「建议用小字呈现，不易读，提示应该为主体强调」）。
  *
- * 三条设计决定：
- * 1. 未解锁的级别不隐藏，而是显示成「还有更具体的提示」——
- *    学生才知道「再点一下还有东西」，否则会以为这里就这么多；
- * 2. 正文用 bodyLarge（与解答步骤同级），不用 label/bodySmall；
- * 3. 用编号圆标代替「第 1 级：给方向」这类长标签，视觉上更干净。
+ * 关于「提示总是分三次给」：
+ * 旧实现严格一级一级解锁，学生要点三次才看到"给到关键式子"。
+ * 但这几级并不是等价的线索——第 1 级只是方法名，第 2 级才是"下一步做什么"，
+ * 真正能让他往下写的往往是第 2 级，逐级点等于逼他多点一次废话。
+ *
+ * 现在的策略是**按需给，按内容决定给多少**：
+ * - 第一次点：一次给到第 2 级（方向 + 下一步），这是多数人卡住时真正需要的信息量；
+ * - 如果这道题只有 2 级提示，第一次点就给全，不再留第二次点击；
+ * - 只有第 3 级（展开顺序与式子）才需要再点一次——
+ *   它是"就差最后一步"时才要的东西，提前给等于把答案喂到嘴边。
+ *
+ * 三条保留的设计决定：
+ * 1. 未解锁的级别不隐藏，而是显示成「还有更具体的提示」；
+ * 2. 正文用 bodyLarge（与解答步骤同级）；
+ * 3. 用编号圆标代替「第 1 级：给方向」这类长标签。
  */
 @Composable
 private fun HintBoard(
@@ -432,7 +471,13 @@ private fun HintBoard(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (unlocked < hints.size) {
                     PrimaryAction(
-                        text = if (unlocked == 0) "给我一点提示" else "还是不行，再给一点",
+                        text =
+                            when {
+                                // 还没给过：一次给到第 2 级（方向 + 下一步）
+                                unlocked == 0 -> "给我提示"
+                                // 还剩最后一级：这是"就差这一步"
+                                else -> "再具体一点"
+                            },
                         onClick = onUnlock,
                     )
                 }
@@ -475,9 +520,16 @@ private fun RevealedHint(hint: HintLevel) {
     }
 }
 
-/** 已揭示的完整解答卡。 */
+/**
+ * 已揭示的完整解答卡。
+ *
+ * 大题按小问分组显示：步骤若以「(1)」「(2)」开头，就按小问切开，
+ * 每个小问单独一个标题。旧实现把所有步骤平铺成 1..n，
+ * 一道三问的大题会变成一长串十六步，学生根本对不上「我现在看的是哪一问」。
+ */
 @Composable
 private fun SolutionStepsCard(payload: SolutionPayload) {
+    val sections = StepSections.group(payload.steps)
     BubbleCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
@@ -485,17 +537,28 @@ private fun SolutionStepsCard(payload: SolutionPayload) {
                 style = MaterialTheme.typography.labelLarge,
                 color = Tokens.OnSurfaceVariant,
             )
-            payload.steps.forEach { step ->
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    FormulaText(
-                        text = step.idx.toString() + ". " + step.content,
-                        style = MaterialTheme.typography.bodyMedium,
+            sections.forEach { section ->
+                if (section.title.isNotBlank()) {
+                    Text(
+                        text = section.title,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Tokens.Primary,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 4.dp),
                     )
-                    if (step.why.isNotBlank()) {
+                }
+                section.steps.forEach { step ->
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         FormulaText(
-                            text = "为什么：" + step.why,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = step.idx.toString() + ". " + step.content,
+                            style = MaterialTheme.typography.bodyMedium,
                         )
+                        if (step.why.isNotBlank()) {
+                            FormulaText(
+                                text = "为什么：" + step.why,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
                     }
                 }
             }

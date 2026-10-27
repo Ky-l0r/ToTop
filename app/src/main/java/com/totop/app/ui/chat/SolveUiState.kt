@@ -73,12 +73,21 @@ data class ConversationMessage(
  *    存进会话文件时字段太多且多数与展示无关；
  * 2. 把「展示要什么」显式列出来，避免以后往里加字段时不小心把内部结构泄漏到存储格式。
  */
+@kotlinx.serialization.Serializable
 data class SolutionPayload(
     val questionId: String,
     val subjectCode: String,
     val stem: String,
     val known: List<String> = emptyList(),
     val ask: String = "",
+    /**
+     * 选择题的选项原文（含 A/B/C/D 标记）。
+     *
+     * 之前这里没有这个字段：题目卡只渲染了题干与「已知 / 求」，
+     * 选项整段丢失。后果不只是"看着不完整"——多选题的答案被模型只写了一个字母时，
+     * 用户手上没有选项可以对照，根本无从判断到底漏了哪几个。
+     */
+    val options: List<String> = emptyList(),
     val steps: List<SolutionStepView> = emptyList(),
     val finalAnswer: String = "",
     val method: String = "",
@@ -101,9 +110,27 @@ data class SolutionPayload(
 
     /** 是否定位到了错因。 */
     val hasError: Boolean get() = firstError != null
+
+    /**
+     * 答案是否「像是单选题答法」（只有一个选项字母）。
+     *
+     * 只在题干带「多选 / 至少有两个 / 正确的是」这类线索时才值得提示，
+     * 否则单选题也会被误标，反而制造焦虑。
+     */
+    fun answerLooksSingleChoice(): Boolean {
+        if (!stem.containsMultiChoiceHint() && !finalAnswer.containsMultiChoiceHint()) return false
+        val letters = finalAnswer.filter { it in 'A'..'D' || it in 'a'..'d' }
+        return letters.length <= 1
+    }
+
+    /** 题干/答案里是否出现了多选线索。 */
+    private fun String.containsMultiChoiceHint(): Boolean =
+        contains("多选") || contains("至少有两个") || contains("多项选择") ||
+            contains("正确的是") || contains("正确的有")
 }
 
 /** 解答步骤的展示行。 */
+@kotlinx.serialization.Serializable
 data class SolutionStepView(
     val idx: Int,
     val content: String,
@@ -111,6 +138,7 @@ data class SolutionStepView(
 )
 
 /** 首个错误的展示行。 */
+@kotlinx.serialization.Serializable
 data class FirstErrorView(
     val stepIdx: Int,
     val typeLabel: String,
@@ -118,7 +146,111 @@ data class FirstErrorView(
     val correctThinking: String = "",
 )
 
+/** 解答步骤按小问分组后的一段。 */
+internal data class StepSection(
+    /** 小问标题；整道题没有小问时为空串（不显示标题）。 */
+    val title: String,
+    val steps: List<SolutionStepView>,
+)
+
+/**
+ * 把步骤链按「(1)」「(2)」这类小问标记切段（纯逻辑，可单测）。
+ *
+ * 识别规则刻意保守：
+ * - 只认行首的「(数字)」「（数字）」「第数字问」；
+ * - 未命中时整份步骤只返回一段且 title 为空，界面与旧版完全一致；
+ * - 只有当前段已有内容时才允许开新段，避免「由(1)得」这类引用被误当成新小问。
+ *
+ * 放在 ui/chat 而不是 ui/solve：展示（分组卡片）与引导（提示从小问起）都要用，
+ * 两者共用同一份切段规则，避免「界面按小问分组、提示却仍从第 (1) 问起」的错位。
+ */
+internal object StepSections {
+    /** 取步骤开头的小问编号；没有则返回 null。 */
+    internal fun markerOf(content: String): Int? {
+        val text = content.trimStart()
+        if (text.isEmpty()) return null
+        // 形态一：(2) 或 （2）
+        val first = text.first()
+        if (first == '(' || first == '（') {
+            val digits = text.drop(1).takeWhile { it in '0'..'9' }
+            if (digits.isNotEmpty()) {
+                val rest = text.drop(1 + digits.length).trimStart()
+                if (rest.firstOrNull() == ')' || rest.firstOrNull() == '）') return digits.toIntOrNull()
+            }
+            return null
+        }
+        // 形态二：第2问
+        if (text.startsWith("第")) {
+            val digits = text.drop(1).takeWhile { it in '0'..'9' }
+            if (digits.isNotEmpty() && text.drop(1 + digits.length).startsWith("问")) {
+                return digits.toIntOrNull()
+            }
+        }
+        return null
+    }
+
+    fun group(steps: List<SolutionStepView>): List<StepSection> {
+        if (steps.isEmpty()) return emptyList()
+        val sections = mutableListOf<StepSection>()
+        val current = mutableListOf<SolutionStepView>()
+        var currentNumber: Int? = null
+        var title = ""
+
+        fun flush() {
+            if (current.isNotEmpty()) {
+                sections.add(StepSection(title = title, steps = current.toList()))
+                current.clear()
+            }
+        }
+        steps.forEach { step ->
+            val marker = markerOf(step.content)
+            if (marker != null && marker != currentNumber && current.isNotEmpty()) {
+                flush()
+                currentNumber = marker
+                title = "第 " + marker + " 问"
+            } else if (marker != null && currentNumber == null) {
+                currentNumber = marker
+                title = "第 " + marker + " 问"
+            }
+            current.add(step)
+        }
+        flush()
+        return sections
+    }
+
+    /**
+     * 卡点所在小问的**首个步骤下标**（0 起），提示从这一步开始给。
+     *
+     * @param stepIdx [FirstErrorView.stepIdx]，1 起的学生步骤序号。
+     * @return 该步所在小问的起始下标；没有小问标记、越界或 [stepIdx] 为空时返回 0，
+     *   退化为「从第一步给提示」，与旧行为一致。
+     */
+    fun startIndexOf(
+        steps: List<SolutionStepView>,
+        stepIdx: Int?,
+    ): Int {
+        if (stepIdx == null || steps.isEmpty()) return 0
+        // 越界说明这个序号与标准步骤对不上（stepIdx 来自学生步骤），
+        // 此时不猜「大概在最后一问」——猜错会把提示指到不相干的小问，
+        // 退化成整题一段反而更安全。
+        if (stepIdx < 1 || stepIdx > steps.size) return 0
+        val position = stepIdx - 1
+        val sections = group(steps)
+        var cursor = 0
+        sections.forEach { section ->
+            val endExclusive = cursor + section.steps.size
+            if (position < endExclusive) {
+                // 该段没有小问标记时仍然回到 0：整道题是一段，谈不上「从第几问起」
+                return if (section.title.isBlank()) 0 else cursor
+            }
+            cursor = endExclusive
+        }
+        return 0
+    }
+}
+
 /** 知识点的展示行。 */
+@kotlinx.serialization.Serializable
 data class KpointView(
     val id: String,
     val name: String,
@@ -126,6 +258,7 @@ data class KpointView(
 )
 
 /** 摘要卡展示行。 */
+@kotlinx.serialization.Serializable
 data class SummaryView(
     val title: String,
     val bullets: List<String> = emptyList(),
@@ -274,6 +407,7 @@ object GuidePolicy {
  * 之所以这样设计，是因为四阶段提示词契约里没有单独的 hint 阶段，
  * 而 GUIDED 模式又必须在「不解锁全解」的前提下给梯子。
  */
+@kotlinx.serialization.Serializable
 data class HintLevel(
     val level: Int,
     val text: String,
@@ -378,10 +512,21 @@ object SolutionMapper {
         mode: TeachingMode,
         mistakeId: String? = null,
     ): SolutionPayload {
+        val steps =
+            content.standardSolution.steps.map { step ->
+                SolutionStepView(idx = step.idx, content = step.content, why = step.why)
+            }
+        // 提示从学生卡住的那一问开始给。
+        //
+        // 一道 (1)(2)(3) 的大题，标准步骤有十几步；若永远从第 1 问开始给提示，
+        // 学生说「我不会第 (3) 问」时拿到的却是「先配方」——那不是他的卡点。
+        // firstError.stepIdx 指向他出错/未作答的那一步，据此定位小问起点；
+        // 整道题没有小问标记时 startIndexOf 返回 0，行为与旧版一致。
+        val hintFrom = StepSections.startIndexOf(steps, content.firstError?.stepIdx)
         val hints =
             com.totop.app.ui.chat.HintBuilder.build(
                 method = content.standardSolution.method,
-                stepContents = content.standardSolution.steps.map { it.content },
+                stepContents = steps.drop(hintFrom).map { it.content },
             )
         return SolutionPayload(
             questionId = content.question.id,
@@ -389,10 +534,8 @@ object SolutionMapper {
             stem = content.question.stemText,
             known = content.question.known,
             ask = content.question.ask,
-            steps =
-                content.standardSolution.steps.map { step ->
-                    SolutionStepView(idx = step.idx, content = step.content, why = step.why)
-                },
+            options = content.question.options,
+            steps = steps,
             finalAnswer = content.standardSolution.finalAnswer,
             method = content.standardSolution.method,
             firstError =
@@ -430,6 +573,7 @@ object SolutionMapper {
                     stemText = payload.stem,
                     known = payload.known,
                     ask = payload.ask,
+                    options = payload.options,
                     createdAtUtc = System.currentTimeMillis(),
                 ),
             standardSolution =
@@ -494,8 +638,11 @@ object SessionTurns {
     /**
      * 展示消息 -> 持久化消息。
      *
-     * 解题气泡的正文由 [SolutionPayload] 决定，这里把正文压成一句话，
-     * 保证即使将来展示格式变了，历史里也还留着一份可读的文字。
+     * 解题气泡除了正文，还会把结构化快照一并写进 [ChatTurn.solutionJson]：
+     * 只留纯文本的话，重新打开历史会话时这条气泡就变成普通 AI 消息，
+     * 「这题考什么」「错在哪」这些区块全部消失，追问也失去了上下文。
+     *
+     * 序列化失败不影响落盘：降级为只存正文，历史仍然可读。
      */
     fun toTurn(message: ConversationMessage): ChatTurn =
         ChatTurn(
@@ -506,7 +653,30 @@ object SessionTurns {
             createdAtUtc = message.createdAtUtc,
             errorText = message.errorText,
             kind = if (message.solution != null) ChatTurn.KIND_SOLUTION else ChatTurn.KIND_CHAT,
+            solutionJson = message.solution?.let { encodeSolution(it) },
         )
+
+    /** 展示快照 -> JSON 文本；失败返回 null（历史里仍有正文可读）。 */
+    fun encodeSolution(payload: SolutionPayload): String? =
+        runCatching { payloadJson.encodeToString(SolutionPayload.serializer(), payload) }.getOrNull()
+
+    /** JSON 文本 -> 展示快照；老数据或损坏数据返回 null。 */
+    fun decodeSolution(json: String?): SolutionPayload? {
+        if (json.isNullOrBlank()) return null
+        return runCatching { payloadJson.decodeFromString(SolutionPayload.serializer(), json) }.getOrNull()
+    }
+
+    /**
+     * 会话文件用的 Json 配置。
+     *
+     * ignoreUnknownKeys：将来给 SolutionPayload 加字段时，旧文件仍能读出来；
+     * encodeDefaults：保证前后两次落盘的文件结构一致，便于排查。
+     */
+    private val payloadJson: kotlinx.serialization.json.Json =
+        kotlinx.serialization.json.Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+        }
 
     /** 会话标题：优先学生说的第一句，其次题干首行。 */
     fun titleOf(
@@ -532,7 +702,15 @@ object SessionTurns {
     /** 会话标题最多取多少个字符（列表一行放得下，且能看出是哪道题）。 */
     const val TITLE_MAX_CHARS: Int = 30
 
-    /** 从会话记录还原展示消息（不含解题结构，历史里的解题气泡按纯文本渲染）。 */
+    /**
+     * 从会话记录还原展示消息。
+     *
+     * 解题气泡会用 [ChatTurn.solutionJson] 还原完整的结构化快照，
+     * 因此历史里的「这题考什么 / 错在哪 / 知识点」与当时的交互状态都在，
+     * 并且继续追问时也有上下文可用。
+     *
+     * 老版本写下的会话没有 solutionJson，此时退回纯文本渲染（气泡内容仍然可读）。
+     */
     fun toMessages(session: SolveSession): List<ConversationMessage> =
         session.turns.map { turn ->
             ConversationMessage(
@@ -542,6 +720,7 @@ object SessionTurns {
                 pages = turn.pages,
                 errorText = turn.errorText,
                 createdAtUtc = turn.createdAtUtc,
+                solution = if (turn.isSolution) decodeSolution(turn.solutionJson) else null,
             )
         }
 }

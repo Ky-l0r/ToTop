@@ -71,8 +71,10 @@ android {
         applicationId = "com.totop.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "0.2.0"
+        // 0.3.0 那一轮只写了 Changelog 没动版本号，包体仍自称 0.2.0，
+        // 出问题时无法从包反查到对应改动，这里一并补齐。
+        versionCode = 3
+        versionName = "0.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
