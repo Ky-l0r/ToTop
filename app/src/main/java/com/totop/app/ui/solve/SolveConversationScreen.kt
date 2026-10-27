@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -26,13 +24,18 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -40,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +54,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.totop.app.data.repo.SolveSession
 import com.totop.app.domain.model.TeachingMode
+import com.totop.app.ml.rememberRecordAudioPermissionRequester
+import com.totop.app.ml.rememberVoiceInput
 import com.totop.app.ui.chat.ComposerPhase
 import com.totop.app.ui.chat.ConversationMessage
 import com.totop.app.ui.chat.ModeMeta
@@ -103,12 +109,16 @@ fun SolveConversationScreen(
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
     onStartNewSession: () -> Unit,
+    onUnderstood: () -> Unit,
     onOpenSession: (String) -> Unit,
     onDeleteSession: (String) -> Unit,
     onSetMode: (TeachingMode) -> Unit,
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
+    thinkingHint: String = "",
+    onNotice: (String) -> Unit = {},
     message: String? = null,
     onDismissMessage: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -126,6 +136,12 @@ fun SolveConversationScreen(
         if (count > 0) listState.animateScrollToItem(count - 1)
     }
 
+    // 「我已理解」只在「这道题已经答完」之后出现：
+    // 已经有结构化解答，且最后一条是已结束、没有报错的 AI 回复。
+    val canFinish =
+        messages.any { it.solution != null } &&
+            messages.lastOrNull()?.let { !it.fromStudent && !it.streaming && it.errorText == null } == true
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().background(Tokens.Background)) {
             ConversationTopBar(
@@ -137,6 +153,7 @@ fun SolveConversationScreen(
                 messages = messages,
                 mode = mode,
                 listState = listState,
+                thinkingHint = thinkingHint,
                 onOpenSettings = onOpenSettings,
                 onRetry = onRetry,
                 onSetMode = onSetMode,
@@ -149,12 +166,16 @@ fun SolveConversationScreen(
             message?.let { text ->
                 InlineHint(text = text, onDismiss = onDismissMessage)
             }
+            if (canFinish) {
+                UnderstoodBar(onUnderstood = onUnderstood)
+            }
             Composer(
                 draft = draft,
                 pages = pages,
                 pageCount = pageCount,
                 processing = processing,
                 isSolving = isSolving,
+                hasSolution = messages.any { it.solution != null },
                 onDraftChange = onDraftChange,
                 onSend = onSend,
                 onStop = onStop,
@@ -162,6 +183,7 @@ fun SolveConversationScreen(
                 onOpenAlbum = onOpenAlbum,
                 onRemovePage = onRemovePage,
                 onOpenPage = onOpenPage,
+                onNotice = onNotice,
             )
         }
 
@@ -228,6 +250,7 @@ private fun ConversationList(
     messages: List<ConversationMessage>,
     mode: TeachingMode,
     listState: androidx.compose.foundation.lazy.LazyListState,
+    thinkingHint: String,
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
     onSetMode: (TeachingMode) -> Unit,
@@ -255,6 +278,7 @@ private fun ConversationList(
             MessageItem(
                 message = item,
                 mode = mode,
+                thinkingHint = if (item.streaming) thinkingHint else "",
                 onOpenSettings = onOpenSettings,
                 onRetry = onRetry,
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
@@ -286,8 +310,9 @@ private fun EmptyConversationHint() {
         )
         Text(
             text =
-                "题目跨页就接着拍，多张会当作同一道题来看。" +
-                    "解答之后还能继续追问，聊聊已经问过的这道题。",
+                "一条对话只对应一道题：题目跨页就接着拍，多张会当作同一道题。" +
+                    "解答之后还能继续追问；如果我没看清，你再补拍一张，也算这道题的补充。" +
+                    "想换下一题，点右上角「+」或下面的「我已理解」。",
             style = MaterialTheme.typography.bodySmall,
             color = Tokens.OnSurfaceVariant,
         )
@@ -369,10 +394,52 @@ private fun OfflineHint() {
 }
 
 /**
+ * 「我已理解」条：这道题答完之后，学生用一个动作结束这一题。
+ *
+ * 位置刻意放在输入框正上方而不是消息流末尾：消息流会继续往下长（追问越多越长），
+ * 放在末尾意味着每次都要先滑到底；而这一条回答的是「现在这道题讲完了吗」，
+ * 属于输入区的语义，跟着输入框走才不会被埋掉。
+ *
+ * 点击后的动作是**新建对话**（清空输入区、归档当前会话），
+ * 而不是「什么都不做只显示一个已理解标记」——后者对学生没有实际去处。
+ */
+@Composable
+private fun UnderstoodBar(onUnderstood: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 4.dp)
+                .clip(RoundedCornerShape(Tokens.RadiusMedium))
+                .background(Tokens.PrimaryContainer)
+                .padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "这道题讲清楚了？",
+            style = MaterialTheme.typography.bodySmall,
+            color = Tokens.OnPrimaryContainer,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onUnderstood) {
+            Text(
+                text = "我已理解",
+                style = MaterialTheme.typography.labelLarge,
+                color = Tokens.Primary,
+            )
+        }
+    }
+}
+
+/**
  * 底部输入区：图片条 + 输入框 + 发送/停止。
  *
- * 这里的布局顺序是本次改造的关键——图片必须在输入框**上方**且同一容器内，
- * 用户写思路时才能一直看到自己拍了哪几页。
+ * 布局取舍（0.4.0）：
+ * 旧版在输入框左侧并排放「拍照」「相册」两个**带文字的竖排按钮**，右侧是发送圆钮，
+ * 中间留给输入框的宽度只剩一半，一行里挤了五个可点元素。
+ * 现在把拍照/相册收进输入框左侧一个「+」菜单（同一入口，两个选项），
+ * 语音按钮放进输入框内部右侧，发送按钮留在外面——
+ * 可点元素从五个降到三个，输入框宽度回到主位。
  */
 @Composable
 private fun Composer(
@@ -381,6 +448,7 @@ private fun Composer(
     pageCount: Int,
     processing: Boolean,
     isSolving: Boolean,
+    hasSolution: Boolean,
     onDraftChange: (String) -> Unit,
     onSend: () -> Unit,
     onStop: () -> Unit,
@@ -388,7 +456,16 @@ private fun Composer(
     onOpenAlbum: () -> Unit,
     onRemovePage: (Int) -> Unit,
     onOpenPage: (Int) -> Unit,
+    onNotice: (String) -> Unit,
 ) {
+    var attachMenuOpen by remember { mutableStateOf(false) }
+    val voice = rememberVoiceInput()
+    val requestMicPermission = rememberRecordAudioPermissionRequester()
+    // 语音识别会给多次「部分结果」，每次都是这一轮的完整句子，
+    // 因此以「开口前的文本」为前缀拼接，而不是把每次结果叠加。
+    var voiceBase by remember { mutableStateOf("") }
+    val currentText by rememberUpdatedState(draft.studentProcess)
+
     Column(
         modifier =
             Modifier
@@ -396,8 +473,8 @@ private fun Composer(
                 .background(Tokens.Surface)
                 .navigationBarsPadding()
                 .imePadding()
-                .padding(top = 6.dp, bottom = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(top = 6.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (pages.isNotEmpty()) {
             ComposerAttachments(
@@ -407,37 +484,66 @@ private fun Composer(
                 onOpenPage = onOpenPage,
             )
         }
+        if (voice.listening) {
+            Text(
+                text = "正在听你说… 说完会自动填进输入框",
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.Primary,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            ComposerActionButton(
-                icon = Icons.Filled.CameraAlt,
-                label = "拍照",
-                onClick = onOpenCamera,
-                highlighted = pages.isEmpty(),
-            )
-            ComposerActionButton(
-                icon = Icons.Filled.PhotoLibrary,
-                label = "相册",
-                onClick = onOpenAlbum,
-            )
-            Box(
+            Row(
                 modifier =
                     Modifier
                         .weight(1f)
+                        .heightIn(min = 46.dp)
                         .clip(RoundedCornerShape(Tokens.RadiusXLarge))
-                        .background(Tokens.SurfaceVariant),
+                        .background(Tokens.SurfaceVariant)
+                        .padding(start = 2.dp, end = 2.dp),
+                verticalAlignment = Alignment.Bottom,
             ) {
+                Box {
+                    IconButton(onClick = { attachMenuOpen = true }, modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "添加题目照片",
+                            tint = Tokens.Primary,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
+                    DropdownMenu(expanded = attachMenuOpen, onDismissRequest = { attachMenuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("拍照") },
+                            leadingIcon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
+                            onClick = {
+                                attachMenuOpen = false
+                                onOpenCamera()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("从相册选") },
+                            leadingIcon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
+                            onClick = {
+                                attachMenuOpen = false
+                                onOpenAlbum()
+                            },
+                        )
+                    }
+                }
                 TextField(
                     value = draft.studentProcess,
                     onValueChange = onDraftChange,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp, max = 120.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 44.dp, max = 120.dp),
                     placeholder = {
                         Text(
                             text =
                                 when {
+                                    hasSolution -> "继续追问，或补拍一张更清楚的"
                                     pageCount > 0 -> "说说你的思路（可不填）"
                                     else -> "写下题目，或先拍一张照片"
                                 },
@@ -456,6 +562,29 @@ private fun Composer(
                         ),
                     maxLines = 5,
                 )
+                IconButton(
+                    onClick = {
+                        requestMicPermission {
+                            if (voice.listening) {
+                                voice.stop()
+                            } else {
+                                voiceBase = currentText
+                                voice.start(
+                                    onText = { spoken -> onDraftChange(voiceBase + spoken) },
+                                    onError = onNotice,
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        imageVector = if (voice.listening) Icons.Filled.MicOff else Icons.Filled.Mic,
+                        contentDescription = if (voice.listening) "停止语音输入" else "语音输入",
+                        tint = if (voice.listening) Tokens.Primary else Tokens.OnSurfaceVariant,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
             }
             if (isSolving) {
                 StopCircleButton(onClick = onStop)
@@ -467,32 +596,6 @@ private fun Composer(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun ComposerActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    highlighted: Boolean = false,
-) {
-    Column(
-        modifier = Modifier.clip(RoundedCornerShape(Tokens.RadiusMedium)).clickable(onClick = onClick).padding(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = if (highlighted) Tokens.Primary else Tokens.OnSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-        )
-        Spacer(Modifier.height(1.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (highlighted) Tokens.Primary else Tokens.OnSurfaceVariant,
-        )
     }
 }
 

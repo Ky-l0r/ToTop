@@ -30,16 +30,24 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.QuestionDraft
 import com.totop.app.ui.theme.Tokens
+import com.totop.app.util.ImageFit
 import com.totop.app.util.NormalizedRect
+import com.totop.app.util.PixelRect
 
 /**
  * 拍照后的照片预览与框选页。
@@ -75,6 +83,26 @@ fun PagePreviewScreen(
     modifier: Modifier = Modifier,
 ) {
     val page = draft.pages.getOrNull(currentIndex)
+    // 图片在控件里的实际绘制区域。
+    //
+    // 这一步是「框选后发送的仍是未框选原图」的正面修法：预览用 ContentScale.Fit，
+    // 控件里必然有 letterbox 空白；框选层铺满控件，若直接拿控件尺寸归一化，
+    // 归一化坐标与图片像素整体错位，裁剪出来的区域自然对不上用户框的地方。
+    // 这里先算出真正的绘制矩形，交给框选层按它换算。
+    var viewport by remember { mutableStateOf(IntSize.Zero) }
+    val imageRect =
+        remember(bitmap, viewport) {
+            if (bitmap == null || viewport.width == 0 || viewport.height == 0) {
+                PixelRect(0, 0, viewport.width, viewport.height)
+            } else {
+                ImageFit.contentRect(
+                    imageWidth = bitmap.width,
+                    imageHeight = bitmap.height,
+                    viewWidth = viewport.width,
+                    viewHeight = viewport.height,
+                )
+            }
+        }
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
         // 顶部：取消 + 页序
         Row(
@@ -96,7 +124,13 @@ fun PagePreviewScreen(
         }
 
         // 中间：照片 + 框选层
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .onSizeChanged { viewport = it },
+        ) {
             if (bitmap != null) {
                 Image(
                     bitmap = bitmap.asImageBitmap(),
@@ -119,6 +153,7 @@ fun PagePreviewScreen(
             }
             CropOverlay(
                 rect = page?.cropRect,
+                contentRect = imageRect,
                 onRectChanged = onCropChanged,
             )
         }

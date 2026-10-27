@@ -74,21 +74,31 @@ object LlmRequestFactory {
 /**
  * Call 注册表，把 OkHttp 的 Call 生命周期挂到 ViewModel 生命周期上。
  *
- * 用法（ui-solve）：在 ViewModel 中持有一个实例，onCleared() 时调用 [cancelAll]；
- * 页面离开即中断 socket，停止继续消耗 token（开发方案 3.4）。
+ * 用法（ui-solve）：ViewModel 持有一个实例，「停止生成 / 切换会话」时调 [cancelAll]，
+ * 页面销毁（onCleared）时调 [cancelAllAndSeal]。
+ *
+ * 两种取消语义必须分开，这是「新建对话后再提问，AI 一个字都不输出」的根因：
+ * 旧实现 [cancelAll] 除了取消在途 Call，还把注册表永久标记为已取消，
+ * 此后 [register] 会把**新**Call 立刻 cancel 掉。而 `startNewSession()`、
+ * `openSession()`、`stop()` 都会调用它——于是用户新建对话后发出的请求
+ * 在建立连接前就被自己取消了，界面只剩一条空回复。
+ * 现在 [cancelAll] 只取消在途 Call，注册表继续可用；只有页面销毁才 [cancelAllAndSeal]。
  */
 class LlmCallRegistry {
     private val calls = LinkedHashSet<Call>()
 
-    /** 是否已被取消（取消后拒绝新调用）。 */
+    /** 是否已封存（封存后拒绝新调用，只用于页面销毁）。 */
     @Volatile
-    var isCancelled: Boolean = false
+    var isSealed: Boolean = false
         private set
 
-    /** 登记一个 Call；若注册表已取消，立即取消该 Call。 */
+    /** 兼容旧命名的只读视图：封存后即为 true。 */
+    val isCancelled: Boolean get() = isSealed
+
+    /** 登记一个 Call；若注册表已封存，立即取消该 Call。 */
     @Synchronized
     fun register(call: Call) {
-        if (isCancelled) {
+        if (isSealed) {
             call.cancel()
             return
         }
@@ -101,18 +111,29 @@ class LlmCallRegistry {
         calls.remove(call)
     }
 
-    /** 取消全部进行中的调用（页面销毁 / 用户点停止）。 */
+    /**
+     * 取消全部进行中的调用，但**不封存**注册表。
+     *
+     * 用于「用户点停止」「切换/新建会话」这类场景：这一轮不要了，下一轮还要继续用。
+     */
     @Synchronized
     fun cancelAll() {
-        isCancelled = true
         calls.toList().forEach { runCatching { it.cancel() } }
         calls.clear()
     }
 
-    /** 允许复用（ViewModel 重建时）。 */
+    /** 取消在途调用并封存注册表（页面销毁时使用，之后不再接受新调用）。 */
+    @Synchronized
+    fun cancelAllAndSeal() {
+        isSealed = true
+        calls.toList().forEach { runCatching { it.cancel() } }
+        calls.clear()
+    }
+
+    /** 解除封存（ViewModel 重建时）。 */
     @Synchronized
     fun reset() {
-        isCancelled = false
+        isSealed = false
         calls.clear()
     }
 

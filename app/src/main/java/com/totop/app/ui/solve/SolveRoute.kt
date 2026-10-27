@@ -63,6 +63,10 @@ fun SolveRoute(
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val currentSessionId by viewModel.sessionId.collectAsStateWithLifecycle()
     val toast by viewModel.toast.collectAsStateWithLifecycle()
+    val stages by viewModel.stages.collectAsStateWithLifecycle()
+    // 「AI 正在思考 · 独立求解」这类状态行：只暴露阶段名，不暴露模型原始输出。
+    val thinkingHint =
+        stages.firstOrNull { it.status == com.totop.app.ui.chat.StageStatus.RUNNING }?.label.orEmpty()
 
     // 三个互斥界面：对话 / 相机 / 单页框选预览
     var cameraOpen by remember { mutableStateOf(false) }
@@ -165,8 +169,10 @@ fun SolveRoute(
             onConfirm = {
                 // 确认只做一件事：回到对话页让用户写思路。
                 // 不直接发送——是否发送、思路写没写，由用户自己决定。
+                //
+                // 这里也不再跑本地 OCR：题目一律由视觉模型直接读图，
+                // 先转文本反而会把公式、图形与手写批注丢掉。
                 previewOpen = false
-                viewModel.runOcrIfNeeded()
             },
             onRetake = {
                 viewModel.removePage(activePage)
@@ -207,12 +213,17 @@ fun SolveRoute(
         onOpenSettings = onOpenSettings,
         onRetry = viewModel::retry,
         onStartNewSession = viewModel::startNewSession,
+        // 「我已理解」= 结束这一题：归档当前会话并开一条干净的对话。
+        // 是否顺带标记掌握度、是否自动进入拍题，属于产品口径，见 docs/偏离记录.md 待决策项。
+        onUnderstood = viewModel::startNewSession,
         onOpenSession = viewModel::openSession,
         onDeleteSession = viewModel::deleteSession,
         onSetMode = viewModel::setMode,
         onOpenKnowledgePoint = onOpenKnowledgePoint,
         onUnlockHint = viewModel::unlockNextHint,
         onRevealSolution = viewModel::revealFullSolution,
+        thinkingHint = thinkingHint,
+        onNotice = viewModel::showToast,
         message = toast,
         onDismissMessage = viewModel::dismissToast,
         modifier = modifier,

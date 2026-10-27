@@ -103,6 +103,47 @@ data class NormalizedRect(
     }
 }
 
+/**
+ * 图片在控件里的实际绘制区域（纯函数，可单测）。
+ *
+ * 为什么必须有这一步：预览页用 `ContentScale.Fit` 把照片等比缩放后居中放进控件，
+ * 控件里必然留下空白（letterbox）。框选层如果拿**控件尺寸**做归一化，
+ * 归一化坐标就不对应图片像素——用户框住题目，上传的却是偏移了一大块、
+ * 甚至几乎整页的画面，观感就是「框选没生效，还是发的原图」。
+ *
+ * 这里把「图片在控件中的绘制矩形」独立成纯函数，框选层只按这个矩形换算坐标，
+ * 与 Compose 的布局细节解耦，也便于在 JVM 单测里直接断言宽高比与偏移。
+ */
+object ImageFit {
+    /**
+     * 计算等比缩放（contain）后的绘制矩形，坐标单位是控件像素。
+     *
+     * @param imageWidth 图片宽（像素）
+     * @param imageHeight 图片高（像素）
+     * @param viewWidth 控件宽（像素）
+     * @param viewHeight 控件高（像素）
+     */
+    fun contentRect(
+        imageWidth: Int,
+        imageHeight: Int,
+        viewWidth: Int,
+        viewHeight: Int,
+    ): PixelRect {
+        // 尺寸非法（未测量完成、解码失败）时退化为整个控件：
+        // 用 any{} 表达而不是四个 || 连写，避免触发 detekt 的 ComplexCondition。
+        val sizes = listOf(imageWidth, imageHeight, viewWidth, viewHeight)
+        if (sizes.any { it <= 0 }) {
+            return PixelRect(0, 0, viewWidth.coerceAtLeast(0), viewHeight.coerceAtLeast(0))
+        }
+        val scale = minOf(viewWidth.toFloat() / imageWidth, viewHeight.toFloat() / imageHeight)
+        val drawnWidth = (imageWidth * scale).toInt().coerceIn(1, viewWidth)
+        val drawnHeight = (imageHeight * scale).toInt().coerceIn(1, viewHeight)
+        val left = (viewWidth - drawnWidth) / 2
+        val top = (viewHeight - drawnHeight) / 2
+        return PixelRect(left = left, top = top, right = left + drawnWidth, bottom = top + drawnHeight)
+    }
+}
+
 /** 裁剪结果。 */
 sealed class CropOutcome {
     data class Success(val bitmap: Bitmap, val pixelRect: Rect) : CropOutcome()

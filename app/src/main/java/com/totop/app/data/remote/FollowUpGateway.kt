@@ -50,6 +50,9 @@ class FollowUpGateway
          *
          * @param history 之前的所有轮次（按时间正序，最后一条是本次追问）
          * @param context 上一轮解题的结构化上下文（由 [buildSolveContext] 生成）
+         * @param images 学生这次补拍的照片（base64，页序）。非空时改走视觉模型，
+         *        并把「这是对当前题的补充，不是新题」写进系统提示。
+         * @param supplementNote 补拍场景下的一句说明；为空表示本轮没有图片
          */
         fun ask(
             credentials: LlmCredentials,
@@ -58,6 +61,8 @@ class FollowUpGateway
             registry: LlmCallRegistry?,
             requestId: String,
             maxTokens: Int = ChatRequestConfig.MAX_TOKENS_CONCISE,
+            images: List<String> = emptyList(),
+            supplementNote: String = "",
         ): Flow<FollowUpEvent> =
             channelFlow {
                 if (!credentials.canCall) {
@@ -71,7 +76,7 @@ class FollowUpGateway
                     return@channelFlow
                 }
                 val messages = ArrayList<ChatMessage>(history.size + 2)
-                messages += ChatMessage.system(systemPrompt(context))
+                messages += ChatMessage.system(systemPrompt(context, supplementNote))
                 history.forEach { turn ->
                     val text = turn.text.trim()
                     if (text.isEmpty()) return@forEach
@@ -82,13 +87,44 @@ class FollowUpGateway
                             ChatMessage(ROLE_ASSISTANT_TEXT, text)
                         }
                 }
+                // 补拍的照片放在**最后一条 user 消息**里，与本次追问的文字同一条，
+                // 这样模型能明确「这张图是配合这句话的补充材料」。
+                if (images.isNotEmpty()) {
+                    val lastUser = messages.indexOfLast { it.role == ChatMessage.ROLE_USER }
+                    val spoken = if (lastUser >= 0) messages[lastUser] else null
+                    val caption =
+                        spoken?.parts
+                            ?.filterIsInstance<ChatPart.Text>()
+                            ?.joinToString("\n") { it.text }
+                            ?.trim()
+                            .orEmpty()
+                            .ifBlank { "请看我补拍的这张照片。" }
+                    if (lastUser >= 0) messages.removeAt(lastUser)
+                    messages +=
+                        ChatMessage.userWithImages(
+                            text = caption,
+                            base64Jpegs = images,
+                            pageHints =
+                                images.indices.map { index ->
+                                    "这是同一道题的第 " + (index + 1) + "/" + images.size +
+                                        " 张补充照片，请与前面的题目信息合并理解。"
+                                },
+                        )
+                }
                 if (messages.size <= 1) {
                     send(FollowUpEvent.Failed(LlmError.Unknown(detail = "没有可发送的追问内容")))
                     return@channelFlow
                 }
                 val config =
                     ChatRequestConfig(
-                        model = credentials.effectiveTextModel,
+                        // 带图必须走视觉模型：文本模型会把图片整包丢掉，
+                        // 学生补拍的那张等于没发。
+                        model =
+                            if (images.isEmpty()) {
+                                credentials.effectiveTextModel
+                            } else {
+                                credentials.effectiveVisionModel
+                            },
                         messages = messages,
                         maxTokens = maxTokens,
                         temperature = 0.3,
@@ -160,7 +196,10 @@ class FollowUpGateway
             const val MAX_CONTEXT_CHARS: Int = 2400
 
             /** 系统提示：把「你已经有这道题的答案」这件事讲清楚。 */
-            fun systemPrompt(context: String): String =
+            fun systemPrompt(
+                context: String,
+                supplementNote: String = "",
+            ): String =
                 buildString {
                     append("你是一名耐心的中学老师，正在微信式地一对一辅导一名学生。\n")
                     append("学生已经问过下面这道题，并且已经看到过完整的标准解答。\n")
@@ -170,6 +209,10 @@ class FollowUpGateway
                     append("2. 直接回答学生的疑问，必要时引用原题的条件或某一步骤；\n")
                     append("3. 如果学生问的是一道新题，就按新题独立作答；\n")
                     append("4. 不要输出 JSON，不要说「作为 AI」之类的话。\n")
+                    if (supplementNote.isNotBlank()) {
+                        append("\n=== 本次带图 ===\n")
+                        append(supplementNote).append('\n')
+                    }
                     if (context.isNotBlank()) {
                         append("\n=== 这道题的已知信息 ===\n")
                         append(context.take(MAX_CONTEXT_CHARS))

@@ -1,10 +1,16 @@
 package com.totop.app.navigation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,6 +61,7 @@ import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
 import com.totop.app.ui.settings.SettingsScreen
 import com.totop.app.ui.theme.Tokens
+import kotlinx.coroutines.delay
 
 /**
  * 应用外壳：Scaffold + 底部三项导航 + 导航宿主。
@@ -74,43 +85,70 @@ fun ToTopApp(
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevel = TopLevelDestination.fromRoute(currentRoute) != null
 
-    // 判定完成前只留背景色：
-    // 先画首页再跳引导会看到「首页闪一下」，先画引导又会给老用户看到陌生页面。
-    if (!ready) {
-        androidx.compose.foundation.layout.Box(
-            modifier = androidx.compose.ui.Modifier.fillMaxSize().background(Tokens.Background),
-        )
-        return
+    // 启动动画：判定完成之后仍要停留一小段时间。
+    //
+    // 只等 ready 是不够的——本机读设置通常几十毫秒，品牌页会一闪而过，
+    // 观感上反而像「闪屏」。留 620ms 让淡入淡出完整走完，同时不掩盖真实耗时：
+    // 若判定本身更久（首次启动要建库），动画会一直停留到判定结束。
+    var splashDone by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(SPLASH_MIN_VISIBLE_MS)
+        splashDone = true
     }
+    val showSplash = !(ready && splashDone)
 
-    Scaffold(
-        bottomBar = {
-            // 不使用动画：性能规范禁止大面积动画与视差
-            if (isTopLevel) {
-                FloatingNavBar(
-                    currentRoute = currentRoute,
-                    onSelect = { destination ->
-                        // 已经在这个页面时不做任何导航：
-                        // 重复 navigate 会走一遍「出栈 + 入栈 + 重建」，是点击卡顿的常见来源。
-                        if (currentRoute == destination.route) return@FloatingNavBar
-                        navController.navigate(destination.route) {
-                            // 顶层页面之间复用同一份回退栈，避免栈无限增长
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (ready) {
+            Scaffold(
+                bottomBar = {
+                    // 不做出现/消失动画：只在顶层页面常驻，动画只会让底部栏闪一下
+                    if (isTopLevel) {
+                        FloatingNavBar(
+                            currentRoute = currentRoute,
+                            onSelect = { destination ->
+                                // 已经在这个页面时不做任何导航：
+                                // 重复 navigate 会走一遍「出栈 + 入栈 + 重建」，是点击卡顿的常见来源。
+                                if (currentRoute == destination.route) return@FloatingNavBar
+                                navController.navigate(destination.route) {
+                                    // 顶层页面之间复用同一份回退栈，避免栈无限增长
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                        )
+                    }
+                },
+            ) { innerPadding ->
+                ToTopNavHost(
+                    navController = navController,
+                    startRoute = startRoute,
+                    modifier = Modifier.padding(innerPadding),
                 )
             }
-        },
-    ) { innerPadding ->
-        ToTopNavHost(
-            navController = navController,
-            startRoute = startRoute,
-            modifier = Modifier.padding(innerPadding),
-        )
+        }
+        // 启动动画覆盖在内容之上淡出，避免「先看首页再盖一层」造成的跳动
+        AnimatedVisibility(
+            visible = showSplash,
+            enter = EnterTransition.None,
+            exit = fadeOut(animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)),
+        ) {
+            com.totop.app.ui.common.SplashScreen()
+        }
     }
 }
+
+/** 启动动画最短展示时长：够走完 380ms 的淡入，又不会让人觉得在等。 */
+private const val SPLASH_MIN_VISIBLE_MS: Long = 620L
+
+/** 进入过渡时长（毫秒）。比系统默认短，避免「点了没反应」的观感。 */
+private const val TRANSITION_ENTER_MS: Int = 180
+
+/** 退出过渡时长（毫秒）。退出比进入更短，让新页面尽快成为视觉主体。 */
+private const val TRANSITION_EXIT_MS: Int = 120
+
+/** 位移幅度 = 屏宽 / 该值。18 约等于 6%，只有方向感，不会让人觉得页面在飞。 */
+private const val TRANSITION_SLIDE_DIVISOR: Int = 18
 
 /**
  * 浮动胶囊导航栏。
@@ -187,17 +225,37 @@ fun ToTopNavHost(
         navController = navController,
         startDestination = startRoute,
         modifier = modifier,
-        // 页面切换动画全部关掉。
+        // 页面切换：淡入淡出 + 极小幅度横向位移。
         //
-        // 为什么必须关：Compose Navigation 默认带 enter/exit 过渡（淡入 + 位移），
-        // 首页、错题、学情这些页面都要在首帧查询数据库（错题数、知识点分布、复习计划），
-        // 过渡动画期间目标页面正在做 IO 与组装，低端机上就表现为"点了没反应、然后突然跳过来"。
-        // 直接切换虽然少了动效，但点击即到位，观感反而更快。
-        // 这也与项目既有规范「禁止大面积动画」一致。
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None },
+        // 上一版把这四条全设为 None，原因是「默认过渡期间目标页在做数据库查询，
+        // 低端机上表现为点了没反应然后突然跳过来」。但完全无过渡又让层级关系消失：
+        // 进二级页与回退看起来一模一样，用户不知道自己是往里走还是往回走。
+        //
+        // 现在的取值刻意保守：
+        // - 进入 180ms、退出 120ms，比系统默认（约 300ms）短，感知上是「轻快」而不是「慢」；
+        // - 位移只有屏宽的 1/18，且不缩放、不做共享元素、不叠加阴影动画，
+        //   每帧只是一次 alpha 与图层平移，低端机 GPU 能承受；
+        // - 进入方向按前进/回退区分（push 从右、pop 从左），层级关系一眼可辨。
+        enterTransition = {
+            fadeIn(tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing)) +
+                slideInHorizontally(
+                    animationSpec = tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing),
+                    initialOffsetX = { width -> width / TRANSITION_SLIDE_DIVISOR },
+                )
+        },
+        exitTransition = {
+            fadeOut(tween(durationMillis = TRANSITION_EXIT_MS, easing = FastOutSlowInEasing))
+        },
+        popEnterTransition = {
+            fadeIn(tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing)) +
+                slideInHorizontally(
+                    animationSpec = tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing),
+                    initialOffsetX = { width -> -width / TRANSITION_SLIDE_DIVISOR },
+                )
+        },
+        popExitTransition = {
+            fadeOut(tween(durationMillis = TRANSITION_EXIT_MS, easing = FastOutSlowInEasing))
+        },
     ) {
         composable(route = Routes.ONBOARDING) {
             com.totop.app.ui.onboarding.OnboardingScreen(

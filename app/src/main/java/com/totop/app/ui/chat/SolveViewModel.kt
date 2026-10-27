@@ -34,8 +34,6 @@ import com.totop.app.domain.model.StudentStepStatus
 import com.totop.app.domain.model.Subjects
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.ImagePreprocessor
-import com.totop.app.ml.OcrOutcome
-import com.totop.app.ml.OcrRecognizer
 import com.totop.app.ml.PreprocessResult
 import com.totop.app.util.EncodedImage
 import com.totop.app.util.ImageCropResult
@@ -85,7 +83,6 @@ class SolveViewModel
         private val questionRepository: QuestionRepository,
         private val mistakeRepository: MistakeRepository,
         private val settingsRepository: SettingsRepository,
-        private val ocrRecognizer: OcrRecognizer,
         private val imagePreprocessor: ImagePreprocessor,
         private val imageCropper: ImageCropper,
         private val sessionRepository: SolveSessionRepository,
@@ -171,6 +168,20 @@ class SolveViewModel
          */
         private var lastSentQuestion: PreparedQuestion? = null
 
+        /**
+         * 最近一次追问的输入（含补拍页）。
+         *
+         * 重试时要原样重发：补拍的照片此时已经从输入区清空，
+         * 若只按消息正文重发，重试就退化成一次「没有图片的追问」，
+         * 模型看不到学生刚补的那张，答复自然还是原来那份。
+         */
+        private var lastFollowUp: FollowUpRequest? = null
+
+        private data class FollowUpRequest(
+            val text: String,
+            val pages: List<PreparedPage>,
+        )
+
         private var solveJob: Job? = null
 
         private var requestId: String = ""
@@ -250,33 +261,40 @@ class SolveViewModel
                 _stages.value = emptyList()
                 _streamText.value = ""
                 lastSentQuestion = null
+                lastFollowUp = null
             }
         }
 
         /**
          * 开一条新对话。
          *
-         * 这是学生点「已看懂，开始新题」时调用的入口：
+         * 这是学生点「我已理解」或顶部「+」时调用的入口：
          * 明确地把当前对话归档、清空输入区，而不是靠「再拍一张就覆盖」的隐式行为。
+         *
+         * 状态清理**同步**完成，只把「归档落盘」放进协程：
+         * 旧实现整段都在 coroutine 里，而归档是一次挂起调用；它挂起期间用户若已经
+         * 发出了新问题，恢复后紧接着的 `registry.cancelAll()` + `solveJob?.cancel()`
+         * 会把刚发出的请求一起取消——这正是「新建对话后提问，AI 没有任何输出」的另一种成因。
          */
         fun startNewSession() {
+            val currentId = _sessionId.value
+            registry.cancelAll()
+            solveJob?.cancel()
+            solveJob = null
+            _sessionId.value = null
+            _messages.value = emptyList()
+            _draft.value = SolveDraft()
+            _draftPages.value = QuestionDraft.EMPTY
+            _activePage.value = 0
+            _phase.value = ComposerPhase.EMPTY
+            _stages.value = emptyList()
+            _streamText.value = ""
+            lastSentQuestion = null
+            lastFollowUp = null
             viewModelScope.launch {
-                val currentId = _sessionId.value
                 if (currentId != null) {
                     runCatching { sessionRepository.setArchived(currentId, true) }
                 }
-                registry.cancelAll()
-                solveJob?.cancel()
-                solveJob = null
-                _sessionId.value = null
-                _messages.value = emptyList()
-                _draft.value = SolveDraft()
-                _draftPages.value = QuestionDraft.EMPTY
-                _activePage.value = 0
-                _phase.value = ComposerPhase.EMPTY
-                _stages.value = emptyList()
-                _streamText.value = ""
-                lastSentQuestion = null
                 refreshSessions()
             }
         }
@@ -477,9 +495,15 @@ class SolveViewModel
         /** 由多页草稿 + 输入框文字组装 [PreparedQuestion]。 */
         private fun buildQuestionFromDraft(): PreparedQuestion {
             val draft = _draftPages.value
+            val text = _draft.value.studentProcess.trim()
+            // 有图时，输入框里的文字是「解题思路」；没有图时，它只能是题目本身。
+            //
+            // 这是取消 OCR 之后必须补上的一条口径：无图请求没有任何视觉输入，
+            // 若仍把文字当解题思路，模型拿到的题目就是空的，必然报「阶段 A 未识别出题干」。
+            val hasPages = draft.pages.isNotEmpty()
             return PreparedQuestion(
-                stemText = _draft.value.stem.trim(),
-                studentRawText = _draft.value.studentProcess.trim(),
+                stemText = if (hasPages) _draft.value.stem.trim() else text,
+                studentRawText = if (hasPages) text else "",
                 pages =
                     draft.pages.map { page ->
                         PreparedPage(
@@ -489,7 +513,7 @@ class SolveViewModel
                             thumbnailPath = page.thumbnailPath,
                         )
                     },
-                sourceLabel = if (draft.isEmpty) "手输" else "拍照",
+                sourceLabel = if (hasPages) "拍照" else "手输",
             )
         }
 
@@ -509,46 +533,6 @@ class SolveViewModel
             _draft.update { it.copy(studentProcess = text) }
         }
 
-        /**
-         * 对当前草稿做一次本地 OCR，把文本填到「题干」里供路由判断。
-         *
-         * 为什么 OCR 不是必需品：
-         * 识别质量差（手写、反光、艺术字）时纯文本档会答错，
-         * 交给视觉模型看原图反而更准。因此 OCR 失败/低置信度只降级为「走视觉档」，
-         * 不能让用户卡在这一步无法解题。
-         */
-        fun runOcrIfNeeded() {
-            val draft = _draftPages.value
-            if (draft.isEmpty) return
-            if (_draft.value.stem.isNotBlank()) return
-            viewModelScope.launch {
-                val texts = ArrayList<String>(draft.pageCount)
-                draft.pages.forEachIndexed { index, page ->
-                    when (val ocr = ocrRecognizer.recognizeFile(page.imagePath)) {
-                        is OcrOutcome.Success -> {
-                            val text = ocr.result.text.trim()
-                            if (text.isNotBlank()) {
-                                // 多页时必须标出页序：只写一段拼接文本，
-                                // 模型会以为是两道题，或把第 2 页的条件当成第 1 页的续写。
-                                texts.add(
-                                    if (draft.isMultiPage) {
-                                        "【第 " + (index + 1) + "/" + draft.pageCount + " 页】\n" + text
-                                    } else {
-                                        text
-                                    },
-                                )
-                            }
-                        }
-                        // 某一页识别失败不影响其余页：视觉档仍然会看到原图
-                        is OcrOutcome.Failure -> Unit
-                    }
-                }
-                if (texts.isNotEmpty()) {
-                    _draft.update { it.copy(stem = texts.joinToString("\n\n")) }
-                }
-            }
-        }
-
         // ---------- 讲解模式 ----------
 
         /**
@@ -565,32 +549,40 @@ class SolveViewModel
         // ---------- 发送 / 追问 / 停止 / 重试 ----------
 
         /**
-         * 发送：判断走「新题解题」还是「追问」。
+         * 发送：判断走「这道题的首次解答」还是「围绕这道题的继续对话」。
          *
-         * 判定规则（简单、可预测，用户能自己总结出来）：
-         * - 当前会话里**已经有解答**（存在解题气泡）→ 走追问，带上上下文；
-         * - 否则 → 走四阶段解题。
+         * 判定规则只有一条，用户可以自己总结出来：
+         * **当前会话里已经有这道题的解答 → 之后的一切输入都属于这道题。**
          *
-         * 这条规则直接解决了旧版的「发送后直接重新输出一套全新解答」问题。
+         * 为什么不再用「这一轮有没有新图」当分界：
+         * 一次对话只对应一道题。用户在 AI 没看清题目时补拍一张，是补充当前题，
+         * 不是换题；把它判成新题会让模型拿到一份被当成新题的截图，
+         * 前半段的解答与错因全部作废，学生看到的是「我又得从头讲一遍」。
+         * 换题的唯一入口是「新建对话」（或「我已理解」）。
          */
         fun send() {
             if (solveJob?.isActive == true) return
             val text = _draft.value.studentProcess.trim()
-            val hasPages = _draftPages.value.pageCount > 0
-            if (text.isEmpty() && !hasPages) {
+            val draftPages = _draftPages.value.pages
+            if (text.isEmpty() && draftPages.isEmpty()) {
                 showToast("先拍一张题，或者写下你的问题")
                 return
             }
-            // 判定顺序（这也是用户能自己总结出来的规则）：
-            // 1. 这一轮**带了新图片** -> 当成新题重新解（换了题就是换题）；
-            // 2. 没带图、但会话里已经有解答 -> 就是在问这道题，走追问。
-            //
-            // 旧实现的条件写成 `hasPages.not()`，看起来对，但**拍完题不重新发图**
-            // 才是追问的常态；而一旦用户复用输入区里残留的图片（例如想再问一句），
-            // 就会被判成新题、从头再解一遍——这就是「再次打字询问，AI 又按新题重解」。
-            // 现在只有明确附加了新图片才重新解题。
-            if (hasSolutionInConversation() && !hasPages && text.isNotEmpty()) {
-                sendFollowUp(text)
+            if (hasSolutionInConversation()) {
+                // 已解答过：补拍的照片作为「补充材料」一起发给模型，
+                // 由视觉模型重新看清题目细节，而不是当成一道新题。
+                sendFollowUp(
+                    text = text,
+                    supplementPages =
+                        draftPages.map { page ->
+                            PreparedPage(
+                                imagePath = page.imagePath,
+                                sha256 = page.sha256,
+                                cropRect = page.cropRect,
+                                thumbnailPath = page.thumbnailPath,
+                            )
+                        },
+                )
                 return
             }
             val question = buildQuestionFromDraft()
@@ -608,18 +600,28 @@ class SolveViewModel
         private fun latestSolution(): SolutionPayload? = _messages.value.lastOrNull { it.solution != null }?.solution
 
         /**
-         * 追问。
+         * 追问 / 补拍。
          *
-         * 上下文 = 最近一次解答 + 这一轮之前的所有对话。
+         * 上下文 = 最近一次解答 + 这一轮之前的所有对话；若这一轮带了补拍照片，
+         * 图片一并交给**视觉模型**，并明确告知「这是对当前题的补充，不是新题」。
+         *
          * 只带最近一次解答而不是全部，是为了让模型始终围绕「当前这道题」回答。
          */
-        private fun sendFollowUp(text: String) {
+        private fun sendFollowUp(
+            text: String,
+            supplementPages: List<PreparedPage> = emptyList(),
+        ) {
             val solution = latestSolution()
+            val pages = supplementPages
+            val hasSupplement = pages.isNotEmpty()
+            lastFollowUp = FollowUpRequest(text = text, pages = pages)
             val studentMessage =
                 ConversationMessage(
                     id = UUID.randomUUID().toString(),
                     fromStudent = true,
-                    text = text,
+                    // 只补拍不写字时给一条可读的说明，消息流里不能出现空气泡
+                    text = text.ifBlank { if (hasSupplement) "补拍了一张" else "" },
+                    pages = pages.map { it.imagePath },
                     createdAtUtc = System.currentTimeMillis(),
                 )
             val replyId = UUID.randomUUID().toString()
@@ -632,8 +634,12 @@ class SolveViewModel
                     createdAtUtc = System.currentTimeMillis(),
                 )
             _messages.update { it + studentMessage + replyMessage }
-            // 立刻清空输入框：文字已经作为消息进入对话流，留着会让人以为没发出去
+            // 立刻清空输入区：文字与图片都已经进入对话流，留着会让人以为没发出去
             _draft.update { it.copy(studentProcess = "") }
+            if (hasSupplement) {
+                _draftPages.value = QuestionDraft.EMPTY
+                _activePage.value = 0
+            }
             _phase.value = ComposerPhase.SOLVING
 
             requestId = UUID.randomUUID().toString()
@@ -651,6 +657,22 @@ class SolveViewModel
                         _phase.value = if (_draftPages.value.pageCount > 0) ComposerPhase.READY else ComposerPhase.EMPTY
                         return@launch
                     }
+                    val encoded = if (hasSupplement) encodePages(pages) else emptyList()
+                    // 补拍的照片同样按框选裁剪后再展示：气泡里看到的必须是发出去的那张
+                    if (encoded.isNotEmpty()) {
+                        updateMessage(studentMessage.id) { it.copy(pages = encoded.map { page -> page.displayPath }) }
+                    }
+                    if (hasSupplement && encoded.isEmpty()) {
+                        updateMessage(replyId) {
+                            it.copy(
+                                streaming = false,
+                                errorText = "补拍的照片读取失败，这次没有上传。请重新拍一次，或直接打字说明。",
+                                retryable = true,
+                            )
+                        }
+                        _phase.value = ComposerPhase.EMPTY
+                        return@launch
+                    }
                     val context = solution?.let(::contextOfSolution).orEmpty()
                     // 追问的历史只带**最近几轮对话**，不带整份记录。
                     //
@@ -661,7 +683,7 @@ class SolveViewModel
                     // 完整题目信息已经由 context 单独给出一次，不必在历史里重复。
                     val history =
                         _messages.value
-                            .filter { it.id != replyId && it.streaming.not() }
+                            .filter { it.id != replyId && !it.streaming }
                             .takeLast(FOLLOW_UP_HISTORY_TURNS)
                             .mapNotNull { message ->
                                 // 解题气泡整条丢掉：它的内容就是 context，
@@ -689,6 +711,15 @@ class SolveViewModel
                                 history = history,
                                 registry = registry,
                                 requestId = requestId,
+                                images = encoded.map { it.encoded.base64 },
+                                supplementNote =
+                                    if (hasSupplement) {
+                                        "学生这次补拍了照片，用来补充先前那道题（可能是原题没拍清楚）。" +
+                                            "请把照片里的信息与上面的题目合并理解；如果照片显示原题信息有误，" +
+                                            "以照片为准修正，但**不要把它当成一道新题重新讲一遍**。"
+                                    } else {
+                                        ""
+                                    },
                             ).collect { event ->
                                 when (event) {
                                     is FollowUpEvent.Delta -> {
@@ -783,7 +814,8 @@ class SolveViewModel
                 // 删掉失败的回复，让 sendFollowUp 重新生成
                 _messages.update { list -> list.filterNot { it.id == lastFailed.id } }
                 _messages.update { list -> list.filterNot { it.id == studentBefore.id } }
-                sendFollowUp(studentBefore.text)
+                val previous = lastFollowUp ?: FollowUpRequest(text = studentBefore.text, pages = emptyList())
+                sendFollowUp(text = previous.text, supplementPages = previous.pages)
                 return
             }
             // 解题失败重试：优先用「上一次真正发出去的那份题目」。
@@ -854,12 +886,20 @@ class SolveViewModel
 
         private suspend fun runSolve(question: PreparedQuestion) {
             val studentText = question.studentRawText.trim()
+            // 先裁剪、再建消息。
+            //
+            // 顺序很关键：气泡与学生看到的图必须是**实际上传的那张**（框选后的）。
+            // 旧实现把原始整页路径塞进消息，用户框完题目、抬头一看还是整页照片，
+            // 自然判断「框选没生效 / 发的还是原图」——这比坐标算错更直接地造成该反馈。
+            val uploadPages = encodePages(question.pages)
+            val displayPages =
+                uploadPages.map { it.displayPath }.ifEmpty { question.pages.map { it.imagePath } }
             val studentMessage =
                 ConversationMessage(
                     id = UUID.randomUUID().toString(),
                     fromStudent = true,
                     text = studentText,
-                    pages = question.pages.map { it.imagePath },
+                    pages = displayPages,
                     createdAtUtc = System.currentTimeMillis(),
                 )
             val replyId = UUID.randomUUID().toString()
@@ -885,8 +925,9 @@ class SolveViewModel
             _phase.value = ComposerPhase.SOLVING
             _stages.value = StageProgressMapper.initial()
             pageWarnings.clear()
-            lastImagePath.value = question.imagePath
-            lastImageSha256.value = question.imageSha256
+            // 落库与历史都指向裁剪后的图：错题本里看到的应该就是学生框定的那道题
+            lastImagePath.value = displayPages.firstOrNull()
+            lastImageSha256.value = uploadPages.firstOrNull()?.encoded?.sha256 ?: question.imageSha256
 
             requestId = UUID.randomUUID().toString()
             val credentials = secretStore.read()
@@ -906,7 +947,7 @@ class SolveViewModel
                 )
             // 逐页裁剪并编码：框选区域在**上传前**裁掉，
             // 而不是让模型自己看整页（协议没有标准坐标字段，且裁剪更省 token、更准）。
-            val encodedPages = encodePages(question)
+            val encodedPages = uploadPages.map { it.encoded }
             if (question.pages.isNotEmpty() && encodedPages.isEmpty()) {
                 updateMessage(replyId) {
                     it.copy(
@@ -920,10 +961,14 @@ class SolveViewModel
             }
             val request =
                 SolveRequest(
+                    // ocr 字段保留为「题目文本」通道，但**不再来自 OCR**：
+                    // 有图时为空（题目由视觉模型直接看图读出），无图时是用户手输的题干。
+                    // 本地 OCR 已从主链路移除——它对纸质题目、公式与图表的识别损耗太大，
+                    // 用它先转一遍文本反而会把「图里才有的条件」筛掉。
                     ocr =
                         com.totop.app.ml.OcrSnapshot(
                             text = question.stemText,
-                            avgConfidence = question.avgConfidence,
+                            avgConfidence = if (question.stemText.isBlank()) 0.0 else 1.0,
                             hasFigure = question.hasFigure,
                             isHandwritten = question.isHandwritten,
                         ),
@@ -966,13 +1011,13 @@ class SolveViewModel
          * 单页失败不影响其余页：题目跨页时，某一页读失败还能用剩下的页作答，
          * 只是会少看一部分内容——这种情况必须通过 warnings 告知用户，不能静默。
          */
-        private suspend fun encodePages(question: PreparedQuestion): List<EncodedImage> {
-            if (question.pages.isEmpty()) return emptyList()
-            val result = ArrayList<EncodedImage>(question.pages.size)
+        private suspend fun encodePages(pages: List<PreparedPage>): List<UploadPage> {
+            if (pages.isEmpty()) return emptyList()
+            val result = ArrayList<UploadPage>(pages.size)
             val failures = mutableListOf<Int>()
-            question.pages.forEachIndexed { index, page ->
-                val encoded = buildEncodedImage(page)
-                if (encoded == null) failures.add(index + 1) else result.add(encoded)
+            pages.forEachIndexed { index, page ->
+                val upload = buildUploadPage(page)
+                if (upload == null) failures.add(index + 1) else result.add(upload)
             }
             if (failures.isNotEmpty()) {
                 pageWarnings.add(
@@ -982,30 +1027,64 @@ class SolveViewModel
             return result
         }
 
-        /** 按框选裁剪并编码一页。 */
-        private suspend fun buildEncodedImage(page: PreparedPage): EncodedImage? =
+        /**
+         * 一页的「上传形态 + 展示路径」。
+         *
+         * @param encoded 真正发给模型的那张（已按框选裁剪）
+         * @param displayPath 气泡与错题本要显示的图片路径。
+         *        有框选时是裁剪图的落盘文件，未框选时就是原图路径。
+         */
+        private data class UploadPage(
+            val encoded: EncodedImage,
+            val displayPath: String,
+        )
+
+        /** 按框选裁剪并编码一页；有框选时把裁剪结果落盘，供气泡与错题本展示。 */
+        private suspend fun buildUploadPage(page: PreparedPage): UploadPage? =
             withContext(Dispatchers.IO) {
-                val cropped =
-                    when (val crop = imageCropper.cropToJpegBytes(page.imagePath, page.cropRect)) {
-                        is ImageCropResult.Success -> crop.bytes
+                val crop =
+                    when (val outcome = imageCropper.cropToJpegBytes(page.imagePath, page.cropRect)) {
+                        is ImageCropResult.Success -> outcome
                         is ImageCropResult.Failure -> {
                             // 裁剪失败不能静默吞掉：退回原图，但把原因记下来
-                            pageWarnings.add(crop.reason + "（已改用整页上传）")
-                            runCatching { java.io.File(page.imagePath).readBytes() }.getOrNull()
+                            pageWarnings.add(outcome.reason + "（已改用整页上传）")
+                            val bytes =
+                                runCatching { java.io.File(page.imagePath).readBytes() }.getOrNull()
+                                    ?: return@withContext null
+                            ImageCropResult.Success(bytes = bytes, cropped = false)
                         }
-                    } ?: return@withContext null
-                runCatching {
-                    EncodedImage(
-                        jpegBytes = cropped,
-                        base64 = android.util.Base64.encodeToString(cropped, android.util.Base64.NO_WRAP),
-                        width = 0,
-                        height = 0,
-                        sha256 = ImageMath.sha256Hex(cropped),
-                        sourceWidth = 0,
-                        sourceHeight = 0,
-                        rotationDegrees = 0,
-                    )
-                }.getOrNull()
+                    }
+                val bytes = crop.bytes
+                val sha = runCatching { ImageMath.sha256Hex(bytes) }.getOrNull() ?: return@withContext null
+                val displayPath =
+                    if (crop.cropped) {
+                        // 裁剪图按内容哈希命名，与主图同一套规则：同一选区重复发送不会重复占空间
+                        runCatching {
+                            val dir = java.io.File(appContext.filesDir, com.totop.app.ml.PreprocessPaths.IMAGE_DIR)
+                            val file = java.io.File(dir, com.totop.app.ml.PreprocessPaths.fileNameFor(sha))
+                            if (!file.exists()) {
+                                dir.mkdirs()
+                                file.writeBytes(bytes)
+                            }
+                            file.absolutePath
+                        }.getOrDefault(page.imagePath)
+                    } else {
+                        page.imagePath
+                    }
+                val encoded =
+                    runCatching {
+                        EncodedImage(
+                            jpegBytes = bytes,
+                            base64 = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP),
+                            width = 0,
+                            height = 0,
+                            sha256 = sha,
+                            sourceWidth = 0,
+                            sourceHeight = 0,
+                            rotationDegrees = 0,
+                        )
+                    }.getOrNull() ?: return@withContext null
+                UploadPage(encoded = encoded, displayPath = displayPath)
             }
 
         private fun handleEvent(
@@ -1024,8 +1103,13 @@ class SolveViewModel
                 is SolveEvent.FirstToken ->
                     _stages.value = StageProgressMapper.firstToken(_stages.value, event.stage, event.elapsedMs)
                 is SolveEvent.Delta -> {
-                    _streamText.value = _streamText.value + event.text
-                    updateMessage(replyId) { it.copy(text = _streamText.value) }
+                    // 刻意不渲染。
+                    //
+                    // 阶段 A/B/C/D 的增量是**结构化 JSON**（识题字段、步骤数组、错因对象），
+                    // 吐到气泡里就是一大段 `{"subject":"math","stem":...}`，
+                    // 学生既读不懂也看不出进度，只会以为「AI 在乱码」。
+                    // 现在解题期间只显示一个「AI 正在思考」占位，完成后一次性换成结构化解答。
+                    _streamText.value = ""
                 }
                 is SolveEvent.StageCompleted ->
                     _stages.value = StageProgressMapper.complete(_stages.value, event.stage, event.summary)
@@ -1285,8 +1369,10 @@ class SolveViewModel
         // ---------- 生命周期 ----------
 
         override fun onCleared() {
-            // 页面销毁：中断所有在途 Call，避免继续计费
-            registry.cancelAll()
+            // 页面销毁：中断所有在途 Call 并封存注册表，避免继续计费。
+            // 这里必须用 cancelAllAndSeal：普通 cancelAll 只取消在途请求、注册表仍可用，
+            // 而 ViewModel 销毁后不应再接受任何新调用。
+            registry.cancelAllAndSeal()
             solveJob?.cancel()
             solveJob = null
             super.onCleared()

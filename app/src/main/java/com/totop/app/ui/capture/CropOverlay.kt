@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.totop.app.util.NormalizedRect
+import com.totop.app.util.PixelRect
 
 /**
  * 框选遮罩层：在照片上拖出矩形选区，松手后**保留选区并可继续调整**。
@@ -43,7 +44,11 @@ import com.totop.app.util.NormalizedRect
  * 这里改为拖动过程只维护本地像素矩形，松手时用本地结果提交，
  * 并让 pointerInput 以 rect 为 key 重建，保证读到最新选区。
  *
- * @param rect 当前选区（归一化）；null 表示未框选（使用整张图）
+ * @param rect 当前选区（归一化，坐标相对**图片**而不是控件）
+ * @param contentRect 图片在控件内的实际绘制矩形（等比缩放后的绘制区域）。
+ *        框选层铺满整个控件，但图片是 Fit 进去的，两者尺寸不同；
+ *        不做这层换算，用户框住的区域和最终上传的裁剪区域会错位，
+ *        看起来就是「框了也白框，还是发整页」。
  * @param onRectChanged 仅在**松手/调整结束**时回调，
  *   拖动过程每秒几十帧，若每帧都写 ViewModel 会触发大量重组导致卡顿
  */
@@ -51,6 +56,7 @@ import com.totop.app.util.NormalizedRect
 fun CropOverlay(
     rect: NormalizedRect?,
     onRectChanged: (NormalizedRect?) -> Unit,
+    contentRect: PixelRect,
     modifier: Modifier = Modifier,
     dimColor: Color = Color.Black.copy(alpha = 0.5f),
     borderColor: Color = Color.White,
@@ -60,6 +66,7 @@ fun CropOverlay(
     val handleTouchPx = with(density) { HANDLE_TOUCH_DP.dp.toPx() }
     val borderStrokePx = with(density) { 2.dp.toPx() }
     val handleRadiusPx = with(density) { HANDLE_DRAW_DP.dp.toPx() }
+    val content = contentRect.toComposeRect()
 
     // 拖动过程中的工作矩形（像素坐标）。非 null 表示正在拖。
     var working by remember(rect) { mutableStateOf<Rect?>(null) }
@@ -72,12 +79,10 @@ fun CropOverlay(
         modifier =
             modifier
                 .fillMaxSize()
-                .pointerInput(rect) {
-                    val viewWidth = size.width.toFloat()
-                    val viewHeight = size.height.toFloat()
+                .pointerInput(rect, contentRect) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            val existing = rect?.toCanvasRect(viewWidth, viewHeight)
+                            val existing = rect?.toCanvasRect(content)
                             val hit = existing?.let { hitTest(it, offset, handleTouchPx) } ?: DragMode.NEW
                             mode = hit
                             baseRect = existing
@@ -117,8 +122,7 @@ fun CropOverlay(
                                                     right = change.position.x - grabOffset.x + base.width,
                                                     bottom = change.position.y - grabOffset.y + base.height,
                                                 ),
-                                                viewWidth,
-                                                viewHeight,
+                                                content,
                                             )
                                         }
                                     }
@@ -133,7 +137,7 @@ fun CropOverlay(
                             working = null
                             baseRect = null
                             if (current != null) {
-                                val normalized = toNormalized(current, viewWidth, viewHeight)
+                                val normalized = toNormalized(current, content)
                                 // 太小的框视为误触：原本有框就保留原框，原本没框就保持整图。
                                 //
                                 // 注意这里只在「真的框到了东西」时才回调：
@@ -150,7 +154,7 @@ fun CropOverlay(
                 },
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val active = working ?: rect?.toCanvasRect(size.width, size.height) ?: return@Canvas
+            val active = working ?: rect?.toCanvasRect(content) ?: return@Canvas
             val left = active.left
             val top = active.top
             val boxWidth = active.width.coerceAtLeast(1f)
@@ -158,7 +162,8 @@ fun CropOverlay(
             val canvasWidth = size.width
             val canvasHeight = size.height
 
-            // 压暗四块区域（上/下/左/右），中间选区保持原亮度
+            // 压暗四块区域（上/下/左/右），中间选区保持原亮度。
+            // 上/下两条按整控件宽度铺满，因此图片外的空白区域也会被压暗。
             drawRect(dimColor, size = Size(canvasWidth, top.coerceIn(0f, canvasHeight)))
             drawRect(
                 dimColor,
@@ -284,22 +289,21 @@ private fun orderRect(
         bottom = maxOf(y1, y2),
     )
 
-/** 平移后夹到画布内：避免把框拖到看不见的地方。 */
+/** 平移后夹到**图片绘制区域**内：避免把框拖到图片外的空白处。 */
 private fun clampInside(
     rect: Rect,
-    canvasWidth: Float,
-    canvasHeight: Float,
+    content: Rect,
 ): Rect {
     val dx =
         when {
-            rect.left < 0f -> -rect.left
-            rect.right > canvasWidth -> canvasWidth - rect.right
+            rect.left < content.left -> content.left - rect.left
+            rect.right > content.right -> content.right - rect.right
             else -> 0f
         }
     val dy =
         when {
-            rect.top < 0f -> -rect.top
-            rect.bottom > canvasHeight -> canvasHeight - rect.bottom
+            rect.top < content.top -> content.top - rect.top
+            rect.bottom > content.bottom -> content.bottom - rect.bottom
             else -> 0f
         }
     return Rect(
@@ -313,41 +317,39 @@ private fun clampInside(
 /**
  * 像素矩形 -> 归一化矩形；太小返回 null（视为误触）。
  *
- * **必须除以画布尺寸**。这个函数曾经漏掉除法，直接把像素坐标 coerce 到 0..1，
- * 后果是：任何超过 1 像素的坐标都被夹成 1.0，于是 left == right == 1.0，
- * 判定「宽高为 0」后返回 null，调用方把 null 当「用户取消了框选」写回状态——
- * 用户看到的就是「画完一松手，框立刻消失，而且没有任何反馈」。
+ * **必须相对图片绘制区域换算**：先减去图片左上角偏移，再除以图片绘制尺寸。
+ * 这个函数曾经漏掉除法（v0.2.0 修过一次），v0.3.x 仍有一处更隐蔽的错：
+ * 除的是**控件**尺寸而不是**图片**尺寸。图片按 Fit 等比缩放后控件里留有空白，
+ * 于是归一化坐标与图片像素整体错位——框住题目，上传的却是偏移的画面。
  *
- * @param canvasWidth 框选层自身的像素宽度（不是图片的，图片是 Fit 进去的）
- * @param canvasHeight 框选层自身的像素高度
+ * @param canvas 图片在控件内的实际绘制矩形（不是控件自身大小）
  */
 private fun toNormalized(
     rect: Rect,
-    canvasWidth: Float,
-    canvasHeight: Float,
+    canvas: Rect,
 ): NormalizedRect? {
-    if (canvasWidth <= 0f || canvasHeight <= 0f) return null
+    if (canvas.width <= 0f || canvas.height <= 0f) return null
     val ordered = orderRect(rect.left, rect.top, rect.right, rect.bottom)
     if (ordered.width < MIN_SIZE_PX || ordered.height < MIN_SIZE_PX) return null
-    val left = (ordered.left / canvasWidth).coerceIn(0f, 1f)
-    val top = (ordered.top / canvasHeight).coerceIn(0f, 1f)
-    val right = (ordered.right / canvasWidth).coerceIn(left, 1f)
-    val bottom = (ordered.bottom / canvasHeight).coerceIn(top, 1f)
+    val left = ((ordered.left - canvas.left) / canvas.width).coerceIn(0f, 1f)
+    val top = ((ordered.top - canvas.top) / canvas.height).coerceIn(0f, 1f)
+    val right = ((ordered.right - canvas.left) / canvas.width).coerceIn(left, 1f)
+    val bottom = ((ordered.bottom - canvas.top) / canvas.height).coerceIn(top, 1f)
     if (right <= left || bottom <= top) return null
     return NormalizedRect(left = left, top = top, right = right, bottom = bottom)
 }
 
-/** 归一化矩形 -> 画布像素矩形（相对框选层自身尺寸）。 */
-internal fun NormalizedRect.toCanvasRect(
-    canvasWidth: Float,
-    canvasHeight: Float,
-): Rect =
+/** 归一化矩形 -> 控件像素矩形（相对图片绘制区域换算）。 */
+internal fun NormalizedRect.toCanvasRect(canvas: Rect): Rect =
     Rect(
-        left = left * canvasWidth,
-        top = top * canvasHeight,
-        right = right * canvasWidth,
-        bottom = bottom * canvasHeight,
+        left = canvas.left + left * canvas.width,
+        top = canvas.top + top * canvas.height,
+        right = canvas.left + right * canvas.width,
+        bottom = canvas.top + bottom * canvas.height,
     )
+
+/** 纯值像素矩形 -> Compose 浮点矩形。 */
+internal fun PixelRect.toComposeRect(): Rect = Rect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat())
 
 /** 角把手绘制半径（dp）。 */
 private const val HANDLE_DRAW_DP = 6f

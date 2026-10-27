@@ -262,12 +262,19 @@ class LlmClientMockWebServerTest {
         }
 
     @Test
-    @DisplayName("Call 注册表：cancelAll 后拒绝新调用并取消进行中的 Call")
+    @DisplayName("Call 注册表：cancelAll 只取消在途调用，注册表仍可复用；封存后才拒绝新调用")
     fun callRegistryCancels() =
         runTest {
             val registry = LlmCallRegistry()
             registry.cancelAll()
-            assertTrue(registry.isCancelled)
+            // 语义变更（0.4.0）：cancelAll 不再永久封存。
+            // 旧语义会把「新建对话 / 切换会话 / 点停止」之后的所有新请求都就地取消，
+            // 表现为「新建对话后再提问，AI 没有任何输出」。
+            assertFalse(registry.isSealed, "cancelAll 后注册表必须仍可用")
+            assertEquals(0, registry.size())
+
+            registry.cancelAllAndSeal()
+            assertTrue(registry.isSealed)
             assertEquals(0, registry.size())
         }
 

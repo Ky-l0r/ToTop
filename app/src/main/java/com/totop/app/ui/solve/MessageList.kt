@@ -1,5 +1,11 @@
 package com.totop.app.ui.solve
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,8 +31,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +60,7 @@ import com.totop.app.ui.theme.Tokens
 internal fun MessageItem(
     message: ConversationMessage,
     mode: TeachingMode,
+    thinkingHint: String,
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
     onOpenKnowledgePoint: (String) -> Unit,
@@ -72,6 +81,7 @@ internal fun MessageItem(
         else ->
             AssistantTextBubble(
                 message = message,
+                thinkingHint = thinkingHint,
                 onRetry = onRetry,
                 onOpenSettings = onOpenSettings,
             )
@@ -142,10 +152,55 @@ private const val STUDENT_BUBBLE_WIDTH_RATIO: Float = 0.82f
 /** 宽度上限：气泡不要横贯整屏，留出对话的呼吸感。 */
 private fun Modifier.widthInMax(): Modifier = this.fillMaxWidth(STUDENT_BUBBLE_WIDTH_RATIO)
 
+/**
+ * 「AI 正在思考」占位。
+ *
+ * 只让一个小圆点做透明度呼吸（6dp），不做位移、缩放或骨架屏：
+ * 这类动画在低端机上几乎不花钱，但足以让用户知道「还在跑，不是卡死」。
+ */
+@Composable
+private fun ThinkingIndicator(
+    label: String,
+    hint: String,
+) {
+    val transition = rememberInfiniteTransition(label = "thinking")
+    val dotAlpha by
+        transition.animateFloat(
+            initialValue = 0.2f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(durationMillis = 650, easing = LinearEasing), RepeatMode.Reverse),
+            label = "thinking-dot",
+        )
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier =
+                Modifier
+                    .size(6.dp)
+                    .alpha(dotAlpha)
+                    .clip(CircleShape)
+                    .background(Tokens.Primary),
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = label + "…",
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.OnSurfaceVariant,
+        )
+        if (hint.isNotBlank()) {
+            Text(
+                text = " · " + hint,
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
+        }
+    }
+}
+
 /** AI 普通文字气泡（追问的回答 / 流式生成中）。 */
 @Composable
 private fun AssistantTextBubble(
     message: ConversationMessage,
+    thinkingHint: String,
     onRetry: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
@@ -166,11 +221,18 @@ private fun AssistantTextBubble(
                 FormulaText(text = message.text, style = MaterialTheme.typography.bodyMedium)
             }
             if (message.streaming) {
+                // 解题期间不再显示模型的原始增量（那是一大段 JSON），
+                // 只给一个「AI 正在思考」占位 + 当前阶段。追问的增量是真回答，
+                // 会同时出现在上面，这里只补一行更细的状态。
                 Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "正在作答…",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Tokens.OnSurfaceVariant,
+                ThinkingIndicator(
+                    label =
+                        if (message.text.isBlank()) {
+                            "AI 正在思考"
+                        } else {
+                            "AI 正在回答"
+                        },
+                    hint = thinkingHint,
                 )
             }
             if (failed != null) {

@@ -151,15 +151,16 @@ fun summarize(
     return normalized.take(limit).trimEnd() + "…"
 }
 
-/** 学科代码转中文（未知学科原样展示，不做猜测）。 */
-fun subjectLabelOf(subject: String): String =
-    when (subject.trim().lowercase()) {
-        "math" -> "数学"
-        "physics" -> "物理"
-        "chemistry" -> "化学"
-        "biology" -> "生物"
-        "chinese" -> "语文"
-        "english" -> "英语"
-        "" -> "未标注学科"
-        else -> subject
-    }
+/**
+ * 学科代码转中文。
+ *
+ * 必须直接委托 [com.totop.app.domain.model.Subjects]，不能在这里维护第二份映射表：
+ * 本文件原先自带一张只覆盖六科的 when 表，缺政治、历史、地理、技术与兜底科，
+ * 于是「技术」在错题本里被原样显示成英文代码 `technology`。
+ * 科目一旦新增，两处映射必然再次分叉，因此这里只保留「空值」这一个例外。
+ */
+fun subjectLabelOf(subject: String): String {
+    val token = subject.trim()
+    if (token.isEmpty()) return "未标注学科"
+    return com.totop.app.domain.model.Subjects.label(token)
+}
