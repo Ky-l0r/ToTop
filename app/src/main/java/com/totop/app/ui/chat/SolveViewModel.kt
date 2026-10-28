@@ -753,6 +753,9 @@ class SolveViewModel
                                         updateMessage(replyId) {
                                             it.copy(text = event.text, streaming = false)
                                         }
+                                        if (hasSupplement && encoded.isNotEmpty()) {
+                                            refreshQuestionFromSupplement(solution?.questionId, encoded)
+                                        }
                                     }
                                     is FollowUpEvent.Failed -> {
                                         updateMessage(replyId) {
@@ -1060,6 +1063,65 @@ class SolveViewModel
             val encoded: EncodedImage,
             val displayPath: String,
         )
+
+        /**
+         * 补拍之后把错题本里的题干换成「看清新照片之后」的版本。
+         *
+         * 只重跑阶段 A（识题），解答与错因保持原样：补拍是同一道题的补充照片，不是换题，
+         * 重跑 B 会得到一份新解答，与已有的错因、提示、复发计数全部对不上。
+         *
+         * 失败只提示、不改数据：错题本里留着旧题干，也比写入一份没校验过的识别结果安全。
+         */
+        private suspend fun refreshQuestionFromSupplement(
+            questionId: String?,
+            pages: List<UploadPage>,
+        ) {
+            if (questionId == null || pages.isEmpty()) return
+            val credentials = runCatching { secretStore.read() }.getOrNull() ?: return
+            if (!credentials.canCall) return
+            val images = pages.map { it.encoded }
+            runCatching {
+                val outcome =
+                    gateway.identifyOnly(
+                        credentials = credentials,
+                        request =
+                            SolveRequest(
+                                // 补拍走视觉通道，ocr 文本留空：这次要读的就是照片本身
+                                ocr =
+                                    com.totop.app.ml.OcrSnapshot(
+                                        text = "",
+                                        avgConfidence = 0.0,
+                                        hasFigure = false,
+                                        isHandwritten = false,
+                                    ),
+                                image = images.first(),
+                                extraImages = images.drop(1),
+                                requestId = UUID.randomUUID().toString(),
+                            ),
+                        registry = registry,
+                    )
+                val recognized = outcome.question
+                questionRepository.updateRecognized(
+                    questionId = questionId,
+                    stemText = recognized.stem.orEmpty(),
+                    known = recognized.known,
+                    ask = recognized.ask.orEmpty(),
+                    options = recognized.options,
+                    hasFigure = recognized.hasFigure,
+                    newImagePaths = pages.map { it.displayPath },
+                )
+            }.onSuccess { updated ->
+                showToast(
+                    if (updated) {
+                        "已按新照片更新这道题，错题本同步了"
+                    } else {
+                        "照片已用于本次回答，但错题本里找不到这道题了"
+                    },
+                )
+            }.onFailure { failure ->
+                showToast("照片已用于本次回答，错题本未更新：" + (failure.message ?: "未知原因"))
+            }
+        }
 
         /** 按框选裁剪并编码一页；有框选时把裁剪结果落盘，供气泡与错题本展示。 */
         private suspend fun buildUploadPage(page: PreparedPage): UploadPage? =

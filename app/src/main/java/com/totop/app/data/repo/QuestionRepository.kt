@@ -117,6 +117,46 @@ class QuestionRepository
             atUtc: Long,
         ): Boolean = withContext(dispatcher) { dao.markSelfMastered(questionId, atUtc) > 0 }
 
+        /**
+         * 补拍后更新题目的题干与图片。
+         *
+         * 只改「识别出来的内容」与图片列表：
+         * - `subject` / `imageSha256` / `createdAt` 保持首次识别的值——sha256 是缓存与去重的锚点，
+         *   跟着补拍图改掉会让同一道题在缓存与错题本里变成两条；
+         * - 图片按「旧页在前、补拍页追加」合并去重，最多保留 [MAX_PAGES] 页；
+         * - 知识点关联不动：补拍是同一道题的补充，解答与错因仍然成立，
+         *   改知识点等于把这道题重新归一次类，属于换题的语义，应该新开对话。
+         *
+         * @return 题目是否仍然存在（被删掉时返回 false，调用方据此提示）
+         */
+        suspend fun updateRecognized(
+            questionId: String,
+            stemText: String,
+            known: List<String>,
+            ask: String,
+            options: List<String>,
+            hasFigure: Boolean,
+            newImagePaths: List<String>,
+        ): Boolean =
+            withContext(dispatcher) {
+                val existing = dao.findById(questionId) ?: return@withContext false
+                val current = existing.toDomain()
+                val mergedPaths = (current.imagePaths + newImagePaths).distinct().take(MAX_PAGES)
+                dao.upsert(
+                    current
+                        .copy(
+                            stemText = stemText,
+                            known = known,
+                            ask = ask,
+                            options = options,
+                            hasFigure = hasFigure,
+                            imagePath = mergedPaths.firstOrNull() ?: current.imagePath,
+                            imagePaths = mergedPaths,
+                        ).toEntity(),
+                )
+                true
+            }
+
         /** 这道题是否已被学生标记为掌握。 */
         suspend fun isMastered(questionId: String): Boolean =
             withContext(dispatcher) { dao.findById(questionId)?.selfMasteredAt != null }
@@ -131,3 +171,6 @@ class QuestionRepository
             val createdNew: Boolean,
         )
     }
+
+/** 一道题最多保留几页图片：再多也不会有人一页页翻，只是白占空间。 */
+private const val MAX_PAGES: Int = 6

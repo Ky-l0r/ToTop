@@ -53,6 +53,12 @@ data class SolveRequest(
     val requestId: String = "",
 )
 
+/** 只识别题目的结果（补拍更新题干用）。 */
+data class IdentifyOutcome(
+    val question: AiQuestion,
+    val usage: TokenUsage,
+)
+
 /** 阶段进度事件（供 UI 展示进度与增量渲染）。 */
 sealed class SolveEvent {
     /** 路由决策完成，UI 可展示「本次使用视觉模型（原因：…）」。 */
@@ -400,6 +406,72 @@ class AiGateway(
                 )
             }
         }
+
+    /**
+     * 只跑阶段 A：补拍后重新识题，用于更新错题本里的题干。
+     *
+     * 为什么只跑 A，而不重跑 B/C/D：
+     * 补拍是「同一道题的补充照片」，不是换题——解答与错因仍然成立，
+     * 需要修正的只是「原题到底写了什么」。重跑 B 会得到一份新的解答，
+     * 与已有的错因、提示记录、复发计数全部对不上。
+     *
+     * 不写缓存：补拍的照片是新的 sha256，缓存里不会有它；写进去也只会占空间。
+     *
+     * @throws LlmException 模型未配置、调用失败或输出无法解析
+     */
+    suspend fun identifyOnly(
+        credentials: LlmCredentials,
+        request: SolveRequest,
+        registry: LlmCallRegistry? = null,
+    ): IdentifyOutcome {
+        if (!credentials.canCall) {
+            throw LlmException(
+                LlmError.Unknown(detail = "尚未配置模型（Base URL / API Key / 模型名），请到设置页填写"),
+            )
+        }
+        val requestId = request.requestId.ifBlank { RequestId.newId() }
+        val hasImages = request.image != null || request.extraImages.isNotEmpty()
+        val decision = ModelRouter(modelPool(credentials)).route(request.ocr, hasImages = hasImages)
+        val prompt =
+            promptRepository.assemble(
+                StageInput.Identify(
+                    ocrText = request.ocr.text,
+                    supplement = request.supplement,
+                    attachImage = decision.attachImage,
+                ),
+                requestId = requestId,
+            )
+        val result =
+            callStage(
+                credentials = credentials,
+                requestId = requestId,
+                stage = AiStage.A,
+                model = decision.model,
+                promptVersion = prompt.promptVersion,
+                prompt = prompt,
+                image = if (decision.attachImage) request.image else null,
+                extraImages = if (decision.attachImage) request.extraImages else emptyList(),
+                maxTokens = request.maxTokens,
+                registry = registry,
+                onDelta = {},
+                onFirstToken = {},
+            )
+        val obj = decodeJsonObject(result.raw)
+        val question =
+            AiQuestion(
+                subject = obj.stringOr("subject", "math"),
+                grade = obj.stringOr("grade", "未知"),
+                stem = obj.stringOr("stem", ""),
+                known = obj.stringListOr("known"),
+                ask = obj.stringOr("ask", ""),
+                options = obj.stringListOr("options"),
+                hasFigure = obj.booleanOr("hasFigure", false),
+            )
+        if (question.stem.isNullOrBlank()) {
+            throw LlmException(LlmError.MalformedResponse(detail = "补拍后仍未识别出题干"))
+        }
+        return IdentifyOutcome(question = question, usage = result.usage)
+    }
 
     /**
      * 执行单阶段，含「解析失败以更严格提示词重试 1 次」与 ai_trace 落库。
