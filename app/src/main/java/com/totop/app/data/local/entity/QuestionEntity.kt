@@ -39,4 +39,19 @@ data class QuestionEntity(
     val sourceType: String,
     /** 创建时间，UTC 毫秒。 */
     val createdAt: Long,
+    /**
+     * 学生手动标记「已掌握」的时间，UTC 毫秒；null 表示没标过。
+     *
+     * 为什么不写 mastery 表：掌握度只能由复习自评、错题频次、覆盖度推导，
+     * 学生自评直接改分数会让推荐路径失真。这个字段只回答「这道题我确认会了」，
+     * 口径见 docs/需求定稿-0.5.0.md 第一节。
+     */
+    val selfMasteredAt: Long? = null,
+    /**
+     * 这道题的全部页面图片，JSON 字符串数组，顺序即页序。
+     *
+     * [imagePath] 仍是第 1 页（兼容旧记录与缓存锚点）；多页题目靠这个字段
+     * 在错题详情里翻页。旧数据为空数组，读取时回退到 [imagePath]。
+     */
+    val imagePathsJson: String = "[]",
 )

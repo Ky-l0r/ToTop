@@ -107,6 +107,20 @@ class QuestionRepository
                 SaveOutcome(question = question, createdNew = true)
             }
 
+        /**
+         * 标记这道题「已掌握」。
+         *
+         * @return 是否命中一行；题目已被删掉时返回 false，调用方据此提示，不静默成功
+         */
+        suspend fun markMastered(
+            questionId: String,
+            atUtc: Long,
+        ): Boolean = withContext(dispatcher) { dao.markSelfMastered(questionId, atUtc) > 0 }
+
+        /** 这道题是否已被学生标记为掌握。 */
+        suspend fun isMastered(questionId: String): Boolean =
+            withContext(dispatcher) { dao.findById(questionId)?.selfMasteredAt != null }
+
         suspend fun delete(id: String): Boolean = withContext(dispatcher) { dao.deleteById(id) > 0 }
 
         suspend fun deleteAll() = withContext(dispatcher) { dao.deleteAll() }

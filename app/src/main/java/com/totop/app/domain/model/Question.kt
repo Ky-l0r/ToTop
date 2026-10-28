@@ -30,6 +30,10 @@ data class Question(
     val sourceType: QuestionSourceType = QuestionSourceType.MANUAL,
     /** 创建时间（UTC 毫秒）。 */
     val createdAtUtc: Long,
+    /** 学生标记「已掌握」的时间（UTC 毫秒）；null 表示没标过。 */
+    val selfMasteredAtUtc: Long? = null,
+    /** 全部页面图片路径，顺序即页序；空列表表示没有图或旧数据。 */
+    val imagePaths: List<String> = emptyList(),
 ) {
     val isMultipleChoice: Boolean get() = options.isNotEmpty()
 

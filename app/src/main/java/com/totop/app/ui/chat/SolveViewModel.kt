@@ -266,6 +266,28 @@ class SolveViewModel
         }
 
         /**
+         * 「已掌握」：标记这道题，然后开下一题。
+         *
+         * 只写题目级的 selfMasteredAt，不动 mastery 表——掌握度由复习自评、错题频次、
+         * 覆盖度推导，学生自评直接改分数会让推荐路径失真（口径见 docs/需求定稿-0.5.0.md）。
+         * 标记失败不拦下一步：题目可能已被删除，提示一句继续做题比卡住体验更好。
+         */
+        fun markMasteredAndNext() {
+            val questionId = latestSolution()?.questionId
+            if (questionId != null) {
+                viewModelScope.launch {
+                    runCatching {
+                        questionRepository.markMastered(questionId, System.currentTimeMillis())
+                    }.onFailure { failure ->
+                        showToast("标记失败：" + (failure.message ?: "未知原因"))
+                    }
+                }
+            }
+            startNewSession()
+            showToast(MASTERED_PHRASE)
+        }
+
+        /**
          * 开一条新对话。
          *
          * 这是学生点「我已理解」或顶部「+」时调用的入口：
@@ -1248,6 +1270,12 @@ class SolveViewModel
                             // 必须写入 sha256，否则 saveDeduplicated 的按图去重永远失效，
                             // 同一张图重解一次就会在错题本里多出一条重复记录。
                             imageSha256 = lastImageSha256.value,
+                            // 多页题目把全部裁剪图都存下来，错题详情才能翻页看；
+                            // 第 1 页仍是 imagePath（缓存与去重锚点用它）。
+                            imagePaths =
+                                _draftPages.value.pages
+                                    .map { it.imagePath }
+                                    .filter { it.isNotBlank() },
                             sourceType = lastSourceType.value,
                             createdAtUtc = content.question.createdAtUtc,
                         ),
@@ -1379,6 +1407,9 @@ class SolveViewModel
         }
 
         private companion object {
+            /** 答完一题后的收束语。P2 会把这类文案挪进 assets 文案表。 */
+            const val MASTERED_PHRASE: String = "这题过了。下一道。"
+
             /** 未配置模型时的统一提示。 */
             const val NOT_CONFIGURED_MESSAGE: String =
                 "尚未配置模型（Base URL / API Key / 模型名）。请到设置页填写后再试：" +

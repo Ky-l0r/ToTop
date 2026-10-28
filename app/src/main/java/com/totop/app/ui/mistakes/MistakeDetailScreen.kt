@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -227,17 +229,24 @@ private fun QuestionCard(detail: MistakeDetailUi) {
                 )
             }
         }
-        detail.imagePath?.let { path ->
+        if (detail.imagePaths.isNotEmpty()) {
             Spacer(Modifier.height(10.dp))
-            OriginalImage(path = path)
+            QuestionImages(paths = detail.imagePaths)
         }
     }
 }
 
-/** 原图：点一下在页面内放大/还原，不引入第三方图片查看库。 */
+/**
+ * 原图：多页题目横向翻页，点一下在页面内放大/还原。
+ *
+ * 这里刻意不提供「重新框选」入口：图片是拍题阶段裁剪后的成品，
+ * 在这一页再框一次会得到一张和题目对不上的新图，反而破坏错题与图片的一一对应。
+ * 要重框就回到拍题页重拍，这是口径决定的（见 docs/需求定稿-0.5.0.md）。
+ */
 @Composable
-private fun OriginalImage(path: String) {
+private fun QuestionImages(paths: List<String>) {
     var expanded by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(pageCount = { paths.size })
     val height = if (expanded) 480.dp else 180.dp
     Box(
         modifier =
@@ -249,12 +258,27 @@ private fun OriginalImage(path: String) {
                 .clickable { expanded = !expanded },
         contentAlignment = Alignment.Center,
     ) {
-        coil.compose.AsyncImage(
-            model = java.io.File(path),
-            contentDescription = "这道题的原图",
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
-        )
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { index ->
+            coil.compose.AsyncImage(
+                model = java.io.File(paths[index]),
+                contentDescription = "第 " + (index + 1) + " 页原图",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        if (paths.size > 1) {
+            Text(
+                text = (pagerState.currentPage + 1).toString() + " / " + paths.size,
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .background(Tokens.Surface.copy(alpha = 0.85f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+            )
+        }
         Text(
             text = if (expanded) "点一下缩小" else "点一下放大",
             style = MaterialTheme.typography.labelSmall,

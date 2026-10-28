@@ -28,7 +28,8 @@ data class MistakeDetailUi(
     val known: List<String>,
     val ask: String,
     val options: List<String>,
-    val imagePath: String?,
+    /** 全部页面图片，顺序即页序；旧记录只有第 1 页。 */
+    val imagePaths: List<String>,
     val createdAtUtc: Long,
     val errorTypeCode: String,
     val errorExplain: String,
@@ -112,6 +113,24 @@ class RoomMistakeDetailGateway
                 }
             }
 
+        /**
+         * 多页图片：优先用题目里存的全页列表，旧记录是空数组时回退到第 1 页。
+         *
+         * 不做数据回填——旧记录只有一张图，回填也变不出第 2 页，
+         * 读取侧兜一下比写一次迁移更省事，也不会动到用户已有数据。
+         */
+        private fun decodeImagePaths(
+            rawJson: String?,
+            firstPage: String?,
+        ): List<String> {
+            val pages = MistakeDetailCodec.decodeStringList(rawJson)
+            return when {
+                pages.isNotEmpty() -> pages
+                firstPage.isNullOrBlank() -> emptyList()
+                else -> listOf(firstPage)
+            }
+        }
+
         private fun Cursor.toDetail(): MistakeDetailUi {
             val correctSolutionJson = getStringOrNull(COL_CORRECT_PATH).orEmpty()
             val studentStepsJson = getStringOrNull(COL_STUDENT_STEPS).orEmpty()
@@ -126,7 +145,7 @@ class RoomMistakeDetailGateway
                 known = MistakeDetailCodec.decodeStringList(getStringOrNull(COL_KNOWN)),
                 ask = getStringOrNull(COL_ASK).orEmpty(),
                 options = MistakeDetailCodec.decodeStringList(getStringOrNull(COL_OPTIONS)),
-                imagePath = getStringOrNull(COL_IMAGE_PATH),
+                imagePaths = decodeImagePaths(getStringOrNull(COL_IMAGE_PATHS), getStringOrNull(COL_IMAGE_PATH)),
                 createdAtUtc = getLong(COL_CREATED_AT),
                 errorTypeCode = getStringOrNull(COL_ERROR_TYPE).orEmpty(),
                 errorExplain = getStringOrNull(COL_ERROR_EXPLAIN).orEmpty(),
@@ -170,6 +189,7 @@ class RoomMistakeDetailGateway
             const val COL_KPOINT_NAMES = 16
             const val COL_RECURRENCE = 17
             const val COL_MODE = 18
+            const val COL_IMAGE_PATHS = 19
 
             const val SQL =
                 "SELECT mr.id AS mistakeId, mr.questionId AS questionId, " +
@@ -182,7 +202,8 @@ class RoomMistakeDetailGateway
                     "(SELECT GROUP_CONCAT(kp.name, '|') FROM mistake_kpoint AS mk " +
                     "INNER JOIN knowledge_point AS kp ON kp.id = mk.kpointId " +
                     "WHERE mk.mistakeId = mr.id) AS kpointNames, " +
-                    "mr.recurrenceIndex AS recurrenceIndex, mr.mode AS mode " +
+                    "mr.recurrenceIndex AS recurrenceIndex, mr.mode AS mode, " +
+                    "q.imagePathsJson AS imagePathsJson " +
                     "FROM mistake_record AS mr INNER JOIN question AS q ON q.id = mr.questionId " +
                     "WHERE mr.id = ? LIMIT 1"
         }

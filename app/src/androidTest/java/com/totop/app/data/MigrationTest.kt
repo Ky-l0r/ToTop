@@ -158,6 +158,30 @@ class MigrationTest {
     }
 
     @Test
+    @Throws(IOException::class)
+    fun migrate1To2KeepsOldRows() {
+        // v2 给 question 加了两列：selfMasteredAt（可空）与 imagePathsJson（默认空数组）。
+        // 断言点不是「列存在」（runMigrationsAndValidate 会校验 schema），
+        // 而是「旧记录迁移后仍然读得出来，且两个新列有合理默认值」。
+        helper.createDatabase(TEST_DB, 1).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt) " +
+                    "VALUES ('q1', 'math', '高一', '旧题干', '[]', '', '[]', 0, '/tmp/a.jpg', 'sha1', 'MANUAL', 1)",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 2, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT stemText, selfMasteredAt, imagePathsJson FROM question WHERE id = 'q1'").use { cursor ->
+                assertTrue("迁移后旧记录必须还在", cursor.moveToFirst())
+                assertEquals("旧题干", cursor.getString(0))
+                assertTrue("selfMasteredAt 默认为 null", cursor.isNull(1))
+                assertEquals("[]", cursor.getString(2))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {

@@ -213,9 +213,9 @@ fun SolveRoute(
         onOpenSettings = onOpenSettings,
         onRetry = viewModel::retry,
         onStartNewSession = viewModel::startNewSession,
-        // 「我已理解」= 结束这一题：归档当前会话并开一条干净的对话。
-        // 是否顺带标记掌握度、是否自动进入拍题，属于产品口径，见 docs/偏离记录.md 待决策项。
-        onUnderstood = viewModel::startNewSession,
+        // 「已掌握」= 标记这道题 + 归档当前会话 + 开一条干净的对话。
+        // 只写题目级标记，不动掌握度公式（口径见 docs/需求定稿-0.5.0.md）。
+        onMastered = { viewModel.markMasteredAndNext() },
         onOpenSession = viewModel::openSession,
         onDeleteSession = viewModel::deleteSession,
         onSetMode = viewModel::setMode,

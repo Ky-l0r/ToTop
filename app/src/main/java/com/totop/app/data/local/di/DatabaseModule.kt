@@ -2,6 +2,8 @@ package com.totop.app.data.local.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.totop.app.data.local.AppDatabase
 import com.totop.app.data.local.dao.AiTraceDao
 import com.totop.app.data.local.dao.CacheEntryDao
@@ -34,8 +36,22 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
-    /** 迁移列表。version 1 为首发版本，暂无迁移；后续版本在此追加 Migration。 */
-    val MIGRATIONS: Array<androidx.room.migration.Migration> = emptyArray()
+    /**
+     * v1 -> v2：题目表加「已掌握」标记与多页图片列表。
+     *
+     * 两个字段都带默认值，旧记录不需要回填：selfMasteredAt 为 null 表示没标过，
+     * imagePathsJson 为空数组时读取侧回退到 imagePath（第 1 页）。
+     */
+    private val MIGRATION_1_2: Migration =
+        object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE question ADD COLUMN selfMasteredAt INTEGER")
+                db.execSQL("ALTER TABLE question ADD COLUMN imagePathsJson TEXT NOT NULL DEFAULT '[]'")
+            }
+        }
+
+    /** 迁移列表。追加新版本时保持升序。 */
+    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
 
     @Provides
     @Singleton

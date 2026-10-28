@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Mic
@@ -125,7 +126,7 @@ fun SolveConversationScreen(
     onOpenSettings: () -> Unit,
     onRetry: () -> Unit,
     onStartNewSession: () -> Unit,
-    onUnderstood: () -> Unit,
+    onMastered: () -> Unit,
     onOpenSession: (String) -> Unit,
     onDeleteSession: (String) -> Unit,
     onSetMode: (TeachingMode) -> Unit,
@@ -162,6 +163,8 @@ fun SolveConversationScreen(
         Column(modifier = Modifier.fillMaxSize().background(Tokens.Background)) {
             ConversationTopBar(
                 title = sessions.firstOrNull { it.id == currentSessionId }?.displayTitle ?: "拍题答疑",
+                masteredEnabled = canFinish,
+                onMastered = onMastered,
                 onOpenHistory = { historyOpen = true },
                 onStartNewSession = onStartNewSession,
             )
@@ -181,9 +184,6 @@ fun SolveConversationScreen(
             if (!networkOnline) OfflineHint()
             message?.let { text ->
                 InlineHint(text = text, onDismiss = onDismissMessage)
-            }
-            if (canFinish) {
-                UnderstoodBar(onUnderstood = onUnderstood)
             }
             Composer(
                 draft = draft,
@@ -228,6 +228,8 @@ fun SolveConversationScreen(
 @Composable
 private fun ConversationTopBar(
     title: String,
+    masteredEnabled: Boolean,
+    onMastered: () -> Unit,
     onOpenHistory: () -> Unit,
     onStartNewSession: () -> Unit,
 ) {
@@ -255,6 +257,15 @@ private fun ConversationTopBar(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f).padding(start = 2.dp),
         )
+        // 「已掌握」放在新建对话左边：答完题之后，这是一个比「再开一条」更有意义的动作，
+        // 但它的优先级不该高过换题，所以用图标而不是按钮，且未答完时置灰。
+        IconButton(onClick = onMastered, enabled = masteredEnabled) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = "这道题已掌握，开下一题",
+                tint = if (masteredEnabled) Tokens.Success else Tokens.OutlineStrong,
+            )
+        }
         IconButton(onClick = onStartNewSession) {
             Icon(Icons.Filled.Add, contentDescription = "开始新对话", tint = Tokens.Primary)
         }
@@ -406,44 +417,6 @@ private fun OfflineHint() {
             style = MaterialTheme.typography.bodySmall,
             color = Tokens.Warning,
         )
-    }
-}
-
-/**
- * 「我已理解」条：这道题答完之后，学生用一个动作结束这一题。
- *
- * 位置刻意放在输入框正上方而不是消息流末尾：消息流会继续往下长（追问越多越长），
- * 放在末尾意味着每次都要先滑到底；而这一条回答的是「现在这道题讲完了吗」，
- * 属于输入区的语义，跟着输入框走才不会被埋掉。
- *
- * 点击后的动作是**新建对话**（清空输入区、归档当前会话），
- * 而不是「什么都不做只显示一个已理解标记」——后者对学生没有实际去处。
- */
-@Composable
-private fun UnderstoodBar(onUnderstood: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(Tokens.RadiusMedium))
-                .background(Tokens.PrimaryContainer)
-                .padding(start = 12.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "这道题讲清楚了？",
-            style = MaterialTheme.typography.bodySmall,
-            color = Tokens.OnPrimaryContainer,
-            modifier = Modifier.weight(1f),
-        )
-        TextButton(onClick = onUnderstood) {
-            Text(
-                text = "我已理解",
-                style = MaterialTheme.typography.labelLarge,
-                color = Tokens.Primary,
-            )
-        }
     }
 }
 

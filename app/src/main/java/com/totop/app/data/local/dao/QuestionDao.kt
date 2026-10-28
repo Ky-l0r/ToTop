@@ -82,4 +82,16 @@ interface QuestionDao {
     /** 清空无图题目的 sha256 占位（理论上不应出现，防御性提供）。 */
     @Query("UPDATE question SET imageSha256 = NULL WHERE id = :id")
     suspend fun clearImageSha256(id: String)
+
+    /**
+     * 写入「已掌握」标记。
+     *
+     * 只动这一个字段：掌握度由 mastery 表与纯算法推导，自评不能直接改分数
+     * （口径见 docs/需求定稿-0.5.0.md）。
+     */
+    @Query("UPDATE question SET selfMasteredAt = :atUtc WHERE id = :id")
+    suspend fun markSelfMastered(
+        id: String,
+        atUtc: Long,
+    ): Int
 }

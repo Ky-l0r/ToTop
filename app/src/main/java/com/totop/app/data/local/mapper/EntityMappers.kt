@@ -71,6 +71,8 @@ object EntityMappers {
             imageSha256 = imageSha256,
             sourceType = sourceType.wire,
             createdAt = createdAtUtc,
+            selfMasteredAt = selfMasteredAtUtc,
+            imagePathsJson = stringListCodec.encodeToString(imagePaths),
         )
 
     fun QuestionEntity.toDomain(): Question =
@@ -87,6 +89,8 @@ object EntityMappers {
             imageSha256 = imageSha256,
             sourceType = QuestionSourceType.fromWire(sourceType),
             createdAtUtc = createdAt,
+            selfMasteredAtUtc = selfMasteredAt,
+            imagePaths = decodeStringList(imagePathsJson),
         )
 
     // ---------- mistake_record ----------
