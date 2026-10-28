@@ -21,7 +21,7 @@ import java.io.IOException
  * Room schema 与迁移测试（开发方案第五章 / 工程规范第 4 节）。
  *
  * 当前 version = 1 是首发版本，尚无迁移可跑，因此本文件做三件事：
- * 1. 用 MigrationTestHelper 按 v1 建库，断言 15 张表与关键索引确实存在（schema 契约回归）；
+ * 1. 用 MigrationTestHelper 按当前版本建库，断言全部表与关键索引确实存在（schema 契约回归）；
  * 2. 断言 DatabaseModule.MIGRATIONS 与版本号一致——升版本必须补迁移，禁止 destructive migration；
  * 3. 直接读取 app/schemas 导出的 1.json，提前验证「schema 目录 -> androidTest assets」链路可用，
  *    未来 runMigrationsAndValidate 正是依赖这条链路。
@@ -92,12 +92,13 @@ class MigrationTest {
 
     @Test
     @Throws(IOException::class)
-    fun createsAllFifteenTables() {
+    fun createsAllTables() {
         val tables = tableNames()
         AppDatabase.Tables.ALL.forEach { table ->
-            assertTrue("v1 应包含表 " + table + "，实际：" + tables, table in tables)
+            assertTrue("库中应包含表 " + table + "，实际：" + tables, table in tables)
         }
-        assertEquals(15, AppDatabase.Tables.ALL.size)
+        // 0.5.0 加了 forgotten_kpoint，共 16 张；数字变化时必须同步这里与迁移用例
+        assertEquals(16, AppDatabase.Tables.ALL.size)
     }
 
     @Test
@@ -177,6 +178,31 @@ class MigrationTest {
                 assertEquals("旧题干", cursor.getString(0))
                 assertTrue("selfMasteredAt 默认为 null", cursor.isNull(1))
                 assertEquals("[]", cursor.getString(2))
+            }
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate2To3AddsForgottenKpoint() {
+        // v3 只新增 forgotten_kpoint 一张表；专注时长写进 daily_stats，不新增表。
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt, selfMasteredAt, imagePathsJson) " +
+                    "VALUES ('q1', 'math', '高一', '题干', '[]', '', '[]', 0, '/tmp/a.jpg', 'sha1', " +
+                    "'MANUAL', 1, NULL, '[]')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT COUNT(*) FROM forgotten_kpoint").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(0, cursor.getInt(0))
+            }
+            db.query("SELECT stemText FROM question WHERE id = 'q1'").use { cursor ->
+                assertTrue("迁移后题目必须还在", cursor.moveToFirst())
+                assertEquals("题干", cursor.getString(0))
             }
         }
     }

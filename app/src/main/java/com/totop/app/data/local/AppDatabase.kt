@@ -7,6 +7,7 @@ import com.totop.app.data.local.dao.AiTraceDao
 import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
 import com.totop.app.data.local.dao.ExerciseDao
+import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
 import com.totop.app.data.local.dao.MasteryDao
@@ -20,6 +21,7 @@ import com.totop.app.data.local.entity.AiTraceEntity
 import com.totop.app.data.local.entity.CacheEntryEntity
 import com.totop.app.data.local.entity.DailyStatsEntity
 import com.totop.app.data.local.entity.ExerciseEntity
+import com.totop.app.data.local.entity.ForgottenKpointEntity
 import com.totop.app.data.local.entity.HintLogEntity
 import com.totop.app.data.local.entity.KnowledgePointEntity
 import com.totop.app.data.local.entity.KpointEdgeEntity
@@ -61,6 +63,7 @@ import com.totop.app.data.local.entity.SettingsEntity
         SettingsEntity::class,
         OutboxEntity::class,
         CacheEntryEntity::class,
+        ForgottenKpointEntity::class,
     ],
     version = AppDatabase.VERSION,
     exportSchema = true,
@@ -93,6 +96,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun cacheEntryDao(): CacheEntryDao
 
+    abstract fun forgottenKpointDao(): ForgottenKpointDao
+
     /** 表名常量：备份、导出与测试按名称引用，避免散落的字符串字面量。 */
     object Tables {
         const val QUESTION = "question"
@@ -110,6 +115,7 @@ abstract class AppDatabase : RoomDatabase() {
         const val SETTINGS = "settings"
         const val OUTBOX = "outbox"
         const val CACHE_ENTRY = "cache_entry"
+        const val FORGOTTEN_KPOINT = "forgotten_kpoint"
 
         /** 全部业务表，备份与清库按此顺序处理。 */
         val ALL: List<String> =
@@ -129,12 +135,13 @@ abstract class AppDatabase : RoomDatabase() {
                 SETTINGS,
                 OUTBOX,
                 CACHE_ENTRY,
+                FORGOTTEN_KPOINT,
             )
     }
 
     companion object {
         /** 当前数据库版本。 */
-        const val VERSION: Int = 2
+        const val VERSION: Int = 3
 
         /** 数据库文件名。 */
         const val NAME: String = "totop.db"

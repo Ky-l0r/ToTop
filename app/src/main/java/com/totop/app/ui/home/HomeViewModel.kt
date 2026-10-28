@@ -31,6 +31,7 @@ class HomeViewModel
         private val reviewGateway: ReviewGateway,
         private val knowledgeRepository: com.totop.app.data.repo.KnowledgeRepository,
         private val clock: com.totop.app.domain.usecase.port.DomainClock,
+        private val insights: com.totop.app.data.repo.CompanionInsightRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(HomeUiState())
         val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -129,6 +130,18 @@ class HomeViewModel
                         todayProgress = if (due.isEmpty()) 1f else 0f,
                         overviewHint = buildHint(total, weak.size, due.size),
                         weakKpoints = weak,
+                        forgottenKpoints =
+                            runCatching { insights.topForgotten(WEAK_LIMIT) }
+                                .getOrElse {
+                                    errors.add("易忘点统计失败：" + describe(it))
+                                    emptyList()
+                                }.map { item ->
+                                    ForgottenItem(
+                                        kpointId = item.kpointId,
+                                        name = item.name,
+                                        askCount = item.askCount,
+                                    )
+                                },
                         loading = false,
                         error = errors.takeIf { it.isNotEmpty() }?.joinToString("；"),
                     )

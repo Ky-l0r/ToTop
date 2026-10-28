@@ -6,6 +6,8 @@ import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.CompanionAskEvent
 import com.totop.app.data.remote.CompanionAskGateway
 import com.totop.app.data.remote.LlmCallRegistry
+import com.totop.app.data.repo.CompanionInsightRepository
+import com.totop.app.data.repo.KnowledgeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -102,6 +104,8 @@ class CompanionViewModel
     constructor(
         private val secretStore: SecretStore,
         private val askGateway: CompanionAskGateway,
+        private val knowledgeRepository: KnowledgeRepository,
+        private val insightRepository: CompanionInsightRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(CompanionUiState())
         val uiState: StateFlow<CompanionUiState> = _uiState.asStateFlow()
@@ -128,6 +132,7 @@ class CompanionViewModel
         fun finishQuestion() {
             ticker?.cancel()
             ticker = null
+            recordFocus(_uiState.value.elapsedSeconds)
             _uiState.update {
                 it.copy(
                     phase = CompanionPhase.IDLE,
@@ -146,6 +151,7 @@ class CompanionViewModel
         fun finishRound() {
             ticker?.cancel()
             ticker = null
+            recordFocus(_uiState.value.elapsedSeconds)
             askJob?.cancel()
             registry.cancelAll()
             _uiState.update { it.copy(phase = CompanionPhase.IDLE, roundFinished = true) }
@@ -207,8 +213,10 @@ class CompanionViewModel
                         return@launch
                     }
                     when (val outcome = last) {
-                        is CompanionAskEvent.Completed ->
+                        is CompanionAskEvent.Completed -> {
                             _uiState.update { it.copy(asking = false, answer = outcome.text) }
+                            recordForgotten(text)
+                        }
                         is CompanionAskEvent.Failed ->
                             _uiState.update { it.copy(asking = false, answerError = outcome.error.userMessage) }
                         else ->
@@ -218,6 +226,34 @@ class CompanionViewModel
                     }
                     if (wasTiming) start()
                 }
+        }
+
+        /** 专注时长按天落库（daily_stats 的 studySeconds），学情报告据此统计学习时长。 */
+        private fun recordFocus(seconds: Int) {
+            if (seconds <= 0) return
+            viewModelScope.launch {
+                runCatching { insightRepository.addFocusSeconds(seconds.toLong(), System.currentTimeMillis()) }
+            }
+        }
+
+        /**
+         * 把这次问到的知识点记进「易忘点」。
+         *
+         * 匹配方式是**知识点名子串命中**：问题文本往往就是「链式法则是什么」这种短句，
+         * 直接用内置目录的名字去比对即可，不需要再为抽取知识点多花一次模型调用。
+         * 名字长度要求 3 个字以上，避免「函数」「方程」这类过短词把整页知识点都命中。
+         */
+        private fun recordForgotten(question: String) {
+            viewModelScope.launch {
+                val catalog = runCatching { knowledgeRepository.catalogEnsuringSeeded() }.getOrNull() ?: return@launch
+                val hits =
+                    catalog
+                        .allKnowledgePoints()
+                        .filter { point -> point.name.length >= MIN_KP_NAME_LENGTH && question.contains(point.name) }
+                        .take(MAX_KP_HITS)
+                if (hits.isEmpty()) return@launch
+                runCatching { insightRepository.recordAsked(hits, System.currentTimeMillis()) }
+            }
         }
 
         private fun launchTicker() {
@@ -238,6 +274,14 @@ class CompanionViewModel
                         }
                     }
                 }
+        }
+
+        private companion object {
+            /** 低于 3 个字的知识点名太泛（如「函数」「方程」），只用作噪声。 */
+            const val MIN_KP_NAME_LENGTH: Int = 3
+
+            /** 一句话最多记 3 个知识点：再多基本是长句里顺带提到的，不代表真的想不起来。 */
+            const val MAX_KP_HITS: Int = 3
         }
 
         override fun onCleared() {

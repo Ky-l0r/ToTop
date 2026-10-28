@@ -62,6 +62,13 @@ class ReviewMaterialGateway
             subjectLabel: String,
             mistakes: List<ReviewMistake>,
             requestId: String,
+            /**
+             * 学生在陪伴模式里问过、说明容易忘的知识点名。
+             *
+             * 只给名字不给次数：资料要的是「这次该重点看什么」，
+             * 问过几次对学生没有意义，反而会挤占上下文。
+             */
+            forgottenPoints: List<String> = emptyList(),
         ): Flow<ReviewMaterialResult> =
             channelFlow {
                 if (!credentials.canCall) {
@@ -80,7 +87,7 @@ class ReviewMaterialGateway
                         messages =
                             listOf(
                                 ChatMessage.system(SYSTEM_PROMPT),
-                                ChatMessage.user(buildUserPrompt(subjectLabel, mistakes)),
+                                ChatMessage.user(buildUserPrompt(subjectLabel, mistakes, forgottenPoints)),
                             ),
                         maxTokens = ChatRequestConfig.MAX_TOKENS_DETAILED,
                         temperature = 0.3,
@@ -211,9 +218,14 @@ class ReviewMaterialGateway
             private fun buildUserPrompt(
                 subjectLabel: String,
                 mistakes: List<ReviewMistake>,
+                forgottenPoints: List<String>,
             ): String {
                 val builder = StringBuilder()
                 builder.append("科目：").append(subjectLabel).append('\n')
+                if (forgottenPoints.isNotEmpty()) {
+                    builder.append("学生写作业时问过下面这些点（说明他自己容易忘）：\n")
+                    forgottenPoints.forEach { name -> builder.append("- ").append(name).append('\n') }
+                }
                 if (mistakes.isEmpty()) {
                     builder.append("这位学生在该科目下还没有错题记录，请生成一份该科目的通用考前要点。\n")
                 } else {
@@ -236,6 +248,7 @@ class ReviewMaterialGateway
                     |}
                     |要求：
                     |1. weakKpoints 最多 4 条，必须来自上面真实错题反映的薄弱点；
+                    |   若给了「容易忘的点」，优先把其中与本科目相关的写进 weakKpoints；
                     |2. exercises 给 2 到 3 道同类题，难度与错题相当，题干完整可独立作答；
                     |3. tips 给 3 到 5 条，要具体可执行，不要说「认真复习」这种空话；
                     |4. 全部用中文，不要出现 emoji。

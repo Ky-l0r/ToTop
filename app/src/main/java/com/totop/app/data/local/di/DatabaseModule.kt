@@ -9,6 +9,7 @@ import com.totop.app.data.local.dao.AiTraceDao
 import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
 import com.totop.app.data.local.dao.ExerciseDao
+import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
 import com.totop.app.data.local.dao.MasteryDao
@@ -50,8 +51,30 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * v2 -> v3：新增「问过的知识点」表。
+     *
+     * 专注时长没有新建表，而是累加到 daily_stats 的 studySeconds（保留学科键 _focus），
+     * 详见 CompanionInsightRepository。
+     */
+    private val MIGRATION_2_3: Migration =
+        object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS forgotten_kpoint (" +
+                        "kpointId TEXT NOT NULL, name TEXT NOT NULL, subject TEXT NOT NULL, " +
+                        "askCount INTEGER NOT NULL, lastAskedAt INTEGER NOT NULL, " +
+                        "PRIMARY KEY(kpointId))",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_forgotten_kpoint_lastAskedAt " +
+                        "ON forgotten_kpoint(lastAskedAt)",
+                )
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
-    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
 
     @Provides
     @Singleton
@@ -71,6 +94,9 @@ object DatabaseModule {
 
     @Provides
     fun provideQuestionDao(database: AppDatabase): QuestionDao = database.questionDao()
+
+    @Provides
+    fun provideForgottenKpointDao(database: AppDatabase): ForgottenKpointDao = database.forgottenKpointDao()
 
     @Provides
     fun provideMistakeDao(database: AppDatabase): MistakeDao = database.mistakeDao()

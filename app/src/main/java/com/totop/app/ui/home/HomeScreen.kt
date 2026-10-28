@@ -207,6 +207,21 @@ fun HomeScreen(
 
         Spacer(Modifier.height(20.dp))
 
+        if (state.forgottenKpoints.isNotEmpty()) {
+            SectionTitle(title = "写作业时常问的")
+            Spacer(Modifier.height(8.dp))
+            state.forgottenKpoints.forEach { item ->
+                WeakKpointRow(
+                    name = item.name,
+                    subject = "问过 " + item.askCount + " 次",
+                    count = item.askCount,
+                    onClick = { onOpenKnowledgePoint(item.kpointId) },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
         if (state.weakKpoints.isNotEmpty()) {
             SectionTitle(title = "还需要多练的知识点")
             Spacer(Modifier.height(8.dp))

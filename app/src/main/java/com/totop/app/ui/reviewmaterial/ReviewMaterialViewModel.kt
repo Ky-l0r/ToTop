@@ -52,6 +52,7 @@ class ReviewMaterialViewModel
         private val secretStore: SecretStore,
         private val mistakeRepository: MistakeRepository,
         private val questionRepository: com.totop.app.data.repo.QuestionRepository,
+        private val insights: com.totop.app.data.repo.CompanionInsightRepository,
     ) : ViewModel() {
         private val pdfWriter = ReviewMaterialPdfWriter()
 
@@ -105,6 +106,7 @@ class ReviewMaterialViewModel
                                 subjectLabel = subjectLabel,
                                 mistakes = mistakes,
                                 requestId = UUID.randomUUID().toString(),
+                                forgottenPoints = loadForgotten(subjectLabel),
                             ).collect { outcome -> last = outcome }
                         last ?: ReviewMaterialResult.Failure(
                             com.totop.app.data.remote.LlmError.Unknown(
@@ -247,8 +249,23 @@ class ReviewMaterialViewModel
         /** 科目中文名转代码，供后续按科目取数据。 */
         fun subjectCode(): String = Subjects.codeOf(_uiState.value.selectedSubject)
 
+        /**
+         * 取本科目的易忘点。
+         *
+         * 只取前 6 条：复习资料是一份「考前看一眼」的材料，
+         * 塞进二十个知识点反而没人看，也没法为每一条给出提醒。
+         */
+        private suspend fun loadForgotten(subjectLabel: String): List<String> =
+            runCatching {
+                val subjectCode = Subjects.codeOf(subjectLabel)
+                insights.forgottenOfSubject(subjectCode).take(MAX_FORGOTTEN).map { it.name }
+            }.getOrDefault(emptyList())
+
         private companion object {
             /** PDF 的 MIME 类型。 */
             const val PDF_MIME: String = "application/pdf"
+
+            /** 一次最多纳入几条易忘点，见 loadForgotten 的说明。 */
+            const val MAX_FORGOTTEN: Int = 6
         }
     }

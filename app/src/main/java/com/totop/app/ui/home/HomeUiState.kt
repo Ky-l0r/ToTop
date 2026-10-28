@@ -11,6 +11,19 @@ data class WeakKpointItem(
 )
 
 /**
+ * 首页的「最近常问」条目。
+ *
+ * 与 [WeakKpointItem] 并列展示：一个是做错过的，一个是写作业时想不起来的，
+ * 两者都是「该回头看一眼」的地方，但成因不同，混在一起会看不出该补什么。
+ */
+data class ForgottenItem(
+    val kpointId: String,
+    val name: String,
+    /** 累计问过几次。 */
+    val askCount: Int,
+)
+
+/**
  * 首页的一个「学习概览」指标块。
  *
  * 为什么做成数据而不是在界面里写死四个格子：
@@ -53,6 +66,8 @@ data class HomeUiState(
     val overviewHint: String = "",
     /** 需要多练的知识点列表（最多 3 条）。 */
     val weakKpoints: List<WeakKpointItem> = emptyList(),
+    /** 写作业时常问、说明容易忘的知识点（最多 3 条）。 */
+    val forgottenKpoints: List<ForgottenItem> = emptyList(),
     val loading: Boolean = true,
     /** 加载失败时展示可读原因，绝不留白。 */
     val error: String? = null,
