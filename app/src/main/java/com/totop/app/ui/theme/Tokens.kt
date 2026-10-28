@@ -37,6 +37,15 @@ object Tokens {
     /** 页面背景：纯白。 */
     val Background = Color(0xFFFFFFFF)
 
+    /**
+     * 启动底色：淡紫。
+     *
+     * 必须与 `res/values/colors.xml` 里的 `window_background` 逐位一致。
+     * 系统启动窗口（冷启动第一帧）用的是资源色，应用内启动页用的是这个常量，
+     * 两者不同就会出现「先深一点、再浅一点」的三段跳，正是要修的那个观感问题。
+     */
+    val Splash = Color(0xFFEFEAFB)
+
     /** 卡片/气泡表面：白色。 */
     val Surface = Color(0xFFFFFFFF)
 

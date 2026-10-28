@@ -3,8 +3,12 @@
     <!-- 自适应图标背景层兜底色：与新图标的淡紫底一致 -->
     <color name="ic_launcher_background">#C2B6EE</color>
 
-    <!-- 窗口与状态栏背景：淡紫白，与界面背景同族，
-         冷启动第一帧不会出现「黑底闪一下」 -->
-    <color name="window_background">#F4F1FC</color>
+    <!-- 启动窗口底色：淡紫，与应用内启动页（SplashScreen.kt）的 Tokens.Splash 必须一致。
+         两者不同色时，冷启动会先看到窗口底色、再跳成另一种颜色，观感就是「闪一下」。
+         低端机冷启动要 2 至 3 秒才出第一帧，这段时间用户看到的就是这个颜色，
+         因此它必须是品牌色，不能是白或黑。 -->
+    <color name="window_background">#EFEAFB</color>
+
+    <!-- 状态栏与导航栏：保持接近白，与首页白底衔接，不跟着启动底色变紫 -->
     <color name="status_bar">#F4F1FC</color>
 </resources>

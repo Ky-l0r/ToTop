@@ -36,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -51,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,8 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
+import com.totop.app.data.prefs.VoiceEnginePrefs
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.TtsSpeed
+import com.totop.app.ml.VoiceEngines
 
 /**
  * 设置页（FR-6 / 方案 6.1）。
@@ -534,6 +538,56 @@ private fun PreferenceSection(
             subtitle = "关闭后不再自动出变式题，可省 token；知识点详情页仍可手动生成",
             checked = toggles.generateExercise,
             onCheckedChange = viewModel::setGenerateExercise,
+        )
+    }
+
+    VoiceEngineSection()
+}
+
+/**
+ * 语音识别引擎。
+ *
+ * 为什么给选项：国产 ROM 自带的识别服务对中文口语（尤其带口音）明显好于系统默认，
+ * 但个别机型自带的引擎必须联网。没有统一的「谁更准」，只能让用户自己挑。
+ * 默认值在 [VoiceEngines.default] 里猜：优先非 Google 的厂商引擎。
+ */
+@Composable
+private fun VoiceEngineSection() {
+    val context = LocalContext.current
+    val engines = remember(context) { VoiceEngines.list(context) }
+    var selectedId by
+        remember(context) {
+            mutableStateOf(VoiceEnginePrefs.selectedId(context) ?: VoiceEngines.default(context).id)
+        }
+    ContentCard(title = "语音识别", subtitle = "影响拍题页与陪伴页的「按住说话」") {
+        engines.forEach { engine ->
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedId = engine.id
+                            VoiceEnginePrefs.select(context, engine.id)
+                        }
+                        .padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = engine.id == selectedId,
+                    onClick = {
+                        selectedId = engine.id
+                        VoiceEnginePrefs.select(context, engine.id)
+                    },
+                )
+                Text(text = engine.label, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Text(
+            text =
+                "部分引擎的中文识别需要联网。断网时会自动改用本机识别（若系统支持），" +
+                    "连续两次没听清会提示你换一个。",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

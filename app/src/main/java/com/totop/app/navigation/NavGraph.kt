@@ -1,11 +1,13 @@
 package com.totop.app.navigation
 
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,11 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -138,17 +142,100 @@ fun ToTopApp(
     }
 }
 
-/** 启动动画最短展示时长：够走完 380ms 的淡入，又不会让人觉得在等。 */
-private const val SPLASH_MIN_VISIBLE_MS: Long = 620L
+/**
+ * 启动动画最短展示时长。
+ *
+ * 字标逐字淡入本身要 440ms（五个字母、间隔 70ms、单个 160ms），
+ * 再留约 260ms 定格，让「全部出现」这个动作被看见；
+ * 定太短会变成「刚写完就被首页顶掉」，反而更乱。
+ */
+private const val SPLASH_MIN_VISIBLE_MS: Long = 700L
 
 /** 进入过渡时长（毫秒）。比系统默认短，避免「点了没反应」的观感。 */
-private const val TRANSITION_ENTER_MS: Int = 180
+private const val TRANSITION_ENTER_MS: Int = 260
 
 /** 退出过渡时长（毫秒）。退出比进入更短，让新页面尽快成为视觉主体。 */
-private const val TRANSITION_EXIT_MS: Int = 120
+private const val TRANSITION_EXIT_MS: Int = 200
 
-/** 位移幅度 = 屏宽 / 该值。18 约等于 6%，只有方向感，不会让人觉得页面在飞。 */
-private const val TRANSITION_SLIDE_DIVISOR: Int = 18
+/** 底栏同级切换只有淡入淡出：横移会把「并列」说成「层级」，见 0.5.0 需求定稿。 */
+private const val TRANSITION_TAB_MS: Int = 180
+
+/**
+ * 位移幅度 = 屏宽 / 该值。
+ *
+ * 上一版取 18（约 5.5%，20dp 左右），在 360dp 窄屏上等于没动；
+ * 真机反馈「完全看不到过渡动画」。10 约等于 10%，方向一眼可辨，又不至于像翻书。
+ */
+private const val TRANSITION_SLIDE_DIVISOR: Int = 10
+
+/** 进入时的起始缩放。只做 1.5% 的轻微推近，与横移一起构成「往里走」的层次感。 */
+private const val TRANSITION_ENTER_SCALE: Float = 0.985f
+
+/**
+ * 动画时长的下限系数（相对系统「动画时长缩放」）。
+ *
+ * 系统设 0.5x 时，Compose 会把我们写的时长再砍一半：260ms 变 130ms、位移又只有 10%，
+ * 观感上就是「没有动画」。这里反过来补偿，保证等效时长不低于 0.8 倍：
+ *
+ *     scale = 0.5 -> 系数 1.6 -> 实际 260 * 1.6 * 0.5 = 208ms（等效 0.8）
+ *
+ * 系统把动画完全关掉（scale <= 0）时不补偿：那是用户明确的无障碍选择，不该对着干。
+ */
+private const val MOTION_SCALE_FLOOR: Float = 0.8f
+
+/** 二级页进入：淡入 + 横向位移 + 轻微推近；退栈时位移方向相反。 */
+private fun slideEnter(
+    ms: Int,
+    fromLeft: Boolean = false,
+): EnterTransition {
+    val direction = if (fromLeft) -1 else 1
+    return fadeIn(tween(ms, easing = FastOutSlowInEasing)) +
+        slideInHorizontally(tween(ms, easing = FastOutSlowInEasing)) { width ->
+            direction * width / TRANSITION_SLIDE_DIVISOR
+        } +
+        scaleIn(tween(ms, easing = FastOutSlowInEasing), initialScale = TRANSITION_ENTER_SCALE)
+}
+
+/**
+ * 是否是「底栏同级切换」。
+ *
+ * 两个顶层页面之间来回切时只做淡入淡出：它们的层级是并列，
+ * 横移会让人以为自己在进/退页面，反而更迷惑。
+ */
+private fun isTabSwitch(
+    from: NavBackStackEntry,
+    to: NavBackStackEntry,
+): Boolean =
+    TopLevelDestination.fromRoute(from.destination.route) != null &&
+        TopLevelDestination.fromRoute(to.destination.route) != null
+
+/** 把基准时长换算成实际写入 [tween] 的时长（含系统缩放补偿）。 */
+private fun durationMs(
+    base: Int,
+    factor: Float,
+): Int = (base * factor).toInt().coerceAtLeast(1)
+
+/**
+ * 读取系统「动画时长缩放」并换算成补偿系数。
+ *
+ * 返回值 1 表示照常；大于 1 表示系统把动画压短了，需要反向拉长。
+ * 系统关闭动画（0）时返回 1——此时 Compose 本来就不会走动画，尊重用户的无障碍选择。
+ */
+@Composable
+private fun rememberMotionCompensation(): Float {
+    val context = LocalContext.current
+    return remember(context) {
+        val scale =
+            runCatching {
+                Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
+            }.getOrDefault(1f)
+        when {
+            scale <= 0f -> 1f
+            scale < MOTION_SCALE_FLOOR -> MOTION_SCALE_FLOOR / scale
+            else -> 1f
+        }
+    }
+}
 
 /**
  * 浮动胶囊导航栏。
@@ -221,40 +308,44 @@ fun ToTopNavHost(
     startRoute: String = Routes.HOME,
     modifier: Modifier = Modifier,
 ) {
+    // 系统动画缩放补偿：见 MOTION_SCALE_FLOOR 的说明。
+    val motionFactor = rememberMotionCompensation()
+    val enterMs = durationMs(TRANSITION_ENTER_MS, motionFactor)
+    val exitMs = durationMs(TRANSITION_EXIT_MS, motionFactor)
+    val tabMs = durationMs(TRANSITION_TAB_MS, motionFactor)
+
     NavHost(
         navController = navController,
         startDestination = startRoute,
         modifier = modifier,
-        // 页面切换：淡入淡出 + 极小幅度横向位移。
+        // 页面切换：淡入淡出 + 横向位移 + 轻微推近。
         //
-        // 上一版把这四条全设为 None，原因是「默认过渡期间目标页在做数据库查询，
-        // 低端机上表现为点了没反应然后突然跳过来」。但完全无过渡又让层级关系消失：
-        // 进二级页与回退看起来一模一样，用户不知道自己是往里走还是往回走。
-        //
-        // 现在的取值刻意保守：
-        // - 进入 180ms、退出 120ms，比系统默认（约 300ms）短，感知上是「轻快」而不是「慢」；
-        // - 位移只有屏宽的 1/18，且不缩放、不做共享元素、不叠加阴影动画，
-        //   每帧只是一次 alpha 与图层平移，低端机 GPU 能承受；
-        // - 进入方向按前进/回退区分（push 从右、pop 从左），层级关系一眼可辨。
+        // 为什么今年这版必须重调参数：
+        // 上一版是 180ms / 120ms + 屏宽 1/18 位移，三层叠加之后几乎不可见——
+        // 位移只有 20dp、系统动画缩放再砍一半、目标页首帧还在查库（动画在空白期就跑完）。
+        // 真机反馈的原话是「完全看不到过渡动画」，因此：
+        // - 时长提到 260 / 200ms，位移提到屏宽的 1/10，进入时 0.985 推近；
+        // - 底栏同级切换只淡入：它们的层级是并列，横移会误导方向感；
+        // - 时长按系统缩放补偿，0.5x 用户也能看到动画。
         enterTransition = {
-            fadeIn(tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing)) +
-                slideInHorizontally(
-                    animationSpec = tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing),
-                    initialOffsetX = { width -> width / TRANSITION_SLIDE_DIVISOR },
-                )
+            if (isTabSwitch(initialState, targetState)) {
+                fadeIn(tween(tabMs, easing = FastOutSlowInEasing))
+            } else {
+                slideEnter(enterMs)
+            }
         },
         exitTransition = {
-            fadeOut(tween(durationMillis = TRANSITION_EXIT_MS, easing = FastOutSlowInEasing))
+            fadeOut(tween(exitMs, easing = FastOutSlowInEasing))
         },
         popEnterTransition = {
-            fadeIn(tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing)) +
-                slideInHorizontally(
-                    animationSpec = tween(durationMillis = TRANSITION_ENTER_MS, easing = FastOutSlowInEasing),
-                    initialOffsetX = { width -> -width / TRANSITION_SLIDE_DIVISOR },
-                )
+            if (isTabSwitch(initialState, targetState)) {
+                fadeIn(tween(tabMs, easing = FastOutSlowInEasing))
+            } else {
+                slideEnter(enterMs, fromLeft = true)
+            }
         },
         popExitTransition = {
-            fadeOut(tween(durationMillis = TRANSITION_EXIT_MS, easing = FastOutSlowInEasing))
+            fadeOut(tween(exitMs, easing = FastOutSlowInEasing))
         },
     ) {
         composable(route = Routes.ONBOARDING) {

@@ -2,17 +2,23 @@ package com.totop.app.ui.solve
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,9 +29,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,10 +55,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.totop.app.data.prefs.VoiceEnginePrefs
 import com.totop.app.data.repo.SolveSession
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.rememberRecordAudioPermissionRequester
@@ -432,14 +448,21 @@ private fun UnderstoodBar(onUnderstood: () -> Unit) {
 }
 
 /**
- * 底部输入区：图片条 + 输入框 + 发送/停止。
+ * 底部输入区：图片条 + 语音/文字双态输入 + 常驻相机与更多。
  *
- * 布局取舍（0.4.0）：
- * 旧版在输入框左侧并排放「拍照」「相册」两个**带文字的竖排按钮**，右侧是发送圆钮，
- * 中间留给输入框的宽度只剩一半，一行里挤了五个可点元素。
- * 现在把拍照/相册收进输入框左侧一个「+」菜单（同一入口，两个选项），
- * 语音按钮放进输入框内部右侧，发送按钮留在外面——
- * 可点元素从五个降到三个，输入框宽度回到主位。
+ * 布局取舍（0.5.0，对齐参考图的三段式）：
+ *
+ * ```
+ *   [ 键盘/麦克风 ] [ 输入框 或 按住说话 ] [ 相机 ] [ 更多 ]
+ * ```
+ *
+ * - 左侧按钮切换语音与文字：语音态中间整块是「按住 说话」，文字态才是输入框；
+ * - 相机常驻在最右侧（拍题是最高频动作），相册收进「更多」；
+ * - 发送键只在有内容时出现，语音态识别出文字后同样出现；
+ * - 语音期间在上方浮出相纹面板与识别结果条，不占输入区宽度。
+ *
+ * 上一版把拍照/相册一起收进「+」菜单，结果每次拍题都要多点一次；
+ * 这一版把相机拿回来，只把相册留在菜单里。
  */
 @Composable
 private fun Composer(
@@ -459,12 +482,31 @@ private fun Composer(
     onNotice: (String) -> Unit,
 ) {
     var attachMenuOpen by remember { mutableStateOf(false) }
+    // 默认停在语音态：一句话的思路说出来比打出来快。已经有草稿时停在文字态，
+    // 否则用户看不到自己写了什么（草稿是跨会话保留的，进来常常不是空的）。
+    var voiceMode by remember { mutableStateOf(draft.studentProcess.isBlank()) }
+    // 切到键盘态后要拉起的输入法：不能在同一次点击里 requestFocus，
+    // 那时 TextField 还没被组合出来，会抛 IllegalStateException。
+    var focusRequested by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val context = LocalContext.current
     val voice = rememberVoiceInput()
     val requestMicPermission = rememberRecordAudioPermissionRequester()
+
     // 语音识别会给多次「部分结果」，每次都是这一轮的完整句子，
     // 因此以「开口前的文本」为前缀拼接，而不是把每次结果叠加。
     var voiceBase by remember { mutableStateOf("") }
+    // 手指是否还按着：首次授权时系统弹框会打断手势，
+    // 授权回来时手指早就松了，这时不能再开始录音，否则会一直录到超时。
+    var pressHeld by remember { mutableStateOf(false) }
     val currentText by rememberUpdatedState(draft.studentProcess)
+
+    LaunchedEffect(focusRequested, voiceMode) {
+        if (focusRequested && !voiceMode) {
+            focusRequested = false
+            runCatching { focusRequester.requestFocus() }
+        }
+    }
 
     Column(
         modifier =
@@ -484,14 +526,24 @@ private fun Composer(
                 onOpenPage = onOpenPage,
             )
         }
-        if (voice.listening) {
-            Text(
-                text = "正在听你说… 说完会自动填进输入框",
-                style = MaterialTheme.typography.labelSmall,
-                color = Tokens.Primary,
-                modifier = Modifier.padding(horizontal = 16.dp),
+
+        if (voice.listening || voice.finishing) {
+            VoiceCapturePanel(
+                level = voice.level,
+                locked = voice.locked,
+                finishing = voice.finishing,
+                onFinish = voice::finish,
+            )
+        } else if (voiceMode && draft.studentProcess.isNotBlank()) {
+            VoiceTranscriptStrip(
+                text = draft.studentProcess,
+                onEdit = {
+                    voiceMode = false
+                    focusRequested = true
+                },
             )
         }
+
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
             verticalAlignment = Alignment.Bottom,
@@ -504,97 +556,333 @@ private fun Composer(
                         .heightIn(min = 46.dp)
                         .clip(RoundedCornerShape(Tokens.RadiusXLarge))
                         .background(Tokens.SurfaceVariant)
-                        .padding(start = 2.dp, end = 2.dp),
-                verticalAlignment = Alignment.Bottom,
+                        .padding(horizontal = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box {
-                    IconButton(onClick = { attachMenuOpen = true }, modifier = Modifier.size(40.dp)) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "添加题目照片",
-                            tint = Tokens.Primary,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
-                    DropdownMenu(expanded = attachMenuOpen, onDismissRequest = { attachMenuOpen = false }) {
-                        DropdownMenuItem(
-                            text = { Text("拍照") },
-                            leadingIcon = { Icon(Icons.Filled.CameraAlt, contentDescription = null) },
-                            onClick = {
-                                attachMenuOpen = false
-                                onOpenCamera()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("从相册选") },
-                            leadingIcon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
-                            onClick = {
-                                attachMenuOpen = false
-                                onOpenAlbum()
-                            },
-                        )
-                    }
-                }
-                TextField(
-                    value = draft.studentProcess,
-                    onValueChange = onDraftChange,
-                    modifier = Modifier.weight(1f).heightIn(min = 44.dp, max = 120.dp),
-                    placeholder = {
-                        Text(
-                            text =
-                                when {
-                                    hasSolution -> "继续追问，或补拍一张更清楚的"
-                                    pageCount > 0 -> "说说你的思路（可不填）"
-                                    else -> "写下题目，或先拍一张照片"
-                                },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Tokens.OnSurfaceVariant,
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(onSend = { onSend() }),
-                    colors =
-                        TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                        ),
-                    maxLines = 5,
-                )
                 IconButton(
                     onClick = {
-                        requestMicPermission {
-                            if (voice.listening) {
-                                voice.stop()
-                            } else {
-                                voiceBase = currentText
-                                voice.start(
-                                    onText = { spoken -> onDraftChange(voiceBase + spoken) },
-                                    onError = onNotice,
-                                )
-                            }
+                        if (voiceMode) {
+                            voice.cancel()
+                            voiceMode = false
+                            focusRequested = true
+                        } else {
+                            voiceMode = true
                         }
                     },
                     modifier = Modifier.size(40.dp),
                 ) {
                     Icon(
-                        imageVector = if (voice.listening) Icons.Filled.MicOff else Icons.Filled.Mic,
-                        contentDescription = if (voice.listening) "停止语音输入" else "语音输入",
-                        tint = if (voice.listening) Tokens.Primary else Tokens.OnSurfaceVariant,
+                        imageVector = if (voiceMode) Icons.Filled.Keyboard else Icons.Filled.Mic,
+                        contentDescription = if (voiceMode) "切换到键盘输入" else "切换到语音输入",
+                        tint = Tokens.OnSurfaceVariant,
                         modifier = Modifier.size(22.dp),
                     )
                 }
-            }
-            if (isSolving) {
-                StopCircleButton(onClick = onStop)
-            } else {
-                SendCircleButton(
-                    enabled = !processing && (pages.isNotEmpty() || draft.studentProcess.isNotBlank()),
-                    processing = processing,
-                    onClick = onSend,
+
+                if (voiceMode) {
+                    HoldToTalk(
+                        listening = voice.listening,
+                        locked = voice.locked,
+                        modifier = Modifier.weight(1f),
+                        onPress = {
+                            pressHeld = true
+                            requestMicPermission {
+                                if (!pressHeld) {
+                                    onNotice("已开启录音权限，再按住说一次")
+                                    return@requestMicPermission
+                                }
+                                voiceBase = currentText
+                                voice.press(
+                                    engineId = VoiceEnginePrefs.selectedId(context),
+                                    onText = { spoken -> onDraftChange(voiceBase + spoken) },
+                                    onError = onNotice,
+                                    onEngineSwitched = { engine ->
+                                        onNotice("已自动切换到「" + engine.label + "」继续识别")
+                                    },
+                                )
+                            }
+                        },
+                        onRelease = {
+                            pressHeld = false
+                            voice.release()
+                        },
+                        onLock = voice::lock,
+                        onFinish = voice::finish,
+                    )
+                } else {
+                    TextField(
+                        value = draft.studentProcess,
+                        onValueChange = onDraftChange,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .heightIn(min = 44.dp, max = 120.dp)
+                                .focusRequester(focusRequester),
+                        placeholder = {
+                            Text(
+                                text =
+                                    when {
+                                        hasSolution -> "继续追问，或补拍一张更清楚的"
+                                        pageCount > 0 -> "说说你的思路（可不填）"
+                                        else -> "写下题目，或先拍一张照片"
+                                    },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Tokens.OnSurfaceVariant,
+                            )
+                        },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(onSend = { onSend() }),
+                        colors =
+                            TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                        maxLines = 5,
+                    )
+                }
+
+                ComposerActionIcons(
+                    menuOpen = attachMenuOpen,
+                    onMenuOpenChange = { attachMenuOpen = it },
+                    onOpenCamera = {
+                        voice.cancel()
+                        onOpenCamera()
+                    },
+                    onOpenAlbum = {
+                        voice.cancel()
+                        onOpenAlbum()
+                    },
                 )
             }
+
+            // 语音态且什么都没拍、什么都没说时不占位：这时候发送没有意义。
+            val showSend = !voiceMode || draft.studentProcess.isNotBlank() || pages.isNotEmpty()
+            if (showSend) {
+                if (isSolving) {
+                    StopCircleButton(onClick = onStop)
+                } else {
+                    SendCircleButton(
+                        enabled = !processing && (pages.isNotEmpty() || draft.studentProcess.isNotBlank()),
+                        processing = processing,
+                        onClick = onSend,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 上滑触发锁定所需的最小位移。24dp 低于常见的滑动手势阈值，不容易误触。 */
+private const val LOCK_SLIDE_DP: Float = 24f
+
+/** 声纹条的相对权重：固定形状比随机跳动的方块更好读，也免掉每条都做一次动画。 */
+private val WAVE_WEIGHTS: List<Float> =
+    listOf(0.45f, 0.7f, 1f, 0.85f, 0.55f, 0.9f, 0.65f, 1f, 0.75f, 0.5f, 0.85f, 0.6f)
+
+/**
+ * 「按住 说话」区域。
+ *
+ * 手势用 [awaitEachGesture] 手写而不是 [detectDragGesturesAfterLongPress]：
+ * 后者必须先等长按判定结束才回调拖动，而这里需要「按下就开始录音」——
+ * 等 500ms 再开口会让第一个字被吃掉。
+ *
+ * 状态只从参数读一次（用 [rememberUpdatedState] 包住），
+ * 因为锁定会触发重组，而重组会取消正在进行的 pointerInput 协程。
+ */
+@Composable
+private fun HoldToTalk(
+    listening: Boolean,
+    locked: Boolean,
+    onPress: () -> Unit,
+    onRelease: () -> Unit,
+    onLock: () -> Unit,
+    onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val haptic = LocalHapticFeedback.current
+    // 手势协程只创建一次，暴露的回调必须通过状态取最新值，
+    // 否则重组后拿到的还是第一帧那份 lambda。
+    val lockedNow by rememberUpdatedState(locked)
+    val onPressNow by rememberUpdatedState(onPress)
+    val onReleaseNow by rememberUpdatedState(onRelease)
+    val onLockNow by rememberUpdatedState(onLock)
+    val onFinishNow by rememberUpdatedState(onFinish)
+    val threshold = with(LocalDensity.current) { LOCK_SLIDE_DP.dp.toPx() }
+
+    Box(
+        modifier =
+            modifier
+                .height(44.dp)
+                .clip(RoundedCornerShape(Tokens.RadiusXLarge))
+                .background(if (listening) Tokens.PrimaryContainer else Color.Transparent)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        down.consume()
+                        if (lockedNow) {
+                            // 锁定态下再按一次 = 结束，而不是再开一轮。
+                            onFinishNow()
+                            waitForUpOrCancellation()
+                            return@awaitEachGesture
+                        }
+                        onPressNow()
+                        var reachedLock = false
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                change.consume()
+                                break
+                            }
+                            if (!reachedLock && down.position.y - change.position.y > threshold) {
+                                reachedLock = true
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onLockNow()
+                            }
+                            change.consume()
+                        }
+                        onReleaseNow()
+                    }
+                },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = if (listening) "松开 结束" else "按住 说话",
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (listening) Tokens.Primary else Tokens.OnSurfaceVariant,
+            fontWeight = if (listening) FontWeight.Medium else FontWeight.Normal,
+        )
+    }
+}
+
+/**
+ * 录音面板：声纹 + 操作提示。
+ *
+ * 声纹取当前音量做高度，不加逐条动画：`onRmsChanged` 约 10Hz，
+ * 12 条各自跑一个动画在低端机上比直接改高度更卡，看起来也更像抖动。
+ */
+@Composable
+private fun VoiceCapturePanel(
+    level: Float,
+    locked: Boolean,
+    finishing: Boolean,
+    onFinish: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .clip(RoundedCornerShape(Tokens.RadiusMedium))
+                .background(Tokens.PrimaryContainer)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            WAVE_WEIGHTS.forEach { weight ->
+                Box(
+                    modifier =
+                        Modifier
+                            .width(3.dp)
+                            .height((6f + 22f * level * weight).dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (finishing) Tokens.OutlineStrong else Tokens.Primary),
+                )
+            }
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text =
+                when {
+                    finishing -> "正在整理…"
+                    locked -> "继续录音 · 点一下结束"
+                    else -> "松手结束 · 上滑锁定"
+                },
+            style = MaterialTheme.typography.labelMedium,
+            color = Tokens.OnPrimaryContainer,
+            modifier = Modifier.weight(1f),
+        )
+        if (locked && !finishing) {
+            TextButton(onClick = onFinish) {
+                Text(text = "结束", style = MaterialTheme.typography.labelLarge, color = Tokens.Primary)
+            }
+        }
+    }
+}
+
+/** 语音识别出来的文字条：点一下切到键盘态去改，语音态本身看不到光标。 */
+@Composable
+private fun VoiceTranscriptStrip(
+    text: String,
+    onEdit: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .clip(RoundedCornerShape(Tokens.RadiusMedium))
+                .background(Tokens.PrimaryContainer)
+                .clickable(onClick = onEdit)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "已识别：" + text,
+            style = MaterialTheme.typography.bodySmall,
+            color = Tokens.OnPrimaryContainer,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "改一下",
+            style = MaterialTheme.typography.labelMedium,
+            color = Tokens.Primary,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+/** 输入框右侧的常驻动作：拍照 + 更多（相册）。 */
+@Composable
+private fun ComposerActionIcons(
+    menuOpen: Boolean,
+    onMenuOpenChange: (Boolean) -> Unit,
+    onOpenCamera: () -> Unit,
+    onOpenAlbum: () -> Unit,
+) {
+    IconButton(onClick = onOpenCamera, modifier = Modifier.size(40.dp)) {
+        Icon(
+            imageVector = Icons.Filled.CameraAlt,
+            contentDescription = "拍照",
+            tint = Tokens.Primary,
+            modifier = Modifier.size(22.dp),
+        )
+    }
+    Box {
+        IconButton(onClick = { onMenuOpenChange(true) }, modifier = Modifier.size(40.dp)) {
+            Icon(
+                imageVector = Icons.Filled.MoreHoriz,
+                contentDescription = "更多",
+                tint = Tokens.OnSurfaceVariant,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { onMenuOpenChange(false) }) {
+            DropdownMenuItem(
+                text = { Text("从相册选") },
+                leadingIcon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
+                onClick = {
+                    onMenuOpenChange(false)
+                    onOpenAlbum()
+                },
+            )
         }
     }
 }
