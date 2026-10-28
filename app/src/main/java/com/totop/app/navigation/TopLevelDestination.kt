@@ -5,19 +5,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.totop.app.R
 
 /**
- * 底部导航的三个顶层目的地。顺序即展示顺序。
+ * 底部导航的四个顶层目的地。顺序即展示顺序。
  *
- * 为什么从 5 项精简到 3 项：
- * 5 个图标挤在底部会让每个入口都变小、文案变挤，低端机窄屏尤其明显；
- * 错题本、知识点、学情报告、设置这些「低频但重要」的功能改为从功能中心进入，
- * 首页仍然一键直达，不丢可达性。
+ * 从 5 项精简到 3 项、再回到 4 项：
+ * 首轮把错题本、知识点、报告、设置收进功能中心，底部只留「首页 / 拍题 / 功能中心」；
+ * 0.5.0 把陪伴作业提上来——学生写作业时最想要的是「随时问一句」，
+ * 藏进二级页面等于没有。它与拍题同级、等宽，不做额外放大。
  */
 enum class TopLevelDestination(
     val route: String,
@@ -27,6 +29,7 @@ enum class TopLevelDestination(
 ) {
     Home(Routes.HOME, R.string.nav_home, Icons.Filled.Home, Icons.Outlined.Home),
     Solve(Routes.SOLVE, R.string.nav_solve, Icons.Filled.CameraAlt, Icons.Outlined.CameraAlt),
+    CompanionTab(Routes.COMPANION, R.string.nav_companion, Icons.Filled.Timer, Icons.Outlined.Timer),
     Hub(Routes.HUB, R.string.nav_hub, Icons.Filled.Menu, Icons.Outlined.Menu),
     ;
 

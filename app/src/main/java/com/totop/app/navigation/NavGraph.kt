@@ -238,7 +238,7 @@ private fun rememberMotionCompensation(): Float {
 }
 
 /**
- * 浮动胶囊导航栏。
+ * 浮动胶囊导航栏（四项：首页 / 拍题 / 陪伴 / 功能中心）。
  *
  * 为什么不用 Material3 的 [NavigationBar]：
  * 1. 它默认高 80dp，且**横向铺满屏幕、四角直角**，在全面屏手机上像一条压在底部的色块，
@@ -259,7 +259,7 @@ private fun FloatingNavBar(
             Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(horizontal = 14.dp, vertical = 8.dp)
                 .shadow(elevation = 10.dp, shape = RoundedCornerShape(NAV_BAR_RADIUS), clip = false)
                 .clip(RoundedCornerShape(NAV_BAR_RADIUS))
                 .background(Tokens.Surface)
@@ -284,9 +284,9 @@ private fun FloatingNavBar(
                     imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                     contentDescription = stringResource(destination.labelRes),
                     tint = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
-                    modifier = Modifier.size(19.dp),
+                    modifier = Modifier.size(18.dp),
                 )
-                Spacer(Modifier.width(5.dp))
+                Spacer(Modifier.width(4.dp))
                 Text(
                     text = stringResource(destination.labelRes),
                     style = MaterialTheme.typography.labelMedium,
@@ -360,22 +360,9 @@ fun ToTopNavHost(
             )
         }
 
+        // 陪伴是顶层页（底栏第四项）：不显示返回箭头，求助在页内直接用语音/文字问。
         composable(route = Routes.COMPANION) {
-            com.totop.app.ui.companion.CompanionScreen(
-                onBack = { navController.popBackStack() },
-                onAskAi = {
-                    // 陪伴作业里的求助 = 新开一次拍题对话。
-                    //
-                    // 刻意不把当前内容带过去：陪伴模式里并没有在解某一道题，
-                    // 硬塞上下文只会让模型拿到一份错位的题干。
-                    navController.navigate(Routes.SOLVE_NEW) {
-                        // 清掉已有的拍题页，保证进去是干净的一轮
-                        popUpTo(Routes.SOLVE) { inclusive = true }
-                        launchSingleTop = true
-                        restoreState = false
-                    }
-                },
-            )
+            com.totop.app.ui.companion.CompanionScreen()
         }
 
         composable(route = Routes.HOME) {
@@ -386,7 +373,7 @@ fun ToTopNavHost(
                 onOpenOffline = { navController.navigate(Routes.OFFLINE) },
                 onOpenHub = { navController.navigateTopLevel(Routes.HUB) },
                 onOpenKnowledgePoint = { id -> navController.navigate(Routes.kpointDetail(id)) },
-                onOpenCompanion = { navController.navigate(Routes.COMPANION) },
+                onOpenCompanion = { navController.navigateTopLevel(Routes.COMPANION) },
             )
         }
 
@@ -423,7 +410,7 @@ fun ToTopNavHost(
                 onOpenOffline = { navController.navigate(Routes.OFFLINE) },
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                onOpenCompanion = { navController.navigate(Routes.COMPANION) },
+                onOpenCompanion = { navController.navigateTopLevel(Routes.COMPANION) },
             )
         }
 

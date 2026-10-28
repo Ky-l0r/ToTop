@@ -7,7 +7,7 @@ package com.totop.app.navigation
  * - kpoint_detail 需要知识点受控 ID，形如 KP_MATH_0312
  */
 object Routes {
-    // 顶层导航（底部栏可见，最多 3 项）
+    // 顶层导航（底栏可见，共 4 项：首页 / 拍题 / 陪伴 / 功能中心）
 
     /** 首次使用引导：仅在尚未看过引导时作为启动页。 */
     const val ONBOARDING = "onboarding"

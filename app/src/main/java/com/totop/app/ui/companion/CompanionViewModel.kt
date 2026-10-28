@@ -2,7 +2,10 @@ package com.totop.app.ui.companion
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.totop.app.data.repo.SettingsRepository
+import com.totop.app.data.prefs.SecretStore
+import com.totop.app.data.remote.CompanionAskEvent
+import com.totop.app.data.remote.CompanionAskGateway
+import com.totop.app.data.remote.LlmCallRegistry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -11,131 +14,106 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
-/** 陪伴作业里一道题的状态。 */
+/** 陪伴作业里这一题的状态。 */
 enum class CompanionPhase {
     /** 还没开始这一题。 */
     IDLE,
 
-    /** 计时中，学生自己写。 */
+    /** 正计时中。 */
     TIMING,
 
-    /** 暂停。 */
+    /** 暂停（含提问期间）。 */
     PAUSED,
-
-    /** 时间到，可以求助或继续自己想。 */
-    OVERTIME,
 }
 
-/**
- * 陪伴作业的默认参数。
- *
- * 单独抽一个对象而不是放在 [CompanionViewModel] 的 companion 里：
- * 数据类 [CompanionUiState] 的默认参数需要引用它，而逻辑上它并不属于 ViewModel。
- */
+/** 陪伴模式的固定阈值。 */
 object CompanionDefaults {
-    /** 默认每题 5 分钟。 */
-    const val PER_QUESTION_SECONDS: Int = 300
-
-    /** 可选的几档时长（秒）。 */
-    val PRESETS: List<Int> = listOf(180, 300, 480, 600)
-
-    const val MIN_SECONDS: Int = 60
-
-    const val MAX_SECONDS: Int = 1800
+    /** 本题专注超过这个秒数，提醒一次「可以问了」。 */
+    const val HINT_AFTER_SECONDS: Int = 300
 }
 
 /**
- * 陪伴作业的一轮统计。
+ * 陪伴作业的一轮状态。
  *
- * @param finishedCount 本轮已经自己写完的题数
- * @param hintCount 本轮求助过的题数
- * @param totalSeconds 本轮累计思考时长（秒）
+ * 与上一版的区别：这里是**正计时**（番茄钟），不是倒计时。
+ * 倒计时隐含「到点就该求助」，而新口径是「一直在做，卡住随时问」，
+ * 计时只负责记录专注时长，并在 5 分钟时给一句提醒。
+ *
+ * @param elapsedSeconds 本题已专注秒数
+ * @param finishedCount 本轮写完的题数
+ * @param askCount 本轮提问次数
+ * @param totalFocusSeconds 本轮已写完题目的专注秒数
  */
 data class CompanionUiState(
     val phase: CompanionPhase = CompanionPhase.IDLE,
-    /** 每题思考时长（秒），默认 5 分钟（见 [CompanionDefaults.PER_QUESTION_SECONDS]）。 */
-    val perQuestionSeconds: Int = CompanionDefaults.PER_QUESTION_SECONDS,
-    /** 剩余秒数。 */
-    val remainingSeconds: Int = CompanionDefaults.PER_QUESTION_SECONDS,
+    val elapsedSeconds: Int = 0,
     val finishedCount: Int = 0,
-    val hintCount: Int = 0,
-    val totalSeconds: Int = 0,
-    /** 是否已经结束本轮（结束卡片可见）。 */
+    val askCount: Int = 0,
+    val totalFocusSeconds: Int = 0,
+    /** 本题是否已经提醒过「做了一会儿了」。 */
+    val hinted: Boolean = false,
+    val question: String = "",
+    val answer: String? = null,
+    val answerError: String? = null,
+    val asking: Boolean = false,
     val roundFinished: Boolean = false,
 ) {
-    /** 分钟:秒 展示。 */
+    /** 分钟:秒。写作业很少超过一小时，因此不做时:分:秒。 */
     val clockText: String
         get() {
-            val safe = remainingSeconds.coerceAtLeast(0)
-            val minutes = safe / 60
-            val seconds = safe % 60
-            return minutes.toString().padStart(2, '0') + ":" + seconds.toString().padStart(2, '0')
+            val safe = elapsedSeconds.coerceAtLeast(0)
+            return (safe / 60).toString().padStart(2, '0') + ":" + (safe % 60).toString().padStart(2, '0')
         }
 
-    /** 进度 0..1（已用时间占比）。 */
-    val progress: Float
-        get() =
-            if (perQuestionSeconds <= 0) {
-                0f
-            } else {
-                ((perQuestionSeconds - remainingSeconds).toFloat() / perQuestionSeconds).coerceIn(0f, 1f)
-            }
+    /** 本轮累计（含正在做的这一题）。 */
+    val totalWithCurrent: Int get() = totalFocusSeconds + elapsedSeconds
+
+    /** 是否该显示「可以问了」的提醒。 */
+    val showHint: Boolean get() = hinted && !roundFinished
 
     /** 一句话状态。 */
     val statusText: String
         get() =
-            when (phase) {
-                CompanionPhase.IDLE -> "准备好就开始，先自己想五分钟"
-                CompanionPhase.TIMING -> "先自己动手，卡住也不要急着问"
-                CompanionPhase.PAUSED -> "已暂停"
-                CompanionPhase.OVERTIME -> "时间到。写下你能想到的第一步，实在没头绪再问"
+            when {
+                roundFinished -> "本轮结束"
+                asking -> "正在回答，计时已暂停"
+                phase == CompanionPhase.TIMING -> "自己在写，卡住随时问"
+                phase == CompanionPhase.PAUSED -> "已暂停"
+                else -> "准备好就开始，计时只记录你真正在写的时间"
             }
 }
 
 /**
- * 陪伴作业模式。
+ * 陪伴作业。
  *
- * 设计取舍（这一版只做「节奏」，不替学生写作业）：
- * 1. **计时是核心**：每道题先给固定时长（默认 5 分钟，可改 3/5/8/10），
- *    目的是拦住「一遇到卡顿就看答案」的习惯；
- * 2. **求助有门槛但不禁止**：时间到之前不给求助按钮，
- *    时间到之后才解锁「问一下 AI」——它跳转到拍题页，用的是同一套解题能力，
- *    不在陪伴模式里重造一套对话；
- * 3. **一轮结束给复盘**：做了几题、求助了几次、平均每题花多久。
+ * 三条规则：
+ * 1. **正计时**：只记录专注时长，不设截止时间；本轮结束给「几题 / 多久 / 问了几次」；
+ * 2. **随时可问**：提问时计时自动暂停，回答完自动恢复——问问题的时间不该算进专注时长；
+ * 3. **5 分钟提醒**：本题做到 5 分钟时给一句「卡住可以问我」，每题只提醒一次。
  *
- * 刻意不做的事：不统计正确率、不给排名、不发通知。陪伴模式的意义是
- * 「有人在旁边看着时间」，不是又一个排行榜。
+ * 刻意不做的事：不排名、不打卡、不发通知。
  */
 @HiltViewModel
 class CompanionViewModel
     @Inject
     constructor(
-        private val settingsRepository: SettingsRepository,
+        private val secretStore: SecretStore,
+        private val askGateway: CompanionAskGateway,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(CompanionUiState())
         val uiState: StateFlow<CompanionUiState> = _uiState.asStateFlow()
 
+        private val registry = LlmCallRegistry()
         private var ticker: Job? = null
+        private var askJob: Job? = null
 
-        /** 开始计时（或从暂停恢复）。 */
+        /** 开始（或从暂停恢复）正计时。 */
         fun start() {
-            val state = _uiState.value
-            if (state.phase == CompanionPhase.TIMING) return
-            // 从暂停恢复时保留剩余时间，重新开始时回到完整时长
-            val remaining =
-                if (state.phase == CompanionPhase.PAUSED) {
-                    state.remainingSeconds
-                } else {
-                    state.perQuestionSeconds
-                }
-            _uiState.value =
-                state.copy(
-                    phase = CompanionPhase.TIMING,
-                    remainingSeconds = remaining,
-                    roundFinished = false,
-                )
+            if (_uiState.value.phase == CompanionPhase.TIMING || _uiState.value.roundFinished) return
+            _uiState.update { it.copy(phase = CompanionPhase.TIMING) }
             launchTicker()
         }
 
@@ -146,48 +124,30 @@ class CompanionViewModel
             _uiState.update { it.copy(phase = CompanionPhase.PAUSED) }
         }
 
-        /** 这一题自己想完了：计入统计并进入下一题。 */
+        /** 这一题写完了：计入本轮统计，回到空闲并清掉提问内容。 */
         fun finishQuestion() {
             ticker?.cancel()
             ticker = null
             _uiState.update {
                 it.copy(
                     phase = CompanionPhase.IDLE,
-                    remainingSeconds = it.perQuestionSeconds,
+                    totalFocusSeconds = it.totalFocusSeconds + it.elapsedSeconds,
+                    elapsedSeconds = 0,
                     finishedCount = it.finishedCount + 1,
-                    totalSeconds = it.totalSeconds + (it.perQuestionSeconds - it.remainingSeconds).coerceAtLeast(0),
+                    hinted = false,
+                    question = "",
+                    answer = null,
+                    answerError = null,
                 )
             }
         }
 
-        /** 时间到之后求助：计入求助次数，剩余时间重置，让学生回来继续。 */
-        fun recordHint() {
-            _uiState.update {
-                it.copy(
-                    hintCount = it.hintCount + 1,
-                    totalSeconds = it.totalSeconds + it.perQuestionSeconds,
-                    phase = CompanionPhase.IDLE,
-                    remainingSeconds = it.perQuestionSeconds,
-                )
-            }
-        }
-
-        /** 切换每题的思考时长；只能在空闲状态下改。 */
-        fun setPerQuestionSeconds(seconds: Int) {
-            if (_uiState.value.phase == CompanionPhase.TIMING) return
-            val bounded = seconds.coerceIn(CompanionDefaults.MIN_SECONDS, CompanionDefaults.MAX_SECONDS)
-            _uiState.update {
-                it.copy(perQuestionSeconds = bounded, remainingSeconds = bounded)
-            }
-            viewModelScope.launch {
-                runCatching { settingsRepository.putInt(KEY_PER_QUESTION, bounded) }
-            }
-        }
-
-        /** 结束本轮并给出复盘；同时把本轮统计写进设置表，下次进来能看到上一轮。 */
+        /** 结束本轮，给出复盘。 */
         fun finishRound() {
             ticker?.cancel()
             ticker = null
+            askJob?.cancel()
+            registry.cancelAll()
             _uiState.update { it.copy(phase = CompanionPhase.IDLE, roundFinished = true) }
         }
 
@@ -195,21 +155,69 @@ class CompanionViewModel
         fun startNewRound() {
             ticker?.cancel()
             ticker = null
-            _uiState.update {
-                CompanionUiState(perQuestionSeconds = it.perQuestionSeconds, remainingSeconds = it.perQuestionSeconds)
-            }
+            _uiState.value = CompanionUiState()
         }
 
-        /** 读上一次选的时长。 */
-        fun bootstrap() {
-            viewModelScope.launch {
-                val stored =
-                    runCatching {
-                        settingsRepository.getInt(KEY_PER_QUESTION, CompanionDefaults.PER_QUESTION_SECONDS)
-                    }.getOrDefault(CompanionDefaults.PER_QUESTION_SECONDS)
-                val bounded = stored.coerceIn(CompanionDefaults.MIN_SECONDS, CompanionDefaults.MAX_SECONDS)
-                _uiState.update { it.copy(perQuestionSeconds = bounded, remainingSeconds = bounded) }
+        fun updateQuestion(text: String) {
+            _uiState.update { it.copy(question = text) }
+        }
+
+        /**
+         * 提问：暂停计时 → 请求 → 回答完自动恢复计时。
+         *
+         * 「自动恢复」只在提问前确实在计时时才做；学生本来就暂停着时，
+         * 回答完仍然保持暂停，不能替他决定继续。
+         */
+        fun ask() {
+            val state = _uiState.value
+            val text = state.question.trim()
+            if (text.isEmpty() || state.asking) return
+            val wasTiming = state.phase == CompanionPhase.TIMING
+            pause()
+            _uiState.update {
+                it.copy(asking = true, answer = null, answerError = null, askCount = it.askCount + 1)
             }
+            askJob?.cancel()
+            askJob =
+                viewModelScope.launch {
+                    val credentials = runCatching { secretStore.read() }.getOrNull()
+                    if (credentials == null || !credentials.canCall) {
+                        _uiState.update {
+                            it.copy(
+                                asking = false,
+                                answerError = "还没配置模型。请到设置页填写 Base URL、API Key 与模型名后再问。",
+                            )
+                        }
+                        return@launch
+                    }
+                    var last: CompanionAskEvent? = null
+                    runCatching {
+                        askGateway
+                            .ask(
+                                credentials = credentials,
+                                question = text,
+                                registry = registry,
+                                requestId = UUID.randomUUID().toString(),
+                            ).collect { event -> last = event }
+                    }.onFailure { failure ->
+                        _uiState.update {
+                            it.copy(asking = false, answerError = "提问失败：" + (failure.message ?: "未知原因"))
+                        }
+                        if (wasTiming) start()
+                        return@launch
+                    }
+                    when (val outcome = last) {
+                        is CompanionAskEvent.Completed ->
+                            _uiState.update { it.copy(asking = false, answer = outcome.text) }
+                        is CompanionAskEvent.Failed ->
+                            _uiState.update { it.copy(asking = false, answerError = outcome.error.userMessage) }
+                        else ->
+                            _uiState.update {
+                                it.copy(asking = false, answerError = "模型没有返回内容，可以再问一次。")
+                            }
+                    }
+                    if (wasTiming) start()
+                }
         }
 
         private fun launchTicker() {
@@ -217,32 +225,26 @@ class CompanionViewModel
             ticker =
                 viewModelScope.launch {
                     while (true) {
-                        delay(1000L)
+                        delay(1_000L)
                         val state = _uiState.value
                         if (state.phase != CompanionPhase.TIMING) return@launch
-                        if (state.remainingSeconds <= 1) {
-                            _uiState.update {
-                                it.copy(
-                                    remainingSeconds = 0,
-                                    phase = CompanionPhase.OVERTIME,
-                                    totalSeconds = it.totalSeconds + it.perQuestionSeconds,
-                                )
-                            }
-                            return@launch
+                        val next = state.elapsedSeconds + 1
+                        _uiState.update {
+                            it.copy(
+                                elapsedSeconds = next,
+                                // 每题只提醒一次；提醒不打断计时，学生没看屏幕时也只是一句提示
+                                hinted = it.hinted || next >= CompanionDefaults.HINT_AFTER_SECONDS,
+                            )
                         }
-                        _uiState.update { it.copy(remainingSeconds = it.remainingSeconds - 1) }
                     }
                 }
         }
 
         override fun onCleared() {
             ticker?.cancel()
+            askJob?.cancel()
+            registry.cancelAllAndSeal()
             ticker = null
             super.onCleared()
-        }
-
-        companion object {
-            /** 设置表里的键。 */
-            private const val KEY_PER_QUESTION: String = "companionPerQuestionSeconds"
         }
     }
