@@ -6,6 +6,7 @@ import com.totop.app.data.repo.SolveSession
 import com.totop.app.domain.model.AiQuestion
 import com.totop.app.domain.model.AiSolvedContent
 import com.totop.app.domain.model.AiStage
+import com.totop.app.domain.model.ChoiceAnswerGuard
 import com.totop.app.domain.model.ErrorType
 import com.totop.app.domain.model.FirstError
 import com.totop.app.domain.model.Question
@@ -62,6 +63,13 @@ data class ConversationMessage(
     val failedStage: AiStage? = null,
     /** 失败是否可重试。 */
     val retryable: Boolean = false,
+    /**
+     * 追问里发生了答案订正、并已写回错题本时的回执文案。
+     *
+     * 单独一个字段而不是拼进 [text]：正文要原样用于下一轮追问的上下文，
+     * 混进「已同步错题本」这类系统提示会污染模型的输入。
+     */
+    val correctionNote: String? = null,
     val createdAtUtc: Long = 0L,
 )
 
@@ -88,6 +96,13 @@ data class SolutionPayload(
      * 用户手上没有选项可以对照，根本无从判断到底漏了哪几个。
      */
     val options: List<String> = emptyList(),
+    /**
+     * 阶段 A 判定的题型（见 [ChoiceAnswerGuard]）。
+     *
+     * 有了它，才谈得上「按题型限制可选数量」：
+     * 旧版只能靠题干里的「多选」字样猜，猜错就放行了一个数量不对的答案。
+     */
+    val choiceType: String = ChoiceAnswerGuard.UNKNOWN,
     val steps: List<SolutionStepView> = emptyList(),
     val finalAnswer: String = "",
     val method: String = "",
@@ -112,21 +127,17 @@ data class SolutionPayload(
     val hasError: Boolean get() = firstError != null
 
     /**
-     * 答案是否「像是单选题答法」（只有一个选项字母）。
+     * 答案数量与题型不符时的说明；一致或题型未知时返回 null。
      *
-     * 只在题干带「多选 / 至少有两个 / 正确的是」这类线索时才值得提示，
-     * 否则单选题也会被误标，反而制造焦虑。
+     * 判定统一走 [ChoiceAnswerGuard]：管线里「要不要重答」与界面上「要不要提示」
+     * 用的是同一套规则，不会出现「后台认为没问题、界面却在报警」的分叉。
      */
-    fun answerLooksSingleChoice(): Boolean {
-        if (!stem.containsMultiChoiceHint() && !finalAnswer.containsMultiChoiceHint()) return false
-        val letters = finalAnswer.filter { it in 'A'..'D' || it in 'a'..'d' }
-        return letters.length <= 1
-    }
-
-    /** 题干/答案里是否出现了多选线索。 */
-    private fun String.containsMultiChoiceHint(): Boolean =
-        contains("多选") || contains("至少有两个") || contains("多项选择") ||
-            contains("正确的是") || contains("正确的有")
+    fun choiceViolation(): String? =
+        ChoiceAnswerGuard.violation(
+            options = options,
+            finalAnswer = finalAnswer,
+            choiceType = choiceType,
+        )
 }
 
 /** 解答步骤的展示行。 */
@@ -566,6 +577,7 @@ object SolutionMapper {
             known = content.question.known,
             ask = content.question.ask,
             options = content.question.options,
+            choiceType = content.choiceType,
             steps = steps,
             finalAnswer = content.standardSolution.finalAnswer,
             method = content.standardSolution.method,
@@ -639,6 +651,7 @@ object SolutionMapper {
                 },
             summaryCard = payload.summary?.let { SummaryCard(title = it.title, bullets = it.bullets) },
             aiGenerated = true,
+            choiceType = payload.choiceType,
         )
 
     /** 阶段 A 的识题结果 -> 领域 Question（落库用，补上时间戳与图片信息）。 */

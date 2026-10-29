@@ -75,6 +75,27 @@ object Tokens {
 
     val WarningContainer = Color(0xFFFDF3DD)
 
+    // ---------- 讲解内容的两种语义色 ----------
+
+    /**
+     * 「解题思路」色：偏紫的深灰蓝。
+     *
+     * 讲解里有两类内容必须一眼分得开：**为什么这样想**（思路、依据、判断）与
+     * **具体怎么算**（代入、变形、得数）。全部用同一个墨色时，一屏十几行公式
+     * 和说明混在一起，学生读三行就不知道自己读到哪了。
+     * 思路用与主色同色系的紫，计算用青色，两者在白底上对比度都在 6:1 以上（WCAG AA）。
+     */
+    val Reasoning = Color(0xFF5B4FA8)
+
+    /** 思路块的浅底。 */
+    val ReasoningContainer = Color(0xFFF3F0FF)
+
+    /** 「计算过程」色：偏冷的青蓝，与思路色色相拉开。 */
+    val Calculation = Color(0xFF1B6B7A)
+
+    /** 计算块的浅底：把连续几行算式聚成一块，避免公式堆叠成一片。 */
+    val CalculationContainer = Color(0xFFE9F5F7)
+
     // ---------- 掌握度三档（沿用既有语义：红<40 / 黄<=70 / 绿>70） ----------
     val MasteryLow = Color(0xFFC0392B)
 

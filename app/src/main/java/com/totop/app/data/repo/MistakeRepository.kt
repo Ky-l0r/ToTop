@@ -12,6 +12,7 @@ import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
 import com.totop.app.domain.model.MistakeRecord
 import com.totop.app.domain.model.ReviewLog
+import com.totop.app.domain.model.StandardSolution
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -196,6 +197,36 @@ class MistakeRepository
                 )
             }
         }
+
+        /**
+         * 用追问得到的订正结果更新错题记录。
+         *
+         * 只改「结论」这一层：最终答案与标准解答里的答案字段。
+         * 学生步骤、错因、知识点归属、复发计数一律不动——
+         * 这次订正是**同一道题**的结论修正，不是重新做错一次，
+         * 动别的字段会让掌握度与复习排期凭空多出一轮。
+         *
+         * 直接 upsert 整行（保留主键与其它列）而不是走 [save]：
+         * [save] 会按 assignments 重写知识点归属，传空列表就把归属清空了。
+         *
+         * @return 错题是否存在并已更新
+         */
+        suspend fun applyCorrection(
+            mistakeId: String,
+            finalAnswer: String,
+            solution: StandardSolution,
+        ): Boolean =
+            withContext(dispatcher) {
+                val row = mistakeDao.findById(mistakeId) ?: return@withContext false
+                val updated =
+                    row.toDomain()
+                        .copy(
+                            finalAnswer = finalAnswer,
+                            correctSolution = solution.copy(finalAnswer = finalAnswer),
+                        ).toEntity()
+                mistakeDao.upsert(updated)
+                true
+            }
 
         /** 某知识点下的错题归属（含置信度）。 */
         suspend fun linksOfKpoint(kpointId: String): List<MistakeKpointLink> =

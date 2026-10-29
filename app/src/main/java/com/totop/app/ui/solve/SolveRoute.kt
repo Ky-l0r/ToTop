@@ -19,6 +19,7 @@ import com.totop.app.ui.capture.PREVIEW_LONG_SIDE
 import com.totop.app.ui.capture.PagePreviewScreen
 import com.totop.app.ui.chat.NetworkStatus
 import com.totop.app.ui.chat.SolveViewModel
+import com.totop.app.ui.common.ImmersiveEffect
 import com.totop.app.util.NormalizedRect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -154,6 +155,9 @@ fun SolveRoute(
     }
 
     if (previewOpen && draftPages.pages.isNotEmpty()) {
+        // 框选页要沉浸：底部导航栏占的 80-90dp 全部让给图片，
+        // 图片按 Fit 缩放，高度多一截就能多框一行字（真机反馈「框选区域太小」的根因之一）。
+        ImmersiveEffect(active = true)
         val bitmap = bitmaps.getOrNull(activePage)
         PagePreviewScreen(
             draft = draftPages,

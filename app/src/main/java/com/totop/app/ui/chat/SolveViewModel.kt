@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.AiGateway
+import com.totop.app.data.remote.FollowUpCorrection
 import com.totop.app.data.remote.FollowUpEvent
 import com.totop.app.data.remote.FollowUpGateway
 import com.totop.app.data.remote.FollowUpTurn
@@ -750,8 +751,16 @@ class SolveViewModel
                                         updateMessage(replyId) { it.copy(text = buffer.toString()) }
                                     }
                                     is FollowUpEvent.Completed -> {
+                                        // 回答里可能带一行「[[订正]]最终答案：…」：
+                                        // 那一行是给客户端写库用的，不能显示给学生，也不能进下一轮上下文。
+                                        val parsed = FollowUpCorrection.parse(event.text)
                                         updateMessage(replyId) {
-                                            it.copy(text = event.text, streaming = false)
+                                            it.copy(text = parsed.text, streaming = false)
+                                        }
+                                        // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
+                                        // 看到的还是那个被推翻的旧答案。
+                                        parsed.correctedAnswer?.let { corrected ->
+                                            syncCorrection(answer = corrected, replyId = replyId)
                                         }
                                         if (hasSupplement && encoded.isNotEmpty()) {
                                             refreshQuestionFromSupplement(solution?.questionId, encoded)
@@ -792,6 +801,59 @@ class SolveViewModel
                         persistSession(solution?.subjectCode.orEmpty())
                     }
                 }
+        }
+
+        /**
+         * 追问里 AI 订正了最终答案：写回错题本，并同步界面上方那张解答卡。
+         *
+         * 为什么必须回写：错题本里的「标准解答 / 答案」是学生在复习页核对的全部依据。
+         * 追问把答案从「A、C」改成「C」而库里还是「A、C」，
+         * 他下次复习看到的就还是错的结论——这比不纠错更糟。
+         *
+         * 写不进去时不静默：气泡上给一句可执行的回执，而不是让用户以为已经同步。
+         */
+        private suspend fun syncCorrection(
+            answer: String,
+            replyId: String,
+        ) {
+            val payload = latestSolution() ?: return
+            if (payload.finalAnswer.trim() == answer.trim()) return
+            val mistakeId = payload.mistakeId
+            if (mistakeId.isNullOrBlank()) {
+                updateMessage(replyId) {
+                    it.copy(correctionNote = "这次订正没能写进错题本：这道题当时没有入库")
+                }
+                return
+            }
+            val solution = SolutionMapper.toContent(payload).standardSolution
+            val updated =
+                runCatching {
+                    mistakeRepository.applyCorrection(
+                        mistakeId = mistakeId,
+                        finalAnswer = answer,
+                        solution = solution,
+                    )
+                }.getOrNull() ?: false
+            if (!updated) {
+                updateMessage(replyId) {
+                    it.copy(correctionNote = "这次订正没能写进错题本，可以到错题详情页手动核对")
+                }
+                return
+            }
+            // 界面上的卡片同步改：同一个屏幕上不能同时出现新旧两个答案
+            _messages.update { list ->
+                list.map { message ->
+                    val current = message.solution
+                    if (current != null && current.mistakeId == mistakeId) {
+                        message.copy(solution = current.copy(finalAnswer = answer))
+                    } else {
+                        message
+                    }
+                }
+            }
+            updateMessage(replyId) {
+                it.copy(correctionNote = "已把订正写进错题本 · 新答案：" + answer)
+            }
         }
 
         /** 把解答压成追问上下文。 */

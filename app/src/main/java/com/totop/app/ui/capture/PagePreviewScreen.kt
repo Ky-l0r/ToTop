@@ -41,6 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.QuestionDraft
@@ -104,13 +105,12 @@ fun PagePreviewScreen(
             }
         }
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
-        // 顶部：取消 + 页序
+        // 顶部：取消 + 页序 + 重拍（重拍从整行按钮收进标题栏，省下一整行高度）
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(onClick = onCancel) { Text("取消", color = Color.White) }
-            Spacer(Modifier.width(4.dp))
             Text(
                 text =
                     if (draft.isMultiPage) {
@@ -120,10 +120,17 @@ fun PagePreviewScreen(
                     },
                 color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
+            TextButton(onClick = onRetake) { Text("重拍这页", color = Color.White) }
         }
 
         // 中间：照片 + 框选层
+        //
+        // 这一块是整页唯一被拉伸的区域（weight 1f），其余控件都压到最小：
+        // 图片按 Fit 缩放，上下留白越多，能框到的细节越少。
         Box(
             modifier =
                 Modifier
@@ -164,7 +171,7 @@ fun PagePreviewScreen(
         // 学生框完题目抬头找确认，如果只是底部一行灰字变了，很容易漏看，
         // 结果就是「我都不知道自己有没有框上」。
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -175,7 +182,7 @@ fun PagePreviewScreen(
                         .weight(1f)
                         .clip(RoundedCornerShape(Tokens.RadiusMedium))
                         .background(if (cropped) Color(0xFF2E7D5B) else Color.White.copy(alpha = 0.14f))
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -189,6 +196,8 @@ fun PagePreviewScreen(
                         text = if (cropped) "已框选：只上传框内的部分" else "未框选：将上传整张图",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -196,21 +205,10 @@ fun PagePreviewScreen(
                 Text("用整张图", color = Color.White)
             }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            OutlinedButton(onClick = onRetake, modifier = Modifier.weight(1f)) {
-                Text("重拍这页", color = Color.White)
-            }
-        }
 
-        Spacer(Modifier.height(10.dp))
-
-        // 多页缩略图：加拍 / 删除 / 排序
+        // 多页缩略图：加拍 / 删除 / 排序（高度压到 52dp，只保留辨认页序所需的信息）
         LazyRow(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -243,8 +241,8 @@ fun PagePreviewScreen(
                 Box(
                     modifier =
                         Modifier
-                            .size(64.dp)
-                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                            .size(THUMB_SIZE)
+                            .background(Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
                             .clickable(onClick = onAddPage),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -253,10 +251,8 @@ fun PagePreviewScreen(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-
         // 底部动作
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp)) {
             Button(
                 onClick = onConfirm,
                 enabled = !loading && draft.pages.isNotEmpty(),
@@ -264,11 +260,8 @@ fun PagePreviewScreen(
             ) {
                 Text(if (loading) "图片处理中…" else "确认，去写解题思路")
             }
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onSaveOffline, modifier = Modifier.weight(1f)) {
-                    Text("先记下来（不联网）", color = Color.White.copy(alpha = 0.85f))
-                }
+            TextButton(onClick = onSaveOffline, modifier = Modifier.fillMaxWidth()) {
+                Text("先记下来（不联网）", color = Color.White.copy(alpha = 0.85f))
             }
         }
     }
@@ -286,10 +279,10 @@ private fun PageThumb(
     Box(
         modifier =
             Modifier
-                .size(64.dp)
+                .size(THUMB_SIZE)
                 .background(
                     if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.2f),
-                    RoundedCornerShape(10.dp),
+                    RoundedCornerShape(8.dp),
                 )
                 .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -331,3 +324,6 @@ private fun PageThumb(
  * 1280 与上传图长边一致——预览里看到的就是最终上传的内容，所见即所得。
  */
 const val PREVIEW_LONG_SIDE: Int = 1280
+
+/** 页缩略图边长：够看清页序与大致内容，又不和框选区抢高度。 */
+private val THUMB_SIZE = 52.dp

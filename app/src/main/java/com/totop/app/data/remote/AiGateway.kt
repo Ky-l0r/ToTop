@@ -8,6 +8,7 @@ import com.totop.app.domain.model.AiSolveResultCodec
 import com.totop.app.domain.model.AiSolveResultMapper
 import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.AiStandardSolution
+import com.totop.app.domain.model.ChoiceAnswerGuard
 import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.Subjects
 import com.totop.app.ml.ModelRouter
@@ -146,8 +147,7 @@ class AiGateway(
 
             try {
                 // ---------- 路由 ----------
-                // 本次是否带了题目图片交给路由决定档位：
-                // 只按 OCR 置信度判断会把「图里才有的条件」整包丢掉，
+                // 档位由「有没有带图」决定：只按 OCR 置信度判断会把「图里才有的条件」整包丢掉，
                 // 多页题目的第 2 页起更是一张都不会被看到。
                 val hasImages = request.image != null || request.extraImages.isNotEmpty()
                 val decision = router.route(request.ocr, hasImages = hasImages)
@@ -180,9 +180,7 @@ class AiGateway(
                             promptVersion = identifyPrompt.promptVersion,
                             prompt = identifyPrompt,
                             image = if (decision.attachImage) request.image else null,
-                            // 多页题目：阶段 A（识题）必须一次看到全部页面。
-                            // 只传第 1 页的话，续页里的第 (2) 问、附加条件、图形全部丢失，
-                            // 学生看到的就是「拍了很多页，AI 只认得第一张」。
+                            // 阶段 A 必须一次看到全部页面，否则续页里的第 (2) 问与图形会丢
                             extraImages = if (decision.attachImage) request.extraImages else emptyList(),
                             maxTokens = request.maxTokens,
                             registry = registry,
@@ -208,6 +206,8 @@ class AiGateway(
                         ask = questionObject.stringOr("ask", ""),
                         options = questionObject.stringListOr("options"),
                         hasFigure = questionObject.booleanOr("hasFigure", false),
+                        // 题型：拿不到就按「未知」处理，不做数量校验，避免误伤老缓存
+                        choiceType = questionObject.stringOrNull("choiceType"),
                     )
                 if (question.stem.isNullOrBlank()) {
                     throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未识别出题干（stem 为空）"))
@@ -221,7 +221,7 @@ class AiGateway(
                 stage = AiStage.B
                 send(SolveEvent.StageStarted(stage))
                 val solvePrompt = promptRepository.assemble(StageInput.Solve(question), requestId = requestId)
-                val rawB =
+                var rawB =
                     callStage(
                         credentials = credentials,
                         requestId = requestId,
@@ -236,12 +236,30 @@ class AiGateway(
                         onFirstToken = { elapsed -> send(SolveEvent.FirstToken(AiStage.B, elapsed)) },
                     )
                 totalUsage = totalUsage.plus(rawB.usage)
-                val solution = decodeStandardSolution(rawB.raw)
-                if (solution.steps.isEmpty()) {
-                    throw LlmException(LlmError.MalformedResponse(detail = "阶段 B 未产出任何解答步骤"))
-                }
+                val firstSolution = decodeStandardSolution(rawB.raw)
+                if (firstSolution.steps.isEmpty()) throw LlmException(LlmError.MalformedResponse("阶段 B 未产出任何解答步骤"))
+                // 题型与答案个数对不上时重答一次（见 ChoiceEnforcement 里的说明）
+                val enforced =
+                    enforceChoiceAnswer(question, solvePrompt, firstSolution, warnings) { retryPrompt ->
+                        callStage(
+                            credentials = credentials,
+                            requestId = requestId,
+                            stage = AiStage.B,
+                            model = decision.model,
+                            promptVersion = solvePrompt.promptVersion,
+                            prompt = retryPrompt,
+                            image = null,
+                            maxTokens = request.maxTokens,
+                            registry = registry,
+                            onDelta = { text -> send(SolveEvent.Delta(AiStage.B, text)) },
+                            onFirstToken = { elapsed -> send(SolveEvent.FirstToken(AiStage.B, elapsed)) },
+                        )
+                    }
+                totalUsage = totalUsage.plus(enforced.usage)
+                // 重答通过校验才替换，否则沿用第一次的结果（差异已写进 warnings）
+                val solution = enforced.solution ?: firstSolution
+                val rawBText = enforced.raw ?: rawB.raw
                 send(SolveEvent.StageCompleted(AiStage.B, "解得 " + solution.steps.size + " 步"))
-
                 // ---------- 阶段 C：错因定位（必须注入学生过程） ----------
                 stage = AiStage.C
                 send(SolveEvent.StageStarted(stage))
@@ -338,7 +356,7 @@ class AiGateway(
                 val contractJson =
                     buildContractJson(
                         question = question,
-                        solutionObject = decodeJsonObject(rawB.raw),
+                        solutionObject = decodeJsonObject(rawBText),
                         stageCObject = stageC,
                         stageDObject = decodeJsonObject(rawD),
                     )
@@ -890,6 +908,9 @@ class AiGateway(
                 put("ask", question.ask.orEmpty())
                 put("options", buildJsonArray { question.options.forEach { add(JsonPrimitive(it)) } })
                 put("hasFigure", question.hasFigure)
+                // 题型跟着 question 一起进契约：阶段 C/D 与最终 DTO 都需要它，
+                // 少写这一项会让「单选/多选校验」在合并后的结果里丢掉依据。
+                put("choiceType", ChoiceAnswerGuard.normalize(question.choiceType))
             }
 
         /** 解析阶段 B 的输出为 [AiStandardSolution]。 */

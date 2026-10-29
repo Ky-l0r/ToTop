@@ -1,6 +1,6 @@
 {
-  "promptVersion": "1.4.0",
-  "releasedAt": "2026-10-28",
+  "promptVersion": "1.5.0",
+  "releasedAt": "2026-10-30",
   "description": "四阶段提示词版本号，参与缓存键计算：缓存键 = sha256(图片或题干) + promptVersion + model。任一阶段提示词文本变更都必须同步升级本版本号，否则旧缓存会被错误复用。",
   "stages": {
     "A": "stage_a_identify.md",

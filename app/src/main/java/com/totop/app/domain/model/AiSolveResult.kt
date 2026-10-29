@@ -16,6 +16,13 @@ data class AiQuestion(
     val ask: String? = null,
     val options: List<String> = emptyList(),
     val hasFigure: Boolean = false,
+    /**
+     * 题型：`single` / `multi` / `none` / `unknown`（取值与 [ChoiceAnswerGuard] 一致）。
+     *
+     * 旧版契约里没有这个字段，因此必须可空并给默认值：
+     * 老会话、老缓存里的阶段 A 输出没有它，解析不能因此失败。
+     */
+    val choiceType: String? = null,
 )
 
 /** 阶段 B：标准解答的单步（6.4 `standardSolution.steps[]`）。 */

@@ -5,6 +5,37 @@
 
 ## [Unreleased]
 
+### 第八轮：六项体验修复
+
+#### Fixed
+
+- **复习页看不到原题图片**：`ReviewCandidate` 带上 `question.imagePath`，题干卡里直接展示原图
+  （点一下放大到 420dp）；题干改为按公式渲染并显示全文，不再只给 80 字摘要。
+- **讲解里公式堆成一摞**：行内公式改用 `AnnotatedString` + `inlineContent` 排进同一段文字，
+  只有 `$$…$$` 行间公式才单独居中；讲解正文按语义分行渲染，思路与计算用不同颜色，
+  结论单独强调（`ui/solve/AnswerBlocks.kt`）。
+- **框选可用区域太小**：框选页进入沉浸态，底部导航栏让出 80-90dp 高度；
+  页面内操作区从四行压到三行（重拍收进标题栏、缩略图 64→52dp）。
+- **追问纠错后错题本没同步**：追问回答带 `[[订正]]最终答案：…` 时剥掉标记行，
+  把新答案写回 `mistake_record` 与标准解答，气泡给出「已写进错题本」回执；
+  写不进去时明确说明原因，不静默。
+- **单选/多选判断错**：阶段 A 输出 `choiceType`，阶段 B 按题型限制 `finalAnswer` 的选项个数，
+  客户端 `ChoiceAnswerGuard` 校验，不符时定向重答一次；仍不符则在界面明示差异。
+- **语音几乎识别不出、音量条不动**：识别引擎逐个兜底（最多 3 个）、补静音判定与语言参数、
+  松动后没等到最终结果时用部分结果兜底；音量条按 RMS 快起慢落，引擎不上报音量时
+  改用呼吸指示并标注「正在拾音」。
+
+#### Added
+
+- 四个新单元：`domain/model/ChoiceAnswerGuard`、`ui/solve/AnswerBlocks`、
+  `data/remote/ChoiceEnforcement`、`ui/common/ImmersiveHost`，均带单测。
+- 讲解配色 token：`Reasoning` / `ReasoningContainer` / `Calculation` / `CalculationContainer`。
+
+#### Changed
+
+- 提示词升到 **1.5.0**：阶段 A 输出 `choiceType`，阶段 B 按题型约束答案数量。
+  阶段 B 在「答案个数与题型不符」时可能多调用一次（取舍见 docs/偏离记录.md 第 24 节）。
+
 ## [0.5.0] - 2026-10-29
 
 本轮收口十四项需求：拍题输入区与语音重做、动效、已掌握、错题多页、补拍更新、

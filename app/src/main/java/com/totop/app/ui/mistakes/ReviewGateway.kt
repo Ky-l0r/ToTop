@@ -127,14 +127,19 @@ class RoomReviewGateway
                     }
             val questionRow =
                 database.query(
-                    "SELECT q.stemText AS stemText, q.subject AS subject FROM question AS q " +
+                    "SELECT q.stemText AS stemText, q.subject AS subject, q.imagePath AS imagePath " +
+                        "FROM question AS q " +
                         "INNER JOIN mistake_record AS mr ON mr.questionId = q.id WHERE mr.id = ? LIMIT 1",
                     arrayOf(mistakeId),
                 ).use { row ->
                     if (row.moveToFirst()) {
-                        row.getStringOrNull(0).orEmpty() to row.getStringOrNull(1).orEmpty()
+                        QuestionRow(
+                            stemText = row.getStringOrNull(0).orEmpty(),
+                            subject = row.getStringOrNull(1).orEmpty(),
+                            imagePath = row.getStringOrNull(2)?.takeIf { it.isNotBlank() },
+                        )
                     } else {
-                        "" to ""
+                        QuestionRow()
                     }
                 }
             val kpointNames =
@@ -154,8 +159,9 @@ class RoomReviewGateway
             return ReviewCandidate(
                 mistakeId = record.mistake.id,
                 questionId = record.mistake.questionId,
-                stemText = questionRow.first,
-                subject = questionRow.second,
+                stemText = questionRow.stemText,
+                subject = questionRow.subject,
+                imagePath = questionRow.imagePath,
                 errorTypeLabel = record.mistake.errorType.label,
                 kpointNames = kpointNames,
                 finalAnswer = record.mistake.finalAnswer,
@@ -173,3 +179,10 @@ class RoomReviewGateway
             const val MAX_LIMIT: Int = 20
         }
     }
+
+/** 复习页需要的题目字段（一次查询取全，避免按页发多次 SQL）。 */
+private data class QuestionRow(
+    val stemText: String = "",
+    val subject: String = "",
+    val imagePath: String? = null,
+)

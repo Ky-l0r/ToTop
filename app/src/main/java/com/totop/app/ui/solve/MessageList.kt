@@ -218,7 +218,9 @@ private fun AssistantTextBubble(
                     .padding(horizontal = 14.dp, vertical = 10.dp),
         ) {
             if (message.text.isNotBlank()) {
-                FormulaText(text = message.text, style = MaterialTheme.typography.bodyMedium)
+                // 追问回答按语义分行渲染：思路（为什么）与计算（算式）用不同颜色，
+                // 结论单独强调。整段直接甩出来的话，一屏七八条公式会糊成一片。
+                AnswerBody(text = message.text, style = MaterialTheme.typography.bodyMedium)
             }
             if (message.streaming) {
                 // 解题期间不再显示模型的原始增量（那是一大段 JSON），
@@ -234,6 +236,23 @@ private fun AssistantTextBubble(
                         },
                     hint = thinkingHint,
                 )
+            }
+            // 订正回执：纠错到底有没有进错题本，必须让用户看见
+            message.correctionNote?.let { note ->
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint = Tokens.Success,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        text = "  " + note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.Success,
+                    )
+                }
             }
             if (failed != null) {
                 Spacer(Modifier.height(8.dp))
@@ -337,11 +356,11 @@ private fun SolutionBubble(
                         }
                     }
                 }
-                // 多选题的答案要是只写了一个字母，就地提示一句，
-                // 比让学生自己猜「是不是漏选了」更有用。
-                if (payload.options.size >= 4 && payload.answerLooksSingleChoice()) {
+                // 答案个数与题型对不上时，就地说明——比让学生自己猜「是不是漏选了」更有用。
+                // 判据来自阶段 A 识别出的题型，不再是「题干里有没有『多选』字样」这种猜法。
+                payload.choiceViolation()?.let { problem ->
                     Text(
-                        text = "这道题看起来是多选，但答案只给了一个选项。可以追问「其他选项为什么不对」。",
+                        text = problem,
                         style = MaterialTheme.typography.labelSmall,
                         color = Tokens.Warning,
                     )
@@ -616,10 +635,9 @@ private fun SolutionStepsCard(payload: SolutionPayload) {
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         if (step.why.isNotBlank()) {
-                            FormulaText(
-                                text = "为什么：" + step.why,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                            // 「为什么」是思路，不是计算：统一用思路色，
+                            // 与上下的算式行形成稳定区分，学生扫读时不用逐字读也能分清两类内容。
+                            ReasoningNote(text = step.why)
                         }
                     }
                 }
@@ -632,6 +650,40 @@ private fun SolutionStepsCard(payload: SolutionPayload) {
                     fontWeight = FontWeight.SemiBold,
                 )
             }
+        }
+    }
+}
+
+/**
+ * 一条「思路」注记：左侧思路色竖标 + 小标 + 正文。
+ *
+ * 只用颜色区分是不够的（色弱用户看不出差别），因此同时给了「思路」这两个字。
+ */
+@Composable
+private fun ReasoningNote(text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 1.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Text(
+            text = "思路",
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.Reasoning,
+            fontWeight = FontWeight.Medium,
+        )
+        Box(
+            modifier =
+                Modifier
+                    .width(2.dp)
+                    .height(12.dp)
+                    .background(Tokens.Reasoning),
+        )
+        Box(modifier = Modifier.weight(1f)) {
+            FormulaText(
+                text = text,
+                style = MaterialTheme.typography.bodySmall.copy(color = Tokens.Reasoning),
+            )
         }
     }
 }

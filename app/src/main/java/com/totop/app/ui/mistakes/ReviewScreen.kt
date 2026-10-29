@@ -1,6 +1,7 @@
 package com.totop.app.ui.mistakes
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -40,6 +42,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -93,6 +97,8 @@ fun ReviewScreen(
             )
         },
     ) { innerPadding ->
+        // 公式渲染宿主：题干里的 LaTeX 要走与解题页同一套离线渲染
+        com.totop.app.ui.components.FormulaRenderHost()
         Column(
             modifier =
                 Modifier
@@ -217,7 +223,20 @@ private fun CurrentQuestion(
     val candidate = session.current ?: return
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionCard(title = "第 " + (session.index + 1) + " 题 · " + candidate.errorTypeLabel) {
-            Text(text = candidate.stemSummary.ifBlank { "（题干为空，请以原题图片为准）" })
+            // 复习要看完整题干，不能只给 80 字的摘要：摘要是列表用的，
+            // 到了「自己再做一遍」这一步，题目缺一半就等于没题。
+            // 用 FormulaText 而不是 Text：题干里的公式（$…$）要按真实排版显示，
+            // 否则学生复习时看到的是「\frac{1}{2}mv^2」这种源码。
+            com.totop.app.ui.components.FormulaText(
+                text = candidate.stemText.ifBlank { "这道题没有保存题干，请以原图为准。" },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            // 原题图片必须显示出来。
+            //
+            // 题干是模型转写的文字，几何图、装置图、化学结构式只存在于图里；
+            // 复习页之前完全没有图，学生看到的是一道「缺了图」的题，
+            // 既没法重做，也没法核对当时到底错在哪。
+            candidate.imagePath?.let { path -> ReviewQuestionImage(path = path) }
             if (candidate.kpointNames.isNotEmpty()) {
                 Row(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -312,6 +331,45 @@ private fun CurrentQuestion(
             state = uiState.checkState,
             onToggle = onToggleAiCheck,
             onRun = onRunAiCheck,
+        )
+    }
+}
+
+/**
+ * 复习页的原题图片：默认高度 170dp，点一下放大到 420dp。
+ *
+ * 用 coil 直接读本地文件，与错题详情页保持同一套渲染方式；
+ * 不走「先解码成 Bitmap 再塞进状态」的路子，避免在复习流程里常驻一份大图。
+ */
+@Composable
+private fun ReviewQuestionImage(path: String) {
+    var expanded by remember(path) { mutableStateOf(false) }
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(if (expanded) 420.dp else 170.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { expanded = !expanded },
+        contentAlignment = Alignment.Center,
+    ) {
+        coil.compose.AsyncImage(
+            model = java.io.File(path),
+            contentDescription = "这道题的原题图片",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(),
+        )
+        Text(
+            text = if (expanded) "点一下缩小" else "点一下放大",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(6.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.85f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
 }

@@ -208,7 +208,11 @@ class FollowUpGateway
                     append("1. 用中文口语化的讲解，像面对面说话，不要用 Markdown 标题和表格；\n")
                     append("2. 直接回答学生的疑问，必要时引用原题的条件或某一步骤；\n")
                     append("3. 如果学生问的是一道新题，就按新题独立作答；\n")
-                    append("4. 不要输出 JSON，不要说「作为 AI」之类的话。\n")
+                    append("4. 不要输出 JSON，不要说「作为 AI」之类的话；\n")
+                    append("5. 如果这次回答**推翻了之前的最终答案**（改选项、改结论、改得数），\n")
+                    append("   必须在回答的最后单独一行给出订正，格式严格照抄：\n")
+                    append("   ").append(CORRECTION_MARKER).append("最终答案：<新的最终答案>；理由：<一句话>\n")
+                    append("   没有改变最终答案时，**禁止**出现这一行；不要用别的方式表达订正。\n")
                     if (supplementNote.isNotBlank()) {
                         append("\n=== 本次带图 ===\n")
                         append(supplementNote).append('\n')
@@ -219,6 +223,15 @@ class FollowUpGateway
                         append("\n=== 已知信息结束 ===\n")
                     }
                 }
+
+            /**
+             * 订正标记。
+             *
+             * 追问的回答是自然语言，客户端没法可靠地从中判断「结论改没改」，
+             * 于是让模型在改变结论时多写一行机器可读的标记：
+             * 只有这一行是机器可读的，其余照旧是人话，学生看到的回答不会被结构化内容切碎。
+             */
+            const val CORRECTION_MARKER: String = "[[订正]]"
         }
     }
 
@@ -272,3 +285,60 @@ object SolveContextBuilder {
 /** 追问正文里用于识别「这不是 JSON」的宽松小工具（保留给未来扩展）。 */
 internal fun parsePlainText(raw: String): String =
     runCatching { (Json.parseToJsonElement(raw) as? JsonPrimitive)?.content }.getOrNull() ?: raw
+
+/**
+ * 一条追问回答（去掉订正标记后的正文 + 订正出来的新答案）。
+ *
+ * @param text 给学生看的回答正文（已剔除机器可读的订正行）
+ * @param correctedAnswer 模型本次纠正后的最终答案；没有纠正时为 null
+ */
+data class FollowUpAnswer(
+    val text: String,
+    val correctedAnswer: String?,
+)
+
+/**
+ * 解析追问回答里的订正标记（纯逻辑，可单测）。
+ *
+ * 约定：模型改变最终答案时，会在最后单独一行写
+ * `[[订正]]最终答案：C；理由：试管口朝上会把冷凝水倒流炸裂`。
+ * 这一行**不能显示给学生**，也不能进历史上下文（会污染下一轮输入），
+ * 因此在这里剥掉，只把答案交给上层写库。
+ *
+ * 容错：标记可能出现在任意一行、可能用了中英文冒号/分号、也可能根本没有「理由」部分；
+ * 拿不到答案时按「没有订正」处理，绝不写入一个猜出来的答案。
+ */
+object FollowUpCorrection {
+    fun parse(raw: String): FollowUpAnswer {
+        if (!raw.contains(FollowUpGateway.CORRECTION_MARKER)) return FollowUpAnswer(raw.trim(), null)
+        val lines = raw.lines()
+        val markerIndex = lines.indexOfFirst { it.contains(FollowUpGateway.CORRECTION_MARKER) }
+        if (markerIndex < 0) return FollowUpAnswer(raw.trim(), null)
+        val markerLine = lines[markerIndex]
+        val answer = extractAnswer(markerLine.substringAfter(FollowUpGateway.CORRECTION_MARKER))
+        val kept =
+            lines
+                .filterIndexed { index, _ -> index != markerIndex }
+                .joinToString("\n")
+                .trim()
+        return FollowUpAnswer(text = kept, correctedAnswer = answer)
+    }
+
+    /** 从「最终答案：X；理由：Y」里取出 X。 */
+    private fun extractAnswer(tail: String): String? {
+        val trimmed = tail.trim()
+        if (trimmed.isEmpty()) return null
+        val body = trimmed.removePrefix("最终答案").removePrefix("答案").trimStart('：', ':', ' ', '　')
+        val answer =
+            body
+                .substringBefore("；")
+                .substringBefore(";")
+                .substringBefore("理由")
+                .trim()
+                .trimEnd('。', '，', ',', '.')
+        return answer.takeIf { it.isNotBlank() && it.length <= MAX_ANSWER_CHARS }
+    }
+
+    /** 答案的长度上限：超过这个长度多半是模型把解释写进了答案位，宁可不同步。 */
+    private const val MAX_ANSWER_CHARS: Int = 60
+}

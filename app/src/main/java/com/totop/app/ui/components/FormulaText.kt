@@ -4,17 +4,21 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -27,12 +31,16 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -289,6 +297,19 @@ private const val SCRIPT_SCALE: Float = 0.72f
 /**
  * 混排内容：文字 + 公式位图。
  *
+ * **行内公式必须跟文字排在同一行**——这是「一屏公式堆成一摞」的根因：
+ * 旧实现把每个片段各渲染成一个 Text（行内公式各占一个整宽 Box），
+ * 一句「初始动能 $E_{k0}=…$，末动能 $E_{k}=…$」会被拉成五六行，
+ * 中间还夹着居中的公式块，读起来像对着碎片看。
+ *
+ * 现在按「行间公式」切段：
+ * - 段内（文字 + 行内公式）合成**一个** [AnnotatedString]，
+ *   行内公式通过 `appendInlineContent` 作为行内图片插入，随文字自然折行；
+ * - 只有 $$…$$ / \\[…\\] 这种行间公式才单独成块并居中。
+ *
+ * 渲染失败时不给 inlineContent 项，[AnnotatedString] 会退回 alternateText（原始 LaTeX），
+ * 因此绝不会出现「公式位置留白」。
+ *
  * 宿主由页面级 [FormulaRenderHost] 提供；若调用方没放，
  * 这里会在「当前还没有宿主」时兜底挂载一次，保证独立使用也能渲染。
  */
@@ -303,14 +324,21 @@ private fun FormulaRichContent(
     val renderer = remember { FormulaRenderer.obtain(context) }
     // 只在组合期的第一帧判断一次：已经有宿主就不再抢，避免把别的 AndroidView 里的宿主挪走
     val needsHost = remember(renderer) { !renderer.hasHost() }
+    val groups = remember(pieces) { FormulaPieceGroups.of(pieces) }
     Column(modifier = modifier) {
-        pieces.forEach { piece ->
-            when (piece) {
-                is FormulaContent.Piece.Text -> Text(text = piece.value, style = style)
-                is FormulaContent.Piece.Formula ->
+        groups.forEach { group ->
+            when (group) {
+                is FormulaPieceGroups.Group.Display ->
                     FormulaBlock(
-                        latex = piece.latex,
-                        displayMode = piece.displayMode,
+                        latex = group.latex,
+                        displayMode = true,
+                        style = style,
+                        fallbackToRaw = fallbackToRaw,
+                        renderer = renderer,
+                    )
+                is FormulaPieceGroups.Group.Run ->
+                    InlineFormulaRun(
+                        pieces = group.pieces,
                         style = style,
                         fallbackToRaw = fallbackToRaw,
                         renderer = renderer,
@@ -327,6 +355,150 @@ private fun FormulaRichContent(
         }
     }
 }
+
+/**
+ * 一段「文字 + 行内公式」的混排。
+ *
+ * 先请求渲染全部行内公式，再拼成一段 [AnnotatedString]；
+ * 渲染未完成的公式先用估算宽度占位，避免整段文字在结果到达时整体跳动。
+ *
+ * 渲染结果按 **LaTeX 源码**缓存（而不是按片段下标）：
+ * 追问的回答是流式的，正文每来一个增量片段列表就会整体变化；
+ * 若按下标缓存，每帧都会把这一条消息里的所有公式重新丢给 WebView 渲染，
+ * 滚动和流式输出会一起卡住。按源码缓存则只渲染「这一帧新出现的公式」。
+ */
+@Composable
+private fun InlineFormulaRun(
+    pieces: List<FormulaContent.Piece>,
+    style: TextStyle,
+    fallbackToRaw: Boolean,
+    renderer: FormulaRenderer,
+) {
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    val maxWidthPx =
+        remember(configuration, density) {
+            (configuration.screenWidthDp * CONTENT_WIDTH_RATIO * density.density).toInt()
+        }
+    val latexes = remember(pieces) { pieces.mapNotNull { (it as? FormulaContent.Piece.Formula)?.latex } }
+    val rendered = remember { mutableStateMapOf<String, FormulaRenderResult>() }
+    LaunchedEffect(latexes, renderer) {
+        latexes.distinct().forEach { latex ->
+            if (rendered.containsKey(latex)) return@forEach
+            val handle = renderer.request(latex, displayMode = false, maxWidthPx = maxWidthPx)
+            handle.onResult = { outcome -> rendered[latex] = outcome }
+        }
+    }
+
+    val fontDp = with(density) { style.fontSize.toDp() }
+    val inline = LinkedHashMap<String, InlineTextContent>()
+    val text =
+        buildAnnotatedString {
+            var formulaIndex = 0
+            pieces.forEach { piece ->
+                when (piece) {
+                    is FormulaContent.Piece.Text -> append(piece.value)
+                    is FormulaContent.Piece.Formula -> {
+                        val id = INLINE_ID_PREFIX + formulaIndex
+                        val result = rendered[piece.latex]
+                        val size = inlinePlaceholderOf(result, fontDp, density)
+                        inline[id] =
+                            InlineTextContent(
+                                Placeholder(size.first, size.second, PlaceholderVerticalAlign.TextCenter),
+                            ) { _ ->
+                                (result as? FormulaRenderResult.Rendered)?.let { outcome ->
+                                    Image(
+                                        bitmap = remember(outcome) { outcome.bitmap.asImageBitmap() },
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+                            }
+                        appendInlineContent(id, if (fallbackToRaw) piece.latex else "")
+                        formulaIndex++
+                    }
+                }
+            }
+        }
+    Text(text = text, style = style, inlineContent = inline)
+}
+
+/**
+ * 行内公式的占位尺寸。
+ *
+ * - 已渲染：按位图实际尺寸换算成 dp，超过 [INLINE_MAX_HEIGHT_RATIO] 倍字号时等比缩小，
+ *   否则一条分式会把行高顶成正文的三四倍，看起来又变成「堆在一起」；
+ * - 渲染中：按 LaTeX 长度估一个宽度，保证文字先能排下来，结果到达后再微调。
+ */
+private fun inlinePlaceholderOf(
+    result: FormulaRenderResult?,
+    fontDp: Dp,
+    density: Density,
+): Pair<TextUnit, TextUnit> {
+    val size: Pair<Dp, Dp> =
+        when (result) {
+            is FormulaRenderResult.Rendered -> {
+                val naturalWidth = with(density) { result.bitmap.width.toDp() }
+                val naturalHeight = with(density) { result.bitmap.height.toDp() }
+                val maxHeight = fontDp * INLINE_MAX_HEIGHT_RATIO
+                val scale =
+                    if (naturalHeight.value > 0f && naturalHeight > maxHeight) {
+                        maxHeight.value / naturalHeight.value
+                    } else {
+                        1f
+                    }
+                (naturalWidth * scale) to (naturalHeight * scale)
+            }
+            // 渲染中 / 渲染失败：按约四个字宽、一行字高占位，文字先排下来再微调
+            else -> (fontDp * PENDING_WIDTH_EM) to (fontDp * PENDING_HEIGHT_EM)
+        }
+    return with(density) { size.first.toSp() to size.second.toSp() }
+}
+
+/** 把片段按行间公式切成「行内段」与「行间块」（纯逻辑，可单测）。 */
+internal object FormulaPieceGroups {
+    sealed interface Group {
+        /** 一段文字 + 行内公式，整体合成一个 Text。 */
+        data class Run(val pieces: List<FormulaContent.Piece>) : Group
+
+        /** 一条行间公式，单独成块居中显示。 */
+        data class Display(val latex: String) : Group
+    }
+
+    fun of(pieces: List<FormulaContent.Piece>): List<Group> {
+        val groups = ArrayList<Group>()
+        val current = ArrayList<FormulaContent.Piece>()
+
+        fun flush() {
+            if (current.isNotEmpty()) {
+                groups += Group.Run(current.toList())
+                current.clear()
+            }
+        }
+        pieces.forEach { piece ->
+            if (piece is FormulaContent.Piece.Formula && piece.displayMode) {
+                flush()
+                groups += Group.Display(piece.latex)
+            } else {
+                current += piece
+            }
+        }
+        flush()
+        return groups
+    }
+}
+
+/** 行内公式的 inlineContent id 前缀。 */
+private const val INLINE_ID_PREFIX = "inline-formula-"
+
+/** 行内公式允许的最大高度（相对字号）：再高就不像「行内」了。 */
+private const val INLINE_MAX_HEIGHT_RATIO: Float = 2.6f
+
+/** 公式尚未渲染完成时的占位宽度（相对字号）：约四个字宽。 */
+private const val PENDING_WIDTH_EM: Float = 4f
+
+/** 公式尚未渲染完成时的占位高度（相对字号）：约一行字高。 */
+private const val PENDING_HEIGHT_EM: Float = 1.2f
 
 /** 单条公式：渲染 -> 位图；失败 -> 原文降级。 */
 @Composable

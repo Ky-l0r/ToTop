@@ -28,6 +28,7 @@
 | known | string[] | 已知条件，一条一个元素；无已知条件时为空数组 |
 | ask | string | 所求内容，一句话表述 |
 | options | string[] | 选择题选项原文（含 A/B/C/D 标记）；非选择题为空数组 |
+| choiceType | string | 题型，只能取 `"single"`（单选）、`"multi"`（多选）、`"none"`（非选择题）、`"unknown"`（无法判断）。判定规则见第四节第 8 条 |
 | hasFigure | boolean | 题干是否含几何图形、函数图象、电路图、流程图或表格 |
 | stemLatex | string | 题干中的公式改写为 LaTeX，行内公式用单个美元符号包裹；无公式时为空字符串 |
 | warnings | string[] | 识别不确定项，如「第(2)问末尾字符模糊，已按 x 的平方记录」 |
@@ -40,7 +41,16 @@
 4. 禁止改写题目的学科含义；只允许修正明显的形近字录入错误，且必须在 `warnings` 中记录；
 5. 禁止猜测 `grade`，无法判断时一律填 `"未知"`；
 6. **禁止因为题目不是数学题就套用 `math`**：物理题填 `physics`，化学题填 `chemistry`，依此类推；只有确实无法判断学科时才用 `general`；
-7. 禁止使用 emoji，禁止输出空字段以外的多余键。
+7. 禁止使用 emoji，禁止输出空字段以外的多余键；
+8. `choiceType` 只能按**题干原文**判定，规则如下（顺序即优先级）：
+   1. 题干或选项区出现「多选」「多项选择」「至少有两项／两个」「有两项符合题目要求」
+      「下列选项中正确的有」这类明确线索 → `"multi"`；
+   2. 题干出现「单选」「只有一项符合题目要求」「下列选项中正确的是（　）」这类单选说法 → `"single"`；
+   3. `options` 为空 → `"none"`；
+   4. 有选项但题干没有任何线索 → `"unknown"`。
+   **不要**用「答案应该有几个」去反推题型（那是阶段 B 的工作，本阶段看不到答案）；
+   **不要**因为选项有四个就默认单选。
+   `"unknown"` 是允许且推荐的取值：猜错题型会导致后面按错误的数量校验答案。
 
 ## 五、JSON Schema
 
@@ -48,7 +58,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["subject", "grade", "stem", "known", "ask", "options", "hasFigure", "stemLatex", "warnings"],
+  "required": ["subject", "grade", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "warnings"],
   "properties": {
     "subject": {
       "type": "string",
@@ -59,6 +69,7 @@
     "known": { "type": "array", "items": { "type": "string" } },
     "ask": { "type": "string", "minLength": 1 },
     "options": { "type": "array", "items": { "type": "string" } },
+    "choiceType": { "type": "string", "enum": ["single", "multi", "none", "unknown"] },
     "hasFigure": { "type": "boolean" },
     "stemLatex": { "type": "string" },
     "warnings": { "type": "array", "items": { "type": "string" } }
@@ -85,6 +96,7 @@
   "known": ["f(x)=x^2-2x+1", "x 的取值范围是 [0,3]"],
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
   "options": ["A. 0", "B. 1", "C. 2", "D. 4"],
+  "choiceType": "unknown",
   "hasFigure": false,
   "stemLatex": "已知函数 $f(x)=x^{2}-2x+1$，求 $f(x)$ 在区间 $[0,3]$ 上的最小值。",
   "warnings": []
@@ -107,6 +119,7 @@
   "known": ["下落高度 20 m", "重力加速度 g=10 m/s^2", "初速度为零"],
   "ask": "求物体落地所需的时间",
   "options": [],
+  "choiceType": "none",
   "hasFigure": false,
   "stemLatex": "一物体从 $20\\,\\mathrm{m}$ 高处自由下落，取 $g=10\\,\\mathrm{m/s^{2}}$，求落地所需时间。",
   "warnings": []
@@ -130,11 +143,33 @@
   "known": ["需判断各选项物质是否属于电解质"],
   "ask": "选出属于电解质的物质",
   "options": ["A. 铜丝", "B. 蔗糖溶液", "C. 氯化钠固体", "D. 酒精"],
+  "choiceType": "unknown",
   "hasFigure": false,
   "stemLatex": "",
   "warnings": []
 }
 ```
+
+### 示例 4（多选题：题干有明确线索）
+
+输入（OCR 文本）：
+
+> 关于实验室制取氨气，下列说法中正确的有（多选）
+> A. 可用加热氯化铵固体的方法制取  B. 可用碱石灰干燥
+> C. 收集时用向下排空气法  D. 尾气可直接排入空气
+
+输出要点（其余字段同前）：
+
+```json
+{
+  "stem": "关于实验室制取氨气，下列说法中正确的有（多选）",
+  "options": ["A. 可用加热氯化铵固体的方法制取", "B. 可用碱石灰干燥", "C. 收集时用向下排空气法", "D. 尾气可直接排入空气"],
+  "choiceType": "multi"
+}
+```
+
+题干里出现「多选」两个字，`choiceType` 就只能是 `"multi"`；
+这一项填成 `"single"` 会让阶段 B 只给一个选项，答案从源头就是错的。
 
 ## 七、错误示例与纠正
 
@@ -148,6 +183,7 @@
   "known": ["f(x)=x^2-2x+1"],
   "ask": "求最小值",
   "options": [],
+  "choiceType": "none",
   "hasFigure": false,
   "stemLatex": "已知函数 $f(x)=x^{2}-2x+1$",
   "warnings": []
@@ -170,6 +206,7 @@
   "known": [],
   "ask": "求时间",
   "options": [],
+  "choiceType": "none",
   "hasFigure": false,
   "stemLatex": "",
   "warnings": []
@@ -188,6 +225,7 @@
   "known": ["f(x)=x^2-2x+1", "x 的取值范围是 [0,3]"],
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
   "options": ["A. 0", "B. 1", "C. 2", "D. 4"],
+  "choiceType": "unknown",
   "hasFigure": false,
   "stemLatex": "已知函数 $f(x)=x^{2}-2x+1$，求 $f(x)$ 在区间 $[0,3]$ 上的最小值。",
   "warnings": []

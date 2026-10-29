@@ -5,6 +5,7 @@ import com.totop.app.domain.model.AiSolutionStep
 import com.totop.app.domain.model.AiSolveResultCodec
 import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.AiStandardSolution
+import com.totop.app.domain.model.ChoiceAnswerGuard
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -297,6 +298,8 @@ class PromptRepository(
             put("ask", question.ask.orEmpty())
             put("options", buildJsonArray { question.options.forEach { add(JsonPrimitive(it)) } })
             put("hasFigure", question.hasFigure)
+            // 阶段 B 必须知道题型才能给出数量正确的答案（单选一个、多选至少两个）
+            put("choiceType", ChoiceAnswerGuard.normalize(question.choiceType))
         }
 
     private fun solutionJson(solution: AiStandardSolution): JsonObject =

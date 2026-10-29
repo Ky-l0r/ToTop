@@ -1,5 +1,11 @@
 package com.totop.app.ui.solve
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -503,6 +509,8 @@ private fun Composer(
         if (voice.listening || voice.finishing) {
             VoiceCapturePanel(
                 level = voice.level,
+                hasVolume = voice.hasVolume,
+                speaking = voice.speaking,
                 locked = voice.locked,
                 finishing = voice.finishing,
                 onFinish = voice::finish,
@@ -733,16 +741,31 @@ private fun HoldToTalk(
 /**
  * 录音面板：声纹 + 操作提示。
  *
- * 声纹取当前音量做高度，不加逐条动画：`onRmsChanged` 约 10Hz，
- * 12 条各自跑一个动画在低端机上比直接改高度更卡，看起来也更像抖动。
+ * 声纹的两种驱动方式：
+ * - 引擎上报音量（绝大多数机型）：用平滑后的 [level] 直接改高度，
+ *   不加逐条动画——`onRmsChanged` 约 10Hz，12 条各自跑一个动画在低端机上比直接改高度更卡；
+ * - 引擎完全不上报音量（部分国产 ROM）：`level` 恒为 0，旧实现看起来就是「条子死了」。
+ *   这时改用一条很轻的呼吸波（相位逐条错开），并在文案上说明「正在拾音」，
+ *   既不假装能测音量，也不让人以为录音没开始。
  */
 @Composable
 private fun VoiceCapturePanel(
     level: Float,
+    hasVolume: Boolean,
+    speaking: Boolean,
     locked: Boolean,
     finishing: Boolean,
     onFinish: () -> Unit,
 ) {
+    val transition = rememberInfiniteTransition(label = "voice-wave")
+    val phase by
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = ((2 * Math.PI).toFloat()),
+            animationSpec = infiniteRepeatable(tween(durationMillis = 1500, easing = LinearEasing), RepeatMode.Restart),
+            label = "voice-phase",
+        )
+    val live = hasVolume || finishing
     Row(
         modifier =
             Modifier
@@ -757,12 +780,19 @@ private fun VoiceCapturePanel(
             horizontalArrangement = Arrangement.spacedBy(3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            WAVE_WEIGHTS.forEach { weight ->
+            WAVE_WEIGHTS.forEachIndexed { index, weight ->
+                val amplitude =
+                    if (live || finishing) {
+                        level
+                    } else {
+                        // 0.28..0.62 的正弦起伏：静止时也看得出在录音，又不会夸张到像在假装。
+                        0.28f + 0.34f * kotlin.math.abs(kotlin.math.sin(phase + index * 0.55f))
+                    }
                 Box(
                     modifier =
                         Modifier
                             .width(3.dp)
-                            .height((6f + 22f * level * weight).dp)
+                            .height((6f + 22f * amplitude * weight).dp)
                             .clip(RoundedCornerShape(2.dp))
                             .background(if (finishing) Tokens.OutlineStrong else Tokens.Primary),
                 )
@@ -774,7 +804,8 @@ private fun VoiceCapturePanel(
                 when {
                     finishing -> "正在整理…"
                     locked -> "继续录音 · 点一下结束"
-                    else -> "松手结束 · 上滑锁定"
+                    speaking || hasVolume -> "正在听 · 松手结束"
+                    else -> "正在拾音 · 松手结束"
                 },
             style = MaterialTheme.typography.labelMedium,
             color = Tokens.OnPrimaryContainer,

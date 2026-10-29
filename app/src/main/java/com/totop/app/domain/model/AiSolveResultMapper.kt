@@ -43,6 +43,7 @@ object AiSolveResultMapper {
                 kpointAssignments = kpoints,
                 summaryCard = summary,
                 aiGenerated = result.aiGenerated,
+                choiceType = ChoiceAnswerGuard.normalize(result.question?.choiceType),
             )
         return AiSolveMapping(content = content, warnings = warnings)
     }

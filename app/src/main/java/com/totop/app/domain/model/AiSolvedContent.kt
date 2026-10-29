@@ -42,6 +42,13 @@ data class AiSolvedContent(
     val summaryCard: SummaryCard?,
     /** 该结果是否由 AI 生成（展示层必须标注）。 */
     val aiGenerated: Boolean,
+    /**
+     * 阶段 A 判定的题型（见 [ChoiceAnswerGuard]）。
+     *
+     * 不写进 question 表：题型只用于校验「单选/多选与答案个数是否一致」，
+     * 属于本次解答的元信息，不参与错题的持久化与统计，避免为它加列加迁移。
+     */
+    val choiceType: String = ChoiceAnswerGuard.UNKNOWN,
 ) {
     /** 首个错误步骤的领域类型；未定位到错误返回 null。 */
     val errorTypeOrNull: ErrorType? get() = firstError?.type

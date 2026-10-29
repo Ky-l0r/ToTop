@@ -95,19 +95,17 @@ object VoiceEngines {
         } ?: engines.first()
     }
 
-    /** 找一个可用作离线兜底的引擎；找不到或与当前相同则返回 null。 */
-    fun offlineFallback(
+    /**
+     * 按会话内的尝试顺序给出「下一个还没试过的引擎」。
+     *
+     * 旧实现只在网络错误时换一次「离线引擎」，等于先猜病因再决定换谁；
+     * 而实际失败原因（服务端 5xx、默认服务没装、被系统拦截）各不相同，
+     * 逐个试一遍比猜「该换离线还是在线」可靠得多。
+     */
+    fun nextUntried(
         context: Context,
-        current: VoiceEngine,
-    ): VoiceEngine? {
-        val engines = list(context)
-        val onDevice = engines.firstOrNull { it.onDevice }
-        if (onDevice != null && onDevice.id != current.id) return onDevice
-        return engines.firstOrNull { engine ->
-            val pkg = engine.component?.packageName ?: return@firstOrNull false
-            !pkg.contains("google", ignoreCase = true)
-        }?.takeIf { it.id != current.id }
-    }
+        triedIds: Set<String>,
+    ): VoiceEngine? = list(context).firstOrNull { it.id !in triedIds }
 
     /** 按 ID 取引擎，找不到时回退到默认。 */
     fun find(
@@ -188,13 +186,35 @@ class VoiceInputController internal constructor(
     var level: Float by mutableFloatStateOf(0f)
         private set
 
+    /**
+     * 引擎是否真的在上报音量（[RecognitionListener.onRmsChanged]）。
+     *
+     * 国产 ROM 的识别服务里有一部分**完全不上报** RMS：此时 [level] 会一直是 0，
+     * 声纹条看起来像「死的」。界面据此改用「拾音中」的呼吸指示，而不是假装有音量。
+     */
+    var hasVolume: Boolean by mutableStateOf(false)
+        private set
+
+    /** 是否检测到人在说话（onBeginningOfSpeech .. onEndOfSpeech）。 */
+    var speaking: Boolean by mutableStateOf(false)
+        private set
+
     private var recognizer: SpeechRecognizer? = null
     private var engine: VoiceEngine? = null
     private var onText: ((String) -> Unit)? = null
     private var onError: ((String) -> Unit)? = null
     private var onEngineSwitched: ((VoiceEngine) -> Unit)? = null
     private var emptyCount = 0
-    private var autoSwitched = false
+
+    /** 本轮已经试过的引擎（按 id），用于「换一个引擎再试」，避免同一引擎反复重试。 */
+    private val triedEngines = mutableSetOf<String>()
+
+    /** 最近一次部分结果：引擎不回调 onResults 时用它兜底，比丢掉整句话好。 */
+    private var lastPartial: String = ""
+
+    /** 本轮是否已经把最终文本交给界面（防止部分结果与兜底重复写入）。 */
+    private var delivered: Boolean = false
+
     private val handler = Handler(Looper.getMainLooper())
 
     /** 开始一轮识别。重复调用会先释放上一轮。 */
@@ -215,7 +235,8 @@ class VoiceInputController internal constructor(
         this.onText = onText
         this.onError = onError
         this.onEngineSwitched = onEngineSwitched
-        autoSwitched = false
+        triedEngines.clear()
+        delivered = false
         listen(VoiceEngines.find(context, engineId))
     }
 
@@ -243,7 +264,10 @@ class VoiceInputController internal constructor(
         listening = false
         locked = false
         finishing = false
+        speaking = false
+        hasVolume = false
         level = 0f
+        lastPartial = ""
         runCatching { recognizer?.cancel() }
     }
 
@@ -258,19 +282,28 @@ class VoiceInputController internal constructor(
     private fun listen(target: VoiceEngine) {
         val created = createRecognizer(target)
         if (created == null) {
+            // 创建失败不直接放弃：换下一个可用引擎，很多机型「系统默认」压根没装识别服务，
+            // 但厂商自带的那一个是在的。
+            if (switchToNextEngine()) return
             onError?.invoke("语音识别初始化失败，可以改用打字输入。")
             return
         }
         engine = target
+        triedEngines += target.id
         listening = true
         locked = false
         finishing = false
+        speaking = false
+        hasVolume = false
         level = 0f
+        lastPartial = ""
+        delivered = false
         created.setRecognitionListener(listener)
         val started =
             runCatching { created.startListening(intent()) }.isSuccess
         if (!started) {
             listening = false
+            if (switchToNextEngine()) return
             onError?.invoke("语音输入启动失败，可以改用打字输入。")
             return
         }
@@ -278,20 +311,52 @@ class VoiceInputController internal constructor(
         handler.postDelayed({ finish() }, MAX_LISTEN_MS)
     }
 
+    /**
+     * 换一个还没试过的引擎继续。
+     *
+     * 这是「几乎每次都识别不出来」的主修法：以前只在网络错误时换一次离线引擎，
+     * 而国产 ROM 上失败原因五花八门（默认服务没装、服务端 5xx、被系统拦截），
+     * 只要第一次落在坏引擎上就永远失败。现在按可用列表逐个试，最多试 [MAX_ENGINE_ATTEMPTS] 个。
+     */
+    private fun switchToNextEngine(): Boolean {
+        if (triedEngines.size >= MAX_ENGINE_ATTEMPTS) return false
+        val next = VoiceEngines.nextUntried(context, triedEngines) ?: return false
+        onEngineSwitched?.invoke(next)
+        listen(next)
+        return true
+    }
+
     private fun stopAndWait() {
         finishing = true
         locked = false
+        speaking = false
         handler.removeCallbacksAndMessages(null)
         runCatching { recognizer?.stopListening() }
         // 引擎不回调时兜底收尾，避免界面一直停在「正在整理」。
-        handler.postDelayed({ complete() }, RESULT_TIMEOUT_MS)
+        // 兜底时若有部分结果就把它交出去，而不是把已经听到的半句话丢掉。
+        handler.postDelayed({ complete(salvage = true) }, RESULT_TIMEOUT_MS)
     }
 
-    private fun complete() {
+    /**
+     * 收尾。
+     *
+     * @param salvage 为 true 时：若引擎始终没回调最终结果，用最近一次部分结果兜底。
+     *   这条兜底很重要——部分国产引擎会一路给部分结果，但松手后不回调 onResults，
+     *   旧实现到这里直接清状态，用户看到的就是「说了半天一个字都没有」。
+     */
+    private fun complete(salvage: Boolean = false) {
         handler.removeCallbacksAndMessages(null)
+        val fallback = if (salvage && !delivered) lastPartial.trim().takeIf { it.isNotEmpty() } else null
         listening = false
         finishing = false
+        speaking = false
+        hasVolume = false
         level = 0f
+        if (fallback != null) {
+            delivered = true
+            emptyCount = 0
+            onText?.invoke(fallback)
+        }
     }
 
     private fun createRecognizer(target: VoiceEngine): SpeechRecognizer? {
@@ -321,9 +386,16 @@ class VoiceInputController internal constructor(
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             // 固定中文：学生的解题思路与追问都是中文，跟随系统语言常常得到英文识别
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh-CN")
+            // 部分引擎只认 LANGUAGE_PREFERENCE，两个都给上，避免被当成系统语言
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "zh-CN")
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+            // 一口气说完一句话通常会超过 1 秒，静音判定太短会把后半句切掉：
+            // 「重力加速度取十，求落地时间」很可能只剩「重力加速度取十」。
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_COMPLETE_MS)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, SILENCE_MAYBE_MS)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, MIN_SPEECH_MS)
             // 离线时优先本机模型：部分引擎在无网时会直接把 ERROR_NETWORK 抛回来
             putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, !isOnline())
         }
@@ -347,27 +419,35 @@ class VoiceInputController internal constructor(
         }
     }
 
-    /** 识别失败：能换离线引擎就换一次，否则把原因交给界面。 */
+    /** 识别失败：能换引擎就换一个再试，换不动才把原因交给界面。 */
     private fun onFailure(error: Int) {
-        complete()
-        val fallback =
-            if (isNetworkError(error) && !autoSwitched) {
-                engine?.let { VoiceEngines.offlineFallback(context, it) }
+        // 「没听到声音 / 没匹配上」不是引擎坏，换引擎重录只会在用户没开口时反复开麦，
+        // 因此这两类只在有部分结果时兜底，否则直接给出可执行的提示。
+        if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+            val partial = lastPartial.trim()
+            complete()
+            if (partial.isNotEmpty()) {
+                delivered = true
+                emptyCount = 0
+                onText?.invoke(partial)
             } else {
-                null
+                onEmpty()
             }
-        if (fallback != null) {
-            autoSwitched = true
-            onEngineSwitched?.invoke(fallback)
-            listen(fallback)
             return
         }
+        val retryable =
+            error == SpeechRecognizer.ERROR_NETWORK ||
+                error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT ||
+                error == SpeechRecognizer.ERROR_SERVER ||
+                error == SpeechRecognizer.ERROR_CLIENT
+        // 只在「用户还按着、也没锁定」时自动换引擎重来：
+        // 松手后（finishing）或已锁定时重启，会凭空多开一次麦克风，
+        // 界面还会从「正在整理」跳回「录音中」，用户以为按钮失灵。
+        val canSwitchEngine = !finishing && !locked
+        if (retryable && canSwitchEngine && switchToNextEngine()) return
+        complete()
         if (isNetworkError(error)) {
-            onError?.invoke("语音识别服务连不上网络，已尝试离线引擎。可以改用打字输入。")
-            return
-        }
-        if (error == SpeechRecognizer.ERROR_NO_MATCH) {
-            onEmpty()
+            onError?.invoke("语音识别服务连不上网络，已试过本机可用的识别引擎。可以改用打字输入，或到设置里换一个引擎。")
             return
         }
         onError?.invoke(messageOf(error))
@@ -377,26 +457,48 @@ class VoiceInputController internal constructor(
         object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) = Unit
 
-            override fun onBeginningOfSpeech() = Unit
+            override fun onBeginningOfSpeech() {
+                speaking = true
+            }
 
             override fun onRmsChanged(rmsdB: Float) {
-                level = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+                // 系统给的 rmsdB 大致在 -2..10 之间。有的引擎一次都不回调这里，
+                // 界面据此把声纹条换成「拾音中」的呼吸指示，而不是假装有音量。
+                hasVolume = true
+                val raw = ((rmsdB + RMS_FLOOR_DB) / RMS_SPAN_DB).coerceIn(0f, 1f)
+                // 快起慢落：说话时立刻抬起，停顿时缓慢回落，观感上才像在「听」。
+                val factor = if (raw > level) RMS_ATTACK else RMS_RELEASE
+                level += (raw - level) * factor
             }
 
             override fun onBufferReceived(buffer: ByteArray?) = Unit
 
             override fun onEndOfSpeech() {
+                speaking = false
                 // 引擎自己判断说完了：等同松手，进入等待结果。
-                if (!locked) finishing = true
+                if (!locked) {
+                    finishing = true
+                    // 引擎若不回调 onResults，这里不设兜底就会永远停在「正在整理」。
+                    handler.removeCallbacksAndMessages(null)
+                    handler.postDelayed({ complete(salvage = true) }, RESULT_TIMEOUT_MS)
+                }
             }
 
             override fun onError(error: Int) = onFailure(error)
 
             override fun onResults(results: Bundle?) {
                 val text = bestOf(results)
+                delivered = true
                 complete()
                 if (text == null) {
-                    onEmpty()
+                    // 最终结果为空但刚才有部分结果：用部分结果，别让用户白说一遍
+                    val partial = lastPartial.trim()
+                    if (partial.isNotEmpty()) {
+                        emptyCount = 0
+                        onText?.invoke(partial)
+                    } else {
+                        onEmpty()
+                    }
                 } else {
                     emptyCount = 0
                     onText?.invoke(text)
@@ -404,7 +506,10 @@ class VoiceInputController internal constructor(
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
-                bestOf(partialResults)?.let { text -> onText?.invoke(text) }
+                bestOf(partialResults)?.let { text ->
+                    lastPartial = text
+                    onText?.invoke(text)
+                }
             }
 
             override fun onEvent(
@@ -438,6 +543,30 @@ class VoiceInputController internal constructor(
     private companion object {
         /** 换引擎提示每次进程只弹一次，避免反复打扰。 */
         var emptyHintShown: Boolean = false
+
+        /** 单轮最多换几个引擎：再多就变成反复开麦，观感上像卡死。 */
+        const val MAX_ENGINE_ATTEMPTS: Int = 3
+
+        /** 说完后判定「已说完」的静音时长（毫秒）。 */
+        const val SILENCE_COMPLETE_MS: Long = 1400L
+
+        /** 可能说完的静音时长，略短于上者，让引擎更早给出中间结果。 */
+        const val SILENCE_MAYBE_MS: Long = 900L
+
+        /** 最短录音时长：避免刚开口就被判定说完。 */
+        const val MIN_SPEECH_MS: Long = 1000L
+
+        /** rmsdB 的下界（系统文档给的范围是 -2..10 dB）。 */
+        const val RMS_FLOOR_DB: Float = 2f
+
+        /** rmsdB 的量程。 */
+        const val RMS_SPAN_DB: Float = 12f
+
+        /** 音量上升系数：说话要立刻反应。 */
+        const val RMS_ATTACK: Float = 0.65f
+
+        /** 音量下降系数：停顿要缓一点，否则声纹条会一直闪。 */
+        const val RMS_RELEASE: Float = 0.22f
     }
 }
 

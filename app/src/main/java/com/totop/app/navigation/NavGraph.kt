@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.totop.app.ui.common.ImmersiveHost
+import com.totop.app.ui.common.LocalImmersiveHost
 import com.totop.app.ui.home.HomeScreen
 import com.totop.app.ui.hub.HubScreen
 import com.totop.app.ui.knowledge.KnowledgePointDetailScreen
@@ -89,6 +92,11 @@ fun ToTopApp(
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevel = TopLevelDestination.fromRoute(currentRoute) != null
 
+    // 沉浸态：框选页要把底部导航栏暂时藏掉，把整块高度让给图片。
+    // 状态放在外壳是因为导航栏本身由外壳绘制，页面没有能力改变它占的这块空间。
+    val immersiveState = remember { mutableStateOf(false) }
+    val immersiveHost = remember { ImmersiveHost { active -> immersiveState.value = active } }
+
     // 启动动画：判定完成之后仍要停留一小段时间。
     //
     // 只等 ready 是不够的——本机读设置通常几十毫秒，品牌页会一闪而过，
@@ -103,32 +111,37 @@ fun ToTopApp(
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (ready) {
-            Scaffold(
-                bottomBar = {
-                    // 不做出现/消失动画：只在顶层页面常驻，动画只会让底部栏闪一下
-                    if (isTopLevel) {
-                        FloatingNavBar(
-                            currentRoute = currentRoute,
-                            onSelect = { destination ->
-                                // 已经在这个页面时不做任何导航：
-                                // 重复 navigate 会走一遍「出栈 + 入栈 + 重建」，是点击卡顿的常见来源。
-                                if (currentRoute == destination.route) return@FloatingNavBar
-                                navController.navigate(destination.route) {
-                                    // 顶层页面之间复用同一份回退栈，避免栈无限增长
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                        )
-                    }
-                },
-            ) { innerPadding ->
-                ToTopNavHost(
-                    navController = navController,
-                    startRoute = startRoute,
-                    modifier = Modifier.padding(innerPadding),
-                )
+            CompositionLocalProvider(LocalImmersiveHost provides immersiveHost) {
+                Scaffold(
+                    bottomBar = {
+                        // 沉浸态（框选页）不画底栏：那一页的全部意义就是「把图放大看清」，
+                        // 底栏占掉的 80-90dp 正好是能多框一行字的高度。
+                        //
+                        // 不做出现/消失动画：只在顶层页面常驻，动画只会让底部栏闪一下
+                        if (isTopLevel && !immersiveState.value) {
+                            FloatingNavBar(
+                                currentRoute = currentRoute,
+                                onSelect = { destination ->
+                                    // 已经在这个页面时不做任何导航：
+                                    // 重复 navigate 会走一遍「出栈 + 入栈 + 重建」，是点击卡顿的常见来源。
+                                    if (currentRoute == destination.route) return@FloatingNavBar
+                                    navController.navigate(destination.route) {
+                                        // 顶层页面之间复用同一份回退栈，避免栈无限增长
+                                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                            )
+                        }
+                    },
+                ) { innerPadding ->
+                    ToTopNavHost(
+                        navController = navController,
+                        startRoute = startRoute,
+                        modifier = Modifier.padding(innerPadding),
+                    )
+                }
             }
         }
         // 启动动画覆盖在内容之上淡出，避免「先看首页再盖一层」造成的跳动

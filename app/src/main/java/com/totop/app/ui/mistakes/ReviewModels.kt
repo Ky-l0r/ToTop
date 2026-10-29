@@ -16,6 +16,13 @@ data class ReviewCandidate(
     val questionId: String,
     val stemText: String,
     val subject: String,
+    /**
+     * 题目原图路径（拍题时裁剪后的那张）；未存图时为 null。
+     *
+     * 复习页必须能看到原图：题干是模型转写的文字，几何图、装置图、化学结构式
+     * 这些只存在于图里的信息一旦丢失，题目就是残缺的，「自己再做一遍」也无从做起。
+     */
+    val imagePath: String? = null,
     val errorTypeLabel: String,
     val kpointNames: List<String>,
     val finalAnswer: String,
