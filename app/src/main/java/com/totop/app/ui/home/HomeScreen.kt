@@ -91,6 +91,15 @@ fun HomeScreen(
             color = Tokens.OnSurfaceVariant,
         )
 
+        if (state.dailyLine.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = state.dailyLine,
+                style = MaterialTheme.typography.bodySmall,
+                color = Tokens.Primary.copy(alpha = 0.85f),
+            )
+        }
+
         Spacer(Modifier.height(16.dp))
 
         // 拍题主入口：整块可点，不做小按钮

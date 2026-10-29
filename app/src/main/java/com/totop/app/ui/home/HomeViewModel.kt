@@ -1,12 +1,15 @@
 package com.totop.app.ui.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.domain.model.Subjects
 import com.totop.app.ui.mistakes.ReviewCandidate
 import com.totop.app.ui.mistakes.ReviewGateway
+import com.totop.app.util.CopyDeck
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +30,7 @@ import javax.inject.Inject
 class HomeViewModel
     @Inject
     constructor(
+        @ApplicationContext private val appContext: Context,
         private val mistakes: MistakeRepository,
         private val reviewGateway: ReviewGateway,
         private val knowledgeRepository: com.totop.app.data.repo.KnowledgeRepository,
@@ -118,6 +122,7 @@ class HomeViewModel
                 _uiState.value =
                     HomeUiState(
                         greeting = _uiState.value.greeting,
+                        dailyLine = CopyDeck.dailyLine(appContext, now),
                         subtitle = _uiState.value.subtitle,
                         mistakeCount = total,
                         weakCount = weak.size,

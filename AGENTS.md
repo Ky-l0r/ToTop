@@ -170,6 +170,14 @@ git status -sb            # 确认无 ahead / behind
 - 问题里包含：你要做什么、卡在哪、可选方案、各自代价。
 - 问完就停。不要一边提问一边按自己的猜测把代码改了。
 
+### 4.6 决策先行，不做「半件」
+
+- 一个需求如果只能做一半就会造成前后不一致（例如只换图不换题干、只落一半数据再改表），
+  先停下来把另一半的代价说清楚，等指示；不要先落地一半再补。
+- 加表、加字段之前先问「用现有表能不能满足」。能复用就复用，但必须在
+  `docs/偏离记录.md` 写清复用的代价（例如专注时长写进 `daily_stats` 的保留学科键）。
+- 同类问题第二次出现时，优先改规范或抽公共件，而不是再复制一份实现。
+
 ---
 
 ## 五、代码规范
@@ -179,7 +187,8 @@ ktlint 与 detekt 是硬门禁（CI 会拦，`maxIssues: 0`），以下是人读
 ### 5.1 风格
 
 - Kotlin 官方代码风格；缩进 4 空格、行宽 120、尾随逗号、UTF-8、LF（见 `.editorconfig`）。
-- **禁止 emoji**，代码、注释、提交信息、文档一律禁止（硬性约束第 6 条）。
+- **禁止 emoji**：代码、注释、提交信息、文档一律禁止（硬性约束第 6 条）。
+  唯一例外是 `app/src/main/assets/copy/` 下的用户可见文案，见 5.6。
 - 禁止 XML View，界面一律 Jetpack Compose。
 - detekt 阈值已定：LongMethod 260、CyclomaticComplexMethod 30、TooManyFunctions 40。
   **超阈值先拆分，不许调高阈值，不许往 lint-baseline.xml 塞新条目**（该文件只登记确认过的误报）。
@@ -236,6 +245,25 @@ ktlint 与 detekt 是硬门禁（CI 会拦，`maxIssues: 0`），以下是人读
 - 注释解释"为什么"，不解释"是什么"。
 - 绕过上游缺陷、与直觉相反的写法、有取舍的实现，必须写清原因。
 - 用中文；不加装饰性分隔线（源码里已有的 `// ----------` 分组风格可沿用）。
+
+### 5.6 动效与文案口径
+
+动效：
+
+- 只做「位移 + 淡入 + 极轻缩放」，不做毛玻璃、共享元素、循环动画、装饰性动效。
+- 时长：二级页进入 260ms、退出 200ms；底栏同级切换只淡入 180ms，不做横移。
+- 时长按系统「动画时长缩放」反向补偿，下限 0.8；系统把动画彻底关掉时不补偿（无障碍选择）。
+- 位移动画走 `graphicsLayer`，不触发重排；页面第一帧先画背景与标题栏，数据后到再填，
+  否则动画会在空白期跑完，观感是「没有动画」。
+
+文案：
+
+- 成组出现的用户可见文案（每日一句、鼓励语、讲解口吻）放 `app/src/main/assets/copy/`，
+  **不硬编码进 Kotlin**，也不要塞成 `strings.xml` 里一堆同前缀的键。
+- 提示词放 `app/src/main/assets/prompts/`；改阶段提示词必须同步升级 `prompt_version.json`。
+- 需要「每天不一样但不能每次刷新都变」的文案，用 UTC 日序号取模，不要用随机。
+- `assets/copy/` 允许少量 emoji，仅限面向学生的文案；代码、注释、提交信息、docs 仍然禁止。
+- 鼓励语要具体、短、不油腻：不写「太棒了」「真厉害」，写「这题过了，下一道」这类。
 
 ---
 
@@ -313,7 +341,7 @@ ktlint 与 detekt 是硬门禁（CI 会拦，`maxIssues: 0`），以下是人读
 
 | 改动内容 | 必跑 |
 | --- | --- |
-| 纯文档、纯注释 | 不跑构建；检查无 emoji、链接有效、与代码是否仍一致 |
+| 纯文档、纯注释 | 不跑构建；检查无 emoji（`assets/copy/` 除外）、链接有效、与代码是否仍一致 |
 | 单个 UI / ViewModel 文件 | `:app:compileDebugKotlin` + `:app:ktlintCheck` + `:app:detekt` |
 | `domain/` 纯逻辑 | 上项 + `:app:testDebugUnitTest` |
 | `data/`、Room 表结构 | 上项 + 单测；改表结构还要迁移测试与 `app/schemas/` 快照 |
@@ -378,7 +406,7 @@ ktlint 与 detekt 是硬门禁（CI 会拦，`maxIssues: 0`），以下是人读
 - [ ] 文档已按第八章同步
 - [ ] 提交信息符合 `<type>(<scope>): <中文简述>`
 - [ ] `git status --short` 无临时文件、无构建产物、无密钥
-- [ ] 代码与文档无 emoji
+- [ ] 代码与文档无 emoji（`app/src/main/assets/copy/` 的用户文案除外）
 - [ ] 已 push，且 `git status -sb` 无 ahead / behind
 
 ---
@@ -411,6 +439,6 @@ git -c http.sslBackend=schannel push origin HEAD   # 本机必需，见 3.5.1
 # 检查 emoji（无输出即合规）
 # 注意：本机 grep 不支持 \x{...} 码位语法，用 grep -P 会直接报错而不是返回空，必须用 perl。
 # 用 -z 加 xargs -0 是为了让 docs/ 下的中文文件名不被 shell 拆开。
-git ls-files -z '*.kt' '*.md' '*.kts' '*.json' \
+git ls-files -z '*.kt' '*.md' '*.kts' '*.json' ':(exclude)app/src/main/assets/copy/*' \
   | xargs -0 perl -CSD -ne 'print "$ARGV:$.: $_" if /[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]/; close ARGV if eof'
 ```

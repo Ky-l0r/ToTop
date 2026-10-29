@@ -149,6 +149,8 @@ private data class OnboardingPage(
     val icon: ImageVector,
     val title: String,
     val lines: List<String>,
+    /** 是否需要额外的「怎么填」示意图与分步说明（目前只有模型配置那一页）。 */
+    val guide: Boolean = false,
 ) {
     companion object {
         val PAGES: List<OnboardingPage> =
@@ -185,8 +187,8 @@ private data class OnboardingPage(
                     title = "写作业时有陪伴模式",
                     lines =
                         listOf(
-                            "每道题先给五分钟，自己动手；到点还没头绪再问我。",
-                            "适合每天刷题，而不是一遇到卡点就看答案。",
+                            "计时只记录你真正在写的时长，不设截止时间。",
+                            "想不起来的知识点随时问一句，问的时候计时自动暂停。",
                         ),
                 ),
                 OnboardingPage(
@@ -194,9 +196,9 @@ private data class OnboardingPage(
                     title = "先填一个模型 Key",
                     lines =
                         listOf(
-                            "本应用不内置 Key，需要你在设置里填自己的 Base URL、Key 与模型名。",
-                            "填完点一次「校验连通性」，通过后就能开始拍题了。",
+                            "本应用不内置 Key，用你自己的模型账号，费用也由你直接付给厂商。",
                         ),
+                    guide = true,
                 ),
                 OnboardingPage(
                     icon = Icons.Filled.Lock,
@@ -241,6 +243,12 @@ private fun OnboardingPageView(page: OnboardingPage) {
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(14.dp))
+        if (page.guide) {
+            // 配置教程单独一屏：三行输入 + 一个校验按钮画成示意图，再列四步，
+            // 比在引导里塞两行文字更能让人一次填对。
+            ApiSetupGuide(modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(10.dp))
+        }
         page.lines.forEach { line ->
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),

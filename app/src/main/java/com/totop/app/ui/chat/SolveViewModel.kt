@@ -284,7 +284,7 @@ class SolveViewModel
                 }
             }
             startNewSession()
-            showToast(MASTERED_PHRASE)
+            showToast(com.totop.app.util.CopyDeck.encouragement(appContext))
         }
 
         /**
@@ -1469,9 +1469,6 @@ class SolveViewModel
         }
 
         private companion object {
-            /** 答完一题后的收束语。P2 会把这类文案挪进 assets 文案表。 */
-            const val MASTERED_PHRASE: String = "这题过了。下一道。"
-
             /** 未配置模型时的统一提示。 */
             const val NOT_CONFIGURED_MESSAGE: String =
                 "尚未配置模型（Base URL / API Key / 模型名）。请到设置页填写后再试：" +

@@ -62,6 +62,8 @@ data class HomeUiState(
     val masteredCount: Int = 0,
     /** 今日复习完成度 0..1；没有待复习时按 1 处理。 */
     val todayProgress: Float = 0f,
+    /** 首页每日一句（含 emoji，来自 assets/copy/home_lines.json）。 */
+    val dailyLine: String = "",
     /** 一句人话总结，例如「最近 7 天你在这 3 个知识点上错得较多」。 */
     val overviewHint: String = "",
     /** 需要多练的知识点列表（最多 3 条）。 */
