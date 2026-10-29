@@ -437,6 +437,18 @@ git -c http.sslBackend=schannel push origin HEAD   # 本机必需，见 3.5.1
 ./gradlew :app:ktlintCheck :app:detekt :app:testDebugUnitTest
 
 # 检查 emoji（无输出即合规）
+# 注意：本机 Git Bash 未安装 perl，下面这条会报 xargs: perl: No such file or directory。
+# 遇到这种情况用等价的 python 版本（2026-10-29 实测可用），两者结果一致：
+#   python - <<'EOF'
+#   import io, re, subprocess
+#   out = subprocess.run(["git","-c","core.quotepath=false","ls-files","-z","*.kt","*.md","*.kts","*.json"],
+#                        capture_output=True).stdout
+#   pat = re.compile("[\U0001F300-\U0001FAFF\u2600-\u27BF]")
+#   for f in [x.decode() for x in out.split(b"\0") if x]:
+#       if f.startswith("app/src/main/assets/copy/"): continue
+#       for i, line in enumerate(io.open(f, encoding="utf-8", errors="ignore"), 1):
+#           if pat.search(line): print(f, i, line.strip())
+#   EOF
 # 注意：本机 grep 不支持 \x{...} 码位语法，用 grep -P 会直接报错而不是返回空，必须用 perl。
 # 用 -z 加 xargs -0 是为了让 docs/ 下的中文文件名不被 shell 拆开。
 git ls-files -z '*.kt' '*.md' '*.kts' '*.json' ':(exclude)app/src/main/assets/copy/*' \
