@@ -237,7 +237,10 @@ private fun isTabSwitch(
  */
 private fun tabEnter(ms: Int): EnterTransition =
     fadeIn(tween(ms, easing = FastOutSlowInEasing)) +
-        slideInVertically(tween(ms, easing = FastOutSlowInEasing)) { height -> height / 50 }
+        slideInVertically(tween(ms, easing = FastOutSlowInEasing)) { height -> height / TAB_RISE_DIVISOR }
+
+/** 上浮幅度的分母：高度取这个值的倒数，360dp 宽屏上约 8dp。 */
+private const val TAB_RISE_DIVISOR: Int = 50
 
 /** 把基准时长换算成实际写入 [tween] 的时长（含系统缩放补偿）。 */
 private fun durationMs(
