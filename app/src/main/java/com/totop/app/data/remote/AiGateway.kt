@@ -305,7 +305,11 @@ class AiGateway(
                 val scopedCandidates =
                     request.candidateKpoints.filter { candidate ->
                         candidate.subject.isBlank() || candidate.subject.equals(subjectOfQuestion, ignoreCase = true)
-                    }.ifEmpty { request.candidateKpoints }
+                    }
+                        // 候选清单现在按科目各挑一份（客户端侧），过滤后仍要限条数：
+                        // 进提示词的每一条都是钱，60 条约 1.5K token 已到预算上限。
+                        .take(MAX_STAGE_CANDIDATES)
+                        .ifEmpty { request.candidateKpoints.take(MAX_STAGE_CANDIDATES) }
                 // 候选清单为空时不调用模型，直接得到「无知识点」的结构化结果。
                 // 这不是静默降级：会下发 StageCompleted 与一条告警，UI 明确显示原因。
                 val hasCandidates = scopedCandidates.isNotEmpty()
@@ -833,6 +837,14 @@ class AiGateway(
 
         /** 阶段 B（独立求解）的温度：偏低以保证同一道题多次求解结果一致。 */
         private const val STAGE_B_TEMPERATURE: Double = 0.1
+
+        /**
+         * 阶段 D 单次最多送进提示词的知识点候选条数。
+         *
+         * 与客户端 [KpointCandidates.MAX_CANDIDATES] 对齐：60 条约 1.5K token。
+         * 候选清单在客户端可能按科目各存一份（总量数百条），但真正进请求的只有这一份。
+         */
+        private const val MAX_STAGE_CANDIDATES: Int = 60
 
         /** 其余阶段的温度：略高，让错因说明与知识点用途的措辞更自然。 */
         private const val STAGE_DEFAULT_TEMPERATURE: Double = 0.2

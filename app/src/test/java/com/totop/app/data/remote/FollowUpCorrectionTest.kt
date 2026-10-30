@@ -3,6 +3,7 @@ package com.totop.app.data.remote
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -34,6 +35,27 @@ class FollowUpCorrectionTest {
     fun parseFlexibleFormats() {
         assertEquals("C. 氯化钠固体", FollowUpCorrection.parse("分析完了\n[[订正]]答案: C. 氯化钠固体").correctedAnswer)
         assertEquals("B、D", FollowUpCorrection.parse("[[订正]]最终答案：B、D").correctedAnswer)
+    }
+
+    @Test
+    @DisplayName("核对标记：结论没变也能被客户端识别，正文同样干净")
+    fun parseCheckMarker() {
+        val raw = "我把条件代回去重算了一遍，结果还是 C。\n[[核对]]最终答案：C"
+        val parsed = FollowUpCorrection.parse(raw)
+        assertEquals("C", parsed.correctedAnswer)
+        assertTrue(parsed.verifiedOnly, "只带核对标记时 verifiedOnly 必须为 true")
+        assertFalse(parsed.text.contains("核对"))
+        assertEquals("我把条件代回去重算了一遍，结果还是 C。", parsed.text)
+    }
+
+    @Test
+    @DisplayName("订正标记优先于核对标记被识别")
+    fun correctionWinsOverCheck() {
+        val raw = "重算后是 B。\n[[核对]]最终答案：B\n[[订正]]最终答案：B；理由：选项看错了"
+        val parsed = FollowUpCorrection.parse(raw)
+        assertEquals("B", parsed.correctedAnswer)
+        assertFalse(parsed.verifiedOnly, "带订正标记时按订正处理")
+        assertFalse(parsed.text.contains("[["))
     }
 
     @Test

@@ -91,6 +91,42 @@ class GuidePolicyTest {
     }
 
     @Test
+    @DisplayName("第 3 级接着第 1 步往下给，不把已经说过的步骤再列一遍")
+    fun thirdHintContinuesInsteadOfRepeating() {
+        val hints =
+            HintBuilder.build(
+                method = "守恒法",
+                stepContents = listOf("先写出反应物与产物", "标出各元素化合价的变化", "配平电子转移数", "合并得到配平式"),
+            )
+        val second = requireNotNull(HintBuilder.levelOf(hints, 2))
+        val third = requireNotNull(HintBuilder.levelOf(hints, 3))
+        assertTrue(second.text.contains("先写出反应物与产物"))
+        // 重复前两步是旧实现最刺眼的问题：第 3 级里不能再出现第 1 步
+        assertFalse(third.text.contains("先写出反应物与产物"), "第 3 级不得重复第 2 级已给的内容")
+        assertTrue(third.text.contains("标出各元素化合价的变化"))
+        assertTrue(third.text.contains("配平电子转移数"))
+    }
+
+    @Test
+    @DisplayName("提示不泄露最终答案：含答案的分句被擦掉")
+    fun hintsScrubAnswerClause() {
+        val hints =
+            HintBuilder.build(
+                method = "元素守恒",
+                stepContents =
+                    listOf(
+                        "先确定溶液里有哪些离子",
+                        "按电荷守恒列式，得到 c(Na+)=0.2 mol/L",
+                        "因此答案是 0.2 mol/L",
+                    ),
+                finalAnswer = "0.2 mol/L",
+            )
+        hints.forEach { hint ->
+            assertFalse(hint.text.contains("0.2 mol/L"), "提示不得出现最终答案：" + hint.text)
+        }
+    }
+
+    @Test
     @DisplayName("模式元信息覆盖全部档位")
     fun modeMetaCoversAll() {
         TeachingMode.entries.forEach { mode ->

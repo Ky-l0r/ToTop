@@ -173,7 +173,10 @@ fun KnowledgeScreen(
             items(items = visible, key = { it.subject }) { subjectGroup ->
                 SubjectHeatSection(
                     group = subjectGroup,
-                    expandedByDefault = uiState.selectedSubject != null || subjectGroup.hasData,
+                    // 默认收起：十科的章节全展开时，这一页先滚十几屏才看到自己那一科，
+                    // 学生反馈「一进来全是展开的条框，不知道从哪看」。
+                    // 只有明确点了某个科目页签（等于已经选定范围）时才默认展开。
+                    expandedByDefault = uiState.selectedSubject != null,
                     onOpenKnowledgePoint = onOpenKnowledgePoint,
                 )
             }
@@ -290,7 +293,7 @@ private fun SubjectHeatSection(
     }
 }
 
-/** 章节折叠卡：默认展开错题最多的前两章。 */
+/** 章节折叠卡：默认收起，由学生自己点开。 */
 @Composable
 private fun ChapterHeatCard(
     group: ChapterHeatGroup,
@@ -298,7 +301,7 @@ private fun ChapterHeatCard(
 ) {
     // key 带上科目：不同科目完全可能同名章节（例如「函数」），
     // 只用章节名做 saveable key 会让两个科目的展开状态互相覆盖。
-    var expanded by rememberSaveable(group.subject + "/" + group.chapter) { mutableStateOf(group.mistakeTotal > 0) }
+    var expanded by rememberSaveable(group.subject + "/" + group.chapter) { mutableStateOf(false) }
     Column(
         modifier =
             Modifier

@@ -569,6 +569,9 @@ object SolutionMapper {
             com.totop.app.ui.chat.HintBuilder.build(
                 method = content.standardSolution.method,
                 stepContents = steps.drop(hintFrom).map { it.content },
+                // 传入答案才能把它从步骤里擦掉：模型写的步骤常直接把结论写进去，
+                // 提示卡上再标一句「答案我不给」是自相矛盾的。
+                finalAnswer = content.standardSolution.finalAnswer,
             )
         return SolutionPayload(
             questionId = content.question.id,

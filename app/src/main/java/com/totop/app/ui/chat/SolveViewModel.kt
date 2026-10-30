@@ -760,7 +760,11 @@ class SolveViewModel
                                         // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
                                         // 看到的还是那个被推翻的旧答案。
                                         parsed.correctedAnswer?.let { corrected ->
-                                            syncCorrection(answer = corrected, replyId = replyId)
+                                            syncCorrection(
+                                                answer = corrected,
+                                                replyId = replyId,
+                                                verifiedOnly = parsed.verifiedOnly,
+                                            )
                                         }
                                         if (hasSupplement && encoded.isNotEmpty()) {
                                             refreshQuestionFromSupplement(solution?.questionId, encoded)
@@ -815,9 +819,19 @@ class SolveViewModel
         private suspend fun syncCorrection(
             answer: String,
             replyId: String,
+            verifiedOnly: Boolean = false,
         ) {
             val payload = latestSolution() ?: return
-            if (payload.finalAnswer.trim() == answer.trim()) return
+            if (payload.finalAnswer.trim() == answer.trim()) {
+                // 重算后结论没变也要给回执：学生质疑过，就该看到「确实核对过了」，
+                // 否则他会以为 AI 只是把原答案又抄了一遍。
+                if (verifiedOnly) {
+                    updateMessage(replyId) {
+                        it.copy(correctionNote = "已按你说的重算，结论没变：" + answer)
+                    }
+                }
+                return
+            }
             val mistakeId = payload.mistakeId
             if (mistakeId.isNullOrBlank()) {
                 updateMessage(replyId) {

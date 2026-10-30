@@ -209,7 +209,17 @@ class FollowUpGateway
                     append("2. 直接回答学生的疑问，必要时引用原题的条件或某一步骤；\n")
                     append("3. 如果学生问的是一道新题，就按新题独立作答；\n")
                     append("4. 不要输出 JSON，不要说「作为 AI」之类的话；\n")
-                    append("5. 如果这次回答**推翻了之前的最终答案**（改选项、改结论、改得数），\n")
+                    append("5. 学生质疑答案（「答案错了吧」「是不是不对」「我算的不是这个」）时，\n")
+                    append("   **必须从题目条件重新独立算一遍**，不许用「刚才已经给出」当理由沿用原结论；\n")
+                    append("   重算时当作一道新题，不要先看上面写的最终答案，算完再对比：\n")
+                    append("   - 算出来不一样：先说旧答案错在哪，再在最后单独一行给出订正；\n")
+                    append("   - 算出来一样：给一句可验证的核对（代回原式、量纲、边界值），\n")
+                    append("     并明确说「我重算过，结论没变」，不要只重复原答案。\n")
+                    append("6. 只要这次回答**涉及最终答案的对错**（学生质疑、补充条件、换了方法），\n")
+                    append("   必须在最后单独一行给出当前结论，格式严格照抄：\n")
+                    append("   ").append(CHECK_MARKER).append("最终答案：<当前结论>\n")
+                    append("   这一行是给客户端同步错题本用的，学生看不到；结论与原来相同时也要写。\n")
+                    append("7. 如果这次回答**推翻了之前的最终答案**（改选项、改结论、改得数），\n")
                     append("   必须在回答的最后单独一行给出订正，格式严格照抄：\n")
                     append("   ").append(CORRECTION_MARKER).append("最终答案：<新的最终答案>；理由：<一句话>\n")
                     append("   没有改变最终答案时，**禁止**出现这一行；不要用别的方式表达订正。\n")
@@ -232,6 +242,16 @@ class FollowUpGateway
              * 只有这一行是机器可读的，其余照旧是人话，学生看到的回答不会被结构化内容切碎。
              */
             const val CORRECTION_MARKER: String = "[[订正]]"
+
+            /**
+             * 核对标记。
+             *
+             * 与 [CORRECTION_MARKER] 的区别：订正表示「结论改了」，核对表示「重算过，
+             * 结论是这一条」。之所以两个都要，是因为只靠订正标记时，
+             * 模型判断「没改」就什么都不写，客户端无从知道它到底重算过没有；
+             * 核对标记让「我重算后仍是 C」也能落到错题本，学生质疑被推翻时也有回执。
+             */
+            const val CHECK_MARKER: String = "[[核对]]"
         }
     }
 
@@ -295,34 +315,60 @@ internal fun parsePlainText(raw: String): String =
 data class FollowUpAnswer(
     val text: String,
     val correctedAnswer: String?,
+    /**
+     * 是否只带了「核对」标记。
+     *
+     * true 表示模型明确说「我重算过，结论是这一条」，此时答案可能与原答案相同，
+     * 上层据此给学生一句「重算过、结论没变」的回执，而不是什么都不说。
+     */
+    val verifiedOnly: Boolean = false,
 )
 
 /**
- * 解析追问回答里的订正标记（纯逻辑，可单测）。
+ * 解析追问回答里的订正/核对标记（纯逻辑，可单测）。
  *
  * 约定：模型改变最终答案时，会在最后单独一行写
- * `[[订正]]最终答案：C；理由：试管口朝上会把冷凝水倒流炸裂`。
- * 这一行**不能显示给学生**，也不能进历史上下文（会污染下一轮输入），
- * 因此在这里剥掉，只把答案交给上层写库。
+ * `[[订正]]最终答案：C；理由：试管口朝上会把冷凝水倒流炸裂`；
+ * 学生质疑后重算而结论没变时，同样单独一行写 `[[核对]]最终答案：C`。
+ * 这两行**都不能显示给学生**，也不能进历史上下文（会污染下一轮输入），
+ * 因此在这里剥掉，只把结论交给上层写库。
  *
  * 容错：标记可能出现在任意一行、可能用了中英文冒号/分号、也可能根本没有「理由」部分；
  * 拿不到答案时按「没有订正」处理，绝不写入一个猜出来的答案。
  */
 object FollowUpCorrection {
     fun parse(raw: String): FollowUpAnswer {
-        if (!raw.contains(FollowUpGateway.CORRECTION_MARKER)) return FollowUpAnswer(raw.trim(), null)
+        val correctionAt = raw.indexOf(FollowUpGateway.CORRECTION_MARKER)
+        val checkAt = raw.indexOf(FollowUpGateway.CHECK_MARKER)
+        val marker =
+            when {
+                correctionAt >= 0 -> FollowUpGateway.CORRECTION_MARKER
+                checkAt >= 0 -> FollowUpGateway.CHECK_MARKER
+                else -> return FollowUpAnswer(raw.trim(), null)
+            }
+        // 按行剥：同一行里既有正文又有标记的情况极少，剥掉整行最安全。
+        // 两个标记都要剥——模型偶尔会同时写核对与订正，剩下的那行同样不能给学生看。
         val lines = raw.lines()
-        val markerIndex = lines.indexOfFirst { it.contains(FollowUpGateway.CORRECTION_MARKER) }
+        val markerIndex = lines.indexOfFirst { it.contains(marker) }
         if (markerIndex < 0) return FollowUpAnswer(raw.trim(), null)
         val markerLine = lines[markerIndex]
-        val answer = extractAnswer(markerLine.substringAfter(FollowUpGateway.CORRECTION_MARKER))
+        val answer = extractAnswer(markerLine.substringAfter(marker))
         val kept =
             lines
-                .filterIndexed { index, _ -> index != markerIndex }
+                .filterNot { line -> isMarkerLine(line) }
                 .joinToString("\n")
                 .trim()
-        return FollowUpAnswer(text = kept, correctedAnswer = answer)
+        return FollowUpAnswer(
+            text = kept,
+            correctedAnswer = answer,
+            // 只写核对行时，语义是「重算过，结论是这一条」，可能和原答案相同
+            verifiedOnly = marker == FollowUpGateway.CHECK_MARKER,
+        )
     }
+
+    /** 某一行是否是机器可读标记行（订正或核对）。 */
+    private fun isMarkerLine(line: String): Boolean =
+        line.contains(FollowUpGateway.CORRECTION_MARKER) || line.contains(FollowUpGateway.CHECK_MARKER)
 
     /** 从「最终答案：X；理由：Y」里取出 X。 */
     private fun extractAnswer(tail: String): String? {

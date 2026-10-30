@@ -216,14 +216,17 @@ fun FormulaText(
 ) {
     val content = remember(text) { FormulaParser.parse(text) }
     when (content) {
-        is FormulaContent.PlainText ->
-            // 没有 LaTeX 定界符：走「朴素数学记号」排版。
+        is FormulaContent.PlainText -> {
+            // 没有 LaTeX 定界符：先剥掉裸命令，再走「朴素数学记号」排版。
             //
-            // 这一步是本次修复「x^2 直接显示成 x∧2」的关键：
-            // 模型给的步骤正文是中文自然语言夹朴素记号（2^x、x^2、x_{n+1}），
-            // 不含任何 $ 定界符，旧实现因此直接当纯文本渲染，
-            // 学生看到的就是课本上根本不存在的 ^ 与 _ 符号。
-            PlainMathText(text = content.text, modifier = modifier, style = style)
+            // 两处修复叠在一起：
+            // 1. 「x^2 直接显示成 x∧2」——上下标交给 MathMarkup 排；
+            // 2. 「H_2SO_4 \cdot xSO_3 原样显示」——模型常把公式写成没有 $ 定界符的
+            //    LaTeX 片段，`\cdot`、`\frac{a}{b}` 会原样留在屏幕上，由 LatexPlain
+            //    换成 ·、a/b 这类字符。认不出的命令原样保留，不吞字符。
+            val normalized = remember(content.text) { LatexPlain.normalize(content.text) }
+            PlainMathText(text = normalized, modifier = modifier, style = style)
+        }
         is FormulaContent.Pieces ->
             FormulaRichContent(
                 pieces = content.pieces,
@@ -397,7 +400,9 @@ private fun InlineFormulaRun(
             var formulaIndex = 0
             pieces.forEach { piece ->
                 when (piece) {
-                    is FormulaContent.Piece.Text -> append(piece.value)
+                    // 公式之间的正文同样可能夹着裸命令（例如 `速度 v=s/t` 后面紧跟 `\cdot`），
+                    // 这里一并归一化，避免一段话里中文正常、公式处露出反斜杠。
+                    is FormulaContent.Piece.Text -> append(LatexPlain.normalize(piece.value))
                     is FormulaContent.Piece.Formula -> {
                         val id = INLINE_ID_PREFIX + formulaIndex
                         val result = rendered[piece.latex]
