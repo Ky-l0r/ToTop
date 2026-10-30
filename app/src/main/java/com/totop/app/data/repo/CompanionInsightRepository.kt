@@ -85,6 +85,16 @@ class CompanionInsightRepository
             )
         }
 
+        /**
+         * 当天已经记过的专注秒数。
+         *
+         * 陪伴页进入时读一次当作起点，顶栏据此显示「今天已写 N 分钟」——
+         * 只算本次进入后的秒数会让人以为数据丢了：写完一段去看别的页面再回来，
+         * 数字从零重新开始，比不显示更糟。
+         */
+        suspend fun todayFocusSeconds(nowUtc: Long = System.currentTimeMillis()): Long =
+            dailyStats.get(UtcDay.of(nowUtc), FOCUS_SUBJECT)?.studySeconds ?: 0L
+
         private fun ForgottenKpointEntity.toModel(): ForgottenKpoint =
             ForgottenKpoint(
                 kpointId = kpointId,

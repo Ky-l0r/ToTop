@@ -39,17 +39,22 @@ data class CompanionQa(
  * 进来即计时，只有问和答，离开即结账。
  *
  * @param elapsedSeconds 本次进入后累计的秒数
+ * @param todayBaseSeconds 进入本页之前当天已经记过的秒数（顶栏显示「今天」而不是「这次」）
  * @param items 问答流，问过的都留着，不再「写完一题就清空」
  */
 data class CompanionUiState(
     val elapsedSeconds: Int = 0,
+    val todayBaseSeconds: Int = 0,
     val question: String = "",
     val items: List<CompanionQa> = emptyList(),
     val asking: Boolean = false,
 ) {
+    /** 当天累计：进入之前的存量 + 本次进入后的增量。 */
+    val todaySeconds: Int get() = todayBaseSeconds + elapsedSeconds
+
     /** 顶栏那行小字。不足一分钟时不显示「0 分钟」这种读起来像没开始的内容。 */
     val clockLabel: String
-        get() = if (elapsedSeconds < 60) "刚开始" else "已写 " + (elapsedSeconds / 60) + " 分钟"
+        get() = if (todaySeconds < 60) "刚开始" else "今天已写 " + (todaySeconds / 60) + " 分钟"
 
     /** 有内容且不在等回答时才能发第二条，避免同一句话连发两次。 */
     val canAsk: Boolean get() = question.isNotBlank() && !asking
@@ -85,6 +90,15 @@ class CompanionViewModel
 
         /** 已经写进当天统计的秒数。用游标而不是「一次结账」，避免切页时重复累加。 */
         private var recordedSeconds: Int = 0
+
+        init {
+            // 起点只读一次：之后本页的每一秒都由 tick 自己累加，
+            // 若改成持续观察当天那一行，checkpoint 写库与界面读数之间会有一次回跳。
+            viewModelScope.launch {
+                val base = runCatching { insightRepository.todayFocusSeconds() }.getOrDefault(0L)
+                _uiState.update { it.copy(todayBaseSeconds = base.toInt()) }
+            }
+        }
 
         fun updateQuestion(text: String) {
             _uiState.update { it.copy(question = text) }
