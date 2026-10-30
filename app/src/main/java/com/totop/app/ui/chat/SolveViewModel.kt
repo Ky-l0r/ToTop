@@ -87,7 +87,6 @@ class SolveViewModel
         private val imagePreprocessor: ImagePreprocessor,
         private val imageCropper: ImageCropper,
         private val sessionRepository: SolveSessionRepository,
-        private val offlineRepository: com.totop.app.data.repo.OfflineNoteRepository,
         private val masteryRecorder: com.totop.app.data.repo.MasteryRecorder,
     ) : ViewModel() {
         private val registry = LlmCallRegistry()
@@ -488,31 +487,6 @@ class SolveViewModel
             _draftPages.value = QuestionDraft.EMPTY
             _activePage.value = 0
             if (_phase.value == ComposerPhase.READY) _phase.value = ComposerPhase.EMPTY
-        }
-
-        /**
-         * 存为离线记题：只落本机，不联网、不调用模型。
-         *
-         * 语义边界：离线记题的目的是「先拍下来别丢」，因此只存图片路径与用户手写的思路；
-         * 真正的识别与解题等联网后再触发。这里刻意不写 mistake_record，
-         * 因为错题记录必须带错因，而错因只能来自模型分析。
-         */
-        fun saveOffline() {
-            val draft = _draftPages.value
-            if (draft.isEmpty && _draft.value.stem.isBlank()) return
-            viewModelScope.launch {
-                runCatching {
-                    offlineRepository.save(
-                        stemText = _draft.value.stem.trim(),
-                        studentProcess = _draft.value.studentProcess.trim(),
-                        imagePaths = draft.pages.map { it.imagePath },
-                    )
-                }.onSuccess {
-                    showToast("已存到「离线记题」，联网后再解")
-                }.onFailure { failure ->
-                    showToast("离线保存失败：" + (failure.message ?: "未知原因"))
-                }
-            }
         }
 
         /** 由多页草稿 + 输入框文字组装 [PreparedQuestion]。 */

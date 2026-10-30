@@ -46,7 +46,9 @@ object Subjects {
             "history" to "历史",
             "geography" to "地理",
             "technology" to "技术",
-            GENERAL to "通用",
+            // 「未知」而不是「通用」：它不是一门课，是模型没认出科目时的标记。
+            // 与「通用技术」无关——后者属于 technology（技术 = 信息技术 + 通用技术）。
+            GENERAL to "未知",
         )
 
     /** 界面全部可选项的中文名（含兜底科目）。 */

@@ -35,9 +35,10 @@ class SubjectLabelTest {
     }
 
     @Test
-    @DisplayName("兜底科显示「通用」，空值显示「未标注学科」")
+    @DisplayName("兜底科显示「未知」，空值显示「未标注学科」")
     fun fallbackLabels() {
-        assertEquals("通用", subjectLabelOf("general"))
+        // 「未知」是识别失败的标记，不是「通用技术」（后者属于 technology）
+        assertEquals("未知", subjectLabelOf("general"))
         assertEquals("未标注学科", subjectLabelOf(""))
         assertEquals("未标注学科", subjectLabelOf("   "))
     }

@@ -12,6 +12,9 @@ object Routes {
     /** 首次使用引导：仅在尚未看过引导时作为启动页。 */
     const val ONBOARDING = "onboarding"
 
+    /** 选科目：引导之后、首次进首页之前；设置里也可再次进入。 */
+    const val SUBJECT_PICK = "subject_pick"
+
     /** 首页：启动即进入（看过引导后）。 */
     const val HOME = "home"
 
@@ -27,8 +30,6 @@ object Routes {
     /** 考前针对性复习资料。 */
     const val REVIEW_MATERIAL = "review_material"
 
-    /** 离线记题列表。 */
-    const val OFFLINE = "offline"
     const val MISTAKES = "mistakes"
     const val KNOWLEDGE = "knowledge"
     const val REPORT = "report"
@@ -45,6 +46,9 @@ object Routes {
 
     /** 模型与连接（BYOK）。 */
     const val SETTINGS_MODEL = "settings_model"
+
+    /** 学习的科目（从设置进入，带返回）。 */
+    const val SETTINGS_SUBJECTS = "settings_subjects"
 
     /** 教学偏好。 */
     const val SETTINGS_TEACHING = "settings_teaching"

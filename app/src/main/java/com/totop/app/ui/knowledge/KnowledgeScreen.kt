@@ -151,6 +151,8 @@ fun KnowledgeScreen(
                 item(key = "subject-tabs") {
                     SubjectTabs(
                         available = uiState.subjectGroups.filter { it.hasData }.map { it.subject }.toSet(),
+                        // 未勾选的科目已经从 subjectGroups 里滤掉，页签同步收敛
+                        allowed = uiState.subjectGroups.map { it.subject }.toSet(),
                         selected = uiState.selectedSubject ?: ALL_SUBJECTS,
                         onSelect = { code ->
                             viewModel.selectSubject(if (code == ALL_SUBJECTS) null else code)

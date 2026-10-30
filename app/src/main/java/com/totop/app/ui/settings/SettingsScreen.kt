@@ -93,6 +93,7 @@ fun SettingsScreen(
     onOpenTeaching: () -> Unit = {},
     onOpenStorage: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onOpenSubjects: () -> Unit = {},
     onBack: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -182,6 +183,11 @@ fun SettingsScreen(
             }
 
             SettingsGroup(title = "学习") {
+                SettingsEntry(
+                    title = "学习的科目",
+                    subtitle = "错题本与知识点只显示这些科目，可多选",
+                    onClick = onOpenSubjects,
+                )
                 SettingsEntry(
                     title = "教学偏好",
                     subtitle = "讲解模式、朗读、周报解读与练习题",

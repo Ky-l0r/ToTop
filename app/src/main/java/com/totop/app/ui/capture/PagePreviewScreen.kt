@@ -60,7 +60,6 @@ import com.totop.app.util.PixelRect
  *    **不会直接发送**。这一点是刻意改的：题目要不要解、思路写没写，
  *    由用户自己决定，而不是拍完就替他提交。
  *
- * 离线记题入口同样在这里，但走的是本地保存分支，不调用模型。
  *
  * @param bitmap 用于框选的高清预览图（长边 [PREVIEW_LONG_SIDE]），
  *   刻意不用列表缩略图：缩略图长边只有 320，放全屏会糊成一片，用户根本瞄不准要框哪一行。
@@ -79,7 +78,6 @@ fun PagePreviewScreen(
     onMovePage: (Int, Int) -> Unit,
     onConfirm: () -> Unit,
     onRetake: () -> Unit,
-    onSaveOffline: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -259,9 +257,6 @@ fun PagePreviewScreen(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
             ) {
                 Text(if (loading) "图片处理中…" else "确认，去写解题思路")
-            }
-            TextButton(onClick = onSaveOffline, modifier = Modifier.fillMaxWidth()) {
-                Text("先记下来（不联网）", color = Color.White.copy(alpha = 0.85f))
             }
         }
     }

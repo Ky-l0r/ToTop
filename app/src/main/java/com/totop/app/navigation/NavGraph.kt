@@ -65,7 +65,6 @@ import com.totop.app.ui.knowledge.KnowledgePointDetailScreen
 import com.totop.app.ui.knowledge.KnowledgeScreen
 import com.totop.app.ui.mistakes.MistakesScreen
 import com.totop.app.ui.mistakes.ReviewScreen
-import com.totop.app.ui.offline.OfflineNoteScreen
 import com.totop.app.ui.report.ReportScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
@@ -79,7 +78,7 @@ import kotlinx.coroutines.delay
  * 导航结构（本次重构的核心变化）：
  * - 启动页由「解题」改为「首页」，让用户一进来先看到学习情况；
  * - 底部只保留 首页 / 拍题 / 功能中心 三项；
- * - 错题本、知识点、学情、设置、复习资料、离线记题全部可从功能中心进入，
+ * - 错题本、知识点、学情、设置、复习资料全部可从功能中心进入，
  *   路由本身保留不动，因此**既有页面与其数据访问完全复用**，不丢任何功能。
  *
  * 二级页面（知识点详情、复习、备份、复习资料）隐藏底部栏，由返回键回到上一页。
@@ -373,7 +372,7 @@ private const val NAV_INDICATOR_MS: Int = 220
 /** 胶囊半径：取高度的一半附近，保证两端是完整的半圆而不是圆角矩形。 */
 private val NAV_BAR_RADIUS = 26.dp
 
-/** 导航宿主。所有既有路由保持不变，只新增首页、功能中心、复习资料、离线记题。 */
+/** 导航宿主。所有既有路由保持不变，只新增首页、功能中心、复习资料。 */
 @Composable
 fun ToTopNavHost(
     navController: NavHostController,
@@ -423,9 +422,23 @@ fun ToTopNavHost(
         composable(route = Routes.ONBOARDING) {
             com.totop.app.ui.onboarding.OnboardingScreen(
                 onFinish = {
-                    // 看完引导直接进首页：不回退栈里留一个「引导」，否则按返回键会再看到它
-                    navController.navigate(Routes.HOME) {
+                    // 看完引导去选科目：新用户第一次打开时十科的列表全是空的，
+                    // 先问一句「你学哪几科」，之后的错题本与知识点就不会混着别人那几科。
+                    navController.navigate(Routes.SUBJECT_PICK) {
                         popUpTo(Routes.ONBOARDING) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(route = Routes.SUBJECT_PICK) {
+            // 没有 onBack：这是启动流程的一步，退回去只会重复看引导。
+            // 设置页进入的那次由设置页自己再叠一层带返回的入口（见 SETTINGS 的二级页）。
+            com.totop.app.ui.onboarding.SubjectPickerScreen(
+                onDone = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.SUBJECT_PICK) { inclusive = true }
                         launchSingleTop = true
                     }
                 },
@@ -445,7 +458,6 @@ fun ToTopNavHost(
                 onOpenCapture = { navController.navigateTopLevel(Routes.SOLVE) },
                 onOpenMistakes = { navController.navigate(Routes.MISTAKES) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
-                onOpenOffline = { navController.navigate(Routes.OFFLINE) },
                 onOpenHub = { navController.navigateTopLevel(Routes.HUB) },
                 onOpenKnowledgePoint = { id -> navController.navigate(Routes.kpointDetail(id)) },
                 onOpenCompanion = { navController.navigateTopLevel(Routes.COMPANION) },
@@ -482,7 +494,6 @@ fun ToTopNavHost(
                 onOpenKnowledge = { navController.navigate(Routes.KNOWLEDGE) },
                 onOpenReport = { navController.navigate(Routes.REPORT) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
-                onOpenOffline = { navController.navigate(Routes.OFFLINE) },
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 onOpenCompanion = { navController.navigateTopLevel(Routes.COMPANION) },
@@ -528,8 +539,17 @@ fun ToTopNavHost(
             ReportScreen(onBack = { navController.popBackStack() })
         }
 
+        composable(route = Routes.SETTINGS_SUBJECTS) {
+            // 从设置进来时带返回：改完科目退回设置，不必重新走一遍启动流程。
+            com.totop.app.ui.onboarding.SubjectPickerScreen(
+                onDone = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
         composable(route = Routes.SETTINGS) {
             SettingsScreen(
+                onOpenSubjects = { navController.navigate(Routes.SETTINGS_SUBJECTS) },
                 onOpenModel = { navController.navigate(Routes.SETTINGS_MODEL) },
                 onOpenTeaching = { navController.navigate(Routes.SETTINGS_TEACHING) },
                 onOpenStorage = { navController.navigate(Routes.SETTINGS_STORAGE) },
@@ -565,10 +585,6 @@ fun ToTopNavHost(
 
         composable(route = Routes.REVIEW_MATERIAL) {
             ReviewMaterialScreen(onBack = { navController.popBackStack() })
-        }
-
-        composable(route = Routes.OFFLINE) {
-            OfflineNoteScreen(onBack = { navController.popBackStack() })
         }
 
         composable(

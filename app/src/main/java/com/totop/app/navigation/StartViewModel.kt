@@ -2,6 +2,7 @@ package com.totop.app.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.data.prefs.SubjectPrefs
 import com.totop.app.data.repo.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +23,13 @@ class StartViewModel
     @Inject
     constructor(
         private val settingsRepository: SettingsRepository,
+        private val subjectPrefs: SubjectPrefs,
     ) : ViewModel() {
         /** 是否已完成启动判定（false 时界面只画背景，避免闪屏）。 */
         private val _ready = MutableStateFlow(false)
         val ready: StateFlow<Boolean> = _ready.asStateFlow()
 
-        /** 起始路由：看过引导为首页，否则为引导页。 */
+        /** 起始路由：没看过引导去引导页，没选过科目去选科目，否则首页。 */
         private val _startRoute = MutableStateFlow(Routes.HOME)
         val startRoute: StateFlow<String> = _startRoute.asStateFlow()
 
@@ -37,7 +39,15 @@ class StartViewModel
                     runCatching {
                         settingsRepository.getBoolean(SettingsRepository.Keys.FIRST_LAUNCH_DONE, false)
                     }.getOrDefault(false)
-                _startRoute.value = if (done) Routes.HOME else Routes.ONBOARDING
+                // 「看过引导」与「选过科目」是两次独立的判定：
+                // 已装过老版本、看完了引导但没有科目键的用户，升级后要补一次选择。
+                val picked = runCatching { subjectPrefs.hasPicked() }.getOrDefault(false)
+                _startRoute.value =
+                    when {
+                        !done -> Routes.ONBOARDING
+                        !picked -> Routes.SUBJECT_PICK
+                        else -> Routes.HOME
+                    }
                 _ready.value = true
             }
         }

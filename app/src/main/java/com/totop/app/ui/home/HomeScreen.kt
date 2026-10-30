@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.ReportProblem
@@ -61,7 +60,6 @@ fun HomeScreen(
     onOpenCapture: () -> Unit,
     onOpenMistakes: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
-    onOpenOffline: () -> Unit,
     onOpenHub: () -> Unit,
     onOpenKnowledgePoint: (String) -> Unit = {},
     onOpenCompanion: () -> Unit = {},
@@ -195,13 +193,6 @@ fun HomeScreen(
                 subtitle = "考试前打印一份",
                 icon = Icons.Filled.PictureAsPdf,
                 onClick = onOpenReviewMaterial,
-                modifier = Modifier.weight(1f),
-            )
-            QuickEntry(
-                title = "离线记题",
-                subtitle = "没网先拍下来",
-                icon = Icons.Filled.CloudOff,
-                onClick = onOpenOffline,
                 modifier = Modifier.weight(1f),
             )
         }

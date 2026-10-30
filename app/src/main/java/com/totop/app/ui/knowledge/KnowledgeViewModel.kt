@@ -2,11 +2,13 @@ package com.totop.app.ui.knowledge
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.data.prefs.SubjectPrefs
 import com.totop.app.data.repo.KnowledgeRepository
 import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.data.repo.UtcDay
 import com.totop.app.domain.model.KnowledgePoint
 import com.totop.app.domain.model.Mastery
+import com.totop.app.domain.model.SubjectScope
 import com.totop.app.domain.model.Subjects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -118,6 +120,7 @@ class KnowledgeViewModel
     constructor(
         private val knowledgeRepository: KnowledgeRepository,
         private val mistakeRepository: MistakeRepository,
+        private val subjectPrefs: SubjectPrefs,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(KnowledgeUiState())
         val uiState: StateFlow<KnowledgeUiState> = _uiState.asStateFlow()
@@ -149,7 +152,12 @@ class KnowledgeViewModel
                     // 学生看到的是一眼望不到头的「章节热力」，根本不知道自己在看哪一科。
                     // 科目是第一层的筛选维度，章节只能是科目内部的第二层。
                     val subjectOfRow: Map<String, String> = points.associate { it.id to it.subject }
-                    val subjectGroups = groupBySubject(heatRows, subjectOfRow)
+                    // 只保留学生勾选的科目：未勾选的科目整块不出现，
+                    // 否则九科的章节树会把这一页拉成十几屏。
+                    val allowed = runCatching { subjectPrefs.allowed() }.getOrDefault(SubjectScope.ALL)
+                    val subjectGroups =
+                        groupBySubject(heatRows, subjectOfRow)
+                            .filter { group -> SubjectScope.isVisible(group.subject, allowed) }
                     // 无数据科目一律折叠（见 SubjectHeatGroup.hasData），
                     // 这里不再单独维护一份扁平列表。
                     val merged = KnowledgeCharts.mergeHistory(masteries)
@@ -162,7 +170,10 @@ class KnowledgeViewModel
                             errorMessage = null,
                             radar = radar,
                             subjectGroups = subjectGroups,
-                            selectedSubject = _uiState.value.selectedSubject,
+                            selectedSubject =
+                                _uiState.value.selectedSubject?.takeIf { code ->
+                                    allowed.contains(code)
+                                },
                             trend = trend,
                             pie = pie,
                             masteredKpointCount = masteries.size,

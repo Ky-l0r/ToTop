@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
@@ -62,7 +61,6 @@ fun HubScreen(
     onOpenKnowledge: () -> Unit,
     onOpenReport: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
-    onOpenOffline: () -> Unit,
     onOpenReview: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenCompanion: () -> Unit = {},
@@ -80,7 +78,6 @@ fun HubScreen(
             "考前冲刺" to
                 listOf(
                     HubEntry("复习资料", "按错题生成，可打印", Icons.Filled.List, onOpenReviewMaterial),
-                    HubEntry("离线记题", "没网先拍下来", Icons.Filled.Create, onOpenOffline),
                 ),
             "了解自己" to
                 listOf(

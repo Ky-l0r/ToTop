@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.totop.app.domain.model.SubjectScope
 import com.totop.app.domain.model.Subjects
 import com.totop.app.ui.theme.Tokens
 
@@ -31,6 +32,8 @@ const val ALL_SUBJECTS: String = "__all__"
  *
  * @param available 有数据的科目代码集合（来自数据库聚合）
  * @param selected 当前选中项（科目代码或 [ALL_SUBJECTS]）
+ * @param allowed 学生勾选的科目；未勾选的科目不出现，而不是置灰——
+ *   置灰传达的是「以后会有」，而这些科目是学生自己明确说不学的。
  */
 @Composable
 fun SubjectTabs(
@@ -39,11 +42,12 @@ fun SubjectTabs(
     onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
     showAll: Boolean = true,
+    allowed: Set<String> = SubjectScope.ALL,
 ) {
     val codes =
         buildList {
             if (showAll) add(ALL_SUBJECTS)
-            addAll(Subjects.ORDER)
+            addAll(Subjects.ORDER.filter { code -> allowed.contains(code) })
         }
 
     Row(

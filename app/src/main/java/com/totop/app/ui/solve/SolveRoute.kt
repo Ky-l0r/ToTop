@@ -183,10 +183,6 @@ fun SolveRoute(
                 if (draftPages.pageCount <= 1) previewOpen = false
                 cameraOpen = true
             },
-            onSaveOffline = {
-                viewModel.saveOffline()
-                previewOpen = false
-            },
             onCancel = { previewOpen = false },
             modifier = modifier,
         )

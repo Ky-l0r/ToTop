@@ -112,6 +112,12 @@ class SettingsRepository
             /** 首次启动完成标记。 */
             const val FIRST_LAUNCH_DONE: String = "firstLaunchDone"
 
+            /** 学生学的科目（逗号分隔的代码串，见 SubjectScope）。 */
+            const val SUBJECTS: String = "subjects"
+
+            /** 是否已经选过科目：为 false 时启动先进科目选择页。 */
+            const val SUBJECTS_PICKED: String = "subjectsPicked"
+
             /** 种子数据全局版本号。 */
             const val SEED_VERSION: String = SettingsEntity.KEY_SEED_VERSION
         }

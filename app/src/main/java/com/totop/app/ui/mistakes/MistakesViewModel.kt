@@ -2,8 +2,10 @@ package com.totop.app.ui.mistakes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.data.prefs.SubjectPrefs
 import com.totop.app.data.repo.KnowledgeRepository
 import com.totop.app.data.repo.MistakeRepository
+import com.totop.app.domain.model.SubjectScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -79,6 +81,7 @@ class MistakesViewModel
         private val gateway: MistakeBrowseGateway,
         private val mistakeRepository: MistakeRepository,
         private val knowledgeRepository: KnowledgeRepository,
+        private val subjectPrefs: SubjectPrefs,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(MistakesUiState())
         val uiState: StateFlow<MistakesUiState> = _uiState.asStateFlow()
@@ -269,16 +272,31 @@ class MistakesViewModel
         }
 
         private suspend fun loadOptions() {
-            val subjects = runCatching { gateway.subjects() }.getOrDefault(emptyList())
+            // 科目下拉只列学生勾选的科目；`general`（未知）不进下拉，
+            // 但仍会出现在「全部」列表里——那是识别失败的题，不是一门课。
+            val allowed = runCatching { subjectPrefs.allowed() }.getOrDefault(SubjectScope.ALL)
+            val subjects =
+                runCatching { gateway.subjects() }
+                    .getOrDefault(emptyList())
+                    .filter { allowed.contains(it) }
             val all =
                 runCatching {
                     knowledgeRepository.catalogEnsuringSeeded().allKnowledgePoints()
                         .filter { it.parentId != null }
                         .sortedWith(compareBy({ it.chapter }, { it.orderIndex }))
                 }.getOrDefault(emptyList())
+            val current = _uiState.value
+            // 上次选中的科目如果已被取消勾选，回落到「全部」，否则会停在必然零结果的状态
+            val keptSubject = current.filter.subject?.takeIf { subjects.contains(it) }
             _uiState.value =
-                _uiState.value.copy(
+                current.copy(
                     subjectOptions = subjects,
+                    filter =
+                        if (keptSubject == current.filter.subject) {
+                            current.filter
+                        } else {
+                            current.filter.withSubject(null)
+                        },
                     kpointOptions = kpointOptionsFor(all, null),
                     allKpoints = all,
                 )
