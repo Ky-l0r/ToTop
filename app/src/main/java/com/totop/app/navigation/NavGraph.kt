@@ -4,21 +4,25 @@ import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -158,11 +161,14 @@ fun ToTopApp(
 /**
  * 启动动画最短展示时长。
  *
- * 字标逐字淡入本身要 440ms（五个字母、间隔 70ms、单个 160ms），
- * 再留约 260ms 定格，让「全部出现」这个动作被看见；
- * 定太短会变成「刚写完就被首页顶掉」，反而更乱。
+ * 0.5.1 从 700ms 提到 1200ms：真机反馈「一闪而过，P 刚出来就没了」。
+ * 时间账拆开看——五个字母逐字淡入 350ms、末字淡入完成约 510ms，
+ * 剩下约 690ms 是「全部出现后定格」，让「写完了」这个动作被看见；
+ * 之后才是 260ms 的淡出。
+ *
+ * 不掩盖真实耗时：判定本身更久（首次启动要建库）时，动画会一直停留到判定结束。
  */
-private const val SPLASH_MIN_VISIBLE_MS: Long = 700L
+private const val SPLASH_MIN_VISIBLE_MS: Long = 1200L
 
 /** 进入过渡时长（毫秒）。比系统默认短，避免「点了没反应」的观感。 */
 private const val TRANSITION_ENTER_MS: Int = 260
@@ -212,7 +218,7 @@ private fun slideEnter(
 /**
  * 是否是「底栏同级切换」。
  *
- * 两个顶层页面之间来回切时只做淡入淡出：它们的层级是并列，
+ * 两个顶层页面之间来回切时不做横移：它们的层级是并列，
  * 横移会让人以为自己在进/退页面，反而更迷惑。
  */
 private fun isTabSwitch(
@@ -221,6 +227,17 @@ private fun isTabSwitch(
 ): Boolean =
     TopLevelDestination.fromRoute(from.destination.route) != null &&
         TopLevelDestination.fromRoute(to.destination.route) != null
+
+/**
+ * 底栏同级切换的入场：淡入 + 极轻的上浮。
+ *
+ * 只淡入时，180ms 的透明度变化在低端机上几乎看不出（真机反馈「切页面没有动画」）；
+ * 加一点上浮既能被眼睛捕捉到，又不会把并列关系说成层级关系——横移才是层级语义。
+ * 幅度取高度的 1/50，360dp 宽屏上约 8dp，与启动页字母的上移量一致。
+ */
+private fun tabEnter(ms: Int): EnterTransition =
+    fadeIn(tween(ms, easing = FastOutSlowInEasing)) +
+        slideInVertically(tween(ms, easing = FastOutSlowInEasing)) { height -> height / 50 }
 
 /** 把基准时长换算成实际写入 [tween] 的时长（含系统缩放补偿）。 */
 private fun durationMs(
@@ -267,7 +284,10 @@ private fun FloatingNavBar(
     currentRoute: String?,
     onSelect: (TopLevelDestination) -> Unit,
 ) {
-    Row(
+    val items = TopLevelDestination.entries
+    // 当前项下标：路由不在四项里时（例如二级页）停在第一项，滑块不会跑到行外
+    val selectedIndex = items.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
+    Box(
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -277,39 +297,75 @@ private fun FloatingNavBar(
                 .clip(RoundedCornerShape(NAV_BAR_RADIUS))
                 .background(Tokens.Surface)
                 .padding(horizontal = 5.dp, vertical = 5.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        TopLevelDestination.entries.forEach { destination ->
-            val selected = currentRoute == destination.route
-            Row(
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val gap = NAV_ITEM_GAP
+            val itemWidth = (maxWidth - gap * (items.size - 1)) / items.size
+            // 滑块：选中项之间的位移，而不是每项各自换底色。
+            //
+            // 每项各画一块底色时，切换是「左边灭、右边亮」两个独立动作，
+            // 眼睛读到的是一次闪烁；连续位移才读得出「选中项换到了这里」。
+            val targetOffset = (itemWidth + gap) * selectedIndex
+            val offsetX by
+                animateDpAsState(
+                    targetValue = targetOffset,
+                    animationSpec = tween(NAV_INDICATOR_MS, easing = FastOutSlowInEasing),
+                    label = "nav-indicator-offset",
+                )
+            Box(
                 modifier =
                     Modifier
-                        .weight(1f)
-                        .height(42.dp)
+                        .offset(x = offsetX)
+                        .width(itemWidth)
+                        .height(NAV_ITEM_HEIGHT)
                         .clip(RoundedCornerShape(NAV_BAR_RADIUS))
-                        .background(if (selected) Tokens.PrimaryContainer else Color.Transparent)
-                        .clickable { onSelect(destination) },
-                horizontalArrangement = Arrangement.Center,
+                        .background(Tokens.PrimaryContainer),
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(gap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                    contentDescription = stringResource(destination.labelRes),
-                    tint = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(
-                    text = stringResource(destination.labelRes),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
-                    fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
-                )
+                items.forEach { destination ->
+                    val selected = currentRoute == destination.route
+                    Row(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(NAV_ITEM_HEIGHT)
+                                .clip(RoundedCornerShape(NAV_BAR_RADIUS))
+                                .clickable { onSelect(destination) },
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                            contentDescription = stringResource(destination.labelRes),
+                            tint = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = stringResource(destination.labelRes),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
+                            fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+/** 导航项之间的间隙。滑块位移按「项宽 + 间隙」累计，与 Row 的 spacedBy 必须一致。 */
+private val NAV_ITEM_GAP = 2.dp
+
+/** 导航项高度。 */
+private val NAV_ITEM_HEIGHT = 42.dp
+
+/** 滑块位移时长：与底栏淡入同量级，短到不拖沓，又足以被看见是「滑过去」。 */
+private const val NAV_INDICATOR_MS: Int = 220
 
 /** 胶囊半径：取高度的一半附近，保证两端是完整的半圆而不是圆角矩形。 */
 private val NAV_BAR_RADIUS = 26.dp
@@ -342,7 +398,7 @@ fun ToTopNavHost(
         // - 时长按系统缩放补偿，0.5x 用户也能看到动画。
         enterTransition = {
             if (isTabSwitch(initialState, targetState)) {
-                fadeIn(tween(tabMs, easing = FastOutSlowInEasing))
+                tabEnter(tabMs)
             } else {
                 slideEnter(enterMs)
             }
@@ -352,7 +408,7 @@ fun ToTopNavHost(
         },
         popEnterTransition = {
             if (isTabSwitch(initialState, targetState)) {
-                fadeIn(tween(tabMs, easing = FastOutSlowInEasing))
+                tabEnter(tabMs)
             } else {
                 slideEnter(enterMs, fromLeft = true)
             }
@@ -373,9 +429,12 @@ fun ToTopNavHost(
             )
         }
 
-        // 陪伴是顶层页（底栏第四项）：不显示返回箭头，求助在页内直接用语音/文字问。
+        // 陪伴是顶层页（底栏第三项）：不显示返回箭头，问在页内直接用语音或打字。
+        // 相机走 SOLVE_NEW：拍下来的是一道题，要的是完整解答，不该塞进「随手问」的一轮对话。
         composable(route = Routes.COMPANION) {
-            com.totop.app.ui.companion.CompanionScreen()
+            com.totop.app.ui.companion.CompanionScreen(
+                onOpenCamera = { navController.navigate(Routes.SOLVE_NEW) },
+            )
         }
 
         composable(route = Routes.HOME) {

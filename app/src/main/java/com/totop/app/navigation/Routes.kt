@@ -38,7 +38,7 @@ object Routes {
     const val REVIEW = "review"
     const val BACKUP = "backup"
 
-    /** 陪伴作业模式（每道题先自己写五分钟）。 */
+    /** 陪伴作业：写作业时随手问一句，顺便记着时长；相机求助跳 [SOLVE_NEW]。 */
     const val COMPANION = "companion"
 
     // 设置的子页面：进入即是一个独立页，而不是长列表里的折叠面板
