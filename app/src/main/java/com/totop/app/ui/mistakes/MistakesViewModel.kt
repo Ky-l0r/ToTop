@@ -132,6 +132,11 @@ class MistakesViewModel
             applyFilter(_uiState.value.filter.withKpoint(kpointId))
         }
 
+        /** 切换状态筛选（不会 / 待校对 / 错误 / 理解）。null 表示全部。 */
+        fun setStatus(status: com.totop.app.domain.model.MistakeStatus?) {
+            applyFilter(_uiState.value.filter.withStatus(status))
+        }
+
         /** 切换错因。 */
         fun setErrorType(errorType: com.totop.app.domain.model.ErrorType?) {
             applyFilter(_uiState.value.filter.withErrorType(errorType))

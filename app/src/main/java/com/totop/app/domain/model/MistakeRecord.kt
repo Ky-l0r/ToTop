@@ -26,6 +26,10 @@ data class MistakeRecord(
     val createdAtUtc: Long,
     /** 同知识点第 N 次出错（FR-4.5 复发提示），首次为 1。 */
     val recurrenceIndex: Int = 1,
+    /** 易错题状态；缺省按「错误」，兼容 0.6.0 之前的调用点。 */
+    val status: MistakeStatus = MistakeStatus.DEFAULT,
+    /** 来源：solve / check / manual。用于区分「拍题进来」与「核对后进来」。 */
+    val source: String = "solve",
 ) {
     /** 是否属于复发（第 2 次及以后）。 */
     val isRecurrence: Boolean get() = recurrenceIndex > 1

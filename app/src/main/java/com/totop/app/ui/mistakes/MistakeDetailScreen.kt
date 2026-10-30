@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.StudentStepStatus
 import com.totop.app.ui.theme.Tokens
 
@@ -102,7 +103,14 @@ fun MistakeDetailScreen(
                 state.errorMessage != null ->
                     ErrorState(message = state.errorMessage.orEmpty(), onRetry = { viewModel.load(mistakeId) })
                 state.notFound -> EmptyState(onBack = onBack)
-                else -> state.detail?.let { detail -> DetailContent(detail) }
+                else ->
+                    state.detail?.let { detail ->
+                        DetailContent(
+                            detail = detail,
+                            status = state.status,
+                            onSetStatus = viewModel::setStatus,
+                        )
+                    }
             }
         }
     }
@@ -128,7 +136,11 @@ fun MistakeDetailScreen(
 }
 
 @Composable
-private fun DetailContent(detail: MistakeDetailUi) {
+private fun DetailContent(
+    detail: MistakeDetailUi,
+    status: MistakeStatus,
+    onSetStatus: (MistakeStatus) -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -138,12 +150,54 @@ private fun DetailContent(detail: MistakeDetailUi) {
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         MetaRow(detail)
+        StatusPickerRow(status = status, onSetStatus = onSetStatus)
         QuestionCard(detail)
         StudentWorkCard(detail)
         ErrorCard(detail)
         SolutionCard(detail)
         if (detail.kpointNames.isNotEmpty()) KpointCard(detail)
         Spacer(Modifier.height(16.dp))
+    }
+}
+
+/**
+ * 状态选择：不会 / 待校对 / 错误 / 理解。
+ *
+ * 放在最上面，因为它是这道题「现在算什么」的第一判断；改状态只改分类，
+ * 不动标准解答、也不动掌握度（掌握度只认核对与变式，见 0.6.0 第七节）。
+ */
+@Composable
+private fun StatusPickerRow(
+    status: MistakeStatus,
+    onSetStatus: (MistakeStatus) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MistakeStatus.entries.forEach { candidate ->
+                val selected = candidate == status
+                Box(
+                    modifier =
+                        Modifier
+                            .background(
+                                if (selected) Tokens.PrimaryContainer else Tokens.SurfaceVariant,
+                                RoundedCornerShape(50),
+                            )
+                            .clickable { onSetStatus(candidate) }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = candidate.label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
+                    )
+                }
+            }
+        }
+        Text(
+            text = status.hint,
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.OnSurfaceVariant,
+        )
     }
 }
 

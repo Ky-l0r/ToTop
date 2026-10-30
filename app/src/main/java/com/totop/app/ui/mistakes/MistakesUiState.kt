@@ -1,6 +1,7 @@
 package com.totop.app.ui.mistakes
 
 import com.totop.app.domain.model.ErrorType
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.usecase.port.DAY_MILLIS
 
 /**
@@ -31,6 +32,8 @@ data class MistakeFilter(
     val errorType: ErrorType? = null,
     val timeWindow: TimeWindow = TimeWindow.ALL,
     val keyword: String = "",
+    /** 状态筛选；null 表示全部。 */
+    val status: MistakeStatus? = null,
 ) {
     /** 有效的搜索词（去首尾空白后非空才参与查询）。 */
     val normalizedKeyword: String get() = keyword.trim()
@@ -39,7 +42,7 @@ data class MistakeFilter(
     val isActive: Boolean
         get() =
             subject != null || kpointId != null || errorType != null ||
-                timeWindow != TimeWindow.ALL || normalizedKeyword.isNotEmpty()
+                timeWindow != TimeWindow.ALL || normalizedKeyword.isNotEmpty() || status != null
 
     /** 生效条件数量，用于界面上的筛选按钮徽标。 */
     val activeCount: Int
@@ -50,6 +53,7 @@ data class MistakeFilter(
                 errorType != null,
                 timeWindow != TimeWindow.ALL,
                 normalizedKeyword.isNotEmpty(),
+                status != null,
             ).count { it }
 
     fun withSubject(value: String?): MistakeFilter = copy(subject = value)
@@ -61,6 +65,8 @@ data class MistakeFilter(
     fun withTimeWindow(value: TimeWindow): MistakeFilter = copy(timeWindow = value)
 
     fun withKeyword(value: String): MistakeFilter = copy(keyword = value)
+
+    fun withStatus(value: MistakeStatus?): MistakeFilter = copy(status = value)
 
     /** 清空筛选，保留无（用于「清除筛选」按钮）。 */
     fun cleared(): MistakeFilter = MistakeFilter()
@@ -108,6 +114,8 @@ data class MistakeCardUi(
     val thumbnailPath: String?,
     val finalAnswer: String,
     val hasLocatedErrorStep: Boolean,
+    /** 易错题状态（不会 / 待校对 / 错误 / 理解）。 */
+    val status: MistakeStatus = MistakeStatus.DEFAULT,
 ) {
     /** 复发徽标：首次不显示，第 2 次起显示「第 N 次错」（FR-4.5）。 */
     val recurrenceBadge: String? get() = recurrenceBadgeText(recurrenceIndex)
@@ -117,6 +125,9 @@ data class MistakeCardUi(
 
     /** 科目中文名。 */
     val subjectLabel: String get() = subjectLabelOf(subject)
+
+    /** 状态中文名，列表徽标用。 */
+    val statusLabel: String get() = status.label
 
     /** 知识点标签（最多三个，其余折叠成一个「+N」标签）。 */
     val kpointTags: List<String>

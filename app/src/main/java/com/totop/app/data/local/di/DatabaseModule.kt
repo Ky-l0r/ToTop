@@ -73,8 +73,24 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * v3 -> v4：易错题四态。
+     *
+     * 两个列都带默认值：历史记录全部落成「错误」（0.6.0 之前只收做错的题），
+     * 来源落成「拍题」。不写 UPDATE 语句也能对齐，但显式写一遍更不容易被误读成
+     * 「旧数据没有状态」——SQLite 的 ADD COLUMN 会把默认值回填到已有行。
+     */
+    private val MIGRATION_3_4: Migration =
+        object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE mistake_record ADD COLUMN status TEXT NOT NULL DEFAULT 'wrong'")
+                db.execSQL("ALTER TABLE mistake_record ADD COLUMN source TEXT NOT NULL DEFAULT 'solve'")
+                db.execSQL("UPDATE mistake_record SET status = 'wrong' WHERE status = ''")
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
-    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 
     @Provides
     @Singleton

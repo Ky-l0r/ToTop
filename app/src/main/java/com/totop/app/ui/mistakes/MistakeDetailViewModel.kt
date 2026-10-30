@@ -2,6 +2,7 @@ package com.totop.app.ui.mistakes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.domain.model.MistakeStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,8 @@ data class MistakeDetailState(
     val detail: MistakeDetailUi? = null,
     val errorMessage: String? = null,
     val deleted: Boolean = false,
+    /** 当前状态（不会 / 待校对 / 错误 / 理解），详情页可改。 */
+    val status: MistakeStatus = MistakeStatus.DEFAULT,
 ) {
     /** 是否真的找不到这道题（区别于「加载中」与「读取失败」）。 */
     val notFound: Boolean get() = !loading && detail == null && errorMessage == null
@@ -56,7 +59,15 @@ class MistakeDetailViewModel
             viewModelScope.launch {
                 try {
                     val detail = detailGateway.detail(mistakeId)
-                    _state.value = MistakeDetailState(loading = false, detail = detail)
+                    // 状态不在 MistakeDetailUi 里（那份结构来自详情编解码，字段是给界面看的题目信息）。
+                    // 这里直接读一次记录，拿到状态与来源，改动面比扩编解码小。
+                    val record = runCatching { mistakeRepository.byId(mistakeId) }.getOrNull()
+                    _state.value =
+                        MistakeDetailState(
+                            loading = false,
+                            detail = detail,
+                            status = record?.mistake?.status ?: MistakeStatus.DEFAULT,
+                        )
                 } catch (cancellation: CancellationException) {
                     throw cancellation
                 } catch (throwable: Throwable) {
@@ -65,6 +76,25 @@ class MistakeDetailViewModel
                             loading = false,
                             errorMessage = "读取这道错题失败：" + (throwable.message ?: "未知原因"),
                         )
+                }
+            }
+        }
+
+        /**
+         * 改状态。
+         *
+         * 不重算掌握度：状态只是学生的自评分类，是否计入掌握度由核对与变式决定
+         * （0.6.0 第七节），在这里顺手改分数会让「理解」变成一个刷分按钮。
+         */
+        fun setStatus(status: MistakeStatus) {
+            val detail = _state.value.detail ?: return
+            if (_state.value.status == status) return
+            viewModelScope.launch {
+                val ok = runCatching { mistakeRepository.setStatus(detail.mistakeId, status) }.getOrDefault(false)
+                if (ok) {
+                    _state.value = _state.value.copy(status = status)
+                } else {
+                    _state.value = _state.value.copy(errorMessage = "状态没改成功，可以再点一次")
                 }
             }
         }

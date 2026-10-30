@@ -98,6 +98,13 @@ interface MistakeDao {
     @Query("DELETE FROM mistake_record WHERE id = :id")
     suspend fun deleteById(id: String): Int
 
+    /** 只改状态，不动其它字段：状态是学生自评，不该牵连标准解答。 */
+    @Query("UPDATE mistake_record SET status = :status WHERE id = :id")
+    suspend fun updateStatus(
+        id: String,
+        status: String,
+    ): Int
+
     @Query("DELETE FROM mistake_record")
     suspend fun deleteAll()
 

@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.ErrorType
+import com.totop.app.domain.model.MistakeStatus
+import com.totop.app.ui.theme.Tokens
 
 /**
  * 错题本筛选栏（FR-4.1）。
@@ -308,6 +310,9 @@ fun MistakeCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Box(modifier = Modifier.weight(1f))
+                // 状态徽标放在复发徽标左边：状态是「这道题现在算什么」，
+                // 复发是「错了第几次」，前者更基础。
+                StatusBadge(status = card.status)
                 card.recurrenceBadge?.let { badge ->
                     RecurrenceBadge(text = badge)
                 }
@@ -463,6 +468,34 @@ fun KpointTag(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/** 状态徽标：不会 / 待校对 / 错误 / 理解，只做区分，不用四种颜色抢注意力。 */
+@Composable
+fun StatusBadge(
+    status: MistakeStatus,
+    modifier: Modifier = Modifier,
+) {
+    val (background, foreground) =
+        when (status) {
+            MistakeStatus.UNKNOWN -> Tokens.ErrorContainer to Tokens.Error
+            MistakeStatus.PENDING_CHECK -> Tokens.WarningContainer to Tokens.Warning
+            MistakeStatus.WRONG -> Tokens.SurfaceVariant to Tokens.OnSurfaceVariant
+            MistakeStatus.UNDERSTOOD -> Tokens.PrimaryContainer to Tokens.Primary
+        }
+    Box(
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(background)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = status.label,
+            style = MaterialTheme.typography.labelSmall,
+            color = foreground,
         )
     }
 }

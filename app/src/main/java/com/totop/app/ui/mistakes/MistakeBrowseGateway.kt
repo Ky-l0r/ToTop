@@ -3,6 +3,7 @@ package com.totop.app.ui.mistakes
 import android.database.Cursor
 import com.totop.app.data.local.AppDatabase
 import com.totop.app.domain.model.ErrorType
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.usecase.port.DAY_MILLIS
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -165,6 +166,10 @@ class RoomMistakeBrowseGateway
                     conditions += "mr.errorType = ?"
                     args += type.code
                 }
+                filter.status?.let { status ->
+                    conditions += "mr.status = ?"
+                    args += status.wire
+                }
                 filter.timeWindow.fromUtcOrNull(nowUtc)?.let { fromUtc ->
                     conditions += "mr.createdAt >= ?"
                     args += fromUtc
@@ -203,6 +208,7 @@ class RoomMistakeBrowseGateway
                 thumbnailPath = thumbnailPathOf(imagePath),
                 finalAnswer = getStringOrNull(COL_FINAL_ANSWER).orEmpty(),
                 hasLocatedErrorStep = !isNull(COL_FIRST_ERROR_STEP),
+                status = MistakeStatus.fromWireOrWrong(getStringOrNull(COL_STATUS)),
             )
         }
 
@@ -227,6 +233,7 @@ class RoomMistakeBrowseGateway
             private const val COL_SUBJECT = 8
             private const val COL_IMAGE_PATH = 9
             private const val COL_KPOINT_NAMES = 10
+            private const val COL_STATUS = 11
 
             private const val SELECT_PAGE =
                 "SELECT mr.id AS mistakeId, mr.questionId AS questionId, " +
@@ -236,7 +243,7 @@ class RoomMistakeBrowseGateway
                     "q.subject AS subject, q.imagePath AS imagePath, " +
                     "(SELECT GROUP_CONCAT(kp.name, '|') FROM mistake_kpoint AS mk " +
                     "INNER JOIN knowledge_point AS kp ON kp.id = mk.kpointId " +
-                    "WHERE mk.mistakeId = mr.id) AS kpointNames " +
+                    "WHERE mk.mistakeId = mr.id) AS kpointNames, mr.status AS status " +
                     "FROM mistake_record AS mr INNER JOIN question AS q ON q.id = mr.questionId " +
                     "WHERE 1 = 1"
 

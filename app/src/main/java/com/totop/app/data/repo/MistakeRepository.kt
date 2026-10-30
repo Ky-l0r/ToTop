@@ -178,6 +178,18 @@ class MistakeRepository
                 }
             }
 
+        /**
+         * 改状态（不会 / 待校对 / 错误 / 理解）。
+         *
+         * 刻意不重算掌握度：状态本身还不是掌握度的输入（见 0.6.0 第七节，
+         * 「理解」要经过核对或变式才算数），把它当成掌握度信号会让学生随手一点
+         * 就把分数刷上去。
+         */
+        suspend fun setStatus(
+            id: String,
+            status: com.totop.app.domain.model.MistakeStatus,
+        ): Boolean = withContext(dispatcher) { mistakeDao.updateStatus(id, status.wire) > 0 }
+
         suspend fun updateKpoints(
             mistakeId: String,
             assignments: List<KpointAssignment>,

@@ -70,7 +70,7 @@ fun HubScreen(
         listOf(
             "学习" to
                 listOf(
-                    HubEntry("错题本", "做过错的题", Icons.Filled.Warning, onOpenMistakes),
+                    HubEntry("易错题", "不会、待校对、做错、理解", Icons.Filled.Warning, onOpenMistakes),
                     HubEntry("多练的知识点", "反复出错的地方", Icons.Filled.Star, onOpenKnowledge),
                     HubEntry("复习打卡", "今天该复习的", Icons.Filled.Refresh, onOpenReview),
                     HubEntry("陪伴", "写作业时随手问", Icons.Filled.Timer, onOpenCompanion),

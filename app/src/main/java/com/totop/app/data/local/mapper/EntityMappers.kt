@@ -25,6 +25,7 @@ import com.totop.app.domain.model.KpointEdge
 import com.totop.app.domain.model.Mastery
 import com.totop.app.domain.model.MasterySnapshot
 import com.totop.app.domain.model.MistakeRecord
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.QuestionSourceType
 import com.totop.app.domain.model.RecallSelfResult
@@ -118,6 +119,8 @@ object EntityMappers {
             mode = mode.wire,
             createdAt = createdAtUtc,
             recurrenceIndex = recurrenceIndex,
+            status = status.wire,
+            source = source,
         )
 
     fun MistakeRecordEntity.toDomain(): MistakeRecord =
@@ -133,6 +136,8 @@ object EntityMappers {
             mode = TeachingMode.fromWire(mode),
             createdAtUtc = createdAt,
             recurrenceIndex = recurrenceIndex.coerceAtLeast(1),
+            status = MistakeStatus.fromWireOrWrong(status),
+            source = source.ifBlank { "solve" },
         )
 
     // ---------- knowledge_point / kpoint_edge ----------

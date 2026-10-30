@@ -6,7 +6,7 @@
     <string name="nav_home">首页</string>
     <string name="nav_hub">功能中心</string>
     <string name="nav_solve">拍题</string>
-    <string name="nav_mistakes">错题本</string>
+    <string name="nav_mistakes">易错题</string>
     <string name="nav_knowledge">知识点</string>
     <string name="nav_report">学情报告</string>
     <string name="nav_settings">设置</string>

@@ -179,8 +179,8 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f),
             )
             QuickEntry(
-                title = "错题本",
-                subtitle = "看看做错过什么",
+                title = "易错题",
+                subtitle = "不会、待校对、做错的都在这",
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 onClick = onOpenMistakes,
                 modifier = Modifier.weight(1f),
