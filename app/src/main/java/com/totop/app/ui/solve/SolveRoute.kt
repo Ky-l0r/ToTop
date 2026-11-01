@@ -65,6 +65,7 @@ fun SolveRoute(
     val currentSessionId by viewModel.sessionId.collectAsStateWithLifecycle()
     val toast by viewModel.toast.collectAsStateWithLifecycle()
     val stages by viewModel.stages.collectAsStateWithLifecycle()
+    val masteredQuestionId by viewModel.masteredQuestionId.collectAsStateWithLifecycle()
     // 「AI 正在思考 · 独立求解」这类状态行：只暴露阶段名，不暴露模型原始输出。
     val thinkingHint =
         stages.firstOrNull { it.status == com.totop.app.ui.chat.StageStatus.RUNNING }?.label.orEmpty()
@@ -222,6 +223,7 @@ fun SolveRoute(
         onOpenKnowledgePoint = onOpenKnowledgePoint,
         onUnlockHint = viewModel::unlockNextHint,
         onRevealSolution = viewModel::revealFullSolution,
+        masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,
         message = toast,

@@ -113,6 +113,15 @@ class SolveViewModel
 
         private val lastImageSha256 = MutableStateFlow<String?>(null)
 
+        /**
+         * 本轮**实际上传**的每一页路径（已按框选裁剪），落库时写进 question.imagePaths。
+         *
+         * 不能从 `_draftPages` 读：发送时草稿已经被清空（那是「发送后输入区不留图」的修法），
+         * 到落库那一刻读到的永远是空列表；退回到读原始 `page.imagePath` 又会把**整页原图**
+         * 写进错题本，复习与详情页于是显示未裁剪的照片。
+         */
+        private val lastUploadedPaths = mutableListOf<String>()
+
         /** 当前正在预览/框选第几页。 */
         private val _activePage = MutableStateFlow(0)
         val activePage: StateFlow<Int> = _activePage.asStateFlow()
@@ -147,6 +156,16 @@ class SolveViewModel
         /** 生成中的阶段进度（仅 Solving 时有意义）。 */
         private val _stages = MutableStateFlow<List<StageProgress>>(emptyList())
         val stages: StateFlow<List<StageProgress>> = _stages.asStateFlow()
+
+        /**
+         * 当前这道题是否**已被标记为掌握**（题目级 selfMasteredAt）。
+         *
+         * 顶部勾选的颜色只能看它，不能看「有没有解答」：旧实现把「有结构化解答且不在生成中」
+         * 直接当成绿色，于是学生刚看到解答、还没自己重做过一遍，勾选就已经是绿的——
+         * 真机反馈的原话是「我尚未完全掌握时勾选就已变绿」。绿色必须只表示「已经标记过」。
+         */
+        private val _masteredQuestionId = MutableStateFlow<String?>(null)
+        val masteredQuestionId: StateFlow<String?> = _masteredQuestionId.asStateFlow()
 
         /** 流式增量文本（追问时用于实时渲染）。 */
         private val _streamText = MutableStateFlow("")
@@ -262,6 +281,15 @@ class SolveViewModel
                 _streamText.value = ""
                 lastSentQuestion = null
                 lastFollowUp = null
+                // 重开历史会话时，勾选是否变绿要按题目在库里的真实标记来定，
+                // 不能因为「这条会话里有解答」就变绿。
+                _masteredQuestionId.value =
+                    _messages.value.lastOrNull { it.solution != null }
+                        ?.solution
+                        ?.questionId
+                        ?.takeIf { questionId ->
+                            runCatching { questionRepository.isMastered(questionId) }.getOrDefault(false)
+                        }
             }
         }
 
@@ -278,6 +306,9 @@ class SolveViewModel
                 viewModelScope.launch {
                     runCatching {
                         questionRepository.markMastered(questionId, System.currentTimeMillis())
+                    }.onSuccess { hit ->
+                        // 只有真的写进库才算标记成功：题目可能已被删除，勾选不能显示成绿
+                        if (hit) _masteredQuestionId.value = questionId
                     }.onFailure { failure ->
                         showToast("标记失败：" + (failure.message ?: "未知原因"))
                     }
@@ -313,6 +344,8 @@ class SolveViewModel
             _streamText.value = ""
             lastSentQuestion = null
             lastFollowUp = null
+            // 新会话没有题目，勾选必须回到中性色，不能把上一题的「已掌握」带过来
+            _masteredQuestionId.value = null
             viewModelScope.launch {
                 if (currentId != null) {
                     runCatching { sessionRepository.setArchived(currentId, true) }
@@ -587,7 +620,24 @@ class SolveViewModel
                 showToast("题目内容为空，先拍一张照片或写下题干")
                 return
             }
-            solveJob = viewModelScope.launch { runSolve(question) }
+            solveJob =
+                viewModelScope.launch {
+                    // 兜住所有未预期异常。
+                    //
+                    // viewModelScope 用的是 SupervisorJob，但 launch 里逃出来的异常仍会
+                    // 交给线程的默认处理器 —— 在 Android 上就是**直接崩进程**。
+                    // runSolve 里有整整一段（读图、裁剪、压缩、拼上下文）在原来的 try 之外，
+                    // 一张大照片解码失败或内存不足就能把学生正在看的整页带走。
+                    try {
+                        runSolve(question)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (unexpected: Throwable) {
+                        _phase.value = ComposerPhase.READY
+                        _stages.value = emptyList()
+                        showToast("处理这道题时出了点问题：" + (unexpected.message ?: unexpected.javaClass.simpleName))
+                    }
+                }
         }
 
         /** 当前会话里是否已经有解答。 */
@@ -654,7 +704,30 @@ class SolveViewModel
                         _phase.value = if (_draftPages.value.pageCount > 0) ComposerPhase.READY else ComposerPhase.EMPTY
                         return@launch
                     }
-                    val encoded = if (hasSupplement) encodePages(pages) else emptyList()
+                    // 补拍图同样要过裁剪与增强：这一步在原来的 try 之外，
+                    // 解码失败或内存不足会直接崩掉进程（追问时最容易踩到，
+                    // 因为同一条对话里图片会被重复解码）。这里兜住并给出可执行提示。
+                    val encoded =
+                        if (hasSupplement) {
+                            try {
+                                encodePages(pages)
+                            } catch (cancellation: CancellationException) {
+                                throw cancellation
+                            } catch (unexpected: Throwable) {
+                                updateMessage(replyId) {
+                                    it.copy(
+                                        streaming = false,
+                                        errorText = "这张照片没能处理：" + (unexpected.message ?: "内存不足") + "，可以重拍一张或改成打字说明。",
+                                        retryable = true,
+                                    )
+                                }
+                                _phase.value =
+                                    if (_draftPages.value.pageCount > 0) ComposerPhase.READY else ComposerPhase.EMPTY
+                                return@launch
+                            }
+                        } else {
+                            emptyList()
+                        }
                     // 补拍的照片同样按框选裁剪后再展示：气泡里看到的必须是发出去的那张
                     if (encoded.isNotEmpty()) {
                         updateMessage(studentMessage.id) { it.copy(pages = encoded.map { page -> page.displayPath }) }
@@ -977,6 +1050,8 @@ class SolveViewModel
                     pages = displayPages,
                     createdAtUtc = System.currentTimeMillis(),
                 )
+            // 新的一道题：上一题是否「已掌握」不能顺延到这一题上
+            _masteredQuestionId.value = null
             val replyId = UUID.randomUUID().toString()
             val replyMessage =
                 ConversationMessage(
@@ -1003,6 +1078,8 @@ class SolveViewModel
             // 落库与历史都指向裁剪后的图：错题本里看到的应该就是学生框定的那道题
             lastImagePath.value = displayPages.firstOrNull()
             lastImageSha256.value = uploadPages.firstOrNull()?.encoded?.sha256 ?: question.imageSha256
+            lastUploadedPaths.clear()
+            lastUploadedPaths.addAll(displayPages)
 
             requestId = UUID.randomUUID().toString()
             val credentials = secretStore.read()
@@ -1173,11 +1250,29 @@ class SolveViewModel
             }
         }
 
-        /** 按框选裁剪并编码一页；有框选时把裁剪结果落盘，供气泡与错题本展示。 */
+        /**
+         * 按框选裁剪、增强并编码一页。
+         *
+         * 三步顺序固定：**裁剪 → 扫描式增强 → 落盘 + 上传**。
+         * 增强放在裁剪之后，是因为背景估计要有足够的纸面区域；放在落盘之前，
+         * 是因为学生复习时看到的应该就是「清楚的那一张」，而不是灰底手机照。
+         * 增强失败（解码/内存）直接退回裁剪图：宁可对比度差一点，也不能没有图。
+         */
         private suspend fun buildUploadPage(page: PreparedPage): UploadPage? =
             withContext(Dispatchers.IO) {
+                // 裁剪本身也可能抛异常（解码大图时的内存错误），必须兜住：
+                // 这一步在旧实现里位于 try 之外，逃出去就是崩进程。
+                val outcome =
+                    try {
+                        imageCropper.cropToJpegBytes(page.imagePath, page.cropRect)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (unexpected: Throwable) {
+                        pageWarnings.add("图片处理失败（" + (unexpected.message ?: "内存不足") + "），已改用整页上传")
+                        null
+                    }
                 val crop =
-                    when (val outcome = imageCropper.cropToJpegBytes(page.imagePath, page.cropRect)) {
+                    when (outcome) {
                         is ImageCropResult.Success -> outcome
                         is ImageCropResult.Failure -> {
                             // 裁剪失败不能静默吞掉：退回原图，但把原因记下来
@@ -1187,24 +1282,30 @@ class SolveViewModel
                                     ?: return@withContext null
                             ImageCropResult.Success(bytes = bytes, cropped = false)
                         }
+                        // 异常分支：同样退回原图；读不出来就放弃这一页
+                        null -> {
+                            val bytes =
+                                runCatching { java.io.File(page.imagePath).readBytes() }.getOrNull()
+                                    ?: return@withContext null
+                            ImageCropResult.Success(bytes = bytes, cropped = false)
+                        }
                     }
-                val bytes = crop.bytes
+                val enhanced =
+                    runCatching { com.totop.app.ml.ScanEnhance.toScannedJpeg(crop.bytes) }.getOrNull()
+                val bytes = enhanced ?: crop.bytes
                 val sha = runCatching { ImageMath.sha256Hex(bytes) }.getOrNull() ?: return@withContext null
+                // 一律按内容哈希落盘并用它展示：这样「学生框定的那块」与「复习页看到的图」
+                // 是同一个文件，不再走「未框选就直接用原始整页路径」的旧分支。
                 val displayPath =
-                    if (crop.cropped) {
-                        // 裁剪图按内容哈希命名，与主图同一套规则：同一选区重复发送不会重复占空间
-                        runCatching {
-                            val dir = java.io.File(appContext.filesDir, com.totop.app.ml.PreprocessPaths.IMAGE_DIR)
-                            val file = java.io.File(dir, com.totop.app.ml.PreprocessPaths.fileNameFor(sha))
-                            if (!file.exists()) {
-                                dir.mkdirs()
-                                file.writeBytes(bytes)
-                            }
-                            file.absolutePath
-                        }.getOrDefault(page.imagePath)
-                    } else {
-                        page.imagePath
-                    }
+                    runCatching {
+                        val dir = java.io.File(appContext.filesDir, com.totop.app.ml.PreprocessPaths.IMAGE_DIR)
+                        val file = java.io.File(dir, com.totop.app.ml.PreprocessPaths.fileNameFor(sha))
+                        if (!file.exists()) {
+                            dir.mkdirs()
+                            file.writeBytes(bytes)
+                        }
+                        file.absolutePath
+                    }.getOrDefault(page.imagePath)
                 val encoded =
                     runCatching {
                         EncodedImage(
@@ -1384,10 +1485,12 @@ class SolveViewModel
                             imageSha256 = lastImageSha256.value,
                             // 多页题目把全部裁剪图都存下来，错题详情才能翻页看；
                             // 第 1 页仍是 imagePath（缓存与去重锚点用它）。
-                            imagePaths =
-                                _draftPages.value.pages
-                                    .map { it.imagePath }
-                                    .filter { it.isNotBlank() },
+                            //
+                            // 这里必须用 lastUploadedPaths（实际上传的裁剪图），
+                            // 不能读 _draftPages：草稿在发送时已清空，读到的会是空列表，
+                            // 详情页于是退回 imagePath 单图；更不能读 page.imagePath，
+                            // 那是未裁剪的整页照片，正是「复习页看到原图」的来源。
+                            imagePaths = lastUploadedPaths.toList(),
                             sourceType = lastSourceType.value,
                             createdAtUtc = content.question.createdAtUtc,
                         ),

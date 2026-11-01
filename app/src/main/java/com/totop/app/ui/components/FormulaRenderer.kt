@@ -33,16 +33,43 @@ sealed class FormulaRenderResult {
  * 避免「迟到的结果」覆盖已经降级显示的内容。
  */
 class FormulaRequest internal constructor() {
+    /**
+     * 结果回调。
+     *
+     * 这里必须处理「结果比回调先到」：WebView 尚未加载完成时，[FormulaRenderer.request]
+     * 会立刻判定失败，而调用方往往要等 request 返回之后才挂上 onResult——
+     * 旧实现直接丢弃了那次失败，于是这条公式既没有图也没有降级文字，
+     * 屏幕上留下一块空白（真机反馈里的「化学式偶尔完全不显示」）。
+     * 现在失败先存进 [pendingResult]，挂回调时补发一次。
+     */
     internal var onResult: ((FormulaRenderResult) -> Unit)? = null
+        set(value) {
+            field = value
+            val queued = pendingResult
+            if (value != null && queued != null) {
+                pendingResult = null
+                value(queued)
+            }
+        }
+
+    /** 回调尚未挂上时先收到的结果。 */
+    private var pendingResult: FormulaRenderResult? = null
 
     /** 是否已被调用方撤销（超时降级、Composable 离开组合）。 */
     @Volatile
     internal var cancelled: Boolean = false
 
+    /** 立刻判定失败；回调还没挂上时先存下来。 */
+    internal fun failNow(result: FormulaRenderResult) {
+        val callback = onResult
+        if (callback != null) callback(result) else pendingResult = result
+    }
+
     /** 撤销本次渲染：之后到达的结果会被直接丢弃。 */
     fun cancel() {
         cancelled = true
         onResult = null
+        pendingResult = null
     }
 }
 
@@ -85,8 +112,37 @@ class FormulaRenderer private constructor(
     /** 当前是否已销毁（销毁后必须重新 [obtain]）。 */
     val isDestroyed: Boolean get() = destroyed
 
+    /** 当前有几个页面在用这个渲染器（见 [retainHost]）。 */
+    private var hostRefs: Int = 0
+
+    /**
+     * 页面级宿主登记。
+     *
+     * 页面切换过渡期间新旧两页会同时在组合树里：旧页 onDispose 若直接销毁 WebView，
+     * 新页刚挂的宿主就成了孤儿，这一页的公式只能降级成源码文本。
+     * 因此销毁推迟到最后一个使用方离开。
+     */
+    fun retainHost() {
+        hostRefs++
+    }
+
+    /** 页面级宿主注销；最后一个使用方离开时才真正销毁。 */
+    fun releaseHost() {
+        if (hostRefs > 0) hostRefs--
+        if (hostRefs == 0) dispose()
+    }
+
     /** 共享 WebView 宿主是否已挂进组合树（供 FormulaText 判断是否需要兜底挂载）。 */
     fun hasHost(): Boolean = hostView != null && webView != null
+
+    /**
+     * 宿主是否**真的**还挂在窗口上。
+     *
+     * [hasHost] 只说明对象还在：宿主挂在某个列表项里时，那一项被回收后对象仍非空，
+     * 但 WebView 已经 detach，此时取像素拿到的是空图。
+     * 判断「要不要重新挂」必须看窗口附着状态。
+     */
+    fun isHostAttached(): Boolean = hostView?.isAttachedToWindow == true
 
     /**
      * 把 WebView 宿主挂到 Compose 的 AndroidView 上。
@@ -167,8 +223,9 @@ class FormulaRenderer private constructor(
     ): FormulaRequest {
         val request = FormulaRequest()
         if (destroyed || !readyState.value) {
-            // 尚未就绪：直接失败，由调用方降级为纯文本；不阻塞用户阅读
-            request.onResult?.invoke(FormulaRenderResult.Failed(IF_NOT_READY))
+            // 尚未就绪：直接失败，由调用方降级为纯文本；不阻塞用户阅读。
+            // 用 failNow 而不是直接调 onResult——此刻调用方还没拿到句柄，回调必然是 null。
+            request.failNow(FormulaRenderResult.Failed(IF_NOT_READY))
             return request
         }
         queue.addLast(

@@ -153,6 +153,11 @@ fun CompanionScreen(
             onAsk = viewModel::ask,
             onOpenCamera = onOpenCamera,
         )
+
+        // 页面级公式渲染宿主：陪伴页的回答里常带公式（「酯基是什么」就会画出结构式），
+        // 没有这个宿主时每段公式各自兜底挂载，宿主挂在气泡内部，滚动回收后随之 detach，
+        // 之后整页公式都渲染不出来——真机截图里的空白正是这一现象。
+        com.totop.app.ui.components.FormulaRenderHost()
     }
 }
 

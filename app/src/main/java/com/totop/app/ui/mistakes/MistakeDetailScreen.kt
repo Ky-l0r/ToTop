@@ -112,6 +112,8 @@ fun MistakeDetailScreen(
                         )
                     }
             }
+            // 页面级公式渲染宿主：标准解答与错因说明里都有公式，缺了它滚动后容易整片空白
+            com.totop.app.ui.components.FormulaRenderHost()
         }
     }
 

@@ -175,24 +175,34 @@ class ImageCropper(
             if (!file.exists() || !file.canRead()) {
                 return@withContext ImageCropResult.Failure("图片文件不可读：$path")
             }
-            // 不框选时直接返回原文件字节，避免无谓的解码与再压缩
-            if (rect == null || rect.isEmpty) {
-                val bytes =
-                    runCatching { file.readBytes() }.getOrElse {
-                        return@withContext ImageCropResult.Failure("读取图片失败：${it.message}")
-                    }
-                return@withContext ImageCropResult.Success(bytes = bytes, cropped = false)
-            }
             val bounds =
                 BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(path, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
                 return@withContext ImageCropResult.Failure("无法识别图片尺寸")
             }
+            // 先降采样再解码。
+            //
+            // 旧实现直接 BitmapFactory.decodeFile(全尺寸)：一张 1200 万像素的手机照片
+            // 解出来是约 48MB 的 ARGB 位图，低端机在这一步就 OOM；
+            // 而失败分支会把「解码失败」当成裁剪失败退回整页原图，
+            // 于是上传的是未裁剪的大图、错题本里存的也是整页照片
+            // ——真机反馈的「复习页显示的还是原始整页图」就是这么来的。
+            // 裁剪只需要「够看清字」的分辨率，长边限制在 MAX_DECODE_LONG_SIDE 已足够。
+            val options =
+                BitmapFactory.Options().apply {
+                    inSampleSize = sampleSizeFor(bounds.outWidth, bounds.outHeight, MAX_DECODE_LONG_SIDE)
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }
             val decoded =
-                runCatching { BitmapFactory.decodeFile(path) }.getOrNull()
+                runCatching { BitmapFactory.decodeFile(path, options) }.getOrNull()
                     ?: return@withContext ImageCropResult.Failure("解码图片失败（可能内存不足）")
-            val pixelRect = rect.toPixelRect(decoded.width, decoded.height)
+            val pixelRect =
+                if (rect == null || rect.isEmpty) {
+                    PixelRect(0, 0, decoded.width, decoded.height)
+                } else {
+                    rect.toPixelRect(decoded.width, decoded.height)
+                }
             val cropped =
                 runCatching {
                     Bitmap.createBitmap(decoded, pixelRect.left, pixelRect.top, pixelRect.width, pixelRect.height)
@@ -201,17 +211,51 @@ class ImageCropper(
                 decoded.recycle()
                 return@withContext ImageCropResult.Failure("裁剪失败，请重新框选")
             }
+            val scaled = downscale(cropped, MAX_OUTPUT_LONG_SIDE)
             val out = java.io.ByteArrayOutputStream()
-            val ok = runCatching { cropped.compress(Bitmap.CompressFormat.JPEG, quality, out) }.getOrDefault(false)
+            val ok = runCatching { scaled.compress(Bitmap.CompressFormat.JPEG, quality, out) }.getOrDefault(false)
+            if (scaled !== cropped) scaled.recycle()
             if (cropped !== decoded) cropped.recycle()
             decoded.recycle()
             if (!ok) return@withContext ImageCropResult.Failure("裁剪图压缩失败")
-            ImageCropResult.Success(bytes = out.toByteArray(), cropped = true)
+            ImageCropResult.Success(bytes = out.toByteArray(), cropped = rect != null && !rect.isEmpty)
         }
+
+    /** 让解码后的长边不超过 [targetLongSide] 的最大采样率（2 的幂）。 */
+    private fun sampleSizeFor(
+        width: Int,
+        height: Int,
+        targetLongSide: Int,
+    ): Int {
+        var sample = 1
+        while (width / (sample * 2) >= targetLongSide || height / (sample * 2) >= targetLongSide) {
+            sample *= 2
+        }
+        return sample
+    }
+
+    /** 输出前再等比缩一次：框选区域本身可能仍然很大。 */
+    private fun downscale(
+        bitmap: Bitmap,
+        maxLongSide: Int,
+    ): Bitmap {
+        val longSide = maxOf(bitmap.width, bitmap.height)
+        if (longSide <= maxLongSide) return bitmap
+        val scale = maxLongSide.toFloat() / longSide
+        val width = (bitmap.width * scale).toInt().coerceAtLeast(1)
+        val height = (bitmap.height * scale).toInt().coerceAtLeast(1)
+        return runCatching { Bitmap.createScaledBitmap(bitmap, width, height, true) }.getOrDefault(bitmap)
+    }
 
     companion object {
         /** 与整图压缩保持一致的质量，避免二次压缩明显掉字迹。 */
         const val DEFAULT_QUALITY: Int = 88
+
+        /** 解码时的长边上限：再大也看不清更多细节，只会把内存和上传体积一起推高。 */
+        private const val MAX_DECODE_LONG_SIDE: Int = 2048
+
+        /** 输出（上传与落盘）时的长边上限。 */
+        const val MAX_OUTPUT_LONG_SIDE: Int = 1600
     }
 }
 

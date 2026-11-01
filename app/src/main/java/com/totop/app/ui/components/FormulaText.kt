@@ -177,8 +177,11 @@ object FormulaParser {
 fun FormulaRenderHost(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val renderer = remember { FormulaRenderer.obtain(context) }
+    // 引用计数而不是「离开即销毁」：页面切换的 260ms 过渡里，新旧两页会同时存在于组合树，
+    // 旧页先 onDispose 就把 WebView 销毁的话，新页刚挂上的公式会全部渲染失败。
     DisposableEffect(renderer) {
-        onDispose { renderer.dispose() }
+        renderer.retainHost()
+        onDispose { renderer.releaseHost() }
     }
     Box(modifier = modifier.size(HOST_SLOT_SIZE)) {
         AndroidView(
@@ -391,6 +394,15 @@ private fun InlineFormulaRun(
             val handle = renderer.request(latex, displayMode = false, maxWidthPx = maxWidthPx)
             handle.onResult = { outcome -> rendered[latex] = outcome }
         }
+        // 兜底：行内公式没有逐条超时判断，一旦结果永远不回来（WebView 被回收、
+        // 宿主被别的列表项带走），这条式子会永久占着一块空白。
+        // 这里统一等一个预算，仍未出结果的按失败处理，交给下面的降级分支显示原文。
+        delay(FormulaRenderer.RENDER_BUDGET_MILLIS + RENDER_GRACE_MILLIS)
+        latexes.distinct().forEach { latex ->
+            if (!rendered.containsKey(latex)) {
+                rendered[latex] = FormulaRenderResult.Failed(RENDER_TIMEOUT_TEXT)
+            }
+        }
     }
 
     val fontDp = with(density) { style.fontSize.toDp() }
@@ -404,23 +416,30 @@ private fun InlineFormulaRun(
                     // 这里一并归一化，避免一段话里中文正常、公式处露出反斜杠。
                     is FormulaContent.Piece.Text -> append(LatexPlain.normalize(piece.value))
                     is FormulaContent.Piece.Formula -> {
-                        val id = INLINE_ID_PREFIX + formulaIndex
                         val result = rendered[piece.latex]
-                        val size = inlinePlaceholderOf(result, fontDp, density)
-                        inline[id] =
-                            InlineTextContent(
-                                Placeholder(size.first, size.second, PlaceholderVerticalAlign.TextCenter),
-                            ) { _ ->
-                                (result as? FormulaRenderResult.Rendered)?.let { outcome ->
-                                    Image(
-                                        bitmap = remember(outcome) { outcome.bitmap.asImageBitmap() },
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize(),
-                                    )
+                        if (result is FormulaRenderResult.Failed) {
+                            // 渲染失败时**不能**注册占位：占位是一块固定尺寸的空白，
+                            // 学生看到的是一句被吃掉公式的话。直接退回可读的 LaTeX 文本，
+                            // 至少还能看懂「H_2SO_4 就是硫酸」。
+                            append(LatexPlain.normalize(piece.latex))
+                        } else {
+                            val id = INLINE_ID_PREFIX + formulaIndex
+                            val size = inlinePlaceholderOf(result, fontDp, density)
+                            inline[id] =
+                                InlineTextContent(
+                                    Placeholder(size.first, size.second, PlaceholderVerticalAlign.TextCenter),
+                                ) { _ ->
+                                    (result as? FormulaRenderResult.Rendered)?.let { outcome ->
+                                        Image(
+                                            bitmap = remember(outcome) { outcome.bitmap.asImageBitmap() },
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
                                 }
-                            }
-                        appendInlineContent(id, if (fallbackToRaw) piece.latex else "")
-                        formulaIndex++
+                            appendInlineContent(id, if (fallbackToRaw) piece.latex else "")
+                            formulaIndex++
+                        }
                     }
                 }
             }

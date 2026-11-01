@@ -124,6 +124,8 @@ fun SolveConversationScreen(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
+    masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
     thinkingHint: String = "",
     onNotice: (String) -> Unit = {},
@@ -153,11 +155,20 @@ fun SolveConversationScreen(
     // 且按钮始终可点，点不动时给一句说明，而不是静默失效。
     val canFinish = messages.any { it.solution != null } && !isSolving
 
+    // 绿色只能表示「这道题已经标记过掌握」，不能表示「可以标记」。
+    //
+    // 旧实现直接用 canFinish 决定颜色：拿到解答就变绿，学生还没自己重做一遍，
+    // 看到的就是「我还没掌握，勾选已经是绿的」。现在分成三档：
+    // 已标记 -> 绿；有解答可标记 -> 主色（提示这里能点）；其余 -> 中性灰。
+    val currentQuestionId = messages.lastOrNull { it.solution != null }?.solution?.questionId
+    val mastered = masteredQuestionId != null && masteredQuestionId == currentQuestionId
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize().background(Tokens.Background)) {
             ConversationTopBar(
                 title = sessions.firstOrNull { it.id == currentSessionId }?.displayTitle ?: "拍题答疑",
                 masteredEnabled = canFinish,
+                mastered = mastered,
                 // 不可用时也要有反馈：灰按钮点了什么都不发生，是「点击无响应」的直接来源。
                 onMastered = {
                     if (canFinish) {
@@ -228,6 +239,11 @@ fun SolveConversationScreen(
                 onDismiss = { historyOpen = false },
             )
         }
+
+        // 页面级公式渲染宿主：WebView 必须先 attach 到窗口，取像素才可靠。
+        // 不在这里放时，靠每条公式自己兜底挂载——而兜底宿主挂在消息项内部，
+        // 列表回收那一项后宿主随之 detach，后面的公式于是全部渲染失败（表现为一片空白）。
+        com.totop.app.ui.components.FormulaRenderHost()
     }
 }
 
@@ -236,6 +252,7 @@ fun SolveConversationScreen(
 private fun ConversationTopBar(
     title: String,
     masteredEnabled: Boolean,
+    mastered: Boolean,
     onMastered: () -> Unit,
     onOpenHistory: () -> Unit,
     onStartNewSession: () -> Unit,
@@ -270,8 +287,19 @@ private fun ConversationTopBar(
         IconButton(onClick = onMastered) {
             Icon(
                 imageVector = Icons.Filled.CheckCircle,
-                contentDescription = "这道题已掌握，开下一题",
-                tint = if (masteredEnabled) Tokens.Success else Tokens.OutlineStrong,
+                contentDescription =
+                    when {
+                        mastered -> "这道题已标记掌握"
+                        masteredEnabled -> "标记这道题已掌握，并开下一题"
+                        else -> "这道题还没有解答，暂时不能标记掌握"
+                    },
+                tint =
+                    when {
+                        mastered -> Tokens.Success
+                        // 可标记但还没标记：用主色提示「这里能点」，绿色留给真正标记过的题
+                        masteredEnabled -> Tokens.Primary
+                        else -> Tokens.OutlineStrong
+                    },
             )
         }
         IconButton(onClick = onStartNewSession) {
