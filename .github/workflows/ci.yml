@@ -48,7 +48,7 @@ jobs:
       # 停在 gradle/actions v5：v5 已迁到 Node 24 且缓存仍属 MIT；
       # v6 起缓存组件 gradle-actions-caching 改为闭源商业组件，本项目不接受该许可。
       - name: 配置 Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: 生成 local.properties
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
@@ -90,7 +90,7 @@ jobs:
       # 停在 gradle/actions v5：v5 已迁到 Node 24 且缓存仍属 MIT；
       # v6 起缓存组件 gradle-actions-caching 改为闭源商业组件，本项目不接受该许可。
       - name: 配置 Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: 生成 local.properties
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
