@@ -8,13 +8,16 @@ import com.totop.app.data.local.dao.ReviewDao
 import com.totop.app.data.local.entity.MistakeKpointEntity
 import com.totop.app.data.local.mapper.EntityMappers.toDomain
 import com.totop.app.data.local.mapper.EntityMappers.toEntity
+import com.totop.app.domain.model.AnswerText
 import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
 import com.totop.app.domain.model.MistakeRecord
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.ReviewLog
 import com.totop.app.domain.model.SolutionPart
 import com.totop.app.domain.model.SolutionStep
 import com.totop.app.domain.model.StandardSolution
+import com.totop.app.domain.model.TeacherAnswerResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -273,7 +276,7 @@ class MistakeRepository
                             why = "",
                         )
                 }
-                val mergedAnswer = mergeAnswer(known, added)
+                val mergedAnswer = AnswerText.merge(known, added)
                 val updated =
                     current
                         .copy(
@@ -284,14 +287,45 @@ class MistakeRepository
                 true
             }
 
-        /** 把新补的小问答案并进最终答案：空值直接用，非空用「；」续在后面。 */
-        private fun mergeAnswer(
-            existing: String,
-            added: List<SolutionPart>,
-        ): String {
-            val suffix = added.joinToString("；") { it.label + "：" + it.answer }
-            return if (existing.isBlank()) suffix else existing.trimEnd('；', ';') + "；" + suffix
-        }
+        /**
+         * 写入「老师给的答案」。
+         *
+         * 口径（用户 2026-11-03 定）：老师给的答案**是权威**，客户端不质疑、不比对后拒绝，
+         * 直接覆盖最终答案。但 AI 之前的结论仍要留痕：两者不一致时把这道题标成「存疑」，
+         * 并把老师的答案追加成一条步骤，复习时能看出「这条不是 AI 算的」。
+         *
+         * @return 写入结果；题目不存在或答案为空时不动数据
+         */
+        suspend fun applyTeacherAnswer(
+            mistakeId: String,
+            teacherAnswer: String,
+        ): TeacherAnswerResult =
+            withContext(dispatcher) {
+                val answer = teacherAnswer.trim()
+                if (answer.isEmpty()) return@withContext TeacherAnswerResult.Ignored
+                val row = mistakeDao.findById(mistakeId) ?: return@withContext TeacherAnswerResult.NotFound
+                val current = row.toDomain()
+                val differs = !AnswerText.sameAs(current.finalAnswer, answer)
+                val steps = current.correctSolution.steps.toMutableList()
+                // 重复写入同一个答案时不重复追加步骤
+                if (steps.none { it.content.contains(answer) }) {
+                    steps +=
+                        SolutionStep(
+                            idx = (steps.maxOfOrNull { it.idx } ?: 0) + 1,
+                            content = "（老师给的答案）" + answer + "，以此为准",
+                            why = "",
+                        )
+                }
+                val updated =
+                    current
+                        .copy(
+                            finalAnswer = answer,
+                            correctSolution = current.correctSolution.copy(steps = steps, finalAnswer = answer),
+                            status = if (differs) MistakeStatus.DISPUTED else current.status,
+                        ).toEntity()
+                mistakeDao.upsert(updated)
+                if (differs) TeacherAnswerResult.WrittenDisputed else TeacherAnswerResult.Written
+            }
 
         /** 某知识点下的错题归属（含置信度）。 */
         suspend fun linksOfKpoint(kpointId: String): List<MistakeKpointLink> =

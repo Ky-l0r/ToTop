@@ -862,10 +862,18 @@ class SolveViewModel
         ) {
             val parsed = FollowUpCorrection.parse(raw)
             updateMessage(replyId) { it.copy(text = parsed.text, streaming = false) }
-            // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
-            // 看到的还是那个被推翻的旧答案。
-            parsed.correctedAnswer?.let { corrected ->
-                syncCorrection(answer = corrected, replyId = replyId, verifiedOnly = parsed.verifiedOnly)
+            // 老师给的答案优先于一切：它不需要「重算验证」，直接写库。
+            // 与 AI 结论不一致时会被标成「存疑」，因此这里不再叠加订正逻辑——
+            // 两个都写会让最终答案在两条路径之间来回覆盖。
+            val teacherAnswer = parsed.teacherAnswer
+            if (teacherAnswer != null) {
+                syncTeacherAnswer(answer = teacherAnswer, replyId = replyId)
+            } else {
+                // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
+                // 看到的还是那个被推翻的旧答案。
+                parsed.correctedAnswer?.let { corrected ->
+                    syncCorrection(answer = corrected, replyId = replyId, verifiedOnly = parsed.verifiedOnly)
+                }
             }
             // 追问补出来的小问答案同样要落库。
             //
@@ -877,6 +885,48 @@ class SolveViewModel
             }
             if (supplementPages.isNotEmpty()) {
                 refreshQuestionFromSupplement(questionId, supplementPages)
+            }
+        }
+
+        /**
+         * 学生转述了老师给的答案：直接覆盖错题本的最终答案，不质疑、不比对后拒绝。
+         *
+         * 为什么连「AI 认为不对」也不拦：老师说错了这件事，学生没法在本应用里裁决；
+         * 而错题本如果继续显示 AI 的答案，学生复习时会把一个可能错的结论再背一遍。
+         * 不一致时标成「存疑」，就是把「这笔账还没结」写在脸上，而不是替学生选一边。
+         */
+        private suspend fun syncTeacherAnswer(
+            answer: String,
+            replyId: String,
+        ) {
+            val payload = latestSolution() ?: return
+            val mistakeId = payload.mistakeId
+            if (mistakeId.isNullOrBlank()) {
+                updateMessage(replyId) { it.copy(correctionNote = "老师的答案没能写进错题本：这道题当时没有入库") }
+                return
+            }
+            val result =
+                runCatching { mistakeRepository.applyTeacherAnswer(mistakeId, answer) }.getOrNull()
+                    ?: com.totop.app.domain.model.TeacherAnswerResult.Ignored
+            when (result) {
+                com.totop.app.domain.model.TeacherAnswerResult.Written -> {
+                    updateSolution(replyId) { it.copy(finalAnswer = answer) }
+                    updateMessage(replyId) { it.copy(correctionNote = "已按老师的答案更新：" + answer) }
+                }
+                com.totop.app.domain.model.TeacherAnswerResult.WrittenDisputed -> {
+                    updateSolution(replyId) { it.copy(finalAnswer = answer) }
+                    updateMessage(replyId) {
+                        it.copy(
+                            correctionNote =
+                                "已按老师的答案 " + answer + " 写入。我的解法和它不一致，这道题已标为「存疑」；" +
+                                    "你可以到别的渠道找一份解析，把截图发给我，我对照它重新看一遍。",
+                        )
+                    }
+                }
+                com.totop.app.domain.model.TeacherAnswerResult.NotFound -> {
+                    updateMessage(replyId) { it.copy(correctionNote = "这道题已经不在错题本里了，答案没有写入") }
+                }
+                com.totop.app.domain.model.TeacherAnswerResult.Ignored -> Unit
             }
         }
 

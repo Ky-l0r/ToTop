@@ -1,6 +1,8 @@
 package com.totop.app.ui.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,9 +28,11 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,12 +41,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ui.theme.Tokens
 import kotlinx.coroutines.launch
 
@@ -71,6 +78,7 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scope = rememberCoroutineScope()
     val finished by viewModel.finished.collectAsStateWithLifecycle()
+    val mode by viewModel.mode.collectAsStateWithLifecycle()
 
     // 完成标记一旦置位就只通知一次。
     //
@@ -103,7 +111,11 @@ fun OnboardingScreen(
             state = pagerState,
             modifier = Modifier.fillMaxWidth().weight(1f),
         ) { index ->
-            OnboardingPageView(page = pages[index])
+            OnboardingPageView(
+                page = pages[index],
+                mode = mode,
+                onModeChange = viewModel::setMode,
+            )
         }
 
         // 页码点：当前页用主色实心，其余用小灰点。
@@ -151,6 +163,8 @@ private data class OnboardingPage(
     val lines: List<String>,
     /** 是否需要额外的「怎么填」示意图与分步说明（目前只有模型配置那一页）。 */
     val guide: Boolean = false,
+    /** 是否在这一页让用户选择讲解方式（首启的唯一一处默认值设定）。 */
+    val modeChoice: Boolean = false,
 ) {
     companion object {
         val PAGES: List<OnboardingPage> =
@@ -172,6 +186,16 @@ private data class OnboardingPage(
                             "写下你的思路，我会指出第一个出错的地方，而不是只给答案。",
                             "想不出来可以逐级要提示，实在不行再展开完整解答。",
                         ),
+                ),
+                OnboardingPage(
+                    icon = Icons.Filled.Tune,
+                    title = "你想让我怎么讲",
+                    lines =
+                        listOf(
+                            "提示引导：先给方向和下一步，答案要你自己点开；适合想自己先想一遍。",
+                            "直接讲解：一次给全步骤与答案；适合想快点对答案或已经想通了。",
+                        ),
+                    modeChoice = true,
                 ),
                 OnboardingPage(
                     icon = Icons.Filled.Book,
@@ -214,7 +238,11 @@ private data class OnboardingPage(
 }
 
 @Composable
-private fun OnboardingPageView(page: OnboardingPage) {
+private fun OnboardingPageView(
+    page: OnboardingPage,
+    mode: TeachingMode,
+    onModeChange: (TeachingMode) -> Unit,
+) {
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -268,6 +296,65 @@ private fun OnboardingPageView(page: OnboardingPage) {
                 )
             }
         }
+        if (page.modeChoice) {
+            Spacer(Modifier.height(10.dp))
+            TeachingMode.entries.forEach { candidate ->
+                ModeOption(
+                    mode = candidate,
+                    selected = candidate == mode,
+                    onSelect = { onModeChange(candidate) },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+        }
         Spacer(Modifier.height(8.dp))
+    }
+}
+
+/**
+ * 讲解方式的一个选项。
+ *
+ * 选中状态与设置页共用 [com.totop.app.data.repo.SettingsRepository.Keys.MODE]：
+ * 这里点一下就直接写库，不等「开始用」——跳过引导的人也算做了选择，
+ * 否则他跳过之后回到设置页会看到一个自己没选过的值。
+ */
+@Composable
+private fun ModeOption(
+    mode: TeachingMode,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    val background = if (selected) Tokens.PrimaryContainer else Tokens.SurfaceVariant
+    val border = if (selected) Tokens.Primary else Color.Transparent
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(background)
+                .border(1.dp, border, RoundedCornerShape(12.dp))
+                .clickable(onClick = onSelect)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Spacer(Modifier.width(6.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = mode.label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = Tokens.OnSurface,
+            )
+            Text(
+                text =
+                    when (mode) {
+                        TeachingMode.GUIDED -> "首屏只给方向和下一步，答案要你自己点开"
+                        TeachingMode.DIRECT -> "一次给全步骤与最终答案"
+                    },
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
+        }
     }
 }

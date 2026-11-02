@@ -14,14 +14,16 @@ import org.junit.jupiter.api.Test
 @DisplayName("易错题状态")
 class MistakeStatusTest {
     @Test
-    @DisplayName("四态齐全，顺序即界面顺序")
-    fun fourStatesInOrder() {
+    @DisplayName("五态齐全，顺序即界面顺序")
+    fun statesInOrder() {
+        // 「存疑」是 2026-11-03 加的第五态（老师给的答案与 AI 结论不一致），
+        // 排在「错误」之后、「理解」之前：先看清结论有没有定，再谈懂没懂。
         assertEquals(
-            listOf("unknown", "pending_check", "wrong", "understood"),
+            listOf("unknown", "pending_check", "wrong", "disputed", "understood"),
             MistakeStatus.entries.map { it.wire },
         )
         assertEquals(
-            listOf("不会", "待校对", "错误", "理解"),
+            listOf("不会", "待校对", "错误", "存疑", "理解"),
             MistakeStatus.entries.map { it.label },
         )
     }

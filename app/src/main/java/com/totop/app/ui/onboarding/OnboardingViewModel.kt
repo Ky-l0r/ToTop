@@ -3,6 +3,7 @@ package com.totop.app.ui.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.repo.SettingsRepository
+import com.totop.app.domain.model.TeachingMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,35 @@ class OnboardingViewModel
     ) : ViewModel() {
         private val _finished = MutableStateFlow(false)
         val finished: StateFlow<Boolean> = _finished.asStateFlow()
+
+        /**
+         * 讲解模式：引导（先想一步）还是直接（看完整讲解）。
+         *
+         * 与设置页共用同一个键 [SettingsRepository.Keys.MODE]，不另存一份：
+         * 引导页选「直接」之后，拍题页第一次进来就是直接讲；之后在设置里改了，
+         * 这里再打开时显示的也是改过的值——两处读的是同一个事实。
+         *
+         * 初值取默认，读库是异步的；读到之后覆盖。用户在这一瞬间就点了选择也不会丢：
+         * 点选本身就是一次写库，写的是他刚选的那个值。
+         */
+        private val _mode = MutableStateFlow(TeachingMode.DEFAULT)
+        val mode: StateFlow<TeachingMode> = _mode.asStateFlow()
+
+        init {
+            viewModelScope.launch {
+                val stored = runCatching { settingsRepository.get(SettingsRepository.Keys.MODE) }.getOrNull()
+                _mode.value = TeachingMode.fromWire(stored)
+            }
+        }
+
+        /** 选择讲解方式：立刻写库，不等「开始用」。 */
+        fun setMode(mode: TeachingMode) {
+            if (_mode.value == mode) return
+            _mode.value = mode
+            viewModelScope.launch {
+                runCatching { settingsRepository.put(SettingsRepository.Keys.MODE, mode.wire) }
+            }
+        }
 
         /**
          * 完成引导：落标记 -> 通知界面收起。

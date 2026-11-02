@@ -106,4 +106,38 @@ class FollowUpCorrectionTest {
         assertTrue(FollowUpCorrection.parse("[[小问]]第(2)问：").parts.isEmpty())
         assertTrue(FollowUpCorrection.parse("[[小问]]第(2)问").parts.isEmpty())
     }
+
+    @Test
+    @DisplayName("老师给的答案：解析出来并从正文里剔除")
+    fun parseTeacherAnswer() {
+        val raw =
+            "以老师的答案为准：我算的 C 应该是把第三问条件看漏了。\n" +
+                "[[老师答案]]B"
+        val parsed = FollowUpCorrection.parse(raw)
+        assertEquals("B", parsed.teacherAnswer)
+        assertNull(parsed.correctedAnswer)
+        assertFalse(parsed.text.contains("[["))
+        assertFalse(parsed.text.contains("老师答案"))
+    }
+
+    @Test
+    @DisplayName("老师答案带的冒号、句号会被吸掉")
+    fun parseTeacherAnswerWithPunctuation() {
+        assertEquals("24 L", FollowUpCorrection.parse("[[老师答案]]：24 L。").teacherAnswer)
+    }
+
+    @Test
+    @DisplayName("老师答案为空时不产生结论")
+    fun parseTeacherAnswerBlank() {
+        assertNull(FollowUpCorrection.parse("[[老师答案]]").teacherAnswer)
+        assertNull(FollowUpCorrection.parse("[[老师答案]]   ").teacherAnswer)
+    }
+
+    @Test
+    @DisplayName("同时出现订正与老师答案时两者都取到（由上层决定以谁为准）")
+    fun parseTeacherAndCorrection() {
+        val parsed = FollowUpCorrection.parse("[[订正]]最终答案：C\n[[老师答案]]B")
+        assertEquals("C", parsed.correctedAnswer)
+        assertEquals("B", parsed.teacherAnswer)
+    }
 }

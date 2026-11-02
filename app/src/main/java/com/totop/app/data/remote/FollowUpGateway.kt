@@ -230,6 +230,13 @@ class FollowUpGateway
                     append("   ").append(PART_MARKER).append("第(2)问：<这一问的最终答案>\n")
                     append("   一行只写一问，答案要短（一句话、一个式子或一组选项），不要写推导过程；\n")
                     append("   这一行同样不显示给学生，只用于把这一问补进错题本。\n")
+                    append("9. 学生转述**老师或答案册给出的最终答案**时（例如「老师说答案是 B」「答案册写的是 24」），\n")
+                    append("   这条结论是**权威**：\n")
+                    append("   - 不许质疑、不许要求他再确认、不许说「答案可能印错了」；\n")
+                    append("   - 若与你的结论不同，直接承认差异并分析可能的原因，明确说「以老师的答案为准」；\n")
+                    append("   - 无论是否相同，最后单独一行照抄：\n")
+                    append("   ").append(TEACHER_MARKER).append("<老师给的答案原文>\n")
+                    append("   这一行是给客户端写入错题本的，学生看不到；只写答案，不要写解释。\n")
                     if (supplementNote.isNotBlank()) {
                         append("\n=== 本次带图 ===\n")
                         append(supplementNote).append('\n')
@@ -272,6 +279,14 @@ class FollowUpGateway
 
             /** 单条小问答案的长度上限：超过多半是把解释写进了答案位，宁可不落库。 */
             const val MAX_PART_CHARS: Int = 120
+
+            /**
+             * 老师给的答案标记。
+             *
+             * 口径是「老师给的答案不质疑、直接入库」：模型在回答里承认差异与否都不影响写库，
+             * 客户端拿到这一行就覆盖最终答案；与 AI 原结论不一致时把题标成「存疑」。
+             */
+            const val TEACHER_MARKER: String = "[[老师答案]]"
         }
     }
 
@@ -349,6 +364,13 @@ data class FollowUpAnswer(
      * 那些答案如果不带回上层，就只活在聊天记录里，错题本永远残缺。
      */
     val parts: List<SolutionPart> = emptyList(),
+    /**
+     * 学生转述的「老师给的答案」（`[[老师答案]]B`）。
+     *
+     * 这条结论是权威：客户端直接覆盖错题本的最终答案，不与 AI 的结论争辩；
+     * 两者不一致时把题目标成「存疑」。
+     */
+    val teacherAnswer: String? = null,
 )
 
 /**
@@ -367,6 +389,7 @@ object FollowUpCorrection {
     fun parse(raw: String): FollowUpAnswer {
         val lines = raw.lines()
         val parts = lines.mapNotNull { parsePart(it) }
+        val teacherAnswer = parseTeacherAnswer(lines)
         val correctionAt = raw.indexOf(FollowUpGateway.CORRECTION_MARKER)
         val checkAt = raw.indexOf(FollowUpGateway.CHECK_MARKER)
         val marker =
@@ -375,8 +398,10 @@ object FollowUpCorrection {
                 checkAt >= 0 -> FollowUpGateway.CHECK_MARKER
                 else -> null
             }
-        // 既没有订正/核对，也没有小问补充：整段就是给学生看的正文。
-        if (marker == null && parts.isEmpty()) return FollowUpAnswer(raw.trim(), null)
+        // 三类标记都没有：整段就是给学生看的正文。
+        if (marker == null && parts.isEmpty() && teacherAnswer == null) {
+            return FollowUpAnswer(raw.trim(), null)
+        }
         // 按行剥：同一行里既有正文又有标记的情况极少，剥掉整行最安全。
         // 三类标记都要剥——模型偶尔会同时写核对与补充，剩下的那些行同样不能给学生看。
         val markerLine = marker?.let { m -> lines.firstOrNull { it.contains(m) } }
@@ -392,6 +417,7 @@ object FollowUpCorrection {
             // 只写核对行时，语义是「重算过，结论是这一条」，可能和原答案相同
             verifiedOnly = marker == FollowUpGateway.CHECK_MARKER,
             parts = parts,
+            teacherAnswer = teacherAnswer,
         )
     }
 
@@ -417,11 +443,32 @@ object FollowUpCorrection {
         return SolutionPart(label = label, answer = answer)
     }
 
-    /** 某一行是否是机器可读标记行（订正、核对或小问补充）。 */
+    /**
+     * 取「老师给的答案」那一行。
+     *
+     * 只取第一条：同一条回答里出现多行时，以最先写下的为准，
+     * 后面那些多半是模型在解释差异，不是新的结论。
+     */
+    private fun parseTeacherAnswer(lines: List<String>): String? {
+        val line = lines.firstOrNull { it.contains(FollowUpGateway.TEACHER_MARKER) } ?: return null
+        val answer =
+            line
+                .substringAfter(FollowUpGateway.TEACHER_MARKER)
+                .trim()
+                .trimStart('：', ':', ' ')
+                .trimEnd('。', '，', ',', '.')
+        return answer.takeIf { it.isNotBlank() && it.length <= MAX_TEACHER_CHARS }
+    }
+
+    /** 老师答案的长度上限：超过这个长度多半把解释一起写进来了。 */
+    private const val MAX_TEACHER_CHARS: Int = 200
+
+    /** 某一行是否是机器可读标记行（订正、核对、小问补充或老师答案）。 */
     private fun isMarkerLine(line: String): Boolean =
         line.contains(FollowUpGateway.CORRECTION_MARKER) ||
             line.contains(FollowUpGateway.CHECK_MARKER) ||
-            line.contains(FollowUpGateway.PART_MARKER)
+            line.contains(FollowUpGateway.PART_MARKER) ||
+            line.contains(FollowUpGateway.TEACHER_MARKER)
 
     /** 从「最终答案：X；理由：Y」里取出 X。 */
     private fun extractAnswer(tail: String): String? {

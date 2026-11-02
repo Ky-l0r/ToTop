@@ -472,7 +472,7 @@ fun KpointTag(
     }
 }
 
-/** 状态徽标：不会 / 待校对 / 错误 / 理解，只做区分，不用四种颜色抢注意力。 */
+/** 状态徽标：不会 / 待校对 / 错误 / 存疑 / 理解，只做区分，不用高饱和色抢注意力。 */
 @Composable
 fun StatusBadge(
     status: MistakeStatus,
@@ -483,6 +483,9 @@ fun StatusBadge(
             MistakeStatus.UNKNOWN -> Tokens.ErrorContainer to Tokens.Error
             MistakeStatus.PENDING_CHECK -> Tokens.WarningContainer to Tokens.Warning
             MistakeStatus.WRONG -> Tokens.SurfaceVariant to Tokens.OnSurfaceVariant
+            // 存疑用紫色：与「错误」的灰、「待校对」的黄都不一样，一眼能认出
+            // 「这条还没定论」，而不是又一条要背的错题。
+            MistakeStatus.DISPUTED -> Tokens.ReasoningContainer to Tokens.Reasoning
             MistakeStatus.UNDERSTOOD -> Tokens.PrimaryContainer to Tokens.Primary
         }
     Box(
