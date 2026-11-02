@@ -52,6 +52,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,8 +62,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
+import com.totop.app.data.prefs.CapturePrefs
 import com.totop.app.data.prefs.VoiceEnginePrefs
 import com.totop.app.domain.model.TeachingMode
+import com.totop.app.ml.ScanLevel
 import com.totop.app.ml.TtsSpeed
 import com.totop.app.ml.VoiceEngines
 
@@ -648,6 +651,59 @@ fun StorageSettingsScreen(
             onOpenBackup = onOpenBackup,
             onOpenExport = onOpenExport,
             onRequestClearAll = viewModel::requestClearAll,
+        )
+        CaptureSection()
+    }
+}
+
+/**
+ * 照片处理强度。
+ *
+ * 为什么放这里而不是「教学」：它决定的是图片怎么处理，不改变讲解方式；
+ * 与「本机存储」并列也符合「上传前本地做的那点事」这个心智。
+ */
+@Composable
+private fun CaptureSection() {
+    val context = LocalContext.current
+    var level by remember { mutableStateOf(CapturePrefs.scanLevel(context)) }
+    ContentCard(title = "照片处理", subtitle = "只在本机做，不上传原图给任何第三方") {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ScanLevel.entries.forEach { candidate ->
+                val selected = candidate == level
+                Box(
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                },
+                            )
+                            .clickable {
+                                level = candidate
+                                CapturePrefs.selectScanLevel(context, candidate)
+                            }
+                            .padding(horizontal = 14.dp, vertical = 7.dp),
+                ) {
+                    Text(
+                        text = candidate.label,
+                        style = MaterialTheme.typography.labelLarge,
+                        color =
+                            if (selected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
+            }
+        }
+        Text(
+            text = level.description,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.data.prefs.CapturePrefs
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.AiGateway
 import com.totop.app.data.remote.FollowUpCorrection
@@ -36,6 +37,8 @@ import com.totop.app.domain.model.Subjects
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.ImagePreprocessor
 import com.totop.app.ml.PreprocessResult
+import com.totop.app.ml.ScanEnhance
+import com.totop.app.ml.ScanLevel
 import com.totop.app.util.EncodedImage
 import com.totop.app.util.ImageCropResult
 import com.totop.app.util.ImageCropper
@@ -1290,8 +1293,11 @@ class SolveViewModel
                             ImageCropResult.Success(bytes = bytes, cropped = false)
                         }
                     }
+                // 增强强度由设置决定（关/弱/标准/强）。关闭时 toScannedJpeg 直接返回 null，
+                // 走「原样上传」分支，学生能自己选「宁可糊也不要处理」。
+                val scanLevel = ScanLevel.fromKey(CapturePrefs.rawLevel(appContext))
                 val enhanced =
-                    runCatching { com.totop.app.ml.ScanEnhance.toScannedJpeg(crop.bytes) }.getOrNull()
+                    runCatching { ScanEnhance.toScannedJpeg(crop.bytes, scanLevel.gain) }.getOrNull()
                 val bytes = enhanced ?: crop.bytes
                 val sha = runCatching { ImageMath.sha256Hex(bytes) }.getOrNull() ?: return@withContext null
                 // 一律按内容哈希落盘并用它展示：这样「学生框定的那块」与「复习页看到的图」

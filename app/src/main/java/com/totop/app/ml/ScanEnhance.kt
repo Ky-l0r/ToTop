@@ -45,10 +45,15 @@ object ScanEnhance {
     /**
      * 把 JPEG 字节转成「扫描件」字节。
      *
+     * @param gain 对比增益，见 [ScanLevel]；<= 0 时不做处理，直接返回 null 让调用方用原图
      * @return 增强后的 JPEG；解码或编码失败时返回 null，调用方退回原图。
      */
-    fun toScannedJpeg(bytes: ByteArray): ByteArray? =
-        runCatching {
+    fun toScannedJpeg(
+        bytes: ByteArray,
+        gain: Float = DEFAULT_GAIN,
+    ): ByteArray? {
+        if (gain <= 0f) return null
+        return runCatching {
             val bounds =
                 BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
@@ -68,7 +73,7 @@ object ScanEnhance {
             val pixels = IntArray(width * height)
             decoded.getPixels(pixels, 0, width, 0, 0, width, height)
             decoded.recycle()
-            val enhanced = enhancePixels(pixels, width, height)
+            val enhanced = enhancePixels(pixels, width, height, gain)
             val output = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             output.setPixels(enhanced, 0, width, 0, 0, width, height)
             val stream = ByteArrayOutputStream()
@@ -76,6 +81,7 @@ object ScanEnhance {
             output.recycle()
             if (!ok) null else stream.toByteArray()
         }.getOrNull()
+    }
 
     /**
      * 像素级增强（纯函数，可单测）。
