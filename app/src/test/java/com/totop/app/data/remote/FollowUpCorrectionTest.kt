@@ -74,4 +74,36 @@ class FollowUpCorrectionTest {
         assertNull(parsed.correctedAnswer)
         assertEquals("说明如下。", parsed.text)
     }
+
+    @Test
+    @DisplayName("小问补充：逐行解析出小问与答案，正文里不留标记")
+    fun parsePartMarkers() {
+        val raw =
+            "第 (2) 问用 (1) 的结论代入即可：由 (1) 得 k=2，所以 y=2x+1。\n" +
+                "[[小问]]第(2)问：y=2x+1\n" +
+                "[[小问]]第(3)问：面积 6"
+        val parsed = FollowUpCorrection.parse(raw)
+        assertEquals(2, parsed.parts.size)
+        assertEquals("第(2)问", parsed.parts[0].label)
+        assertEquals("y=2x+1", parsed.parts[0].answer)
+        assertEquals("面积 6", parsed.parts[1].answer)
+        assertNull(parsed.correctedAnswer)
+        assertFalse(parsed.text.contains("[["))
+    }
+
+    @Test
+    @DisplayName("小问标记写法不标准时也认：半角冒号与 (2) 前缀")
+    fun parsePartFlexible() {
+        val parsed = FollowUpCorrection.parse("[[小问]](2): 24 L")
+        assertEquals(1, parsed.parts.size)
+        assertEquals("(2)", parsed.parts[0].label)
+        assertEquals("24 L", parsed.parts[0].answer)
+    }
+
+    @Test
+    @DisplayName("小问标记缺答案时丢弃，不写进错题本")
+    fun parsePartWithoutAnswer() {
+        assertTrue(FollowUpCorrection.parse("[[小问]]第(2)问：").parts.isEmpty())
+        assertTrue(FollowUpCorrection.parse("[[小问]]第(2)问").parts.isEmpty())
+    }
 }

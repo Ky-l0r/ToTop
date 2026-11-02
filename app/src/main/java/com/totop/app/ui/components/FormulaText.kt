@@ -217,7 +217,10 @@ fun FormulaText(
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     fallbackToRaw: Boolean = true,
 ) {
-    val content = remember(text) { FormulaParser.parse(text) }
+    // 先把裸 \frac / \sqrt 补上定界符：没有这一步，分式会被压成 1/2，
+    // 「分子在上、分母在下」的排版就丢了（数学题里 sinx/2 到底是谁除以谁读不出来）。
+    val prepared = remember(text) { BareLatex.wrap(text) }
+    val content = remember(prepared) { FormulaParser.parse(prepared) }
     when (content) {
         is FormulaContent.PlainText -> {
             // 没有 LaTeX 定界符：先剥掉裸命令，再走「朴素数学记号」排版。

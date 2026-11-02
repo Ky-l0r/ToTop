@@ -12,6 +12,8 @@ import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
 import com.totop.app.domain.model.MistakeRecord
 import com.totop.app.domain.model.ReviewLog
+import com.totop.app.domain.model.SolutionPart
+import com.totop.app.domain.model.SolutionStep
 import com.totop.app.domain.model.StandardSolution
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -239,6 +241,57 @@ class MistakeRepository
                 mistakeDao.upsert(updated)
                 true
             }
+
+        /**
+         * 把追问里补出来的小问答案追加进错题本。
+         *
+         * 为什么是「追加」而不是像订正那样覆盖：订正改的是同一问的结论，
+         * 而这里补的是之前根本没写进库的**另外几问**——覆盖会把已有的第 (1) 问冲掉。
+         *
+         * 幂等：最终答案里已经包含这条答案时跳过，学生重复问同一问不会让步骤无限增长。
+         *
+         * @return 是否真的写入了（无可追加内容或题不存在时为 false）
+         */
+        suspend fun appendSolutionParts(
+            mistakeId: String,
+            parts: List<SolutionPart>,
+        ): Boolean =
+            withContext(dispatcher) {
+                if (parts.isEmpty()) return@withContext false
+                val row = mistakeDao.findById(mistakeId) ?: return@withContext false
+                val current = row.toDomain()
+                val known = current.finalAnswer
+                val added = parts.filterNot { known.contains(it.answer) }
+                if (added.isEmpty()) return@withContext false
+                val steps = current.correctSolution.steps.toMutableList()
+                var nextIdx = (steps.maxOfOrNull { it.idx } ?: 0) + 1
+                added.forEach { part ->
+                    steps +=
+                        SolutionStep(
+                            idx = nextIdx++,
+                            content = "（补充）" + part.label + "：" + part.answer,
+                            why = "",
+                        )
+                }
+                val mergedAnswer = mergeAnswer(known, added)
+                val updated =
+                    current
+                        .copy(
+                            correctSolution = current.correctSolution.copy(steps = steps, finalAnswer = mergedAnswer),
+                            finalAnswer = mergedAnswer,
+                        ).toEntity()
+                mistakeDao.upsert(updated)
+                true
+            }
+
+        /** 把新补的小问答案并进最终答案：空值直接用，非空用「；」续在后面。 */
+        private fun mergeAnswer(
+            existing: String,
+            added: List<SolutionPart>,
+        ): String {
+            val suffix = added.joinToString("；") { it.label + "：" + it.answer }
+            return if (existing.isBlank()) suffix else existing.trimEnd('；', ';') + "；" + suffix
+        }
 
         /** 某知识点下的错题归属（含置信度）。 */
         suspend fun linksOfKpoint(kpointId: String): List<MistakeKpointLink> =

@@ -30,3 +30,17 @@ data class StandardSolution(
 
 /** 标准解答步骤的短别名，便于写作 `List<Step>`。 */
 typealias Step = SolutionStep
+
+/**
+ * 追问补出来的某一个小问的答案。
+ *
+ * 为什么需要它：多小问的大题第一次可能只讲清第 (1) 问，第 (2)(3) 问是学生追问才得到的。
+ * 那份答案原本只存在聊天记录里，错题本永远是残缺的；带着 [label] 一起落库，
+ * 复习时才看得出「这一条是后来补的」。
+ */
+data class SolutionPart(
+    /** 小问标记，例如「第(2)问」；模型没写小问号时可能是「(2)」。 */
+    val label: String,
+    /** 该小问最终给出的答案。 */
+    val answer: String,
+)

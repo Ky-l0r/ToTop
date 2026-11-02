@@ -376,6 +376,19 @@ private fun SolutionBubble(
 
         val withheld = GuidePolicy.withholdsSolution(mode, payload.fullSolutionRevealed)
 
+        // 这道题分几问：步骤里的小问标记就是依据。
+        //
+        // 为什么要把它算出来：引导模式首屏只给「第一问」的引导，多小问的题看起来
+        // 就像「AI 只答了第 (1) 问」。把问数写在卡片上、把按钮改成「看全部 N 问」，
+        // 学生才知道剩下的问在同一个入口里，而不是以为要一问一问追问。
+        val partCount =
+            StepSections
+                .group(payload.steps)
+                .mapNotNull { section -> section.number }
+                .distinct()
+                .size
+                .coerceAtLeast(1)
+
         // 2. 提示卡：引导模式下这是主体
         if (withheld && payload.hints.isNotEmpty()) {
             HintBoard(
@@ -383,6 +396,7 @@ private fun SolutionBubble(
                 unlocked = payload.unlockedHintLevel,
                 onUnlock = { onUnlockHint(message.id) },
                 onReveal = { onRevealSolution(message.id) },
+                partCount = partCount,
             )
         }
 
@@ -422,6 +436,7 @@ private fun SolutionBubble(
             LockedSolutionCard(
                 onReveal = { onRevealSolution(message.id) },
                 canReveal = GuidePolicy.showsRevealAction(mode, payload.fullSolutionRevealed),
+                partCount = partCount,
             )
         }
 
@@ -562,6 +577,7 @@ private fun HintBoard(
     unlocked: Int,
     onUnlock: () -> Unit,
     onReveal: () -> Unit,
+    partCount: Int = 1,
 ) {
     BubbleCard(emphasis = true) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -574,7 +590,12 @@ private fun HintBoard(
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = "先自己想一步，卡住了再看提示",
+                    text =
+                        if (partCount > 1) {
+                            "这道题分 " + partCount + " 问，下面先给第 1 问的引导"
+                        } else {
+                            "先自己想一步，卡住了再看提示"
+                        },
                     style = MaterialTheme.typography.bodyMedium,
                     color = Tokens.Primary,
                     fontWeight = FontWeight.SemiBold,
@@ -589,8 +610,13 @@ private fun HintBoard(
             if (unlocked == 0) {
                 Text(
                     text =
-                        "这道题的答案我先不给。想不起来怎么下手，就点下面的按钮，我给一点线索；" +
-                            "实在想不出来，也可以直接看完整解答。",
+                        if (partCount > 1) {
+                            "答案我先不给。每一问的思路与答案，都在下面「看全部 " + partCount +
+                                " 问的解答」里；只想先看某一问，也可以直接问我。"
+                        } else {
+                            "这道题的答案我先不给。想不起来怎么下手，就点下面的按钮，我给一点线索；" +
+                                "实在想不出来，也可以直接看完整解答。"
+                        },
                     style = MaterialTheme.typography.bodySmall,
                     color = Tokens.OnSurfaceVariant,
                 )
@@ -608,7 +634,10 @@ private fun HintBoard(
                         onClick = onUnlock,
                     )
                 }
-                SmallAction(text = "我已想通，看全解", onClick = onReveal)
+                SmallAction(
+                    text = if (partCount > 1) "看全部 " + partCount + " 问的解答" else "我已想通，看全解",
+                    onClick = onReveal,
+                )
             }
         }
     }
@@ -739,22 +768,31 @@ private fun ReasoningNote(text: String) {
 private fun LockedSolutionCard(
     onReveal: () -> Unit,
     canReveal: Boolean,
+    partCount: Int = 1,
 ) {
     BubbleCard {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "完整解答暂不展开",
+                text = if (partCount > 1) "完整解答暂不展开（共 " + partCount + " 问）" else "完整解答暂不展开",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Tokens.OnSurface,
                 fontWeight = FontWeight.Medium,
             )
             Text(
-                text = "自己先写一遍再看，记得更牢。真想不出来，可以直接展开。",
+                text =
+                    if (partCount > 1) {
+                        "自己先写一遍再看，记得更牢。展开会一次给出 " + partCount + " 问的步骤与答案。"
+                    } else {
+                        "自己先写一遍再看，记得更牢。真想不出来，可以直接展开。"
+                    },
                 style = MaterialTheme.typography.bodySmall,
                 color = Tokens.OnSurfaceVariant,
             )
             if (canReveal) {
-                SmallAction(text = "直接看完整解答", onClick = onReveal)
+                SmallAction(
+                    text = if (partCount > 1) "直接看完整解答（" + partCount + " 问）" else "直接看完整解答",
+                    onClick = onReveal,
+                )
             }
         }
     }

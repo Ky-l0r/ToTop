@@ -1,6 +1,7 @@
 package com.totop.app.data.remote
 
 import com.totop.app.data.prefs.LlmCredentials
+import com.totop.app.domain.model.SolutionPart
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -223,6 +224,12 @@ class FollowUpGateway
                     append("   必须在回答的最后单独一行给出订正，格式严格照抄：\n")
                     append("   ").append(CORRECTION_MARKER).append("最终答案：<新的最终答案>；理由：<一句话>\n")
                     append("   没有改变最终答案时，**禁止**出现这一行；不要用别的方式表达订正。\n")
+                    append("8. 如果学生问的是这道题里**之前还没讲到的某个小问**（例如原解答重点在第 (1) 问，\n")
+                    append("   他现在问第 (2)(3) 问），请在讲完之后，为**每一个**你这次真正答出的小问\n")
+                    append("   单独写一行，格式严格照抄：\n")
+                    append("   ").append(PART_MARKER).append("第(2)问：<这一问的最终答案>\n")
+                    append("   一行只写一问，答案要短（一句话、一个式子或一组选项），不要写推导过程；\n")
+                    append("   这一行同样不显示给学生，只用于把这一问补进错题本。\n")
                     if (supplementNote.isNotBlank()) {
                         append("\n=== 本次带图 ===\n")
                         append(supplementNote).append('\n')
@@ -252,6 +259,19 @@ class FollowUpGateway
              * 核对标记让「我重算后仍是 C」也能落到错题本，学生质疑被推翻时也有回执。
              */
             const val CHECK_MARKER: String = "[[核对]]"
+
+            /**
+             * 小问补充标记。
+             *
+             * 多小问的大题，第一次往往只讲清第 (1) 问；后面几问是追问才拿到的。
+             * 学生已经接受了「答案会进错题本」这个承诺，后面补的答案也不能只留在聊天里——
+             * 让模型在回答某一小问时多写一行 `[[小问]]第(2)问：<答案>`，
+             * 客户端据此把这一问补进标准解答与最终答案。
+             */
+            const val PART_MARKER: String = "[[小问]]"
+
+            /** 单条小问答案的长度上限：超过多半是把解释写进了答案位，宁可不落库。 */
+            const val MAX_PART_CHARS: Int = 120
         }
     }
 
@@ -322,6 +342,13 @@ data class FollowUpAnswer(
      * 上层据此给学生一句「重算过、结论没变」的回执，而不是什么都不说。
      */
     val verifiedOnly: Boolean = false,
+    /**
+     * 本轮补出来的小问答案（`[[小问]]第(2)问：…`）。
+     *
+     * 多小问大题第一次常常只讲清第 (1) 问，后面几问是追问才拿到的；
+     * 那些答案如果不带回上层，就只活在聊天记录里，错题本永远残缺。
+     */
+    val parts: List<SolutionPart> = emptyList(),
 )
 
 /**
@@ -338,21 +365,22 @@ data class FollowUpAnswer(
  */
 object FollowUpCorrection {
     fun parse(raw: String): FollowUpAnswer {
+        val lines = raw.lines()
+        val parts = lines.mapNotNull { parsePart(it) }
         val correctionAt = raw.indexOf(FollowUpGateway.CORRECTION_MARKER)
         val checkAt = raw.indexOf(FollowUpGateway.CHECK_MARKER)
         val marker =
             when {
                 correctionAt >= 0 -> FollowUpGateway.CORRECTION_MARKER
                 checkAt >= 0 -> FollowUpGateway.CHECK_MARKER
-                else -> return FollowUpAnswer(raw.trim(), null)
+                else -> null
             }
+        // 既没有订正/核对，也没有小问补充：整段就是给学生看的正文。
+        if (marker == null && parts.isEmpty()) return FollowUpAnswer(raw.trim(), null)
         // 按行剥：同一行里既有正文又有标记的情况极少，剥掉整行最安全。
-        // 两个标记都要剥——模型偶尔会同时写核对与订正，剩下的那行同样不能给学生看。
-        val lines = raw.lines()
-        val markerIndex = lines.indexOfFirst { it.contains(marker) }
-        if (markerIndex < 0) return FollowUpAnswer(raw.trim(), null)
-        val markerLine = lines[markerIndex]
-        val answer = extractAnswer(markerLine.substringAfter(marker))
+        // 三类标记都要剥——模型偶尔会同时写核对与补充，剩下的那些行同样不能给学生看。
+        val markerLine = marker?.let { m -> lines.firstOrNull { it.contains(m) } }
+        val answer = markerLine?.let { extractAnswer(it.substringAfter(marker.orEmpty())) }
         val kept =
             lines
                 .filterNot { line -> isMarkerLine(line) }
@@ -363,12 +391,37 @@ object FollowUpCorrection {
             correctedAnswer = answer,
             // 只写核对行时，语义是「重算过，结论是这一条」，可能和原答案相同
             verifiedOnly = marker == FollowUpGateway.CHECK_MARKER,
+            parts = parts,
         )
     }
 
-    /** 某一行是否是机器可读标记行（订正或核对）。 */
+    /**
+     * 解析一行小问补充：`[[小问]]第(2)问：体积为 24 L`。
+     *
+     * 容忍三种写法（模型不一定照抄「第(2)问」）：`第(2)问：`、`(2)：`、`第2问：`。
+     * 拿不到小问标记或答案为空时返回 null——宁可这次不落库，也不往错题本里写一条没有归属的答案。
+     */
+    private fun parsePart(line: String): SolutionPart? {
+        if (!line.contains(FollowUpGateway.PART_MARKER)) return null
+        val tail = line.substringAfter(FollowUpGateway.PART_MARKER).trim()
+        if (tail.isEmpty()) return null
+        val separatorAt = tail.indexOfFirst { it == '：' || it == ':' || it == '＝' || it == '=' }
+        if (separatorAt <= 0) return null
+        val label = tail.substring(0, separatorAt).trim()
+        val answer =
+            tail
+                .substring(separatorAt + 1)
+                .trim()
+                .trimEnd('。', '，', ',', '.')
+        if (label.isEmpty() || answer.isEmpty() || answer.length > FollowUpGateway.MAX_PART_CHARS) return null
+        return SolutionPart(label = label, answer = answer)
+    }
+
+    /** 某一行是否是机器可读标记行（订正、核对或小问补充）。 */
     private fun isMarkerLine(line: String): Boolean =
-        line.contains(FollowUpGateway.CORRECTION_MARKER) || line.contains(FollowUpGateway.CHECK_MARKER)
+        line.contains(FollowUpGateway.CORRECTION_MARKER) ||
+            line.contains(FollowUpGateway.CHECK_MARKER) ||
+            line.contains(FollowUpGateway.PART_MARKER)
 
     /** 从「最终答案：X；理由：Y」里取出 X。 */
     private fun extractAnswer(tail: String): String? {

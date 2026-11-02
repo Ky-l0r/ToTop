@@ -801,24 +801,14 @@ class SolveViewModel
                                         updateMessage(replyId) { it.copy(text = buffer.toString()) }
                                     }
                                     is FollowUpEvent.Completed -> {
-                                        // 回答里可能带一行「[[订正]]最终答案：…」：
-                                        // 那一行是给客户端写库用的，不能显示给学生，也不能进下一轮上下文。
-                                        val parsed = FollowUpCorrection.parse(event.text)
-                                        updateMessage(replyId) {
-                                            it.copy(text = parsed.text, streaming = false)
-                                        }
-                                        // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
-                                        // 看到的还是那个被推翻的旧答案。
-                                        parsed.correctedAnswer?.let { corrected ->
-                                            syncCorrection(
-                                                answer = corrected,
-                                                replyId = replyId,
-                                                verifiedOnly = parsed.verifiedOnly,
-                                            )
-                                        }
-                                        if (hasSupplement && encoded.isNotEmpty()) {
-                                            refreshQuestionFromSupplement(solution?.questionId, encoded)
-                                        }
+                                        // 回答里可能带机器标记（[[订正]] / [[核对]] / [[小问]]）：
+                                        // 那些行是给客户端写库用的，不能显示给学生，也不能进下一轮上下文。
+                                        onFollowUpCompleted(
+                                            raw = event.text,
+                                            replyId = replyId,
+                                            questionId = solution?.questionId,
+                                            supplementPages = if (hasSupplement) encoded else emptyList(),
+                                        )
                                     }
                                     is FollowUpEvent.Failed -> {
                                         updateMessage(replyId) {
@@ -855,6 +845,92 @@ class SolveViewModel
                         persistSession(solution?.subjectCode.orEmpty())
                     }
                 }
+        }
+
+        /**
+         * 一轮追问结束后的收尾：剥标记、落库、必要时重识别。
+         *
+         * 抽出来是因为这几步都是「回答完了才发生」的副作用，留在收集流的分支里
+         * 会让 [sendFollowUp] 的圈复杂度顶到阈值（detekt 30）；拆开之后三条路径
+         * （订正、补小问、补拍重识别）各自有名字，读起来也更清楚。
+         */
+        private suspend fun onFollowUpCompleted(
+            raw: String,
+            replyId: String,
+            questionId: String?,
+            supplementPages: List<UploadPage>,
+        ) {
+            val parsed = FollowUpCorrection.parse(raw)
+            updateMessage(replyId) { it.copy(text = parsed.text, streaming = false) }
+            // 改了口径就必须落到错题本：否则学生回头看「回顾」页，
+            // 看到的还是那个被推翻的旧答案。
+            parsed.correctedAnswer?.let { corrected ->
+                syncCorrection(answer = corrected, replyId = replyId, verifiedOnly = parsed.verifiedOnly)
+            }
+            // 追问补出来的小问答案同样要落库。
+            //
+            // 多小问的大题第一次常常只讲清第 (1) 问，第 (2)(3) 问是追问才拿到的；
+            // 这些答案原来只活在这条聊天记录里，错题本永远是残缺的，
+            // 复习时看到「答案：(1)…」就以为这道题只有一问。
+            if (parsed.parts.isNotEmpty()) {
+                syncSupplementParts(parts = parsed.parts, replyId = replyId)
+            }
+            if (supplementPages.isNotEmpty()) {
+                refreshQuestionFromSupplement(questionId, supplementPages)
+            }
+        }
+
+        /**
+         * 追问里补出了某个小问的答案：追加进错题本，并同步界面上那张解答卡。
+         *
+         * 与 [syncCorrection] 的区别是语义：订正改的是**同一问**的结论（覆盖），
+         * 这里补的是**之前没进库的另外几问**（追加）。混用会把第 (1) 问冲掉。
+         *
+         * 幂等由仓储保证：最终答案里已包含的答案不会重复追加。
+         */
+        private suspend fun syncSupplementParts(
+            parts: List<com.totop.app.domain.model.SolutionPart>,
+            replyId: String,
+        ) {
+            val payload = latestSolution() ?: return
+            val mistakeId = payload.mistakeId
+            if (mistakeId.isNullOrBlank()) {
+                updateMessage(replyId) {
+                    it.copy(correctionNote = "这次补的小问答案没能写进错题本：这道题当时没有入库")
+                }
+                return
+            }
+            val written =
+                runCatching {
+                    mistakeRepository.appendSolutionParts(mistakeId, parts)
+                }.getOrNull() ?: false
+            val labels = parts.joinToString("、") { it.label }
+            if (!written) {
+                updateMessage(replyId) {
+                    it.copy(correctionNote = "这次补的答案没有新增：错题本里已经有这几问，或这道题已被删除")
+                }
+                return
+            }
+            updateSolution(replyId) { current ->
+                val nextIdx = (current.steps.maxOfOrNull { it.idx } ?: 0) + 1
+                val added =
+                    parts.mapIndexed { offset, part ->
+                        SolutionStepView(
+                            idx = nextIdx + offset,
+                            content = "（补充）" + part.label + "：" + part.answer,
+                            why = "",
+                        )
+                    }
+                val mergedAnswer =
+                    if (current.finalAnswer.isBlank()) {
+                        parts.joinToString("；") { it.label + "：" + it.answer }
+                    } else {
+                        current.finalAnswer.trimEnd('；', ';') + "；" +
+                            parts.joinToString("；") { it.label + "：" + it.answer }
+                    }
+                current.copy(steps = current.steps + added, finalAnswer = mergedAnswer)
+            }
+            updateMessage(replyId) { it.copy(correctionNote = "已补进错题本：" + labels) }
         }
 
         /**
