@@ -492,6 +492,7 @@ fun ToTopNavHost(
             HubScreen(
                 onOpenMistakes = { navController.navigate(Routes.MISTAKES) },
                 onOpenKnowledge = { navController.navigate(Routes.KNOWLEDGE) },
+                onOpenLibrary = { navController.navigate(Routes.LIBRARY) },
                 onOpenReport = { navController.navigate(Routes.REPORT) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
@@ -524,6 +525,10 @@ fun ToTopNavHost(
                 mistakeId = entry.arguments?.getString(Routes.MISTAKE_DETAIL_ARG).orEmpty(),
                 onBack = { navController.popBackStack() },
             )
+        }
+
+        composable(route = Routes.LIBRARY) {
+            com.totop.app.ui.library.LibraryScreen(onBack = { navController.popBackStack() })
         }
 
         composable(route = Routes.KNOWLEDGE) {

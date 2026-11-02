@@ -91,6 +91,7 @@ class SolveViewModel
         private val imageCropper: ImageCropper,
         private val sessionRepository: SolveSessionRepository,
         private val masteryRecorder: com.totop.app.data.repo.MasteryRecorder,
+        private val learnedMaterials: com.totop.app.data.repo.LearnedMaterialRepository,
     ) : ViewModel() {
         private val registry = LlmCallRegistry()
 
@@ -889,6 +890,46 @@ class SolveViewModel
         }
 
         /**
+         * 把这一轮解答存进「资料库」。
+         *
+         * 口径（2026-11-03）：资料是学生从别处攒来的解析，用来让 AI 在解题时参考。
+         * 这里直接从当前解答里抽结构，而不是让用户再拍一次——他刚看到的就是想留下的那份。
+         *
+         * @param sourceLabel 来源标注（如「作业帮」「老师发的解析」），随资料一起存，
+         *   列表里展示，提醒学生这条不是我自己的解法、可能有错
+         */
+        fun saveAsMaterial(
+            messageId: String,
+            sourceLabel: String,
+        ) {
+            val message = _messages.value.firstOrNull { it.id == messageId } ?: return
+            val payload = message.solution ?: return
+            val kpoint = payload.kpoints.firstOrNull()
+            val material =
+                com.totop.app.domain.model.LearnedMaterial(
+                    id = "",
+                    subject = payload.subjectCode,
+                    kpointId = kpoint?.id,
+                    kpointName = kpoint?.name ?: payload.subjectLabel,
+                    title = payload.stem.take(MATERIAL_TITLE_CHARS).ifBlank { "未命名资料" },
+                    method = payload.method,
+                    keySteps = payload.steps.take(MATERIAL_STEP_LIMIT).map { it.content },
+                    answer = payload.finalAnswer,
+                    pitfalls = listOfNotNull(payload.firstError?.typeLabel?.takeIf { it.isNotBlank() }),
+                    sourceLabel = sourceLabel.trim().ifBlank { "手动收录" },
+                    imagePath = null,
+                    createdAtUtc = System.currentTimeMillis(),
+                )
+            viewModelScope.launch {
+                val ok =
+                    runCatching { learnedMaterials.save(material) }
+                        .onFailure { failure -> showToast("存进资料库失败：" + (failure.message ?: "未知原因")) }
+                        .isSuccess
+                if (ok) showToast("已存进资料库：" + material.kpointName + "。下次解同类题会参考它")
+            }
+        }
+
+        /**
          * 学生转述了老师给的答案：直接覆盖错题本的最终答案，不质疑、不比对后拒绝。
          *
          * 为什么连「AI 认为不对」也不拦：老师说错了这件事，学生没法在本应用里裁决；
@@ -1240,6 +1281,11 @@ class SolveViewModel
                 _phase.value = ComposerPhase.READY
                 return
             }
+            // 学生自己收集的资料：取最近若干条交给网关，由它按科目再收敛到 3 条。
+            // 放在阶段 B 之前取（而不是按科目预筛）是因为此刻还不知道科目——
+            // 阶段 A 识别出科目后，网关里才有依据做筛选。
+            val materials =
+                runCatching { learnedMaterials.recent(MATERIAL_QUERY_LIMIT) }.getOrDefault(emptyList())
             val request =
                 SolveRequest(
                     // ocr 字段保留为「题目文本」通道，但**不再来自 OCR**：
@@ -1257,6 +1303,7 @@ class SolveViewModel
                     extraImages = encodedPages.drop(1),
                     studentRawText = question.studentRawText,
                     candidateKpoints = candidates,
+                    materials = materials,
                     requestId = requestId,
                 )
             try {
@@ -1786,6 +1833,20 @@ class SolveViewModel
 
             /** 阶段 A 报告的「卷面上确实写了东西」的两种取值（none 不算）。 */
             val HANDWRITING_WITH_WORK: Set<String> = setOf("partial", "full")
+
+            /**
+             * 一次解答最多取多少条资料交给网关。
+             *
+             * 取 6 而不是 3：网关要在识别出科目后再筛到 3 条，先取 3 条会让
+             * 「最近 3 条恰好都是别的科目」时一条都用不上。
+             */
+            const val MATERIAL_QUERY_LIMIT: Int = 6
+
+            /** 资料标题取题干前多少字。 */
+            const val MATERIAL_TITLE_CHARS: Int = 24
+
+            /** 一条资料最多带几步：再多就不是要点，而是整篇解析。 */
+            const val MATERIAL_STEP_LIMIT: Int = 5
         }
     }
 

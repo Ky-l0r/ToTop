@@ -32,6 +32,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,6 +69,7 @@ internal fun MessageItem(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    onSaveMaterial: (String) -> Unit = {},
 ) {
     when {
         message.fromStudent -> StudentBubble(message)
@@ -77,6 +81,7 @@ internal fun MessageItem(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
+                onSaveMaterial = onSaveMaterial,
             )
         else ->
             AssistantTextBubble(
@@ -304,7 +309,19 @@ private fun SolutionBubble(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    onSaveMaterial: (String) -> Unit,
 ) {
+    // 来源输入框：存资料前问一句「这是哪来的」，因为资料的可信度全靠这条标注。
+    var materialDialogOpen by remember { mutableStateOf(false) }
+    if (materialDialogOpen) {
+        MaterialSourceDialog(
+            onDismiss = { materialDialogOpen = false },
+            onConfirm = { source ->
+                materialDialogOpen = false
+                onSaveMaterial(source)
+            },
+        )
+    }
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -465,6 +482,17 @@ private fun SolutionBubble(
                     }
                 }
             }
+        }
+
+        // 存进资料库：把这次的解法留成「别人的解析」，下次解同类题时作为参考。
+        // 放在卡片末尾而不是顶部：它是看完之后才会产生的动作。
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            SmallAction(text = "存进资料库", onClick = { materialDialogOpen = true })
+            Text(
+                text = "下次解同类题时参考",
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
         }
 
         // 落库提示：入库成功给一句确认，用户才知道错题本里有东西了
@@ -856,3 +884,47 @@ private fun SmallAction(
         Text(text = text, style = MaterialTheme.typography.labelMedium, color = Tokens.OnSurface)
     }
 }
+
+/**
+ * 存资料时的来源输入。
+ *
+ * 为什么要问：资料的**可信度全靠这条标注**。作业帮、老师发的、同学笔记——
+ * 来源不同，将来它给 AI 参考时的分量也不同；不标注的话，三个月后学生自己也想不起来
+ * 「这条到底是谁说的」。
+ */
+@Composable
+private fun MaterialSourceDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit,
+) {
+    var source by remember { mutableStateOf("作业帮截图") }
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("存进资料库") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "这条解法来自哪里？会显示在资料库里，提醒你它不是你自己做的。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = source,
+                    onValueChange = { source = it.take(SOURCE_MAX_CHARS) },
+                    singleLine = true,
+                    label = { Text("来源") },
+                    placeholder = { Text("作业帮截图 / 老师发的解析") },
+                )
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(onClick = { onConfirm(source) }) { Text("存进去") }
+        },
+        dismissButton = {
+            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("取消") }
+        },
+    )
+}
+
+/** 来源标注的长度上限：它是一句标注，不是一段说明。 */
+private const val SOURCE_MAX_CHARS: Int = 30

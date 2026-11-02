@@ -10,6 +10,7 @@ import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
 import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
+import com.totop.app.data.local.dao.LearnedMaterialDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
 import com.totop.app.data.local.dao.MasteryDao
@@ -89,8 +90,44 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * 4 -> 5：新增「资料库」表（学生自己攒的解析，供解题时参考）。
+     *
+     * 只建表、不动已有表：资料是增量数据，旧版本读不到它也不影响任何既有功能，
+     * 因此不需要回填。
+     */
+    private val MIGRATION_4_5: Migration =
+        object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `learned_material` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`subject` TEXT NOT NULL, " +
+                        "`kpointId` TEXT, " +
+                        "`kpointName` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`method` TEXT NOT NULL, " +
+                        "`keyStepsJson` TEXT NOT NULL, " +
+                        "`answer` TEXT NOT NULL, " +
+                        "`pitfallsJson` TEXT NOT NULL, " +
+                        "`sourceLabel` TEXT NOT NULL, " +
+                        "`imagePath` TEXT, " +
+                        "`createdAtUtc` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_learned_material_subject` " +
+                        "ON `learned_material` (`subject`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_learned_material_createdAtUtc` " +
+                        "ON `learned_material` (`createdAtUtc`)",
+                )
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
-    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 
     @Provides
     @Singleton
@@ -113,6 +150,9 @@ object DatabaseModule {
 
     @Provides
     fun provideForgottenKpointDao(database: AppDatabase): ForgottenKpointDao = database.forgottenKpointDao()
+
+    @Provides
+    fun provideLearnedMaterialDao(database: AppDatabase): LearnedMaterialDao = database.learnedMaterialDao()
 
     @Provides
     fun provideMistakeDao(database: AppDatabase): MistakeDao = database.mistakeDao()

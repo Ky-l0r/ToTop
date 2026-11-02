@@ -27,6 +27,9 @@ object Routes {
     /** 功能中心（原错题/知识点/学情/设置的聚合入口）。 */
     const val HUB = "hub"
 
+    /** 资料库：学生自己攒的解析。 */
+    const val LIBRARY = "library"
+
     /** 考前针对性复习资料。 */
     const val REVIEW_MATERIAL = "review_material"
 

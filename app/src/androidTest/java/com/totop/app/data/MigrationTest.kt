@@ -208,6 +208,31 @@ class MigrationTest {
     }
 
     @Test
+    @Throws(IOException::class)
+    fun migrate4To5AddsLearnedMaterial() {
+        // v5 只新增 learned_material 一张表（资料库）；其余表结构不动。
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt, selfMasteredAt, imagePathsJson) " +
+                    "VALUES ('q1', 'physics', '高一', '题干', '[]', '', '[]', 0, NULL, 'sha1', " +
+                    "'MANUAL', 1, NULL, '[]')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 5, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT COUNT(*) FROM learned_material").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(0, cursor.getInt(0))
+            }
+            db.query("SELECT stemText FROM question WHERE id = 'q1'").use { cursor ->
+                assertTrue("迁移后题目必须还在", cursor.moveToFirst())
+                assertEquals("题干", cursor.getString(0))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {

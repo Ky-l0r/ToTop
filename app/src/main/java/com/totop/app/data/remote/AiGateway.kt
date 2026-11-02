@@ -9,6 +9,7 @@ import com.totop.app.domain.model.AiSolveResultMapper
 import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.AiStandardSolution
 import com.totop.app.domain.model.ChoiceAnswerGuard
+import com.totop.app.domain.model.LearnedMaterial
 import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.QuestionProgress
 import com.totop.app.domain.model.QuestionProgressState
@@ -50,6 +51,14 @@ data class SolveRequest(
     val supplement: String = "",
     /** 阶段 D 的候选知识点清单，由 data 层检索内置知识点树得到。 */
     val candidateKpoints: List<CandidateKpoint> = emptyList(),
+    /**
+     * 学生自己收集的资料（别人的解析）。
+     *
+     * 由上层按「最近若干条」取出，这里按阶段 A 识别出的科目再收敛一次——
+     * 物理题混进语文解析比不给资料更糟。全部不匹配时退回原列表，
+     * 宁可参考得杂一点，也不要在学生刚存完资料时一条都不用。
+     */
+    val materials: List<LearnedMaterial> = emptyList(),
     /** 「简洁 / 详细」两档输出上限。 */
     val maxTokens: Int = ChatRequestConfig.MAX_TOKENS_CONCISE,
     /** 幂等请求 ID；为空时自动生成。 */
@@ -204,7 +213,15 @@ class AiGateway(
                 // ---------- 阶段 B：独立求解（绝不注入学生过程） ----------
                 stage = AiStage.B
                 send(SolveEvent.StageStarted(stage))
-                val solvePrompt = promptRepository.assemble(StageInput.Solve(question), requestId = requestId)
+                // 参考资料：按科目收敛到最多 3 条，每条渲染成不超过 400 字的文本块。
+                // 它们进的是阶段 B——这是用户明确要求的（「不加进去第一次还是会错」），
+                // 代价是阶段 B 不再是纯独立求解，因此提示词里写死了「冲突时说明差异，不许照抄」。
+                val referenceBlocks = selectMaterials(request.materials, question.subject)
+                val solvePrompt =
+                    promptRepository.assemble(
+                        StageInput.Solve(question, referenceBlocks),
+                        requestId = requestId,
+                    )
                 var rawB =
                     callStage(
                         credentials = credentials,
@@ -907,6 +924,27 @@ class AiGateway(
             warnings.addAll(obj.stringListOr("warnings"))
             return question
         }
+
+        /**
+         * 挑出这次解题要参考的资料，并渲染成文本块。
+         *
+         * 三条规则：按科目优先（同一科优先，全不匹配时退回全部）、最多 3 条、
+         * 每条由 [LearnedMaterial.promptBlock] 截到 400 字。合起来约 1200 字，
+         * 大约是一次解答预算的 15%，再高就会把题干和知识点候选挤掉。
+         */
+        fun selectMaterials(
+            materials: List<LearnedMaterial>,
+            subject: String?,
+        ): List<String> {
+            if (materials.isEmpty()) return emptyList()
+            val normalized = Subjects.normalize(subject)
+            val matched = materials.filter { Subjects.normalize(it.subject) == normalized }
+            val chosen = (matched.ifEmpty { materials }).take(MAX_REFERENCE_MATERIALS)
+            return chosen.map { it.promptBlock() }
+        }
+
+        /** 单次解答最多参考几条资料。 */
+        const val MAX_REFERENCE_MATERIALS: Int = 3
 
         /**
          * 拼出交给阶段 C 的「学生过程」。

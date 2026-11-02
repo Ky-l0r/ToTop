@@ -15,6 +15,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Refresh
@@ -59,6 +60,7 @@ data class HubEntry(
 fun HubScreen(
     onOpenMistakes: () -> Unit,
     onOpenKnowledge: () -> Unit,
+    onOpenLibrary: () -> Unit,
     onOpenReport: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
     onOpenReview: () -> Unit,
@@ -78,6 +80,7 @@ fun HubScreen(
             "考前冲刺" to
                 listOf(
                     HubEntry("复习资料", "按错题生成，可打印", Icons.Filled.List, onOpenReviewMaterial),
+                    HubEntry("资料库", "自己攒的解析，解题时参考", Icons.Filled.Book, onOpenLibrary),
                 ),
             "了解自己" to
                 listOf(

@@ -52,9 +52,16 @@ sealed class StageInput {
         override val stage: AiStage get() = AiStage.A
     }
 
-    /** 阶段 B：独立求解，只含题目本身。 */
+    /**
+     * 阶段 B：独立求解。
+     *
+     * @param referenceMaterials 学生自己收集的资料（别人的解析），**已渲染成文本块**。
+     *   它们只能当参考：提示词里明确要求「以你自己从题目条件推出的结论为准，
+     *   资料的结论与你的推导冲突时，说明差异而不是照抄」。
+     */
     data class Solve(
         val question: AiQuestion,
+        val referenceMaterials: List<String> = emptyList(),
     ) : StageInput() {
         override val stage: AiStage get() = AiStage.B
     }
@@ -238,6 +245,12 @@ class PromptRepository(
             is StageInput.Solve ->
                 buildJsonObject {
                     put("question", questionJson(input.question))
+                    if (input.referenceMaterials.isNotEmpty()) {
+                        put(
+                            "referenceMaterials",
+                            buildJsonArray { input.referenceMaterials.forEach { add(JsonPrimitive(it)) } },
+                        )
+                    }
                 }
 
             is StageInput.LocateError ->

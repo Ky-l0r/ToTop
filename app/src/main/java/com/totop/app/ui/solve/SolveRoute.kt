@@ -223,6 +223,7 @@ fun SolveRoute(
         onOpenKnowledgePoint = onOpenKnowledgePoint,
         onUnlockHint = viewModel::unlockNextHint,
         onRevealSolution = viewModel::revealFullSolution,
+        onSaveMaterial = { messageId, source -> viewModel.saveAsMaterial(messageId, source) },
         masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,

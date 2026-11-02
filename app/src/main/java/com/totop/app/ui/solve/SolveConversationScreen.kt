@@ -124,6 +124,8 @@ fun SolveConversationScreen(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    /** 把这一轮解答存进资料库（参数是来源标注）。 */
+    onSaveMaterial: (String, String) -> Unit = { _, _ -> },
     /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
     masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
@@ -197,6 +199,7 @@ fun SolveConversationScreen(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
+                onSaveMaterial = { messageId, source -> onSaveMaterial(messageId, source) },
                 modifier = Modifier.weight(1f),
             )
             if (!networkOnline) OfflineHint()
@@ -320,6 +323,7 @@ private fun ConversationList(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
+    onSaveMaterial: (String, String) -> Unit,
     // 由调用方传入 Modifier.weight(1f)：weight 是 ColumnScope 的扩展，
     // 在被抽出的独立 Composable 里没有 ColumnScope 上下文，只能从外面带进来。
     modifier: Modifier = Modifier,
@@ -347,6 +351,7 @@ private fun ConversationList(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
+                onSaveMaterial = { source -> onSaveMaterial(item.id, source) },
             )
         }
     }
