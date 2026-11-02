@@ -1502,6 +1502,13 @@ class SolveViewModel
                         ),
                     )
                 val firstError = content.firstError
+                // 卷面上有手写过程 → 这道题属于「自己做过、答案还没核对」，落成「待校对」。
+                //
+                // 为什么不在界面上让用户选：他拍卷子这个动作本身就说明了「我做了」，
+                // 再问一句「你做完了吗」只是多一次点击。核对（⑨）通过之后状态会被推到「理解」，
+                // 这条自动写入只是起点。
+                val handwritingDetected =
+                    HANDWRITING_WITH_WORK.contains(content.handwriting?.lowercase().orEmpty())
                 val record =
                     MistakeRecord(
                         id = UUID.randomUUID().toString(),
@@ -1518,6 +1525,13 @@ class SolveViewModel
                         mode = _mode.value,
                         createdAtUtc = System.currentTimeMillis(),
                         recurrenceIndex = 1,
+                        status =
+                            if (handwritingDetected) {
+                                com.totop.app.domain.model.MistakeStatus.PENDING_CHECK
+                            } else {
+                                com.totop.app.domain.model.MistakeStatus.DEFAULT
+                            },
+                        source = if (handwritingDetected) "handwriting" else "solve",
                     )
                 val assignments =
                     content.kpointAssignments
@@ -1643,6 +1657,9 @@ class SolveViewModel
 
             /** 单条历史消息的字符上限，防止某个超长回答把预算吃光。 */
             const val FOLLOW_UP_TURN_MAX_CHARS: Int = 400
+
+            /** 阶段 A 报告的「卷面上确实写了东西」的两种取值（none 不算）。 */
+            val HANDWRITING_WITH_WORK: Set<String> = setOf("partial", "full")
         }
     }
 

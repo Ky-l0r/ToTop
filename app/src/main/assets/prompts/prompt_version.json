@@ -1,5 +1,5 @@
 {
-  "promptVersion": "1.5.2",
+  "promptVersion": "1.6.0",
   "releasedAt": "2026-11-02",
   "description": "四阶段提示词版本号，参与缓存键计算：缓存键 = sha256(图片或题干) + promptVersion + model。任一阶段提示词文本变更都必须同步升级本版本号，否则旧缓存会被错误复用。",
   "stages": {
@@ -15,6 +15,7 @@
   ],
   "changes": [
     "1.5.1：陪伴问答禁止裸 LaTeX 命令与公式单独换行；追问新增 [[核对]] 行，允许推翻原答案",
-    "1.5.2：阶段 C 明确「结果陈述不是解题过程」，只知道答案对错时 firstError 取 null，不许反推错因类型"
+    "1.5.2：阶段 C 明确「结果陈述不是解题过程」，只知道答案对错时 firstError 取 null，不许反推错因类型",
+    "1.6.0：阶段 A 新增 handwriting / handwritingText / progress（输出字段变化，升 MINOR）；阶段 C 增加手写识别结果的容错说明"
   ]
 }

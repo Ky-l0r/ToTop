@@ -10,6 +10,8 @@ import com.totop.app.domain.model.AiStage
 import com.totop.app.domain.model.AiStandardSolution
 import com.totop.app.domain.model.ChoiceAnswerGuard
 import com.totop.app.domain.model.Question
+import com.totop.app.domain.model.QuestionProgress
+import com.totop.app.domain.model.QuestionProgressState
 import com.totop.app.domain.model.Subjects
 import com.totop.app.ml.ModelRouter
 import com.totop.app.ml.OcrSnapshot
@@ -196,25 +198,7 @@ class AiGateway(
                 val rawStageA: String =
                     rawA
                         ?: throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未产出任何内容"))
-                val questionObject = decodeJsonObject(rawStageA)
-                val question =
-                    AiQuestion(
-                        subject = questionObject.stringOr("subject", "math"),
-                        grade = questionObject.stringOr("grade", "未知"),
-                        stem = questionObject.stringOr("stem", ""),
-                        known = questionObject.stringListOr("known"),
-                        ask = questionObject.stringOr("ask", ""),
-                        options = questionObject.stringListOr("options"),
-                        hasFigure = questionObject.booleanOr("hasFigure", false),
-                        // 题型：拿不到就按「未知」处理，不做数量校验，避免误伤老缓存
-                        choiceType = questionObject.stringOrNull("choiceType"),
-                    )
-                if (question.stem.isNullOrBlank()) {
-                    throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未识别出题干（stem 为空）"))
-                }
-                if (questionObject.stringListOr("warnings").isNotEmpty()) {
-                    warnings.addAll(questionObject.stringListOr("warnings"))
-                }
+                val question = parseStageAQuestion(rawStageA, warnings)
                 send(SolveEvent.StageCompleted(AiStage.A, if (cachedRaw != null) "命中缓存" else "识题完成"))
 
                 // ---------- 阶段 B：独立求解（绝不注入学生过程） ----------
@@ -263,12 +247,18 @@ class AiGateway(
                 // ---------- 阶段 C：错因定位（必须注入学生过程） ----------
                 stage = AiStage.C
                 send(SolveEvent.StageStarted(stage))
-                val noStudentText = request.studentRawText.isBlank()
+                // 学生过程有两个来源：他自己打的字，和卷面上的手写。
+                //
+                // 「审批」这条需求的核心就在这里：学生把写了过程的卷子拍下来、一个字都不打，
+                // 也要能拿到「错在哪一步、下一步做什么」。阶段 A 已经从图上读出了手写内容，
+                // 直接把那份转写当作学生过程交给阶段 C——不需要额外一次调用，也不需要他复述。
+                val studentText = composeStudentText(request.studentRawText, question.handwritingText)
+                val noStudentText = studentText.isBlank()
                 val locatePrompt =
                     promptRepository.assemble(
                         StageInput.LocateError(
                             question = question,
-                            studentRawText = request.studentRawText.ifBlank { "（学生未提供解题过程）" },
+                            studentRawText = studentText.ifBlank { "（学生未提供解题过程）" },
                             standardSolution = solution,
                         ),
                         requestId = requestId,
@@ -885,6 +875,60 @@ class AiGateway(
             )
         }
 
+        /**
+         * 解析阶段 A 的输出。
+         *
+         * 抽出来是为了把 [solve] 压在 detekt 的长度阈值内；
+         * 顺带把「老缓存没有新字段」的兜底集中在一处：手写与进度缺省即「没看到手写」。
+         */
+        fun parseStageAQuestion(
+            raw: String,
+            warnings: MutableList<String>,
+        ): AiQuestion {
+            val obj = decodeJsonObject(raw)
+            val question =
+                AiQuestion(
+                    subject = obj.stringOr("subject", "math"),
+                    grade = obj.stringOr("grade", "未知"),
+                    stem = obj.stringOr("stem", ""),
+                    known = obj.stringListOr("known"),
+                    ask = obj.stringOr("ask", ""),
+                    options = obj.stringListOr("options"),
+                    hasFigure = obj.booleanOr("hasFigure", false),
+                    // 题型：拿不到就按「未知」处理，不做数量校验，避免误伤老缓存
+                    choiceType = obj.stringOrNull("choiceType"),
+                    handwriting = obj.stringOrNull("handwriting"),
+                    handwritingText = obj.stringOrNull("handwritingText"),
+                    progress = obj.progressOr("progress"),
+                )
+            if (question.stem.isNullOrBlank()) {
+                throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未识别出题干（stem 为空）"))
+            }
+            warnings.addAll(obj.stringListOr("warnings"))
+            return question
+        }
+
+        /**
+         * 拼出交给阶段 C 的「学生过程」。
+         *
+         * 两种来源并存时以打字内容为主、手写转写附在后面，并明确标注来源——
+         * 阶段 C 的提示词要求对「识别结果」容错（不因为认错一个字就判他写错）。
+         * 抽成独立函数是为了把 [solve] 控制在 detekt 的长度与复杂度阈值内。
+         */
+        fun composeStudentText(
+            typed: String,
+            handwritingText: String?,
+        ): String {
+            val typedTrimmed = typed.trim()
+            val handwritingTrimmed = handwritingText.orEmpty().trim()
+            return when {
+                typedTrimmed.isNotEmpty() && handwritingTrimmed.isNotEmpty() ->
+                    typedTrimmed + "\n\n（卷面上的手写内容，识别结果如下）\n" + handwritingTrimmed
+                typedTrimmed.isNotEmpty() -> typedTrimmed
+                else -> handwritingTrimmed
+            }
+        }
+
         /** 抽取 JSON 对象（容忍 Markdown 代码围栏与前置说明文字）。 */
         fun decodeJsonObject(raw: String): JsonObject {
             val trimmed = raw.trim()
@@ -923,6 +967,27 @@ class AiGateway(
                 // 题型跟着 question 一起进契约：阶段 C/D 与最终 DTO 都需要它，
                 // 少写这一项会让「单选/多选校验」在合并后的结果里丢掉依据。
                 put("choiceType", ChoiceAnswerGuard.normalize(question.choiceType))
+                // 手写过程与逐问进度同样要带过去：它们决定错题状态（待校对）与进度条，
+                // 不写进契约就等于阶段 A 白读了这张卷子。
+                put("handwriting", question.handwriting ?: "none")
+                put("handwritingText", question.handwritingText.orEmpty())
+                put(
+                    "progress",
+                    buildJsonArray {
+                        question.progress.forEach { item ->
+                            add(
+                                buildJsonObject {
+                                    if (item.no != null) {
+                                        put("no", item.no)
+                                    } else {
+                                        put("no", kotlinx.serialization.json.JsonNull)
+                                    }
+                                    put("state", item.state.wire)
+                                },
+                            )
+                        }
+                    },
+                )
             }
 
         /** 解析阶段 B 的输出为 [AiStandardSolution]。 */
@@ -967,6 +1032,23 @@ internal fun JsonObject.booleanOr(
     key: String,
     fallback: Boolean,
 ): Boolean = (this[key] as? JsonPrimitive)?.content?.toBooleanStrictOrNull() ?: fallback
+
+/**
+ * 读「逐问进度」数组：`[{"no":1,"state":"done"}, ...]`。
+ *
+ * 宽松处理两条，都是为了让老响应也能用：
+ * - `no` 缺失或不是数字 → 当作「整题不分小问」（null）；
+ * - `state` 认不出 → 丢弃这一条，不猜成「没写」。
+ */
+internal fun JsonObject.progressOr(key: String): List<QuestionProgress> =
+    (this[key] as? JsonArray)
+        .orEmpty()
+        .mapNotNull { element ->
+            val item = element as? JsonObject ?: return@mapNotNull null
+            val state = QuestionProgressState.ofWire(item.stringOrNull("state")) ?: return@mapNotNull null
+            val no = (item["no"] as? JsonPrimitive)?.content?.toIntOrNull()
+            QuestionProgress(no = no, state = state)
+        }
 
 /** 生成「更严格」版本提示词（FR-1.10 重试）。 */
 fun AssembledPrompt.asStrict(): AssembledPrompt =

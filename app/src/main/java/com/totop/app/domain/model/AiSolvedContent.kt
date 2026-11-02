@@ -49,9 +49,26 @@ data class AiSolvedContent(
      * 属于本次解答的元信息，不参与错题的持久化与统计，避免为它加列加迁移。
      */
     val choiceType: String = ChoiceAnswerGuard.UNKNOWN,
+    /**
+     * 卷面上识别到手写过程的程度：`none` / `partial` / `full`（阶段 A 产出）。
+     *
+     * 与 [choiceType] 同理，不写进 question 表：它属于「这一次看懂了什么」的元信息，
+     * 用来说明「学生自己做过」，不参与统计；错题状态在落库时按它定一次即可。
+     */
+    val handwriting: String? = null,
+    /** 手写过程的转写（只含算式、关键步骤与结论）。 */
+    val handwritingText: String? = null,
+    /** 逐问进度：写到 / 卡住 / 没写。 */
+    val progress: List<QuestionProgress> = emptyList(),
 ) {
     /** 首个错误步骤的领域类型；未定位到错误返回 null。 */
     val errorTypeOrNull: ErrorType? get() = firstError?.type
+
+    /** 是否看到学生自己写的过程（手写转写或卷面上确有笔迹）。 */
+    val sawStudentWork: Boolean
+        get() =
+            !handwritingText.isNullOrBlank() ||
+                handwriting?.equals("none", ignoreCase = true) == false
 
     /** 被定位到的错误步骤在 studentSteps 中的下标；未找到返回 null。 */
     val errorStepIndexInStudentSteps: Int?

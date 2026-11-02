@@ -313,6 +313,12 @@ private fun SolutionBubble(
         BubbleCard {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SubjectLine(payload)
+                // 卷面进度：从你写的那张卷子上看出来「写到 / 卡住 / 没写」。
+                // 放在题目卡里而不是解答卡里，是因为它描述的是「你交上来的那份东西」，
+                // 与下面 AI 的解答是两件事；混在一起会让人以为这是 AI 的判断。
+                if (payload.progress.isNotEmpty()) {
+                    ProgressStrip(progress = payload.progress)
+                }
                 if (payload.stem.isNotBlank()) {
                     FormulaText(text = payload.stem, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -489,6 +495,46 @@ private fun SubjectLine(payload: SolutionPayload) {
         color = Tokens.Primary,
         fontWeight = FontWeight.Medium,
     )
+}
+
+/**
+ * 卷面进度：逐问标出「写到 / 卡住 / 没写」。
+ *
+ * 这一行说的是**你交上来的卷子**，不是 AI 对你的评价：
+ * 有它，学生不用打字复述思路也能看到「它知道我停在哪」；
+ * 没它，一份只拍照片的请求在界面上看不出 AI 到底看没看见自己的过程。
+ */
+@Composable
+private fun ProgressStrip(progress: List<com.totop.app.domain.model.QuestionProgress>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "你的卷面",
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.OnSurfaceVariant,
+        )
+        progress.forEach { item ->
+            val tone =
+                when (item.state) {
+                    com.totop.app.domain.model.QuestionProgressState.DONE -> Tokens.Success
+                    com.totop.app.domain.model.QuestionProgressState.STUCK -> Tokens.Warning
+                    com.totop.app.domain.model.QuestionProgressState.MISSING -> Tokens.OnSurfaceVariant
+                }
+            Text(
+                text = item.label,
+                style = MaterialTheme.typography.labelSmall,
+                color = tone,
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(tone.copy(alpha = 0.12f))
+                        .padding(horizontal = 7.dp, vertical = 2.dp),
+            )
+        }
+    }
 }
 
 /**

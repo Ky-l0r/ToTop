@@ -103,6 +103,13 @@ data class SolutionPayload(
      * 旧版只能靠题干里的「多选」字样猜，猜错就放行了一个数量不对的答案。
      */
     val choiceType: String = ChoiceAnswerGuard.UNKNOWN,
+    /**
+     * 逐问作答进度（写到 / 卡住 / 没写），来自阶段 A 对卷面手写的判断。
+     *
+     * 为什么放在解答卡里而不是单独一页：学生问「我卡在哪」时，答案是紧挨着解答看的，
+     * 分开两页会让他来回切；这里只是一行小标签，不占版面。
+     */
+    val progress: List<com.totop.app.domain.model.QuestionProgress> = emptyList(),
     val steps: List<SolutionStepView> = emptyList(),
     val finalAnswer: String = "",
     val method: String = "",
@@ -581,6 +588,7 @@ object SolutionMapper {
             ask = content.question.ask,
             options = content.question.options,
             choiceType = content.choiceType,
+            progress = content.progress,
             steps = steps,
             finalAnswer = content.standardSolution.finalAnswer,
             method = content.standardSolution.method,

@@ -23,7 +23,22 @@ data class AiQuestion(
      * 老会话、老缓存里的阶段 A 输出没有它，解析不能因此失败。
      */
     val choiceType: String? = null,
-)
+    /**
+     * 卷面上是否有学生手写的过程：`none` / `partial` / `full`。
+     *
+     * 这条决定了「错题本里的状态」与「能不能在没有打字的情况下定位错因」：
+     * 有手写说明学生自己做过，属于「待校对」而不是「不会」。
+     */
+    val handwriting: String? = null,
+    /** 手写过程的转写（只取算式、关键步骤与结论，见阶段 A 提示词）。 */
+    val handwritingText: String? = null,
+    /** 逐问进度；整题不分小问时只有一条且 `no = null`。 */
+    val progress: List<QuestionProgress> = emptyList(),
+) {
+    /** 是否识别到手写过程（none/未知都算没有）。 */
+    val hasHandwriting: Boolean
+        get() = handwriting?.equals("none", ignoreCase = true) == false && !handwritingText.isNullOrBlank()
+}
 
 /** 阶段 B：标准解答的单步（6.4 `standardSolution.steps[]`）。 */
 @Serializable

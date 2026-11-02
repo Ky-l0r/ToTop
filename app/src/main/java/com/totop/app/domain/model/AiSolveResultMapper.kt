@@ -44,6 +44,9 @@ object AiSolveResultMapper {
                 summaryCard = summary,
                 aiGenerated = result.aiGenerated,
                 choiceType = ChoiceAnswerGuard.normalize(result.question?.choiceType),
+                handwriting = result.question?.handwriting,
+                handwritingText = result.question?.handwritingText,
+                progress = result.question?.progress.orEmpty(),
             )
         return AiSolveMapping(content = content, warnings = warnings)
     }
