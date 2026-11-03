@@ -526,6 +526,9 @@ class AiGateway(
     ): StageCallResult {
         var attempt = 0
         var lastError: LlmError? = null
+        // 用户选的档位是基准，各阶段再按自己的输出体量做上下修正（见 [stageMaxTokens]）。
+        // 放在这里而不是每个调用点：调用点有五处，漏一处就会出现「某一个阶段总被截断」。
+        val stageBudget = stageMaxTokens(stage, maxTokens)
         // 三档参数降级：某些厂商不支持 thinking / response_format，
         // 遇到「参数不支持」就逐级关掉后重试，而不是直接失败。
         var state = CallState()
@@ -540,7 +543,7 @@ class AiGateway(
                     prompt = prompt,
                     image = image,
                     extraImages = extraImages,
-                    maxTokens = maxTokens,
+                    maxTokens = stageBudget,
                     registry = registry,
                     onDelta = onDelta,
                     onFirstToken = onFirstToken,
@@ -575,18 +578,21 @@ class AiGateway(
         val disableThinking: Boolean = false,
         /** 是否去掉 response_format=json_object。 */
         val disableJsonObject: Boolean = false,
+        /** 是否把输出预算加倍：上一轮被 max_tokens 截断过。 */
+        val budgetBoosted: Boolean = false,
     ) {
         /**
          * 依据本次重试原因推进到下一轮状态。
          *
          * 所有标志位只允许从 false 变 true：降级是单向的，
-         * 一旦确认某个参数不被支持，就不该在后续重试里再打开它。
+         * 一旦确认某个参数不被支持（或预算不够），就不该在后续重试里再退回去。
          */
         fun next(retry: Attempt.Retry): CallState =
             CallState(
                 strict = strict || retry.retryAsStrict,
                 disableThinking = disableThinking || retry.disableThinkingNext,
                 disableJsonObject = disableJsonObject || retry.disableJsonObjectNext,
+                budgetBoosted = budgetBoosted || retry.boostBudgetNext,
             )
     }
 
@@ -602,12 +608,14 @@ class AiGateway(
          * @param retryAsStrict 下次是否改用更严格的提示词
          * @param disableThinkingNext 下次是否关闭思考模式
          * @param disableJsonObjectNext 下次是否去掉 response_format
+         * @param boostBudgetNext 下次是否加大输出预算（这次被截断了）
          */
         data class Retry(
             val error: LlmError,
             val retryAsStrict: Boolean = true,
             val disableThinkingNext: Boolean = false,
             val disableJsonObjectNext: Boolean = false,
+            val boostBudgetNext: Boolean = false,
         ) : Attempt()
     }
 
@@ -641,11 +649,14 @@ class AiGateway(
         var usage = TokenUsage.EMPTY
         var finishReason = ""
         val effectivePrompt = if (state.strict) prompt.asStrict() else prompt
+        // 上一轮被截断过就加倍预算：同样的上限只会再被截一次，
+        // 而重试本身已经付过一次全价，抠这点输出预算没有意义。
+        val budget = if (state.budgetBoosted) minOf(maxTokens * 2, MAX_TOKENS_CEILING) else maxTokens
         val config =
             ChatRequestConfig(
                 model = model,
                 messages = buildMessages(effectivePrompt, image, extraImages),
-                maxTokens = maxTokens,
+                maxTokens = budget,
                 temperature = if (stage == AiStage.B) STAGE_B_TEMPERATURE else STAGE_DEFAULT_TEMPERATURE,
                 // json_object 与思考链天然冲突（正文被挤空），
                 // 因此默认关闭思考；模型不支持该字段时再降级为「不发送」。
@@ -732,9 +743,13 @@ class AiGateway(
                 errorMsg = empty.traceMessage(),
             )
             // 被 max_tokens 截断：优先怀疑思考链吃掉了预算，
-            // 关掉 json_object 会浪费预算，因此改成「关思考 + 收紧提示词」再试
-            val truncated = finishReason == FINISH_REASON_LENGTH && !state.disableJsonObject
-            return Attempt.Retry(empty, disableThinkingNext = truncated)
+            // 关掉 json_object 会浪费预算，因此改成「关思考 + 收紧提示词 + 下一轮加预算」再试
+            val truncated = finishReason == FINISH_REASON_LENGTH
+            return Attempt.Retry(
+                empty,
+                disableThinkingNext = truncated && !state.disableJsonObject,
+                boostBudgetNext = truncated && !state.budgetBoosted,
+            )
         }
         val parseError = validateStageJson(stage, raw)
         traceRecorder.record(
@@ -749,7 +764,13 @@ class AiGateway(
             errorMsg = parseError?.let { "malformed_response：" + it },
         )
         if (parseError == null) return Attempt.Succeeded(StageCallResult(raw = raw, usage = usage))
-        return Attempt.Retry(LlmError.MalformedResponse(detail = parseError))
+        // 截断导致的解析失败与「模型就不按 JSON 输出」要分开处理：
+        // 前者只需加预算，后者要收紧提示词，两者同时做也不会互相干扰。
+        val truncatedJson = finishReason == FINISH_REASON_LENGTH
+        return Attempt.Retry(
+            LlmError.MalformedResponse(detail = parseError, truncated = truncatedJson),
+            boostBudgetNext = truncatedJson && !state.budgetBoosted,
+        )
     }
 
     /**
@@ -859,6 +880,45 @@ class AiGateway(
         /** 厂商表示「输出被 max_tokens 截断」的 finish_reason 取值。 */
         private const val FINISH_REASON_LENGTH: String = "length"
 
+        /** 诊断日志里最多列几个顶层字段名。 */
+        private const val MAX_LOGGED_KEYS: Int = 8
+
+        /**
+         * 阶段 B（独立求解）的最低输出预算。
+         *
+         * 「简洁」档 2048 对一道多小问的解答常常不够：JSON 被拦腰截断后整份作废，
+         * 还得再花一次调用重来，比一开始就给够更贵。求解是这份解答的主体，因此抬高下限；
+         * 是否继续加大仍由用户选的档位决定（详细档本身就是 8192）。
+         */
+        private const val STAGE_B_MIN_TOKENS: Int = 4096
+
+        /** 阶段 C（错因定位）的最低输出预算：步骤 + 错因 + 小结，比识题长。 */
+        private const val STAGE_C_MIN_TOKENS: Int = 3072
+
+        /** 阶段 D 只需要一小组 ID，给多了纯属浪费。 */
+        private const val STAGE_D_MAX_TOKENS: Int = 2048
+
+        /** 被截断时加压的上限：再加也是浪费，超长输出本身就说明该换档位。 */
+        private const val MAX_TOKENS_CEILING: Int = 16384
+
+        /**
+         * 按阶段给出本次请求的输出上限。
+         *
+         * 用户选的「简洁 / 详细」是**基准**，不是每个阶段的精确值：
+         * 识题（A）字段少，用基准；求解（B）与错因（C）给下限保护；
+         * 知识点（D）只回一小组 ID，压到基准以内。
+         */
+        internal fun stageMaxTokens(
+            stage: AiStage,
+            requested: Int,
+        ): Int =
+            when (stage) {
+                AiStage.A -> requested
+                AiStage.B -> maxOf(requested, STAGE_B_MIN_TOKENS)
+                AiStage.C -> maxOf(requested, STAGE_C_MIN_TOKENS)
+                AiStage.D -> minOf(requested, STAGE_D_MAX_TOKENS)
+            }
+
         /** 缓存键原文分隔符，避免「题干尾部 + 补充说明」拼出相同字符串。 */
         private const val CACHE_SEPARATOR: String = "\u0000"
 
@@ -875,22 +935,73 @@ class AiGateway(
         /** 由凭据推导模型池。 */
         fun modelPool(credentials: LlmCredentials): ModelPool = credentials.modelPool
 
-        /** 校验某阶段输出是否是合法 JSON 对象。 */
+        /**
+         * 校验某阶段输出是否可用：先是合法 JSON 对象，再是该阶段必须具备的字段。
+         *
+         * 为什么要连字段一起校验：
+         * 旧实现只判「是不是 JSON」，于是「JSON 合法但字段名不对」会被放到阶段解析时
+         * 直接抛错，**不会触发严格提示词重试**——明明还有一次机会就白白浪费了。
+         * 现在把「形状不对」也归到解析失败，和「不是 JSON」走同一条重试路径。
+         *
+         * 注意：detail 会写进 ai_trace，属于日志，**不得包含模型正文**
+         * （可能含题干原文与学生作答），只记结构特征。
+         */
         fun validateStageJson(
             stage: AiStage,
             raw: String,
         ): String? {
             val trimmed = raw.trim()
             if (trimmed.isEmpty()) return "阶段 " + stage.wire + " 输出为空"
-            val start = trimmed.indexOf('{')
-            val end = trimmed.lastIndexOf('}')
-            if (start < 0 || end <= start) return "阶段 " + stage.wire + " 输出中没有 JSON 对象"
-            val candidate = trimmed.substring(start, end + 1)
-            return runCatching { OpenAiWire.json.parseToJsonElement(candidate) }.fold(
-                onSuccess = { null },
-                onFailure = { "阶段 " + stage.wire + " 输出不是合法 JSON：" + it.message },
-            )
+            val obj = JsonSalvage.parseObject(trimmed)
+            if (obj == null) {
+                return "阶段 " + stage.wire + " 输出不是合法 JSON" + shapeHintOf(trimmed)
+            }
+            val present = requiredKeysOf(stage).filter { obj.containsKey(it) }
+            if (present.isEmpty()) {
+                return "阶段 " + stage.wire + " 缺少约定字段（需要其一：" +
+                    requiredKeysOf(stage).joinToString("、") + "；实际顶层字段：" +
+                    obj.keys.take(MAX_LOGGED_KEYS).joinToString("、") + "）"
+            }
+            // 求解阶段「没有步骤」等于没答：下游只会直接抛错，
+            // 在这里判失败至少还能用严格提示词再试一次。
+            if (stage == AiStage.B && (obj["steps"] as? JsonArray)?.isEmpty() != false) {
+                return "阶段 B 的 steps 为空"
+            }
+            // 识题阶段标题为空同理：宁可再问一次，也不要带着空题干往下走
+            if (stage == AiStage.A && (obj["stem"] as? JsonPrimitive)?.content.isNullOrBlank()) {
+                return "阶段 A 的 stem 为空"
+            }
+            return null
         }
+
+        /**
+         * 各阶段「至少出现一个」的顶层字段。
+         *
+         * 用「之一」而不是「全部」：模型经常省略值为 null 的字段（firstError 就是典型），
+         * 要求全齐会把一批本来能用的输出判成失败。
+         */
+        private fun requiredKeysOf(stage: AiStage): List<String> =
+            when (stage) {
+                // 识题没有题干就等于没识别出来，下游会直接抛错，因此这里只认 stem
+                AiStage.A -> listOf("stem")
+                AiStage.B -> listOf("steps", "finalAnswer")
+                AiStage.C -> listOf("studentSteps", "firstError", "summaryCard")
+                AiStage.D -> listOf("kpoints", "primaryId")
+            }
+
+        /** 结构特征（长度、是否有花括号/围栏），用于诊断而不泄露正文。 */
+        private fun shapeHintOf(text: String): String {
+            val fenced = text.startsWith("```") || text.contains("```")
+            val braces = text.count { it == '{' } to text.count { it == '}' }
+            return "（长度 " + text.length + "，含围栏 " + fenced +
+                "，花括号 " + braces.first + "/" + braces.second + "）"
+        }
+
+        /** 抽 JSON 对象：容忍围栏、前置说明、未转义换行与多余逗号（见 [JsonSalvage]）。 */
+        fun decodeJsonObject(raw: String): JsonObject =
+            JsonSalvage.parseObject(raw) ?: throw LlmException(
+                LlmError.MalformedResponse(detail = "输出中没有可用的 JSON 对象" + shapeHintOf(raw.trim())),
+            )
 
         /**
          * 解析阶段 A 的输出。
@@ -965,15 +1076,6 @@ class AiGateway(
                 typedTrimmed.isNotEmpty() -> typedTrimmed
                 else -> handwritingTrimmed
             }
-        }
-
-        /** 抽取 JSON 对象（容忍 Markdown 代码围栏与前置说明文字）。 */
-        fun decodeJsonObject(raw: String): JsonObject {
-            val trimmed = raw.trim()
-            val start = trimmed.indexOf('{')
-            val end = trimmed.lastIndexOf('}')
-            require(start >= 0 && end > start) { "输出中没有 JSON 对象" }
-            return OpenAiWire.json.parseToJsonElement(trimmed.substring(start, end + 1)) as JsonObject
         }
 
         /** 合并四阶段结果为 6.4 契约 JSON。 */

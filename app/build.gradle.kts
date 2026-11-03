@@ -75,8 +75,9 @@ android {
         // 出问题时无法从包反查到对应改动，这里一并补齐。
         // 0.4.0：第六轮真机反馈（视觉直读、一次对话一题、语音输入、启动与页面过渡、框选修缺陷）。
         // 0.6.0：复习资料重做为章节化长文，并加上「以往的复习资料」本地存档。
-        versionCode = 6
-        versionName = "0.6.0"
+        // 0.6.1：模型输出抢救式解析（围栏/前言/裸换行/多余逗号/LaTeX 非法转义）+ 按阶段给输出预算。
+        versionCode = 7
+        versionName = "0.6.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

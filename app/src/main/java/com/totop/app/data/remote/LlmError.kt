@@ -140,8 +140,22 @@ sealed class LlmError(
     /** 响应结构不合法（SSE 行损坏、JSON 缺字段）。 */
     data class MalformedResponse(
         override val detail: String? = null,
+        /**
+         * 是否为「输出被 max_tokens 截断」造成的残缺 JSON。
+         *
+         * 单独区分是因为两者的自救方式不同：截断要加大预算（或提高输出档位），
+         * 而完全不按 JSON 输出只能换模型。混在一句话里说，用户不知道该动哪里。
+         */
+        val truncated: Boolean = false,
     ) : LlmError(
-            userMessage = "模型返回的内容不是约定的 JSON 结构，已自动用更严格的提示词重试一次；若仍失败，本次结果不会写入错题本。",
+            userMessage =
+                if (truncated) {
+                    "模型这次输出被长度上限截断，JSON 不完整，已自动加大输出预算重试；" +
+                        "若仍失败，把设置里的输出档位改成「详细」再试。"
+                } else {
+                    "模型返回的内容不是约定的 JSON 结构，已自动用更严格的提示词重试一次；" +
+                        "若仍失败，本次结果不会写入错题本。可以把输出档位改成「详细」，或换一个支持 JSON 输出的模型。"
+                },
             isRetryable = true,
             httpStatus = null,
             detail = detail,
