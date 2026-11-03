@@ -259,6 +259,11 @@ private fun AssistantTextBubble(
                     )
                 }
             }
+            // 资料库回执：补拍截图存进去之后，就地告诉学生，不用往上翻
+            message.materialNote?.let { note ->
+                Spacer(Modifier.height(8.dp))
+                MaterialSavedNote(note)
+            }
             if (failed != null) {
                 Spacer(Modifier.height(8.dp))
                 Box(
@@ -486,13 +491,19 @@ private fun SolutionBubble(
 
         // 存进资料库：把这次的解法留成「别人的解析」，下次解同类题时作为参考。
         // 放在卡片末尾而不是顶部：它是看完之后才会产生的动作。
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            SmallAction(text = "存进资料库", onClick = { materialDialogOpen = true })
-            Text(
-                text = "下次解同类题时参考",
-                style = MaterialTheme.typography.labelSmall,
-                color = Tokens.OnSurfaceVariant,
-            )
+        // 存过之后就地把回执摆在这里，学生不用滚到页面顶部找提示。
+        val savedNote = message.materialNote
+        if (savedNote != null) {
+            MaterialSavedNote(savedNote)
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SmallAction(text = "存进资料库", onClick = { materialDialogOpen = true })
+                Text(
+                    text = "下次解同类题时参考",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
         }
 
         // 落库提示：入库成功给一句确认，用户才知道错题本里有东西了
@@ -882,6 +893,29 @@ private fun SmallAction(
                 .padding(horizontal = 14.dp, vertical = 9.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelMedium, color = Tokens.OnSurface)
+    }
+}
+
+/**
+ * 「已存入资料库」就地回执。
+ *
+ * 为什么不做成页面顶部的提示条：解答很长，学生看到这句话的位置就在卡片末尾，
+ * 让他往上滚去确认真的是白费一次操作。
+ */
+@Composable
+private fun MaterialSavedNote(text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = Tokens.Success,
+            modifier = Modifier.size(14.dp),
+        )
+        Text(
+            text = "  " + text,
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.Success,
+        )
     }
 }
 

@@ -4,6 +4,7 @@ import com.totop.app.data.prefs.LlmCredentials
 import com.totop.app.data.remote.ChatMessage
 import com.totop.app.data.remote.ChatRequestConfig
 import com.totop.app.data.remote.LlmChunk
+import com.totop.app.data.remote.LlmError
 import com.totop.app.data.remote.LlmException
 import com.totop.app.data.remote.LlmTransport
 import com.totop.app.data.remote.TokenUsage
@@ -78,7 +79,7 @@ class ReviewMaterialGateway
                 if (!credentials.canCall) {
                     send(
                         ReviewMaterialResult.Failure(
-                            com.totop.app.data.remote.LlmError.Unknown(
+                            LlmError.Unknown(
                                 detail = "尚未配置模型（Base URL / API Key / 模型名），请到设置页填写",
                             ),
                         ),
@@ -86,89 +87,117 @@ class ReviewMaterialGateway
                     return@channelFlow
                 }
                 if (systemPrompt.isBlank()) {
-                    send(
-                        ReviewMaterialResult.Failure(
-                            com.totop.app.data.remote.LlmError.Unknown(
-                                detail = "复习资料提示词为空，无法生成",
-                            ),
-                        ),
+                    send(ReviewMaterialResult.Failure(LlmError.Unknown(detail = "复习资料提示词为空，无法生成")))
+                    return@channelFlow
+                }
+                val userPrompt = buildUserPrompt(subjectLabel, mistakes, forgottenPoints)
+                // 先按较大预算请求（目标六七页）；厂商若拒绝这个大值，退回保守预算再试一次。
+                // 只降一次：再失败就是模型本身的问题，反复试只会烧钱。
+                var budget = MAX_TOKENS_REVIEW
+                var outcome =
+                    requestOnce(
+                        credentials = credentials,
+                        subjectLabel = subjectLabel,
+                        mistakes = mistakes,
+                        systemPrompt = systemPrompt,
+                        userPrompt = userPrompt,
+                        requestId = requestId,
+                        maxTokens = budget,
                     )
-                    return@channelFlow
+                // 只降一次：厂商嫌大就换保守值，再失败就是模型本身的问题
+                while (outcome is ReviewMaterialResult.Failure &&
+                    outcome.error is LlmError.ParameterNotSupported &&
+                    budget > FALLBACK_MAX_TOKENS
+                ) {
+                    budget = FALLBACK_MAX_TOKENS
+                    outcome =
+                        requestOnce(
+                            credentials = credentials,
+                            subjectLabel = subjectLabel,
+                            mistakes = mistakes,
+                            systemPrompt = systemPrompt,
+                            userPrompt = userPrompt,
+                            requestId = requestId,
+                            maxTokens = budget,
+                        )
                 }
-                val config =
-                    ChatRequestConfig(
-                        model = credentials.effectiveTextModel,
-                        messages =
-                            listOf(
-                                ChatMessage.system(systemPrompt),
-                                ChatMessage.user(buildUserPrompt(subjectLabel, mistakes, forgottenPoints)),
-                            ),
-                        // 目标是四五张 A4 纸（约 6000-7000 字），
-                        // 沿用「详细」档上限：预算不足时正文会被拦腰截断，
-                        // 而 JSON 截断后整份资料只能丢弃。
-                        maxTokens = ChatRequestConfig.MAX_TOKENS_DETAILED,
-                        // 略高于解题链路：作文命题预测与素材库需要一点发散空间，
-                        // 但错因与知识点必须稳定，因此不再往上调。
-                        temperature = 0.35,
-                        jsonObject = true,
-                        stream = true,
-                        thinkingMode = ChatRequestConfig.THINKING_DISABLED,
-                    )
-                val buffer = StringBuilder()
-                var usage = TokenUsage.EMPTY
-                var finishReason = ""
-                var streamError: com.totop.app.data.remote.LlmError? = null
-                try {
-                    llmClient.stream(credentials, config, requestId, registry = null, allowRetry = true)
-                        .collect { chunk ->
-                            when (chunk) {
-                                is LlmChunk.Delta -> buffer.append(chunk.text)
-                                is LlmChunk.Finished -> {
-                                    usage = chunk.usage
-                                    if (chunk.finishReason.isNotBlank()) finishReason = chunk.finishReason
-                                }
-                                is LlmChunk.Failed -> streamError = chunk.error
-                                is LlmChunk.Reasoning -> Unit
-                            }
-                        }
-                } catch (cancellation: CancellationException) {
-                    throw cancellation
-                } catch (exception: LlmException) {
-                    send(ReviewMaterialResult.Failure(exception.error))
-                    return@channelFlow
-                }
-                streamError?.let { error ->
-                    send(ReviewMaterialResult.Failure(error))
-                    return@channelFlow
-                }
-                // 被 max_tokens 截断时 JSON 必然不完整，继续解析只会报一个
-                // 「不是合法 JSON」的假原因，掩盖真正的问题。这里直接给出可操作的解释。
-                if (finishReason == FINISH_REASON_LENGTH) {
-                    send(
-                        ReviewMaterialResult.Failure(
-                            com.totop.app.data.remote.LlmError.Unknown(
-                                detail = "模型输出超出单次上限被截断（finish_reason=length），这次资料不完整，请重试一次",
-                            ),
-                        ),
-                    )
-                    return@channelFlow
-                }
-                val raw = buffer.toString()
-                if (raw.isBlank()) {
-                    send(
-                        ReviewMaterialResult.Failure(
-                            com.totop.app.data.remote.LlmError.EmptyCompletion(
-                                detail = "模型没有返回内容（复习资料生成）",
-                            ),
-                        ),
-                    )
-                    return@channelFlow
-                }
-                val parsed = parse(raw, subjectLabel, mistakes)
-                // 把真实 usage 传下去：旧实现固定返回 TokenUsage.EMPTY，
-                // 导致界面上的 token 统计永远是 0，用户无法判断这次花了多少。
-                send(parsed.withUsage(usage))
+                send(outcome)
             }
+
+        /**
+         * 发一次请求：流式收集 → 截断判断 → 解析。
+         *
+         * 失败一律作为返回值而不是直接 send：调用方要据此决定「换个小一点的预算再试」，
+         * 早退就把这个机会堵死了。
+         */
+        @Suppress("LongParameterList")
+        private suspend fun requestOnce(
+            credentials: LlmCredentials,
+            subjectLabel: String,
+            mistakes: List<ReviewMistake>,
+            systemPrompt: String,
+            userPrompt: String,
+            requestId: String,
+            maxTokens: Int,
+        ): ReviewMaterialResult {
+            val config =
+                ChatRequestConfig(
+                    model = credentials.effectiveTextModel,
+                    messages =
+                        listOf(
+                            ChatMessage.system(systemPrompt),
+                            ChatMessage.user(userPrompt),
+                        ),
+                    maxTokens = maxTokens,
+                    // 略高于解题链路：作文命题预测与素材库需要一点发散空间，
+                    // 但错因与知识点必须稳定，因此不再往上调。
+                    temperature = 0.35,
+                    jsonObject = true,
+                    stream = true,
+                    thinkingMode = ChatRequestConfig.THINKING_DISABLED,
+                )
+            val buffer = StringBuilder()
+            var usage = TokenUsage.EMPTY
+            var finishReason = ""
+            var streamError: LlmError? = null
+            try {
+                llmClient.stream(credentials, config, requestId, registry = null, allowRetry = true)
+                    .collect { chunk ->
+                        when (chunk) {
+                            is LlmChunk.Delta -> buffer.append(chunk.text)
+                            is LlmChunk.Finished -> {
+                                usage = chunk.usage
+                                if (chunk.finishReason.isNotBlank()) finishReason = chunk.finishReason
+                            }
+                            is LlmChunk.Failed -> streamError = chunk.error
+                            is LlmChunk.Reasoning -> Unit
+                        }
+                    }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: LlmException) {
+                return ReviewMaterialResult.Failure(exception.error)
+            }
+            streamError?.let { return ReviewMaterialResult.Failure(it) }
+            // 被 max_tokens 截断时 JSON 必然不完整，继续解析只会报一个
+            // 「不是合法 JSON」的假原因，掩盖真正的问题。
+            if (finishReason == FINISH_REASON_LENGTH) {
+                return ReviewMaterialResult.Failure(
+                    LlmError.Unknown(
+                        detail = "模型输出超出单次上限被截断（finish_reason=length），这次资料不完整，请重试一次",
+                    ),
+                )
+            }
+            val raw = buffer.toString()
+            if (raw.isBlank()) {
+                return ReviewMaterialResult.Failure(
+                    LlmError.EmptyCompletion(detail = "模型没有返回内容（复习资料生成）"),
+                )
+            }
+            // 把真实 usage 传下去：旧实现固定返回 TokenUsage.EMPTY，
+            // 导致界面上的 token 统计永远是 0，用户无法判断这次花了多少。
+            return parse(raw, subjectLabel, mistakes).withUsage(usage)
+        }
 
         /** 解析模型输出；解析失败要给出明确原因而不是空资料。 */
         private fun parse(
@@ -181,7 +210,8 @@ class ReviewMaterialGateway
                     .getOrElse { failure ->
                         return failureOf("复习资料不是合法 JSON：" + (failure.message ?: "未知原因"))
                     }
-            val summary = (json["summary"] as? JsonPrimitive)?.content.orEmpty().trim()
+            val summaryText = (json["summary"] as? JsonPrimitive)?.content.orEmpty().trim()
+            val summary = ReviewText.formatChemical(summaryText)
             val sections =
                 (json["sections"] as? JsonArray).orEmpty()
                     .mapNotNull { element -> parseSection(element) }
@@ -206,8 +236,9 @@ class ReviewMaterialGateway
         /** 解析一个章节；标题为空或没有可用内容时丢弃。 */
         private fun parseSection(element: JsonElement): ReviewSection? {
             val obj = element as? JsonObject ?: return null
-            val title = (obj["title"] as? JsonPrimitive)?.content?.trim().orEmpty()
-            if (title.isEmpty()) return null
+            val rawTitle = (obj["title"] as? JsonPrimitive)?.content?.trim().orEmpty()
+            if (rawTitle.isEmpty()) return null
+            val title = ReviewText.formatChemical(rawTitle)
             val blocks =
                 (obj["blocks"] as? JsonArray).orEmpty().mapNotNull { block -> parseBlock(block) }
             if (blocks.isEmpty()) {
@@ -255,7 +286,7 @@ class ReviewMaterialGateway
             return array
                 .mapNotNull { (it as? JsonPrimitive)?.content }
                 .flatMap { text -> text.split('\n') }
-                .map { line -> ReviewText.sanitizeLine(line, style) }
+                .map { line -> ReviewText.formatChemical(ReviewText.sanitizeLine(line, style)) }
                 .filter { it.isNotEmpty() }
                 .take(MAX_LINES_PER_BLOCK)
         }
@@ -281,11 +312,22 @@ class ReviewMaterialGateway
             /** 单条题干最多带多少字：够模型判断题型，又不会把上下文撑满。 */
             const val MAX_STEM_CHARS: Int = 200
 
-            /** 章节上限：再多就不是「考前翻一遍」的材料了。 */
-            private const val MAX_SECTIONS: Int = 9
+            /** 章节上限：与提示词里的「最多 10 个章节」对齐。 */
+            private const val MAX_SECTIONS: Int = 10
 
             /** 单个内容块的行数上限，防止一段话占掉整页。 */
             private const val MAX_LINES_PER_BLOCK: Int = 14
+
+            /**
+             * 目标六七页（约 9000-10500 字）需要的输出预算。
+             *
+             * 比「详细」档再高一档：字数目标翻倍，8192 会在最后两章被截断，
+             * 而截断后整份 JSON 作废，等于白花一次全额调用。
+             */
+            private const val MAX_TOKENS_REVIEW: Int = 16384
+
+            /** 厂商拒绝大 max_tokens 时退回到的保守值（与「详细」档一致）。 */
+            private const val FALLBACK_MAX_TOKENS: Int = ChatRequestConfig.MAX_TOKENS_DETAILED
 
             /** PDF 副标题上的固定说明。 */
             private const val EXAM_DATE_LABEL: String = "考前复习"
@@ -333,8 +375,9 @@ class ReviewMaterialGateway
                 }
                 builder.append('\n')
                 builder.append("请严格按 system 中的 JSON 结构与内容要求输出：")
-                builder.append("错题先归类再归纳，补齐本科目高频易错点，")
-                builder.append("篇幅 6000 到 7000 字，关键结论用 **加粗**。")
+                builder.append("错题只做归类归因，写成不引用原题的通用解法；补齐本科目高频易错点；")
+                builder.append("方法类章节附 1 到 2 道同类例题（最后一行写答案）；")
+                builder.append("篇幅 9000 到 10500 字（约六七页 A4），关键结论用成对的 ** 加粗，其余不出现星号。")
                 return builder.toString()
             }
 

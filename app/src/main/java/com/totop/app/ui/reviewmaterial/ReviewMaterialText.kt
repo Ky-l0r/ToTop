@@ -26,7 +26,9 @@ object ReviewText {
     /**
      * 把一行文本切成「普通」与「加粗」交替的片段。
      *
-     * 未闭合的标记按普通文本处理：宁可少一处加粗，也不能把 `**` 原样印在纸上。
+     * 未闭合的标记按普通文本处理；切完之后**再抹掉残留的星号**：
+     * 模型偶尔会写单星号强调（`*重点*`）或句尾多一个 `*`，
+     * 打印出来就是一个莫名其妙的符号，而它并不是内容的一部分。
      */
     fun splitBold(raw: String): List<ReviewTextRun> {
         if (raw.isEmpty()) return emptyList()
@@ -36,16 +38,19 @@ object ReviewText {
             val start = raw.indexOf(BOLD_MARK, index)
             val end = if (start < 0) -1 else raw.indexOf(BOLD_MARK, start + BOLD_MARK.length)
             if (start < 0 || end < 0) {
-                runs += ReviewTextRun(raw.substring(index), false)
+                runs += ReviewTextRun(stripAsterisks(raw.substring(index)), false)
                 break
             }
-            if (start > index) runs += ReviewTextRun(raw.substring(index, start), false)
-            val inner = raw.substring(start + BOLD_MARK.length, end)
+            if (start > index) runs += ReviewTextRun(stripAsterisks(raw.substring(index, start)), false)
+            val inner = stripAsterisks(raw.substring(start + BOLD_MARK.length, end))
             if (inner.isNotEmpty()) runs += ReviewTextRun(inner, true)
             index = end + BOLD_MARK.length
         }
         return runs
     }
+
+    /** 去掉加粗标记之外的所有星号（含全角）。 */
+    private fun stripAsterisks(text: String): String = text.replace("*", "").replace("＊", "")
 
     /**
      * 清洗一行正文：去掉模型爱加的 Markdown 装饰与自带列表符号。
@@ -81,4 +86,86 @@ object ReviewText {
         index: Int,
         title: String,
     ): String = sectionNumber(index) + "、" + title
+
+    /** 例题块里以「答案」开头的行，排版时缩小字号。 */
+    fun isAnswerLine(line: String): Boolean = line.trimStart().startsWith(ANSWER_PREFIX)
+
+    /**
+     * 把化学式里的数字转成下标字符：C8H16O4 → C₈H₁₆O₄。
+     *
+     * 为什么不交给模型自觉：它时好时坏，而「H2SO4 印成 H2SO4」是硬伤。
+     * 但也不能见数字就转——`A4 纸`、`MP3`、`K12`、`P2P` 都不是化学式，
+     * 所以这里要求：连续的元素符号组 ≥ 2 且至少两种不同元素，
+     * 每个符号都必须能在元素表里查到。宁可漏转，不可误转。
+     */
+    fun formatChemical(text: String): String {
+        if (text.isEmpty() || text.none { it.isDigit() }) return text
+        var result = DIATOMIC.replace(text) { match -> match.groupValues[1] + SUBSCRIPT_2 }
+        result =
+            FORMULA.replace(result) { match ->
+                val token = match.groupValues[1]
+                if (isChemicalFormula(token)) subscriptDigits(token) else token
+            }
+        return result
+    }
+
+    /** 判断一个「字母 + 数字」串是不是化学式（保守判定）。 */
+    private fun isChemicalFormula(token: String): Boolean {
+        if (token.none { it.isDigit() }) return false
+        var index = 0
+        var groups = 0
+        val symbols = HashSet<String>(4)
+        while (index < token.length) {
+            if (!token[index].isUpperCase()) return false
+            var symbol = token[index].toString()
+            index++
+            if (index < token.length && token[index].isLowerCase()) {
+                symbol += token[index]
+                index++
+            }
+            if (symbol !in ELEMENTS) return false
+            symbols += symbol
+            groups++
+            while (index < token.length && token[index].isDigit()) index++
+        }
+        return groups >= 2 && symbols.size >= 2
+    }
+
+    private fun subscriptDigits(token: String): String =
+        buildString(token.length) {
+            token.forEach { ch -> append(SUBSCRIPT_DIGITS[ch] ?: ch) }
+        }
+
+    /** 数字 -> 下标字符。 */
+    private val SUBSCRIPT_DIGITS: Map<Char, Char> =
+        mapOf(
+            '0' to '₀',
+            '1' to '₁',
+            '2' to '₂',
+            '3' to '₃',
+            '4' to '₄',
+            '5' to '₅',
+            '6' to '₆',
+            '7' to '₇',
+            '8' to '₈',
+            '9' to '₉',
+        )
+
+    private const val ANSWER_PREFIX: String = "答案"
+
+    private const val SUBSCRIPT_2: String = "₂"
+
+    /** 双原子单质：O2 / H2 / N2 / Cl2 这种只有一种元素的式子。 */
+    private val DIATOMIC = Regex("(?<![A-Za-z])(H|N|O|F|Cl|Br|I)2(?![A-Za-z0-9])")
+
+    /** 由「元素符号 + 可选下标数字」重复组成的串。 */
+    private val FORMULA = Regex("(?<![A-Za-z])((?:[A-Z][a-z]?\\d*){2,})(?![A-Za-z0-9])")
+
+    /** 常见元素符号（中学化学范围内），按空格分隔写成多行，避免一长串字面量。 */
+    private val ELEMENTS: Set<String> =
+        (
+            "H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca " +
+                "Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr " +
+                "Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce W Pt Au Hg Tl Pb Bi"
+        ).split(' ').toSet()
 }

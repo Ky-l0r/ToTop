@@ -70,6 +70,14 @@ data class ConversationMessage(
      * 混进「已同步错题本」这类系统提示会污染模型的输入。
      */
     val correctionNote: String? = null,
+    /**
+     * 存进资料库的回执。
+     *
+     * 与 [correctionNote] 同样单独一个字段：正文要留给下一轮上下文，
+     * 系统提示混进去会污染模型输入。界面把它渲染在这条消息**旁边**，
+     * 学生不用滚到页面顶部去找那行提示。
+     */
+    val materialNote: String? = null,
     val createdAtUtc: Long = 0L,
 )
 

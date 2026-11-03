@@ -31,6 +31,14 @@ enum class ReviewBlockStyle {
 
     /** 有序步骤，渲染时统一加「1. 2. 3. 」。 */
     NUMBERED,
+
+    /**
+     * 同类例题：第一行题干，之后是「思路」与「答案」，答案排成小字。
+     *
+     * 单独一种样式而不是塞进段落，是因为答案必须**明显小于正文**：
+     * 学生要的是先自己动手做，做完再看答案；字号一样会一眼扫到结果。
+     */
+    EXAMPLE,
     ;
 
     companion object {
@@ -39,6 +47,7 @@ enum class ReviewBlockStyle {
             when (raw?.trim()?.lowercase()) {
                 "bullets", "bullet", "list", "unordered" -> BULLETS
                 "numbered", "ordered", "steps", "sequence" -> NUMBERED
+                "example", "examples", "exercise", "sample" -> EXAMPLE
                 else -> PARAGRAPH
             }
     }

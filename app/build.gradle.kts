@@ -76,8 +76,9 @@ android {
         // 0.4.0：第六轮真机反馈（视觉直读、一次对话一题、语音输入、启动与页面过渡、框选修缺陷）。
         // 0.6.0：复习资料重做为章节化长文，并加上「以往的复习资料」本地存档。
         // 0.6.1：模型输出抢救式解析（围栏/前言/裸换行/多余逗号/LaTeX 非法转义）+ 按阶段给输出预算。
-        versionCode = 7
-        versionName = "0.6.1"
+        // 0.6.2：复习资料改通用解法/去星号/化学下标/时政人物/六七页/例题；资料库可看截图；补拍入库就地回执。
+        versionCode = 8
+        versionName = "0.6.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

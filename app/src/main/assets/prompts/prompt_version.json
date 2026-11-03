@@ -1,6 +1,6 @@
 {
-  "promptVersion": "1.8.0",
-  "releasedAt": "2026-11-03",
+  "promptVersion": "1.9.0",
+  "releasedAt": "2026-11-04",
   "description": "四阶段提示词版本号，参与缓存键计算：缓存键 = sha256(图片或题干) + promptVersion + model。任一阶段提示词文本变更都必须同步升级本版本号，否则旧缓存会被错误复用。",
   "stages": {
     "A": "stage_a_identify.md",
@@ -22,6 +22,7 @@
     "1.5.2：阶段 C 明确「结果陈述不是解题过程」，只知道答案对错时 firstError 取 null，不许反推错因类型",
     "1.6.0：阶段 A 新增 handwriting / handwritingText / progress（输出字段变化，升 MINOR）；阶段 C 增加手写识别结果的容错说明",
     "1.7.0：阶段 B 新增 referenceMaterials（学生收集的参考资料，输入语义变化，升 MINOR），并要求冲突时说明差异、不许照抄结论",
+    "1.9.0：复习资料模板重写：错题归因改为不引用原题的通用解法；禁止加粗以外的星号；化学式改用下标字符；时政改为议论文人物素材；篇幅 9000-10500 字；新增 example 块（同类例题，答案小字）",
     "1.8.0：新增复习资料模板 review_material.md（章节化输出：错题归因 → 知识点 → 方法 → 学科高频易错点 → 学科专项模板 → 备考建议，6000-7000 字，重点用加粗），输出契约由 weakKpoints/typicalMistakes/exercises/tips 改为 sections（输出字段变化，升 MINOR）；四阶段模板文本未改动"
   ]
 }

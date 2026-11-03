@@ -808,6 +808,7 @@ class SolveViewModel
                                             raw = event.text,
                                             replyId = replyId,
                                             questionId = solution?.questionId,
+                                            solution = solution,
                                             supplementPages = if (hasSupplement) encoded else emptyList(),
                                         )
                                     }
@@ -859,6 +860,7 @@ class SolveViewModel
             raw: String,
             replyId: String,
             questionId: String?,
+            solution: SolutionPayload?,
             supplementPages: List<UploadPage>,
         ) {
             val parsed = FollowUpCorrection.parse(raw)
@@ -886,6 +888,13 @@ class SolveViewModel
             }
             if (supplementPages.isNotEmpty()) {
                 refreshQuestionFromSupplement(questionId, supplementPages)
+                // 补拍截图连同这轮解析一起存档，并在回复旁给一句回执
+                saveSupplementMaterial(
+                    replyId = replyId,
+                    text = parsed.text,
+                    pages = supplementPages,
+                    solution = solution,
+                )
             }
         }
 
@@ -905,6 +914,9 @@ class SolveViewModel
             val message = _messages.value.firstOrNull { it.id == messageId } ?: return
             val payload = message.solution ?: return
             val kpoint = payload.kpoints.firstOrNull()
+            // 有截图就一并存下来：资料库里要能看到「当初是哪张图」，
+            // 只有文字的资料三个月后连来源都对不上。
+            val imagePath = nearestStudentImage(messageId)
             val material =
                 com.totop.app.domain.model.LearnedMaterial(
                     id = "",
@@ -917,7 +929,7 @@ class SolveViewModel
                     answer = payload.finalAnswer,
                     pitfalls = listOfNotNull(payload.firstError?.typeLabel?.takeIf { it.isNotBlank() }),
                     sourceLabel = sourceLabel.trim().ifBlank { "手动收录" },
-                    imagePath = null,
+                    imagePath = imagePath,
                     createdAtUtc = System.currentTimeMillis(),
                 )
             viewModelScope.launch {
@@ -925,7 +937,76 @@ class SolveViewModel
                     runCatching { learnedMaterials.save(material) }
                         .onFailure { failure -> showToast("存进资料库失败：" + (failure.message ?: "未知原因")) }
                         .isSuccess
-                if (ok) showToast("已存进资料库：" + material.kpointName + "。下次解同类题会参考它")
+                if (ok) {
+                    // 回执写在这条消息上，而不是只在页面底部弹一下：
+                    // 解答很长，学生的视线停在卡片末尾，让他往上滚去找提示是多余的操作。
+                    val note =
+                        if (imagePath != null) {
+                            "已存入资料库（含截图）· " + material.kpointName
+                        } else {
+                            "已存入资料库 · " + material.kpointName
+                        }
+                    updateMessage(messageId) { it.copy(materialNote = note) }
+                }
+            }
+        }
+
+        /**
+         * 找这条回复对应的学生截图。
+         *
+         * 从回复往上找最近一条学生消息：拍题时是原题照片，补拍时是补拍的那张。
+         * 只取一张——资料库表结构里只有一个 imagePath，多图会撑破既有字段。
+         */
+        private fun nearestStudentImage(messageId: String): String? {
+            val list = _messages.value
+            val index = list.indexOfFirst { it.id == messageId }
+            if (index <= 0) return null
+            for (cursor in index - 1 downTo 0) {
+                val candidate = list[cursor]
+                if (candidate.fromStudent) return candidate.pages.lastOrNull()
+                // 遇到上一条 AI 回复就停：再往前的图属于上一道题了
+                if (candidate.solution != null) return null
+            }
+            return null
+        }
+
+        /**
+         * 补拍截图在解析完成后自动入资料库。
+         *
+         * 为什么自动：学生会补拍一张「别人写的解析」，本意就是把它留下；
+         * 旧实现什么也不做，他还得再点一次「存进资料库」，且存下来的还是模型复述的版本。
+         * 这里直接用这轮回答的正文 + 补拍截图建一条资料，并在回复旁给回执。
+         *
+         * 只在**带图补拍**时触发：纯文字追问只是对话，不需要进资料库。
+         */
+        private suspend fun saveSupplementMaterial(
+            replyId: String,
+            text: String,
+            pages: List<UploadPage>,
+            solution: SolutionPayload?,
+        ) {
+            val body = text.trim()
+            val imagePath = pages.lastOrNull()?.displayPath
+            if (body.isEmpty() || imagePath == null) return
+            val kpoint = solution?.kpoints?.firstOrNull()
+            val material =
+                com.totop.app.domain.model.LearnedMaterial(
+                    id = "",
+                    subject = solution?.subjectCode.orEmpty(),
+                    kpointId = kpoint?.id,
+                    kpointName = kpoint?.name ?: "补拍截图",
+                    title = body.lineSequence().first().take(MATERIAL_TITLE_CHARS).ifBlank { "补拍截图" },
+                    method = body.take(SUPPLEMENT_MATERIAL_CHARS),
+                    keySteps = emptyList(),
+                    answer = "",
+                    pitfalls = emptyList(),
+                    sourceLabel = "补拍截图",
+                    imagePath = imagePath,
+                    createdAtUtc = System.currentTimeMillis(),
+                )
+            val saved = runCatching { learnedMaterials.save(material) }.isSuccess
+            if (saved) {
+                updateMessage(replyId) { it.copy(materialNote = "补拍的截图已存入资料库") }
             }
         }
 
@@ -1847,6 +1928,14 @@ class SolveViewModel
 
             /** 一条资料最多带几步：再多就不是要点，而是整篇解析。 */
             const val MATERIAL_STEP_LIMIT: Int = 5
+
+            /**
+             * 补拍截图自动存档时，正文最多留多少字。
+             *
+             * 这段文字会作为「方法」进提示词，而资料块整体只截 400 字，
+             * 存太多既没用，也会把别的资料挤掉。
+             */
+            const val SUPPLEMENT_MATERIAL_CHARS: Int = 800
         }
     }
 

@@ -579,6 +579,40 @@ private fun BlockContent(block: ReviewBlock) {
                 }
                 Spacer(Modifier.height(3.dp))
             }
+
+        // 例题：题干 + 思路用正文，答案用小字，做完再看
+        ReviewBlockStyle.EXAMPLE -> {
+            Row(Modifier.fillMaxWidth()) {
+                Text(
+                    text = "例：",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Tokens.OnSurface,
+                )
+                RichText(
+                    block.lines.first(),
+                    MaterialTheme.typography.bodyMedium,
+                    Tokens.OnSurface,
+                    Modifier.weight(1f),
+                )
+            }
+            Spacer(Modifier.height(3.dp))
+            block.lines.drop(1).forEach { line ->
+                val isAnswer = ReviewText.isAnswerLine(line)
+                RichText(
+                    text = line,
+                    style =
+                        if (isAnswer) {
+                            MaterialTheme.typography.bodySmall
+                        } else {
+                            MaterialTheme.typography.bodyMedium
+                        },
+                    color = if (isAnswer) Tokens.OnSurfaceVariant else Tokens.OnSurface,
+                    modifier = Modifier.padding(start = 14.dp),
+                )
+                Spacer(Modifier.height(3.dp))
+            }
+        }
     }
     Spacer(Modifier.height(6.dp))
 }

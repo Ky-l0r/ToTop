@@ -14,6 +14,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/** 例题题干的标记；外层与排版器都要用，因此放在文件级。 */
+private const val EXAMPLE_PREFIX: String = "例："
+
 /**
  * 把复习资料排成可打印的 A4 PDF。
  *
@@ -68,7 +71,7 @@ class ReviewMaterialPdfWriter(
             }
         }
 
-    /** 一个内容块：段落逐行写，要点加「· 」，编号步骤加「1. 」。 */
+    /** 一个内容块：段落逐行写，要点加「· 」，编号步骤加「1. 」，例题的答案用小字。 */
     private fun paintBlock(
         painter: PagePainter,
         block: ReviewBlock,
@@ -91,6 +94,13 @@ class ReviewMaterialPdfWriter(
                     painter.item((index + 1).toString() + ". ", line)
                     painter.gap(2f)
                 }
+
+            // 例题：题干与思路用正文字号，答案单独缩到小字，方便做完再核对
+            ReviewBlockStyle.EXAMPLE ->
+                painter.exampleFigure(
+                    stem = block.lines.first(),
+                    notes = block.lines.drop(1),
+                )
         }
         painter.gap(4f)
     }
@@ -189,6 +199,25 @@ private class PagePainter(private val doc: PdfDocument) {
             typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
         }
 
+    /** 例题答案用的小字：比正文小 1.5 磅，做完题再看也不至于一眼扫到结果。 */
+    private val smallPaint =
+        Paint(bodyPaint).apply {
+            textSize = 10f
+        }
+
+    private val smallBoldPaint =
+        Paint(smallPaint).apply {
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    /**
+     * 这台设备的有衬线字体有没有下标字符。
+     *
+     * 有就直接排下标（C₈H₁₆O₄），没有就退回普通数字（C8H16O4）——
+     * 缺字形时 PDF 会印成空心方块，比没有下标难看十倍。
+     */
+    private val subscriptSupported: Boolean by lazy { bodyPaint.hasGlyph("₈") }
+
     private val rulePaint =
         Paint().apply {
             isAntiAlias = true
@@ -240,6 +269,44 @@ private class PagePainter(private val doc: PdfDocument) {
     /** 普通段落：整段折行，行内 `**…**` 加粗。 */
     fun paragraph(text: String) {
         writeRich(ReviewText.splitBold(text), firstIndent = 0f, restIndent = 0f, paint = bodyPaint)
+    }
+
+    /**
+     * 例题：题干带「例：」，随后思路用正文、答案缩成小字。
+     *
+     * @param notes 思路与答案行；以「答案」开头的行自动用小字
+     */
+    fun exampleFigure(
+        stem: String,
+        notes: List<String>,
+    ) {
+        ensureSpace(EXAMPLE_BLOCK_PT)
+        y += 4f
+        val stemRuns =
+            buildList {
+                add(ReviewTextRun(EXAMPLE_PREFIX, true))
+                addAll(ReviewText.splitBold(stem))
+            }
+        writeRich(stemRuns, firstIndent = 0f, restIndent = 0f, paint = bodyPaint)
+        notes.forEach { line ->
+            if (ReviewText.isAnswerLine(line)) {
+                writeRich(
+                    ReviewText.splitBold(line),
+                    firstIndent = EXAMPLE_INDENT_PT,
+                    restIndent = EXAMPLE_INDENT_PT,
+                    paint = smallPaint,
+                    boldPaint = smallBoldPaint,
+                )
+            } else {
+                writeRich(
+                    ReviewText.splitBold(line),
+                    firstIndent = EXAMPLE_INDENT_PT,
+                    restIndent = EXAMPLE_INDENT_PT,
+                    paint = bodyPaint,
+                )
+            }
+        }
+        y += 4f
     }
 
     /** 要点：行首符号或序号 + 悬挂缩进，折行后与正文左对齐。 */
@@ -294,6 +361,7 @@ private class PagePainter(private val doc: PdfDocument) {
         firstIndent: Float,
         restIndent: Float,
         paint: Paint,
+        boldPaint: Paint = bodyBoldPaint,
     ) {
         if (runs.isEmpty()) return
         val lineHeight = paint.textSize * LINE_HEIGHT_RATIO
@@ -301,8 +369,8 @@ private class PagePainter(private val doc: PdfDocument) {
         var x = marginX + firstIndent
         var lineStartX = x
         runs.forEach { run ->
-            val runPaint = if (run.bold) bodyBoldPaint else paint
-            var rest = run.text
+            val runPaint = if (run.bold) boldPaint else paint
+            var rest = prepareScripts(run.text)
             while (rest.isNotEmpty()) {
                 var count = runPaint.breakText(rest, true, contentRight - x, null)
                 if (count <= 0) {
@@ -330,11 +398,34 @@ private class PagePainter(private val doc: PdfDocument) {
         y += lineHeight
     }
 
+    /** 字体不支持下标时把下标字符退回普通数字，避免印成方块。 */
+    private fun prepareScripts(text: String): String {
+        if (subscriptSupported || text.isEmpty()) return text
+        val builder = StringBuilder(text.length)
+        text.forEach { ch -> builder.append(SUBSCRIPT_TO_DIGIT[ch] ?: ch) }
+        return builder.toString()
+    }
+
     private fun ensureSpace(needed: Float) {
         if (y + needed > pageHeight - marginBottom) newPage()
     }
 
     private companion object {
+        /** 下标字符 -> 普通数字，字体缺字形时用。 */
+        val SUBSCRIPT_TO_DIGIT: Map<Char, Char> =
+            mapOf(
+                '₀' to '0',
+                '₁' to '1',
+                '₂' to '2',
+                '₃' to '3',
+                '₄' to '4',
+                '₅' to '5',
+                '₆' to '6',
+                '₇' to '7',
+                '₈' to '8',
+                '₉' to '9',
+            )
+
         /** 行高相对字号的倍数：1.55 在 A4 上中文不挤，行距也不松散。 */
         const val LINE_HEIGHT_RATIO: Float = 1.55f
 
@@ -362,5 +453,11 @@ private class PagePainter(private val doc: PdfDocument) {
         /** 分隔线之前 / 之后的留白。 */
         const val RULE_BEFORE_PT: Float = 6f
         const val RULE_AFTER_PT: Float = 8f
+
+        /** 例题最低占用高度（题干一行 + 至少两行附注）。 */
+        const val EXAMPLE_BLOCK_PT: Float = 54f
+
+        /** 例题附注的左缩进。 */
+        const val EXAMPLE_INDENT_PT: Float = 14f
     }
 }
