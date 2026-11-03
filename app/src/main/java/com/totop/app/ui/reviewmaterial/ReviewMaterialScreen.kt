@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Biotech
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Eco
 import androidx.compose.material.icons.filled.HistoryEdu
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,11 +45,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -165,6 +170,16 @@ fun ReviewMaterialScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // 以往的复习资料：退出页面再进来，上次生成的那份仍然在这里。
+            HistorySection(
+                items = state.history,
+                loading = state.historyLoading,
+                onOpen = viewModel::openHistory,
+                onDelete = viewModel::deleteHistory,
+            )
+
+            Spacer(Modifier.height(16.dp))
+
             when (val materialState = state.materialState) {
                 is ReviewMaterialState.Idle -> {
                     HintCard(
@@ -236,6 +251,145 @@ fun ReviewMaterialScreen(
 
 /** 科目卡片网格的列数：三列在常见手机宽度下每格约 100dp，点得准也放得下字。 */
 private const val SUBJECT_COLUMNS: Int = 3
+
+/**
+ * 以往的复习资料。
+ *
+ * 为什么单独一块而不是塞进「历史记录」页：学生的动作是「考前冲刺时打开这一页」，
+ * 上次整理的那份就在同一个位置，点一下直接预览、再导出，不用再找入口。
+ */
+@Composable
+private fun HistorySection(
+    items: List<ReviewMaterialSummary>,
+    loading: Boolean,
+    onOpen: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    // 删除前二次确认：资料本身能重新生成，但删错了会以为自己丢过东西
+    var pendingDelete by remember { mutableStateOf<ReviewMaterialSummary?>(null) }
+
+    Column(
+        modifier =
+            Modifier.fillMaxWidth()
+                .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
+                .padding(14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "以往的复习资料",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = Tokens.OnSurface,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = if (items.isEmpty()) "还没有" else items.size.toString() + " 份",
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+
+        when {
+            loading && items.isEmpty() -> {
+                Text(
+                    text = "正在读取…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
+
+            items.isEmpty() -> {
+                Text(
+                    text = "生成一份之后会自动存在这里，退出再进也还在，方便回头对照以前的错题。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
+
+            else -> {
+                items.forEach { item ->
+                    HistoryRow(
+                        item = item,
+                        onOpen = { onOpen(item.createdAtUtc) },
+                        onDelete = { pendingDelete = item },
+                    )
+                }
+            }
+        }
+    }
+
+    pendingDelete?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("删除这份资料？") },
+            text = {
+                Text(
+                    target.subjectLabel + " · " + target.dateLabel + " 的这份复习资料会从本机删掉，" +
+                        "删除后只能重新生成。",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(target.createdAtUtc)
+                        pendingDelete = null
+                    },
+                ) { Text("删除") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("取消") }
+            },
+        )
+    }
+}
+
+/** 一条历史记录：科目 + 时间 + 篇幅，右侧删除。 */
+@Composable
+private fun HistoryRow(
+    item: ReviewMaterialSummary,
+    onOpen: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val meta =
+        buildString {
+            append("约 ").append(item.charCount).append(" 字 · ").append(item.sectionCount).append(" 章")
+            if (item.mistakesUsed > 0) append(" · ").append(item.mistakesUsed).append(" 道错题")
+        }
+    Row(
+        modifier =
+            Modifier.fillMaxWidth()
+                .clip(RoundedCornerShape(Tokens.RadiusSmall))
+                .clickable(onClick = onOpen)
+                .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = item.subjectLabel + " · " + item.dateLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = Tokens.OnSurface,
+            )
+            Text(
+                text = meta,
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "删除这份资料",
+                tint = Tokens.OnSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+    }
+}
 
 /**
  * 一张科目卡片：图标 + 科目名，选中态用主色浅底 + 主色描边。

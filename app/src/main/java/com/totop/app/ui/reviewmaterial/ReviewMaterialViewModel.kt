@@ -20,6 +20,10 @@ data class ReviewMaterialUiState(
     val subjects: List<String> = Subjects.ALL_LABELS,
     val selectedSubject: String = Subjects.label("math"),
     val materialState: ReviewMaterialState = ReviewMaterialState.Idle,
+    /** 以往的复习资料，最新在前；生成成功后会立刻刷新。 */
+    val history: List<ReviewMaterialSummary> = emptyList(),
+    /** 历史列表是否还在读取。 */
+    val historyLoading: Boolean = false,
     /** 操作反馈（导出成功等），一次性提示。 */
     val message: String? = null,
     /** 最近一次导出的文件信息；非空时界面显示「打开 / 分享」入口。 */
@@ -58,12 +62,59 @@ class ReviewMaterialViewModel
 
         private val sink = ExportSink(context)
 
+        /** 历史资料存档（文件形态，见 [ReviewMaterialStore] 的取舍说明）。 */
+        private val materialStore = ReviewMaterialStore(context)
+
         private val _uiState = MutableStateFlow(ReviewMaterialUiState())
         val uiState: StateFlow<ReviewMaterialUiState> = _uiState.asStateFlow()
 
         /** 待分享的 Intent；界面消费后调用 [consumePendingIntent]。 */
         private val _pendingIntent = MutableStateFlow<Intent?>(null)
         val pendingIntent: StateFlow<Intent?> = _pendingIntent.asStateFlow()
+
+        init {
+            // 一进页面就把历史读出来：学生退出后再进来，最想看到的是「上次那份还在不在」。
+            refreshHistory()
+        }
+
+        /** 重新读取历史列表。 */
+        fun refreshHistory() {
+            viewModelScope.launch {
+                _uiState.value = _uiState.value.copy(historyLoading = true)
+                val history = materialStore.list()
+                _uiState.value = _uiState.value.copy(history = history, historyLoading = false)
+            }
+        }
+
+        /** 打开一份历史资料：直接复用预览与导出链路，不需要重新生成。 */
+        fun openHistory(createdAtUtc: Long) {
+            viewModelScope.launch {
+                val material = materialStore.load(createdAtUtc)
+                if (material == null) {
+                    _uiState.value = _uiState.value.copy(message = "这份资料已经读取不到了，可能已被删除。")
+                    refreshHistory()
+                    return@launch
+                }
+                _uiState.value =
+                    _uiState.value.copy(
+                        materialState = ReviewMaterialState.Success(material),
+                        exportedFile = null,
+                        message = "已打开 " + material.subjectLabel + " 的这份资料，可以再导出一次 PDF。",
+                    )
+            }
+        }
+
+        /** 删除一份历史资料。 */
+        fun deleteHistory(createdAtUtc: Long) {
+            viewModelScope.launch {
+                val removed = materialStore.delete(createdAtUtc)
+                _uiState.value =
+                    _uiState.value.copy(
+                        message = if (removed) "已删除这份资料。" else "删除失败，文件可能被占用。",
+                    )
+                refreshHistory()
+            }
+        }
 
         fun selectSubject(label: String) {
             _uiState.value =
@@ -135,18 +186,26 @@ class ReviewMaterialViewModel
                         )
                     }
                 when (val outcome = result) {
-                    is ReviewMaterialResult.Success ->
+                    is ReviewMaterialResult.Success -> {
+                        // 先存档再更新界面：学生退出页面是常态，
+                        // 存档失败必须在这句话里说出来，不能让人以为「生成过却不见了」。
+                        val saved = materialStore.save(outcome.material)
+                        val origin =
+                            if (mistakes.isEmpty()) {
+                                "该科目暂时没有错题记录，这份资料是按通用要点生成的。"
+                            } else {
+                                "已根据你错过的 " + mistakes.size + " 道题生成。"
+                            }
                         _uiState.value =
                             _uiState.value.copy(
                                 materialState = ReviewMaterialState.Success(outcome.material),
                                 message =
-                                    if (mistakes.isEmpty()) {
-                                        "该科目暂时没有错题记录，这份资料是按通用要点生成的。"
-                                    } else {
-                                        "已根据你错过的 " + mistakes.size + " 道题生成。"
-                                    },
+                                    origin +
+                                        if (saved) "已存入「以往的复习资料」。" else "本地存档失败，退出后可能看不到这份。",
                                 exportedFile = null,
+                                history = materialStore.list(),
                             )
+                    }
                     is ReviewMaterialResult.Failure ->
                         _uiState.value =
                             _uiState.value.copy(
