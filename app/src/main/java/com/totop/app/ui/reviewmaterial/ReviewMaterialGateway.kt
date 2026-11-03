@@ -13,8 +13,12 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -43,6 +47,9 @@ sealed class ReviewMaterialResult {
  *
  * 复用点在于**传输层与错误分类**：都走 [LlmTransport] 与同一套 LlmError，
  * 因此「模型没连上」在解题页与复习资料页有完全一致的可读表达。
+ *
+ * 提示词本体外置在 `assets/prompts/review_material.md`（见 [ReviewMaterialPrompt]），
+ * 由调用方读好后传入：这样网关保持纯 JVM、可单测，不依赖 Android Context。
  */
 @Singleton
 class ReviewMaterialGateway
@@ -54,20 +61,17 @@ class ReviewMaterialGateway
          * 生成一份复习资料。
          *
          * @param subjectLabel 科目中文名
-         * @param mistakes 本地错题摘要（题干 + 错因），由调用方从 Room 读取后传入，
+         * @param mistakes 本地错题摘要（题干 + 错因 + 正确思路），由调用方从 Room 读取后传入，
          *   保证「资料里讲的是你自己错过的题」而不是模型凭空编的通用题
+         * @param systemPrompt 教研模板全文，见 [ReviewMaterialPrompt]
+         * @param forgottenPoints 学生在陪伴模式里问过、说明容易忘的知识点名
          */
         fun generate(
             credentials: LlmCredentials,
             subjectLabel: String,
             mistakes: List<ReviewMistake>,
             requestId: String,
-            /**
-             * 学生在陪伴模式里问过、说明容易忘的知识点名。
-             *
-             * 只给名字不给次数：资料要的是「这次该重点看什么」，
-             * 问过几次对学生没有意义，反而会挤占上下文。
-             */
+            systemPrompt: String,
             forgottenPoints: List<String> = emptyList(),
         ): Flow<ReviewMaterialResult> =
             channelFlow {
@@ -81,29 +85,48 @@ class ReviewMaterialGateway
                     )
                     return@channelFlow
                 }
+                if (systemPrompt.isBlank()) {
+                    send(
+                        ReviewMaterialResult.Failure(
+                            com.totop.app.data.remote.LlmError.Unknown(
+                                detail = "复习资料提示词为空，无法生成",
+                            ),
+                        ),
+                    )
+                    return@channelFlow
+                }
                 val config =
                     ChatRequestConfig(
                         model = credentials.effectiveTextModel,
                         messages =
                             listOf(
-                                ChatMessage.system(SYSTEM_PROMPT),
+                                ChatMessage.system(systemPrompt),
                                 ChatMessage.user(buildUserPrompt(subjectLabel, mistakes, forgottenPoints)),
                             ),
+                        // 目标是四五张 A4 纸（约 6000-7000 字），
+                        // 沿用「详细」档上限：预算不足时正文会被拦腰截断，
+                        // 而 JSON 截断后整份资料只能丢弃。
                         maxTokens = ChatRequestConfig.MAX_TOKENS_DETAILED,
-                        temperature = 0.3,
+                        // 略高于解题链路：作文命题预测与素材库需要一点发散空间，
+                        // 但错因与知识点必须稳定，因此不再往上调。
+                        temperature = 0.35,
                         jsonObject = true,
                         stream = true,
                         thinkingMode = ChatRequestConfig.THINKING_DISABLED,
                     )
                 val buffer = StringBuilder()
                 var usage = TokenUsage.EMPTY
+                var finishReason = ""
                 var streamError: com.totop.app.data.remote.LlmError? = null
                 try {
                     llmClient.stream(credentials, config, requestId, registry = null, allowRetry = true)
                         .collect { chunk ->
                             when (chunk) {
                                 is LlmChunk.Delta -> buffer.append(chunk.text)
-                                is LlmChunk.Finished -> usage = chunk.usage
+                                is LlmChunk.Finished -> {
+                                    usage = chunk.usage
+                                    if (chunk.finishReason.isNotBlank()) finishReason = chunk.finishReason
+                                }
                                 is LlmChunk.Failed -> streamError = chunk.error
                                 is LlmChunk.Reasoning -> Unit
                             }
@@ -116,6 +139,18 @@ class ReviewMaterialGateway
                 }
                 streamError?.let { error ->
                     send(ReviewMaterialResult.Failure(error))
+                    return@channelFlow
+                }
+                // 被 max_tokens 截断时 JSON 必然不完整，继续解析只会报一个
+                // 「不是合法 JSON」的假原因，掩盖真正的问题。这里直接给出可操作的解释。
+                if (finishReason == FINISH_REASON_LENGTH) {
+                    send(
+                        ReviewMaterialResult.Failure(
+                            com.totop.app.data.remote.LlmError.Unknown(
+                                detail = "模型输出超出单次上限被截断（finish_reason=length），这次资料不完整，请重试一次",
+                            ),
+                        ),
+                    )
                     return@channelFlow
                 }
                 val raw = buffer.toString()
@@ -144,58 +179,91 @@ class ReviewMaterialGateway
             val json =
                 runCatching { Json.parseToJsonElement(trimToJsonObject(raw)) as JsonObject }
                     .getOrElse { failure ->
-                        return ReviewMaterialResult.Failure(
-                            com.totop.app.data.remote.LlmError.MalformedResponse(
-                                detail = "复习资料不是合法 JSON：" + (failure.message ?: "未知原因"),
-                            ),
-                        )
+                        return failureOf("复习资料不是合法 JSON：" + (failure.message ?: "未知原因"))
                     }
-            val summary = (json["summary"] as? JsonPrimitive)?.content.orEmpty()
-            val tips = (json["tips"] as? JsonArray).orEmpty().mapNotNull { (it as? JsonPrimitive)?.content }
-            if (summary.isBlank() && tips.isEmpty()) {
-                return ReviewMaterialResult.Failure(
-                    com.totop.app.data.remote.LlmError.MalformedResponse(
-                        detail = "复习资料缺少 summary 与 tips 两个必需字段",
-                    ),
-                )
+            val summary = (json["summary"] as? JsonPrimitive)?.content.orEmpty().trim()
+            val sections =
+                (json["sections"] as? JsonArray).orEmpty()
+                    .mapNotNull { element -> parseSection(element) }
+                    .take(MAX_SECTIONS)
+            if (sections.isEmpty()) {
+                return failureOf("复习资料缺少可用的 sections（章节为空或字段名不对）")
             }
-            val kpoints =
-                (json["weakKpoints"] as? JsonArray).orEmpty().mapNotNull { element ->
-                    val obj = element as? JsonObject ?: return@mapNotNull null
-                    val name = (obj["name"] as? JsonPrimitive)?.content ?: return@mapNotNull null
-                    ReviewKpoint(
-                        name = name,
-                        mistakeCount = (obj["mistakeCount"] as? JsonPrimitive)?.content?.toIntOrNull() ?: 0,
-                        reminder = (obj["reminder"] as? JsonPrimitive)?.content.orEmpty(),
-                    )
-                }
-            val exercises =
-                (json["exercises"] as? JsonArray).orEmpty().mapNotNull { element ->
-                    val obj = element as? JsonObject ?: return@mapNotNull null
-                    val stem = (obj["stem"] as? JsonPrimitive)?.content ?: return@mapNotNull null
-                    ReviewExercise(
-                        stem = stem,
-                        answer = (obj["answer"] as? JsonPrimitive)?.content.orEmpty(),
-                        analysis = (obj["analysis"] as? JsonPrimitive)?.content.orEmpty(),
-                    )
-                }
             return ReviewMaterialResult.Success(
                 material =
                     ReviewMaterial(
                         subjectLabel = subjectLabel,
-                        examDate = "考前复习",
-                        summary = summary,
-                        weakKpoints = kpoints,
-                        // 典型错题直接用本地真实数据，不交给模型复述：
-                        // 模型的措辞可能把题干改错，而这些题用户自己认得出来。
-                        typicalMistakes = mistakes.take(MAX_MISTAKES),
-                        exercises = exercises,
-                        tips = tips,
+                        examDate = EXAM_DATE_LABEL,
+                        summary = summary.ifBlank { "这份资料按本科目的高频考点与你的错题整理。" },
+                        sections = sections,
+                        mistakesUsed = mistakes.size,
                         createdAtUtc = System.currentTimeMillis(),
                     ),
                 usage = TokenUsage.EMPTY,
             )
         }
+
+        /** 解析一个章节；标题为空或没有可用内容时丢弃。 */
+        private fun parseSection(element: JsonElement): ReviewSection? {
+            val obj = element as? JsonObject ?: return null
+            val title = (obj["title"] as? JsonPrimitive)?.content?.trim().orEmpty()
+            if (title.isEmpty()) return null
+            val blocks =
+                (obj["blocks"] as? JsonArray).orEmpty().mapNotNull { block -> parseBlock(block) }
+            if (blocks.isEmpty()) {
+                // 容忍模型把章节直接写成 lines 数组的简化形态
+                val fallback = parseLines(obj["lines"], ReviewBlockStyle.PARAGRAPH)
+                if (fallback.isEmpty()) return null
+                return ReviewSection(
+                    title = title,
+                    blocks = listOf(ReviewBlock(style = ReviewBlockStyle.PARAGRAPH, lines = fallback)),
+                )
+            }
+            return ReviewSection(title = title, blocks = blocks)
+        }
+
+        /**
+         * 解析一个内容块。
+         *
+         * 宽容三种写法：标准对象、纯字符串（当段落）、只有 text 字段。
+         * 模型的输出形态在小语种模型上并不稳定，与其整份失败，不如归一后照排。
+         */
+        private fun parseBlock(element: JsonElement): ReviewBlock? {
+            if (element is JsonPrimitive) {
+                val single = parseLines(JsonArray(listOf(element)), ReviewBlockStyle.PARAGRAPH)
+                return single.takeIf { it.isNotEmpty() }?.let {
+                    ReviewBlock(style = ReviewBlockStyle.PARAGRAPH, lines = it)
+                }
+            }
+            val obj = element as? JsonObject ?: return null
+            val style = ReviewBlockStyle.parse((obj["style"] as? JsonPrimitive)?.content)
+            val lines =
+                parseLines(obj["lines"], style).ifEmpty {
+                    val single = (obj["text"] as? JsonPrimitive)?.content.orEmpty()
+                    parseLines(JsonArray(listOf(JsonPrimitive(single))), style)
+                }
+            if (lines.isEmpty()) return null
+            return ReviewBlock(style = style, lines = lines)
+        }
+
+        /** 把 lines 数组清洗成可排版的短行；空行与超长行在这里被处理掉。 */
+        private fun parseLines(
+            element: JsonElement?,
+            style: ReviewBlockStyle,
+        ): List<String> {
+            val array = element as? JsonArray ?: return emptyList()
+            return array
+                .mapNotNull { (it as? JsonPrimitive)?.content }
+                .flatMap { text -> text.split('\n') }
+                .map { line -> ReviewText.sanitizeLine(line, style) }
+                .filter { it.isNotEmpty() }
+                .take(MAX_LINES_PER_BLOCK)
+        }
+
+        private fun failureOf(detail: String): ReviewMaterialResult =
+            ReviewMaterialResult.Failure(
+                com.totop.app.data.remote.LlmError.MalformedResponse(detail = detail),
+            )
 
         /** 从可能含 Markdown 围栏或前置说明的输出里截出 JSON 对象。 */
         private fun trimToJsonObject(raw: String): String {
@@ -208,13 +276,29 @@ class ReviewMaterialGateway
 
         companion object {
             /** 最多带几道真实错题进教材。 */
-            const val MAX_MISTAKES: Int = 5
+            const val MAX_MISTAKES: Int = 8
 
-            private const val SYSTEM_PROMPT =
-                "你是一名中学教研员，负责根据学生自己错过的题，生成一份考前针对性复习资料。" +
-                    "只输出一个 JSON 对象，不要任何解释文字或 Markdown 代码围栏。"
+            /** 单条题干最多带多少字：够模型判断题型，又不会把上下文撑满。 */
+            const val MAX_STEM_CHARS: Int = 200
 
-            /** 组装用户消息：把真实错题摘要交给模型，避免它凭空编题。 */
+            /** 章节上限：再多就不是「考前翻一遍」的材料了。 */
+            private const val MAX_SECTIONS: Int = 9
+
+            /** 单个内容块的行数上限，防止一段话占掉整页。 */
+            private const val MAX_LINES_PER_BLOCK: Int = 14
+
+            /** PDF 副标题上的固定说明。 */
+            private const val EXAM_DATE_LABEL: String = "考前复习"
+
+            /** 厂商表示「被 max_tokens 截断」的 finish_reason。 */
+            private const val FINISH_REASON_LENGTH: String = "length"
+
+            /**
+             * 组装用户消息：把真实错题与易忘点交给模型。
+             *
+             * 只给事实，不给结论——归因与归纳是模型的工作，
+             * 本地若先算好一份结论塞进去，模型会照着抄，串科的错因也会被原样放大。
+             */
             private fun buildUserPrompt(
                 subjectLabel: String,
                 mistakes: List<ReviewMistake>,
@@ -222,39 +306,48 @@ class ReviewMaterialGateway
             ): String {
                 val builder = StringBuilder()
                 builder.append("科目：").append(subjectLabel).append('\n')
+                builder.append("学段：高中（新高考）\n")
+                builder.append("当前年月：").append(currentYearMonth())
+                    .append("（用于挑选时政热点，不要写尚未发生的事件）\n")
                 if (forgottenPoints.isNotEmpty()) {
-                    builder.append("学生写作业时问过下面这些点（说明他自己容易忘）：\n")
+                    builder.append("学生写作业时问过下面这些点（说明他自己容易忘），请优先覆盖：\n")
                     forgottenPoints.forEach { name -> builder.append("- ").append(name).append('\n') }
                 }
                 if (mistakes.isEmpty()) {
-                    builder.append("这位学生在该科目下还没有错题记录，请生成一份该科目的通用考前要点。\n")
+                    builder.append("这位学生在该科目下还没有错题记录。\n")
+                    builder.append("请把第一章改成「本科目常见失分点速查」，其余章节按该学科的骨架完整生成。\n")
                 } else {
-                    builder.append("以下是这位学生真实错过的题（题干 / 错在哪 / 正确思路）：\n")
+                    builder.append("本份资料依据的真实错题共 ").append(mistakes.size).append(" 道：\n")
                     mistakes.forEachIndexed { index, mistake ->
-                        builder.append(index + 1).append(". 题干：").append(mistake.stem).append('\n')
-                        builder.append("   错因：").append(mistake.errorSummary).append('\n')
-                        builder.append("   正确思路：").append(mistake.correctIdea).append('\n')
+                        builder.append(index + 1).append(". ")
+                        if (mistake.errorType.isNotBlank()) {
+                            builder.append("错因类型：").append(mistake.errorType).append("；")
+                        }
+                        builder.append("题干：").append(truncate(mistake.stem, MAX_STEM_CHARS)).append('\n')
+                        builder.append("   错在哪：").append(mistake.errorSummary.ifBlank { "未记录具体错因" })
+                            .append('\n')
+                        builder.append("   正确思路：")
+                            .append(mistake.correctIdea.ifBlank { "未记录标准解答" })
+                            .append('\n')
                     }
                 }
-                builder.append(
-                    """
-
-                    |请输出这个 JSON 结构：
-                    |{
-                    |  "summary": "一句话总述这次该重点看什么",
-                    |  "weakKpoints": [{"name":"知识点名","mistakeCount":数字,"reminder":"一句话提醒"}],
-                    |  "exercises": [{"stem":"同类练习题题干","answer":"答案","analysis":"解析"}],
-                    |  "tips": ["考前建议1","考前建议2","考前建议3"]
-                    |}
-                    |要求：
-                    |1. weakKpoints 最多 4 条，必须来自上面真实错题反映的薄弱点；
-                    |   若给了「容易忘的点」，优先把其中与本科目相关的写进 weakKpoints；
-                    |2. exercises 给 2 到 3 道同类题，难度与错题相当，题干完整可独立作答；
-                    |3. tips 给 3 到 5 条，要具体可执行，不要说「认真复习」这种空话；
-                    |4. 全部用中文，不要出现 emoji。
-                    """.trimMargin(),
-                )
+                builder.append('\n')
+                builder.append("请严格按 system 中的 JSON 结构与内容要求输出：")
+                builder.append("错题先归类再归纳，补齐本科目高频易错点，")
+                builder.append("篇幅 6000 到 7000 字，关键结论用 **加粗**。")
                 return builder.toString()
             }
+
+            /** 超长题干截断保留前缀，末尾加省略号表明不是原题全部。 */
+            private fun truncate(
+                text: String,
+                limit: Int,
+            ): String {
+                val trimmed = text.trim()
+                return if (trimmed.length <= limit) trimmed else trimmed.substring(0, limit) + "…"
+            }
+
+            /** 当前年月（本地时区），给时政热点一个时间锚点。 */
+            private fun currentYearMonth(): String = SimpleDateFormat("yyyy 年 M 月", Locale.CHINA).format(Date())
         }
     }

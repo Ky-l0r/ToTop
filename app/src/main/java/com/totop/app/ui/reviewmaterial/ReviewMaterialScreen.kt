@@ -47,11 +47,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -162,8 +168,8 @@ fun ReviewMaterialScreen(
             when (val materialState = state.materialState) {
                 is ReviewMaterialState.Idle -> {
                     HintCard(
-                        "会根据你最近的错题和还需要多练的知识点来整理，",
-                        "不需要联网翻题库，也不用你手动挑题。",
+                        "会先把你错过的题归类归因，再往下归纳知识点与下手方法，",
+                        "并补齐这一科的高频易错点、答题模板与考前建议，导出约四五页 A4。",
                     )
                 }
 
@@ -322,70 +328,17 @@ private fun MaterialContent(
             color = Tokens.OnSurface,
         )
         Spacer(Modifier.height(4.dp))
-        Text(material.summary, style = MaterialTheme.typography.bodyMedium, color = Tokens.OnSurfaceVariant)
+        RichText(material.summary, MaterialTheme.typography.bodyMedium, Tokens.OnSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = materialSourceNote(material),
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.OnSurfaceVariant,
+        )
 
-        SectionBlock("还需要多练的知识点") {
-            material.weakKpoints.forEach { kp ->
-                Text(
-                    text = "· " + kp.name + "（错过 " + kp.mistakeCount + " 次）",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tokens.OnSurface,
-                )
-                if (kp.reminder.isNotBlank()) {
-                    Text(
-                        text = "　" + kp.reminder,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Tokens.OnSurfaceVariant,
-                    )
-                }
-            }
-        }
-
-        SectionBlock("典型错题") {
-            material.typicalMistakes.forEachIndexed { index, item ->
-                Text(
-                    text = (index + 1).toString() + ". " + item.stem,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tokens.OnSurface,
-                )
-                Text(
-                    text = "错在哪：" + item.errorSummary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-                Text(
-                    text = "正确思路：" + item.correctIdea,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-        }
-
-        SectionBlock("同类练习") {
-            material.exercises.forEachIndexed { index, item ->
-                Text(
-                    text = (index + 1).toString() + ". " + item.stem,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tokens.OnSurface,
-                )
-                Text(
-                    text = "答案：" + item.answer,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-                Text(
-                    text = "解析：" + item.analysis,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-        }
-
-        SectionBlock("考前建议") {
-            material.tips.forEach { tip ->
-                Text("· " + tip, style = MaterialTheme.typography.bodyMedium, color = Tokens.OnSurface)
+        material.sections.forEachIndexed { index, section ->
+            SectionBlock(ReviewText.sectionHeading(index + 1, section.title)) {
+                section.blocks.forEach { block -> BlockContent(block) }
             }
         }
 
@@ -422,12 +375,86 @@ private fun MaterialContent(
         Spacer(Modifier.height(8.dp))
         Text(
             text =
-                "PDF 按 A4 排版，保存到手机的「下载/ToTop」文件夹；" +
+                "PDF 按 A4 排版（约四到五页，正文 11.5 磅），保存到手机的「下载/ToTop」文件夹；" +
                     "也可以点「分享 / 打印」直接发给打印机 App。",
             style = MaterialTheme.typography.labelSmall,
             color = Tokens.OnSurfaceVariant,
         )
     }
+}
+
+/** 卷首说明：资料从哪来、多长。与 PDF 上那行小字保持同一口径。 */
+private fun materialSourceNote(material: ReviewMaterial): String {
+    val origin =
+        if (material.mistakesUsed > 0) {
+            "依据本科目 " + material.mistakesUsed + " 道错题整理"
+        } else {
+            "本科目暂无错题记录，按通用考点整理"
+        }
+    return origin + " · 全文约 " + material.charCount + " 字"
+}
+
+/** 一个内容块的界面渲染，规则与 PDF 一致：段落、要点、编号步骤。 */
+@Composable
+private fun BlockContent(block: ReviewBlock) {
+    when (block.style) {
+        ReviewBlockStyle.PARAGRAPH ->
+            block.lines.forEach { line ->
+                RichText(line, MaterialTheme.typography.bodyMedium, Tokens.OnSurface)
+                Spacer(Modifier.height(3.dp))
+            }
+
+        ReviewBlockStyle.BULLETS ->
+            block.lines.forEach { line ->
+                Row(Modifier.fillMaxWidth()) {
+                    Text("· ", style = MaterialTheme.typography.bodyMedium, color = Tokens.OnSurface)
+                    RichText(line, MaterialTheme.typography.bodyMedium, Tokens.OnSurface, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(3.dp))
+            }
+
+        ReviewBlockStyle.NUMBERED ->
+            block.lines.forEachIndexed { index, line ->
+                Row(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = (index + 1).toString() + ". ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Tokens.OnSurface,
+                    )
+                    RichText(line, MaterialTheme.typography.bodyMedium, Tokens.OnSurface, Modifier.weight(1f))
+                }
+                Spacer(Modifier.height(3.dp))
+            }
+    }
+    Spacer(Modifier.height(6.dp))
+}
+
+/**
+ * 行内加粗文本。
+ *
+ * 与 PDF 共用 [ReviewText.splitBold]：屏幕上加粗的地方，打印出来一定也加粗，
+ * 不会出现「手机上标了重点、纸上却没有」的错位。
+ */
+@Composable
+private fun RichText(
+    text: String,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    val annotated =
+        remember(text) {
+            buildAnnotatedString {
+                ReviewText.splitBold(text).forEach { run ->
+                    if (run.bold) {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(run.text) }
+                    } else {
+                        append(run.text)
+                    }
+                }
+            }
+        }
+    Text(text = annotated, style = style, color = color, modifier = modifier)
 }
 
 @Composable
@@ -439,8 +466,8 @@ private fun SectionBlock(
     Text(
         text = title,
         style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = Tokens.Primary,
+        fontWeight = FontWeight.Bold,
+        color = Tokens.OnSurface,
     )
     Spacer(Modifier.height(6.dp))
     content()

@@ -33,6 +33,7 @@ class LearnedMaterialRepository
         private val dao: LearnedMaterialDao,
     ) {
         private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+
         fun observeAll(): Flow<List<LearnedMaterial>> = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
         fun observeCount(): Flow<Int> = dao.observeCount()

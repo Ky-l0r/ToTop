@@ -95,6 +95,21 @@ class ReviewMaterialViewModel
                 // 而不是模型凭空编的通用题。取不到就退化为通用要点，但会说明。
                 val subjectLabel = _uiState.value.selectedSubject
                 val mistakes = loadMistakes(subjectLabel)
+                // 提示词外置在 assets：读不到就是资源问题，直接说清楚，
+                // 不要用一个空 system 提示词让模型自由发挥。
+                val systemPrompt =
+                    runCatching { ReviewMaterialPrompt.load(context) }.getOrElse { failure ->
+                        _uiState.value =
+                            _uiState.value.copy(
+                                materialState =
+                                    ReviewMaterialState.Failed(
+                                        message =
+                                            "读取复习资料模板失败：" + (failure.message ?: ReviewMaterialPrompt.ASSET_PATH),
+                                        retryable = false,
+                                    ),
+                            )
+                        return@launch
+                    }
                 // 把「流结束了但一个事件都没收到」也归一成一个明确的失败，
                 // 这样后续 when 分支是穷尽的，不需要再判空。
                 val result: ReviewMaterialResult =
@@ -106,6 +121,7 @@ class ReviewMaterialViewModel
                                 subjectLabel = subjectLabel,
                                 mistakes = mistakes,
                                 requestId = UUID.randomUUID().toString(),
+                                systemPrompt = systemPrompt,
                                 forgottenPoints = loadForgotten(subjectLabel),
                             ).collect { outcome -> last = outcome }
                         last ?: ReviewMaterialResult.Failure(
@@ -165,6 +181,9 @@ class ReviewMaterialViewModel
                         stem = questionStemOf(record.questionId),
                         errorSummary = record.errorExplain.ifBlank { "（未记录具体错因）" },
                         correctIdea = record.correctSolution.steps.firstOrNull()?.content.orEmpty(),
+                        // 错因类型已在入库时归一为固定七类，直接透传给模型，
+                        // 让它按「同类错因」合并归纳，而不是逐题复述。
+                        errorType = record.errorType.label,
                     )
                 }
             }.getOrDefault(emptyList())

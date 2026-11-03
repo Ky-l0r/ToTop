@@ -10,9 +10,9 @@ import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
 import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
-import com.totop.app.data.local.dao.LearnedMaterialDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
+import com.totop.app.data.local.dao.LearnedMaterialDao
 import com.totop.app.data.local.dao.MasteryDao
 import com.totop.app.data.local.dao.MistakeDao
 import com.totop.app.data.local.dao.OutboxDao
