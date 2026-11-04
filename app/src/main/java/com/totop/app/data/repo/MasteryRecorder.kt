@@ -132,7 +132,13 @@ class MasteryRecorder
                         .sumOf { record -> mistakeRepository.hintsOf(record.id).size }
                 }.getOrDefault(0)
 
-            val practice = mistakeTimes.size + reviews.size
+            // 覆盖度只按「复习次数」算，不含错题数。
+            //
+            // 旧实现用「错题数 + 复习次数」，两个权重（0.30 / 0.15）与两个分母（10 / 5）
+            // 恰好让每道错题一扣一加相抵，掌握度在 0..5 道错题区间内恒为 30 分——
+            // 界面上的表现就是「雷达图永远是一个正多边形、解题后也不变」。
+            // 错题已由错题项惩罚，不能再当覆盖度奖励回去。详见 docs/偏离记录.md 第 38 节。
+            val practice = reviews.size
             return MasteryInput(
                 recallEvents = reviews,
                 mistakeAtUtc = mistakeTimes,

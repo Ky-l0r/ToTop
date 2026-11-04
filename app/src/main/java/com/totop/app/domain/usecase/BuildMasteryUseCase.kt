@@ -198,7 +198,13 @@ class BuildMasteryUseCase(
             }.getOrDefault(emptyList())
         val recallEvents = reviews.map { RecallEvent(reviewedAtUtc = it.reviewedAtUtc, selfResult = it.selfResult) }
         val hintOnly = recallEvents.isNotEmpty() && hintOnlyOf(kpointId, nowUtc)
-        val coverage = coverageOf(mistakeTimes.size + recallEvents.size)
+        // 覆盖度只看「复习 / 核对」次数，**不再把错题数算进去**。
+        //
+        // 旧实现用「错题数 + 复习次数」，于是两项在 0..5 道错题区间内精确抵消：
+        // 每多一道错题，错题项 -0.03（0.30 / 10），覆盖项 +0.03（0.15 / 5），
+        // 掌握度恒等于 30 分。表现出来就是「雷达图永远是一个正多边形、怎么练都不动」。
+        // 错题已经由错题项惩罚过了，再让它奖励一次覆盖度，等于自己把惩罚抵消掉。
+        val coverage = coverageOf(recallEvents.size)
         val value =
             MasteryCalculator.compute(
                 MasteryInput(
@@ -239,12 +245,14 @@ class BuildMasteryUseCase(
     }
 
     /**
-     * 覆盖度：该知识点近 30 天的练习量（错题数 + 复习次数）相对 [COVERAGE_FULL_AT] 的比值。
+     * 覆盖度：该知识点近 30 天的**复习次数**相对 [COVERAGE_FULL_AT] 的比值。
      *
-     * 定义刻意保守：只统计「确实动过手」的记录，不使用任何「答对/答错」的比率。
+     * 刻意不把错题数算进来：错题已经由 [MasteryCalculator] 的错题项扣过分，
+     * 再算作「覆盖度」等于又奖励回去——两个权重（0.30 / 0.15）与两个分母（10 / 5）
+     * 恰好让每道错题的分值一扣一加相抵，掌握度因此恒为 30 分。
+     * 详情见 docs/偏离记录.md 第 38 节。
      */
-    private fun coverageOf(practiceCount: Int): Double =
-        (practiceCount.toDouble() / COVERAGE_FULL_AT).coerceIn(0.0, 1.0)
+    private fun coverageOf(reviewCount: Int): Double = (reviewCount.toDouble() / COVERAGE_FULL_AT).coerceIn(0.0, 1.0)
 
     /**
      * 合并历史快照：同一天只保留一条（最新的覆盖旧的），并按 90 天裁剪。

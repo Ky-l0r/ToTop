@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -258,17 +259,39 @@ fun ErrorTypePieChart(
     }
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Canvas(modifier = Modifier.size(120.dp)) {
-                val radius = minOf(size.width, size.height) / 2f
-                val center = Offset(size.width / 2f, size.height / 2f)
-                data.slices.forEach { slice ->
-                    drawArc(
-                        color = MasteryColors.pieColor(slice.colorIndex),
-                        startAngle = slice.startAngle.toFloat() + ANGLE_OFFSET_DEGREES,
-                        sweepAngle = slice.sweepAngle.toFloat(),
-                        useCenter = true,
-                        topLeft = Offset(center.x - radius, center.y - radius),
-                        size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+            // 环形图：中间留白写总数。
+            //
+            // 旧版是实心饼 + 七个高饱和色，读起来像一张色卡：每块都在抢注意力，
+            // 反而看不出「哪一类最多」。改成环形后，中心放总数，扇区之间留 2 度空隙，
+            // 颜色也换成了同明度的柔和色（见 [MasteryColors.PiePalette]）。
+            Box(modifier = Modifier.size(120.dp), contentAlignment = Alignment.Center) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val diameter = minOf(size.width, size.height)
+                    val radius = diameter / 2f
+                    val center = Offset(size.width / 2f, size.height / 2f)
+                    val thickness = radius * (1f - DONUT_INNER_RATIO)
+                    data.slices.forEach { slice ->
+                        drawArc(
+                            color = MasteryColors.pieColor(slice.colorIndex),
+                            startAngle = slice.startAngle.toFloat() + ANGLE_OFFSET_DEGREES + SLICE_GAP_DEGREES / 2f,
+                            sweepAngle = (slice.sweepAngle.toFloat() - SLICE_GAP_DEGREES).coerceAtLeast(0.5f),
+                            useCenter = false,
+                            topLeft = Offset(center.x - radius, center.y - radius),
+                            size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+                            style = Stroke(width = thickness),
+                        )
+                    }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = data.total.toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = "条错因",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -294,7 +317,7 @@ fun ErrorTypePieChart(
             }
         }
         Text(
-            text = "共 " + data.total + " 条错因记录；扇区顺序固定为七类错因的产品定义顺序。",
+            text = "扇区顺序固定为七类错因的产品定义顺序，同一错因在全应用同色。",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -368,3 +391,9 @@ private const val RADAR_LEGEND_PER_ROW = 2
 
 /** Canvas 的 0 度在 3 点方向；饼图数据从 12 点起算，因此偏移 -90 度。 */
 private const val ANGLE_OFFSET_DEGREES = -90f
+
+/** 环形图内圈占比：0.6 表示中间留出 60% 半径的空白放总数。 */
+private const val DONUT_INNER_RATIO = 0.6f
+
+/** 相邻扇区之间的空隙（度）：没有空隙时同明度色块会连成一片。 */
+private const val SLICE_GAP_DEGREES = 2f
