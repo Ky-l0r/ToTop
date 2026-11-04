@@ -241,7 +241,13 @@ class ReviewMaterialGateway
             val title = ReviewText.formatChemical(rawTitle)
             val blocks =
                 (obj["blocks"] as? JsonArray).orEmpty().mapNotNull { block -> parseBlock(block) }
-            if (blocks.isEmpty()) {
+            // 小节是可选的：模型没写就退回「章节直接挂内容块」的老结构，
+            // 老存档读回来也走这条路径，两边不需要分叉渲染。
+            val subsections =
+                (obj["subsections"] as? JsonArray).orEmpty()
+                    .mapNotNull { child -> parseSubsection(child) }
+                    .take(MAX_SUBSECTIONS_PER_SECTION)
+            if (blocks.isEmpty() && subsections.isEmpty()) {
                 // 容忍模型把章节直接写成 lines 数组的简化形态
                 val fallback = parseLines(obj["lines"], ReviewBlockStyle.PARAGRAPH)
                 if (fallback.isEmpty()) return null
@@ -250,7 +256,26 @@ class ReviewMaterialGateway
                     blocks = listOf(ReviewBlock(style = ReviewBlockStyle.PARAGRAPH, lines = fallback)),
                 )
             }
-            return ReviewSection(title = title, blocks = blocks)
+            return ReviewSection(title = title, blocks = blocks, subsections = subsections)
+        }
+
+        /** 解析一个小节；标题为空或内容块为空时丢弃（空标题在小节这一层没有意义）。 */
+        private fun parseSubsection(element: JsonElement): ReviewSubsection? {
+            val obj = element as? JsonObject ?: return null
+            val rawTitle = (obj["title"] as? JsonPrimitive)?.content?.trim().orEmpty()
+            if (rawTitle.isEmpty()) return null
+            val blocks =
+                (obj["blocks"] as? JsonArray).orEmpty().mapNotNull { block -> parseBlock(block) }
+                    .ifEmpty {
+                        val fallback = parseLines(obj["lines"], ReviewBlockStyle.PARAGRAPH)
+                        if (fallback.isEmpty()) {
+                            emptyList()
+                        } else {
+                            listOf(ReviewBlock(style = ReviewBlockStyle.PARAGRAPH, lines = fallback))
+                        }
+                    }
+            if (blocks.isEmpty()) return null
+            return ReviewSubsection(title = ReviewText.formatChemical(rawTitle), blocks = blocks)
         }
 
         /**
@@ -314,6 +339,14 @@ class ReviewMaterialGateway
 
             /** 章节上限：与提示词里的「最多 10 个章节」对齐。 */
             private const val MAX_SECTIONS: Int = 10
+
+            /**
+             * 单章小节上限。
+             *
+             * 提示词要求 2 到 4 个；这里放宽到 6 是为了不在解析阶段砍内容，
+             * 真写了七八个小节的资料仍会整份接受，只是版面上必然被压字号。
+             */
+            private const val MAX_SUBSECTIONS_PER_SECTION: Int = 6
 
             /** 单个内容块的行数上限，防止一段话占掉整页。 */
             private const val MAX_LINES_PER_BLOCK: Int = 14

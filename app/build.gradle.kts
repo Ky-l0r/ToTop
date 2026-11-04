@@ -77,8 +77,9 @@ android {
         // 0.6.0：复习资料重做为章节化长文，并加上「以往的复习资料」本地存档。
         // 0.6.1：模型输出抢救式解析（围栏/前言/裸换行/多余逗号/LaTeX 非法转义）+ 按阶段给输出预算。
         // 0.6.2：复习资料改通用解法/去星号/化学下标/时政人物/六七页/例题；资料库可看截图；补拍入库就地回执。
-        versionCode = 8
-        versionName = "0.6.2"
+        // 0.6.3：复习资料正文接入轻数学记号（下标/上标/分式/根号），屏上与 PDF 同一套排版；正文改 16sp 并合并段落。
+        versionCode = 9
+        versionName = "0.6.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

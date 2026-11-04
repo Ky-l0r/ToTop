@@ -146,6 +146,11 @@ class ReviewMaterialViewModel
                 // 而不是模型凭空编的通用题。取不到就退化为通用要点，但会说明。
                 val subjectLabel = _uiState.value.selectedSubject
                 val mistakes = loadMistakes(subjectLabel)
+                // 取材池大小：报告「本科目共 N 道，本次纳入 M 道」用。
+                // 与 mistakes.size 分开取，因为一次最多只喂 8 道，只报 8 会让人以为错题本里就这么多。
+                val available =
+                    runCatching { mistakeRepository.countBySubject(Subjects.codeOf(subjectLabel)) }
+                        .getOrDefault(mistakes.size)
                 // 提示词外置在 assets：读不到就是资源问题，直接说清楚，
                 // 不要用一个空 system 提示词让模型自由发挥。
                 val systemPrompt =
@@ -187,18 +192,24 @@ class ReviewMaterialViewModel
                     }
                 when (val outcome = result) {
                     is ReviewMaterialResult.Success -> {
+                        // 补上「取材池有多大」：资料正文与卷首说明都按这个数写。
+                        val material =
+                            outcome.material.copy(mistakesAvailable = maxOf(available, outcome.material.mistakesUsed))
                         // 先存档再更新界面：学生退出页面是常态，
                         // 存档失败必须在这句话里说出来，不能让人以为「生成过却不见了」。
-                        val saved = materialStore.save(outcome.material)
+                        val saved = materialStore.save(material)
                         val origin =
-                            if (mistakes.isEmpty()) {
-                                "该科目暂时没有错题记录，这份资料是按通用要点生成的。"
-                            } else {
-                                "已根据你错过的 " + mistakes.size + " 道题生成。"
+                            when {
+                                material.mistakesUsed <= 0 ->
+                                    "该科目暂时没有错题记录，这份资料是按通用要点生成的。"
+                                material.mistakesAvailable > material.mistakesUsed ->
+                                    "本科目共 " + material.mistakesAvailable + " 道错题，本次纳入最近 " +
+                                        material.mistakesUsed + " 道。"
+                                else -> "已根据你错过的 " + material.mistakesUsed + " 道题生成。"
                             }
                         _uiState.value =
                             _uiState.value.copy(
-                                materialState = ReviewMaterialState.Success(outcome.material),
+                                materialState = ReviewMaterialState.Success(material),
                                 message =
                                     origin +
                                         if (saved) "已存入「以往的复习资料」。" else "本地存档失败，退出后可能看不到这份。",
@@ -277,9 +288,12 @@ class ReviewMaterialViewModel
                                         exportedFile = published.info,
                                         message =
                                             if (published.info.visibleInDownloads) {
-                                                "已保存到「下载/ToTop/" + published.info.displayName + "」，可直接打开或分享。"
+                                                "已保存到「下载/ToTop/" + published.info.displayName + "」，共 " +
+                                                    result.pageCount + " 页（双面打印 " +
+                                                    (result.pageCount + 1) / 2 + " 张），可直接打开或分享。"
                                             } else {
-                                                "已生成 " + published.info.displayName + "，可点下方按钮打开或分享。"
+                                                "已生成 " + published.info.displayName + "（" + result.pageCount +
+                                                    " 页），可点下方按钮打开或分享。"
                                             },
                                     )
                             is PublishResult.Failure ->

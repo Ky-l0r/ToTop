@@ -73,4 +73,35 @@ class ReviewMaterialTextTest {
         assertEquals(ReviewBlockStyle.EXAMPLE, ReviewBlockStyle.parse("Exercise"))
         assertEquals(ReviewBlockStyle.PARAGRAPH, ReviewBlockStyle.parse("unknown"))
     }
+
+    @Test
+    @DisplayName("段落的多行连成一段，中文之间不插空格")
+    fun `段落连成一段`() {
+        assertEquals(
+            "先定研究对象，再分解受力，最后列方程。",
+            ReviewText.joinParagraph(listOf("先定研究对象，", "再分解受力，", "最后列方程。")),
+        )
+    }
+
+    @Test
+    @DisplayName("两侧都是半角字母数字时补一个空格，避免 v=at2 这种粘连")
+    fun `段落接缝补空格`() {
+        assertEquals("v=at 2 m/s", ReviewText.joinParagraph(listOf("v=at", "2 m/s")))
+    }
+
+    @Test
+    @DisplayName("带「易错」标签的行单独成段")
+    fun `标签行独立成段`() {
+        val segments = ReviewText.paragraphSegments(listOf("先说结论，", "第二句补条件。", "注意：单位要统一。"))
+        assertEquals(listOf("先说结论，第二句补条件。", "注意：单位要统一。"), segments)
+    }
+
+    @Test
+    @DisplayName("章节用「一、」，小节用「（一）」，两层编号不混")
+    fun `两层编号`() {
+        assertEquals("三、导数与不等式", ReviewText.sectionHeading(3, "导数与不等式"))
+        assertEquals("（三）构造函数怎么下手", ReviewText.subsectionHeading(3, "构造函数怎么下手"))
+        // 超过十二个回落成阿拉伯数字，不会印出空格或异常字符
+        assertEquals("（13）结尾", ReviewText.subsectionHeading(13, "结尾"))
+    }
 }

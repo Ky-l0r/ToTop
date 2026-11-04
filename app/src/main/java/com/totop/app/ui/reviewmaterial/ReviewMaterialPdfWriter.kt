@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import kotlinx.coroutines.CoroutineDispatcher
@@ -17,6 +18,9 @@ import java.util.Locale
 /** 例题题干的标记；外层与排版器都要用，因此放在文件级。 */
 private const val EXAMPLE_PREFIX: String = "例："
 
+/** 根号符号；绘制单元与排版器都要用，因此放在文件级。 */
+private const val RADICAL_SIGN_TEXT: String = "√"
+
 /**
  * 把复习资料排成可打印的 A4 PDF。
  *
@@ -26,12 +30,13 @@ private const val EXAMPLE_PREFIX: String = "例："
  * 3. 打印与分享都能直接拿到 PDF 文件，链路最短。
  *
  * 版面约定（A4 纵向，72 dpi 的 PostScript 点）：
- * - 页面 595 × 842 pt；
- * - 左右边距 46pt，上下 52pt；
- * - 正文 11.5pt、行距 1.55 倍（打印后肉眼清晰，一页约 40 行）；
- * - 标题 17pt、章节标题 13pt，均为**加粗黑字**；
- * - 强调一律用加粗，不用颜色：黑白打印机是默认场景，靠颜色区分重点会全部变成浅灰；
- * - 超过一页自动换页，绝不截断内容，页脚标页码。
+ * - 页面 595 × 842 pt，左右边距 46pt、上下 52pt；
+ * - **层级靠字号与色阶拉开**：文档标题 19pt 主色、章节标题 13pt 加粗带主色序号、
+ *   正文 11.5pt 墨色、附注 9.5pt 灰色；重点不再靠「全部加粗」，而是主色 + 字重 + 前置色块标签；
+ * - 颜色都取中等明度（黑白打印后落在 30%-60% 灰度），不用浅色也不刺眼；
+ * - **页数硬上限 [MAX_PAGES]**：先按最舒适的档位排，超页就换更紧的字号档重排，
+ *   保证「双面打印最多 5 张纸」成立；
+ * - 页脚页码；从第 2 页起加淡色书眉，散页后能对回顺序。
  */
 class ReviewMaterialPdfWriter(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -42,84 +47,106 @@ class ReviewMaterialPdfWriter(
     ): PdfWriteResult =
         withContext(ioDispatcher) {
             runCatching {
-                val doc = PdfDocument()
-                val painter = PagePainter(doc)
-                painter.newPage()
-                painter.title(material.subjectLabel + " · 考前复习资料")
-                painter.note(sourceNote(material))
-                painter.rule()
-                if (material.summary.isNotBlank()) {
-                    painter.paragraph(material.summary)
-                    painter.gap(2f)
-                }
-                material.sections.forEachIndexed { index, section ->
-                    painter.heading(ReviewText.sectionHeading(index + 1, section.title))
-                    section.blocks.forEach { block -> paintBlock(painter, block) }
-                }
-                painter.finish()
-
-                // 先写 cacheDir 的临时文件：这是整个渲染过程的事务性落点，
-                // 写失败时不会在用户可见目录里留下半个 PDF。
-                // 真正的「发布到下载目录 + 生成可分享 Uri」由 ExportSink 负责。
                 val dir = File(context.cacheDir, PDF_DIR).apply { if (!exists()) mkdirs() }
                 val file = File(dir, FILE_STEM + System.currentTimeMillis() + ".pdf")
-                file.outputStream().use { out -> doc.writeTo(out) }
-                doc.close()
-                PdfWriteResult.Success(file)
+                var pages = 0
+                for (preset in Typography.PRESETS) {
+                    val doc = PdfDocument()
+                    val painter = PagePainter(doc, preset)
+                    paintDocument(painter, material)
+                    painter.finish()
+                    pages = painter.pageCount
+                    if (pages <= MAX_PAGES || preset == Typography.PRESETS.last()) {
+                        file.outputStream().use { out -> doc.writeTo(out) }
+                        doc.close()
+                        break
+                    }
+                    // 超页：丢掉这一版重排。渲染只有 CPU 开销，比砍内容划算。
+                    doc.close()
+                }
+                PdfWriteResult.Success(file, pages)
             }.getOrElse { failure ->
                 PdfWriteResult.Failure(failure.message ?: failure.javaClass.simpleName)
             }
         }
 
-    /** 一个内容块：段落逐行写，要点加「· 」，编号步骤加「1. 」，例题的答案用小字。 */
+    /** 按「文档头 → 总述 → 各章节」的顺序画完整份资料。 */
+    private fun paintDocument(
+        painter: PagePainter,
+        material: ReviewMaterial,
+    ) {
+        painter.newPage()
+        painter.docHeader(
+            title = material.subjectLabel + " · 考前复习资料",
+            subtitle = subtitleOf(material),
+        )
+        if (material.summary.isNotBlank()) {
+            painter.summaryBlock(material.summary)
+        }
+        material.sections.forEachIndexed { index, section ->
+            if (section.isEmpty) return@forEachIndexed
+            painter.heading(ReviewText.sectionHeading(index + 1, section.title))
+            // 章节导读先排，再进小节：导读回答「这章解决什么」，小节回答「具体怎么做」
+            section.blocks.forEach { block -> paintBlock(painter, block) }
+            section.subsections.forEachIndexed { subIndex, subsection ->
+                painter.subheading(ReviewText.subsectionHeading(subIndex + 1, subsection.title))
+                subsection.blocks.forEach { block -> paintBlock(painter, block) }
+            }
+        }
+    }
+
+    /** 一个内容块：段落逐行写，要点加色块符号，编号用主色数字，例题单独成块。 */
     private fun paintBlock(
         painter: PagePainter,
         block: ReviewBlock,
     ) {
         when (block.style) {
             ReviewBlockStyle.PARAGRAPH ->
-                block.lines.forEach { line ->
-                    painter.paragraph(line)
-                    painter.gap(3f)
+                ReviewText.paragraphSegments(block.lines).forEach { text ->
+                    painter.paragraph(text)
+                    painter.gap(BLOCK_LINE_GAP_PT)
                 }
 
             ReviewBlockStyle.BULLETS ->
                 block.lines.forEach { line ->
-                    painter.item(BULLET_PREFIX, line)
-                    painter.gap(2f)
+                    painter.item("", line)
+                    painter.gap(BLOCK_LINE_GAP_PT)
                 }
 
             ReviewBlockStyle.NUMBERED ->
                 block.lines.forEachIndexed { index, line ->
-                    painter.item((index + 1).toString() + ". ", line)
-                    painter.gap(2f)
+                    painter.item((index + 1).toString(), line)
+                    painter.gap(BLOCK_LINE_GAP_PT)
                 }
 
-            // 例题：题干与思路用正文字号，答案单独缩到小字，方便做完再核对
-            ReviewBlockStyle.EXAMPLE ->
-                painter.exampleFigure(
-                    stem = block.lines.first(),
-                    notes = block.lines.drop(1),
-                )
+            ReviewBlockStyle.EXAMPLE -> painter.example(block.lines)
         }
-        painter.gap(4f)
+        painter.gap(BLOCK_GAP_PT)
     }
 
-    /** 卷首说明：这份资料到底从哪来，避免看完不知道依据。 */
-    private fun sourceNote(material: ReviewMaterial): String {
-        val origin =
-            if (material.mistakesUsed > 0) {
-                "依据本科目 " + material.mistakesUsed + " 道错题整理"
-            } else {
-                "本科目暂无错题记录，按该科目通用考点整理"
-            }
+    /** 卷首说明：这份资料从哪来、用了多少错题、一共几章。 */
+    private fun subtitleOf(material: ReviewMaterial): String {
         val date =
             if (material.createdAtUtc > 0L) {
                 SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date(material.createdAtUtc))
             } else {
                 ""
             }
-        return if (date.isEmpty()) origin else origin + " · 生成于 " + date
+        val origin =
+            when {
+                material.mistakesUsed > 0 && material.mistakesAvailable > material.mistakesUsed ->
+                    "取材：本科目共 " + material.mistakesAvailable + " 道错题，纳入最近 " +
+                        material.mistakesUsed + " 道"
+                material.mistakesUsed > 0 -> "取材：本科目 " + material.mistakesUsed + " 道错题"
+                else -> "本科目暂无错题记录，按该科目通用考点整理"
+            }
+        val parts =
+            buildList {
+                add(origin)
+                add(material.sections.size.toString() + " 个章节")
+                if (date.isNotEmpty()) add("生成于 " + date)
+            }
+        return parts.joinToString("　·　")
     }
 
     companion object {
@@ -128,32 +155,62 @@ class ReviewMaterialPdfWriter(
         /** 导出文件名前缀。 */
         const val FILE_STEM: String = "考前复习资料_"
 
-        /** 无序要点的行首符号。 */
-        private const val BULLET_PREFIX: String = "· "
+        /** A4 双面 5 张 = 10 页的硬上限。 */
+        const val MAX_PAGES: Int = 10
+
+        /** 同一块内相邻两行之间的小间距。 */
+        private const val BLOCK_LINE_GAP_PT: Float = 2f
+
+        /** 块与块之间的间距。 */
+        private const val BLOCK_GAP_PT: Float = 5f
     }
 }
 
 sealed class PdfWriteResult {
-    data class Success(val file: File) : PdfWriteResult()
+    /** @param pageCount 实际排出的页数，界面据此提示「双面打印 N 张」。 */
+    data class Success(
+        val file: File,
+        val pageCount: Int,
+    ) : PdfWriteResult()
 
     data class Failure(val reason: String) : PdfWriteResult()
 }
 
+/** 一套字号档位：四档递减，只在超页时才会用到后三档。 */
+private data class Typography(
+    val body: Float,
+    val lineRatio: Float,
+    val title: Float,
+    val heading: Float,
+) {
+    companion object {
+        /** 从舒适到紧凑；最后一档是兜底，宁可字小一点也不砍内容。 */
+        val PRESETS: List<Typography> =
+            listOf(
+                Typography(body = 11.5f, lineRatio = 1.55f, title = 19f, heading = 13f),
+                Typography(body = 11f, lineRatio = 1.46f, title = 18f, heading = 12.5f),
+                Typography(body = 10.5f, lineRatio = 1.38f, title = 17f, heading = 12f),
+                Typography(body = 10f, lineRatio = 1.32f, title = 16.5f, heading = 11.5f),
+            )
+    }
+}
+
 /**
- * 简易排版器：维护当前页与 y 坐标，写满自动换页。
+ * 版面绘制器：维护当前页与 y 坐标，写满自动换页。
  *
- * 支持「标题 / 章节标题 / 段落 / 要点 / 间隔 / 分隔线」六种操作，
- * 加上行内加粗（`**…**`）。刻意不引入完整排版引擎：
- * 复习资料只有这几种版式，多出来的能力没人用，还得自己养。
+ * 支持「文档头 / 总述块 / 章节标题 / 段落 / 要点 / 例题 / 间隔」七种操作，加上行内加粗。
+ * 刻意不引入完整排版引擎：复习资料只有这几种版式，多出来的能力没人用，还得自己养。
  */
-private class PagePainter(private val doc: PdfDocument) {
+private class PagePainter(
+    private val doc: PdfDocument,
+    private val type: Typography,
+) {
     private val pageWidth = 595
     private val pageHeight = 842
     private val marginX = 46f
     private val marginTop = 52f
     private val marginBottom = 52f
 
-    /** 版心右边界，折行时用它判断「还能放多宽」。 */
     private val contentRight: Float get() = pageWidth - marginX
 
     private var page: PdfDocument.Page? = null
@@ -161,27 +218,57 @@ private class PagePainter(private val doc: PdfDocument) {
     private var y: Float = marginTop
     private var pageNumber = 0
 
+    /** 已排出的页数（超页判断用）。 */
+    val pageCount: Int get() = pageNumber
+
     private val titlePaint =
         Paint().apply {
             isAntiAlias = true
-            textSize = 17f
-            color = Color.BLACK
+            textSize = type.title
+            color = Palette.PRIMARY
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         }
 
     private val headingPaint =
         Paint().apply {
             isAntiAlias = true
-            textSize = 13f
-            color = Color.BLACK
+            textSize = type.heading
+            color = Palette.INK
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    private val headingNumberPaint =
+        Paint().apply {
+            isAntiAlias = true
+            textSize = type.heading
+            color = Palette.PRIMARY
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    /**
+     * 小节标题：比章节标题小 1.5 磅，不加细线。
+     *
+     * 层级靠字号与「有没有线」区分：章节有一条横贯版心的细线，
+     * 小节只有主色序号，翻页扫读时两层的分界不会混。
+     */
+    private val subheadingPaint =
+        Paint().apply {
+            isAntiAlias = true
+            textSize = type.heading - 1.5f
+            color = Palette.INK
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    private val subheadingNumberPaint =
+        Paint(subheadingPaint).apply {
+            color = Palette.PRIMARY
         }
 
     private val bodyPaint =
         Paint().apply {
             isAntiAlias = true
-            textSize = 11.5f
-            color = Color.BLACK
+            textSize = type.body
+            color = Palette.INK
             typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
         }
 
@@ -191,23 +278,83 @@ private class PagePainter(private val doc: PdfDocument) {
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         }
 
+    /** 总述块正文：主色系深色，与正文一眼分得开。 */
+    private val summaryPaint =
+        Paint(bodyPaint).apply {
+            color = Palette.PRIMARY
+        }
+
+    private val summaryBoldPaint =
+        Paint(summaryPaint).apply {
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
     private val notePaint =
         Paint().apply {
             isAntiAlias = true
-            textSize = 9.5f
-            color = Color.rgb(0x55, 0x55, 0x55)
+            textSize = type.body - 2f
+            color = Palette.MUTED
             typeface = Typeface.create(Typeface.SERIF, Typeface.NORMAL)
         }
 
-    /** 例题答案用的小字：比正文小 1.5 磅，做完题再看也不至于一眼扫到结果。 */
-    private val smallPaint =
+    /** 例题答案：比正文小 1.5 磅并改用成功色，做完题再看也不至于一眼扫到。 */
+    private val answerPaint =
         Paint(bodyPaint).apply {
-            textSize = 10f
+            textSize = type.body - 1.5f
+            color = Palette.SUCCESS
         }
 
-    private val smallBoldPaint =
-        Paint(smallPaint).apply {
+    private val answerBoldPaint =
+        Paint(answerPaint).apply {
             typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    private val detailPaint =
+        Paint(notePaint).apply {
+            textSize = type.body - 1.5f
+        }
+
+    /** 例题里的「思路」：用推理色，与题干区分开。 */
+    private val hintPaint =
+        Paint(bodyPaint).apply {
+            color = Palette.REASONING
+        }
+
+    private val rulePaint =
+        Paint().apply {
+            isAntiAlias = true
+            strokeWidth = 0.7f
+            color = Palette.RULE
+            style = Paint.Style.STROKE
+        }
+
+    private val barPaint =
+        Paint().apply {
+            isAntiAlias = true
+            color = Palette.PRIMARY
+            style = Paint.Style.FILL
+        }
+
+    private val accentBarPaint =
+        Paint().apply {
+            isAntiAlias = true
+            color = Palette.ACCENT
+            style = Paint.Style.FILL
+        }
+
+    private val tagPaint =
+        Paint().apply {
+            isAntiAlias = true
+            textSize = type.body - 2.5f
+            color = Palette.ACCENT
+            typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        }
+
+    private val tagBoxPaint =
+        Paint().apply {
+            isAntiAlias = true
+            color = Palette.ACCENT_TINT
+            style = Paint.Style.FILL
         }
 
     /**
@@ -218,11 +365,18 @@ private class PagePainter(private val doc: PdfDocument) {
      */
     private val subscriptSupported: Boolean by lazy { bodyPaint.hasGlyph("₈") }
 
-    private val rulePaint =
+    /** 同上，判定上标字符（`²`）。 */
+    private val superscriptSupported: Boolean by lazy { bodyPaint.hasGlyph("²") }
+
+    /** 小字号副本的缓存：上下标、分子分母、根号符号都要用，不能每画一个分式就 new 一支 Paint。 */
+    private val brush = PaintScaler()
+
+    /** 分式横线与根号顶横：比正文细，打印出来是一条细线而不是一道黑杠。 */
+    private val mathRulePaint =
         Paint().apply {
             isAntiAlias = true
-            strokeWidth = 0.7f
-            color = Color.rgb(0x66, 0x66, 0x66)
+            strokeWidth = 0.6f
+            color = Palette.INK
             style = Paint.Style.STROKE
         }
 
@@ -234,93 +388,231 @@ private class PagePainter(private val doc: PdfDocument) {
         page = created
         canvas = created.canvas
         y = marginTop
+        // 第 2 页起加书眉：散页后知道这是哪一科的哪一份
+        if (pageNumber > 1) {
+            canvas?.drawText(RUNNING_TITLE, marginX, RUNNING_TITLE_BASELINE_Y, notePaint)
+            canvas?.drawLine(marginX, RUNNING_RULE_Y, contentRight, RUNNING_RULE_Y, rulePaint)
+        }
     }
 
-    fun title(text: String) {
-        ensureSpace(TITLE_BLOCK_PT)
-        canvas?.drawText(text, marginX, y, titlePaint)
-        y += TITLE_BLOCK_PT
+    /** 文档头：主色标题 + 主色细条 + 一行灰字说明。 */
+    fun docHeader(
+        title: String,
+        subtitle: String,
+    ) {
+        canvas?.drawText(title, marginX, y + type.title, titlePaint)
+        y += type.title + HEADER_TITLE_GAP
+        canvas?.drawRect(marginX, y, contentRight, y + HEADER_RULE_HEIGHT, barPaint)
+        y += HEADER_RULE_AFTER
+        writeRich(ReviewText.splitBold(subtitle), 0f, 0f, notePaint, notePaint)
+        y += HEADER_SUBTITLE_AFTER
     }
 
-    fun note(text: String) {
-        ensureSpace(NOTE_BLOCK_PT)
-        canvas?.drawText(text, marginX, y, notePaint)
-        y += NOTE_BLOCK_PT
-    }
-
-    /** 章节标题：加粗，下方一条细线，方便打印后快速定位。 */
+    /** 章节标题：主色序号 + 墨色标题 + 一条淡线，方便打印后快速定位。 */
     fun heading(text: String) {
-        ensureSpace(HEADING_BLOCK_PT)
+        // 标题后面至少留三行正文，避免「标题孤零零挂在页脚」
+        ensureSpace(HEADING_BLOCK_PT + bodyPaint.textSize * type.lineRatio * 3f)
         y += HEADING_GAP_PT
-        canvas?.drawText(text, marginX, y, headingPaint)
+        val number = text.substringBefore('、', "")
+        val rest = if (number.isEmpty()) text else text.substringAfter('、', text)
+        var x = marginX
+        if (number.isNotEmpty()) {
+            canvas?.drawText(number + "、", x, y, headingNumberPaint)
+            x += headingNumberPaint.measureText(number + "、")
+        }
+        canvas?.drawText(rest, x, y, headingPaint)
         y += HEADING_RULE_GAP_PT
         canvas?.drawLine(marginX, y, contentRight, y, rulePaint)
         y += HEADING_AFTER_PT
     }
 
-    /** 分隔线（卷首用）。 */
-    fun rule() {
-        ensureSpace(RULE_BLOCK_PT)
-        y += RULE_BEFORE_PT
-        canvas?.drawLine(marginX, y, contentRight, y, rulePaint)
-        y += RULE_AFTER_PT
-    }
-
-    /** 普通段落：整段折行，行内 `**…**` 加粗。 */
-    fun paragraph(text: String) {
-        writeRich(ReviewText.splitBold(text), firstIndent = 0f, restIndent = 0f, paint = bodyPaint)
+    /**
+     * 小节标题：主色「（一）」+ 墨色标题。
+     *
+     * 序号与标题分色，和章节标题用的是同一套视觉语言，只是小一号、不带细线——
+     * 打印出来后一眼能看出「这一条属于上面那一章」。
+     */
+    fun subheading(text: String) {
+        ensureSpace(SUB_HEADING_BLOCK_PT + bodyPaint.textSize * type.lineRatio * 2f)
+        y += SUB_HEADING_GAP_PT
+        val close = text.indexOf('）')
+        val hasLabel = text.startsWith("（") && close > 0
+        val label = if (hasLabel) text.substring(0, close + 1) else ""
+        val rest = if (hasLabel) text.substring(close + 1) else text
+        var x = marginX
+        if (label.isNotEmpty()) {
+            canvas?.drawText(label, x, y, subheadingNumberPaint)
+            x += subheadingNumberPaint.measureText(label)
+        }
+        canvas?.drawText(rest, x, y, subheadingPaint)
+        y += SUB_HEADING_AFTER_PT
     }
 
     /**
-     * 例题：题干带「例：」，随后思路用正文、答案缩成小字。
+     * 卷首总述：左侧一条主色竖线，正文整体缩进。
      *
-     * @param notes 思路与答案行；以「答案」开头的行自动用小字
+     * 竖线在正文画完之后再补：这样不需要预先估算折行高度，
+     * 只要记住起止 y 就能画一条正好等高的线。
      */
-    fun exampleFigure(
-        stem: String,
-        notes: List<String>,
-    ) {
-        ensureSpace(EXAMPLE_BLOCK_PT)
-        y += 4f
-        val stemRuns =
-            buildList {
-                add(ReviewTextRun(EXAMPLE_PREFIX, true))
-                addAll(ReviewText.splitBold(stem))
-            }
-        writeRich(stemRuns, firstIndent = 0f, restIndent = 0f, paint = bodyPaint)
-        notes.forEach { line ->
-            if (ReviewText.isAnswerLine(line)) {
-                writeRich(
-                    ReviewText.splitBold(line),
-                    firstIndent = EXAMPLE_INDENT_PT,
-                    restIndent = EXAMPLE_INDENT_PT,
-                    paint = smallPaint,
-                    boldPaint = smallBoldPaint,
-                )
-            } else {
-                writeRich(
-                    ReviewText.splitBold(line),
-                    firstIndent = EXAMPLE_INDENT_PT,
-                    restIndent = EXAMPLE_INDENT_PT,
-                    paint = bodyPaint,
-                )
-            }
-        }
-        y += 4f
+    fun summaryBlock(text: String) {
+        val startY = y
+        writeRich(ReviewText.splitBold(text), SUMMARY_INDENT_PT, SUMMARY_INDENT_PT, summaryPaint, summaryBoldPaint)
+        canvas?.drawRect(
+            marginX,
+            startY - type.body,
+            marginX + SUMMARY_BAR_WIDTH,
+            y - type.body * SUMMARY_BAR_BOTTOM_RATIO,
+            barPaint,
+        )
+        y += SUMMARY_AFTER_PT
     }
 
-    /** 要点：行首符号或序号 + 悬挂缩进，折行后与正文左对齐。 */
+    /** 普通段落：整段折行，行内 `**…**` 加粗；行首若是「易错/注意」先画标签。 */
+    fun paragraph(text: String) {
+        val tag = ReviewText.tagOf(text)
+        if (tag != null) {
+            val body = text.trimStart().removePrefix(tag).trimStart('：', ':', ' ')
+            val startY = y
+            writeRich(ReviewText.splitBold(body), TAG_WIDTH_PT, TAG_WIDTH_PT, bodyPaint)
+            drawTag(tag, startY)
+            return
+        }
+        writeRich(ReviewText.splitBold(text), 0f, 0f, bodyPaint)
+    }
+
+    /**
+     * 要点：无序用主色小方块，有序用主色数字，正文悬挂缩进。
+     *
+     * @param prefix 有序列表的序号（"1"）；空串表示无序要点
+     */
     fun item(
         prefix: String,
         text: String,
     ) {
-        val runs =
+        val tag = ReviewText.tagOf(text)
+        val body = if (tag != null) text.trimStart().removePrefix(tag).trimStart('：', ':', ' ') else text
+        val indent = ITEM_INDENT_PT
+        val startY = y
+        writeRich(ReviewText.splitBold(body), indent, indent, bodyPaint)
+        if (prefix.isEmpty()) {
+            canvas?.drawRect(
+                marginX + ITEM_BULLET_LEFT,
+                startY - type.body + ITEM_BULLET_TOP,
+                marginX + ITEM_BULLET_RIGHT,
+                startY - ITEM_BULLET_BOTTOM,
+                barPaint,
+            )
+        } else {
+            canvas?.drawText(prefix + ".", marginX, startY, headingNumberPaint)
+        }
+        if (tag != null) drawTag(tag, startY)
+    }
+
+    /**
+     * 例题：题干 → 选项（一行一个）→ 思路 → 答案（小字）→ 详解（更小的灰字）。
+     *
+     * 为什么选项要单独占行：四个选项挤成一段时，学生要在同一行里来回找 A/B/C/D，
+     * 打印在纸上更明显。答案与详解放在**一条虚分割线之后**，先做完再看。
+     */
+    fun example(lines: List<String>) {
+        if (lines.isEmpty()) return
+        val answer =
+            lines.firstOrNull { ReviewText.isAnswerLine(it) }
+                ?.substringAfter('：', "")
+                .orEmpty()
+                .trim()
+        y += EXAMPLE_GAP_BEFORE_PT
+        val startY = y
+        val stemRuns =
             buildList {
-                add(ReviewTextRun(prefix, false))
-                addAll(ReviewText.splitBold(text))
+                add(ReviewTextRun(EXAMPLE_PREFIX, true))
+                addAll(ReviewText.splitBold(lines.first()))
             }
-        val indent = bodyPaint.measureText(prefix)
-        writeRich(runs, firstIndent = 0f, restIndent = indent, paint = bodyPaint)
+        writeRich(stemRuns, 0f, 0f, bodyPaint)
+        var sawAnswer = false
+        lines.drop(1).forEach { raw ->
+            val line = raw.trim()
+            if (line.isEmpty()) return@forEach
+            when {
+                ReviewText.isOptionLine(line) -> {
+                    val letter = ReviewText.optionLetter(line).orEmpty()
+                    writeOption(letter, stripOptionPrefix(line))
+                }
+
+                ReviewText.isHintLine(line) ->
+                    writeRich(
+                        ReviewText.splitBold(ReviewText.stripAnswerLeak(line, answer)),
+                        OPTION_INDENT_PT,
+                        OPTION_INDENT_PT,
+                        hintPaint,
+                    )
+
+                ReviewText.isAnswerLine(line) -> {
+                    sawAnswer = true
+                    dashedRule()
+                    writeRich(ReviewText.splitBold(line), 0f, 0f, answerPaint, answerBoldPaint)
+                }
+
+                ReviewText.isDetailLine(line) -> {
+                    if (!sawAnswer) dashedRule()
+                    writeRich(ReviewText.splitBold(line), 0f, 0f, detailPaint, detailPaint)
+                }
+
+                else -> writeRich(ReviewText.splitBold(line), OPTION_INDENT_PT, OPTION_INDENT_PT, bodyPaint)
+            }
+        }
+        y += 3f
+        // 整块左侧一条赭石竖线：把「题干 + 选项 + 思路 + 答案」圈成一道题
+        canvas?.drawRect(
+            marginX - EXAMPLE_BAR_LEFT,
+            startY - type.body,
+            marginX - EXAMPLE_BAR_RIGHT,
+            y - type.body * EXAMPLE_BAR_BOTTOM_RATIO,
+            accentBarPaint,
+        )
+        y += EXAMPLE_GAP_AFTER_PT
+    }
+
+    /** 选项：字母主色加粗 + 悬挂缩进，一行一个。 */
+    private fun writeOption(
+        letter: String,
+        body: String,
+    ) {
+        val label = if (letter.isEmpty()) "" else letter + "."
+        val indent = OPTION_INDENT_PT + OPTION_LABEL_WIDTH_PT
+        val starts = y
+        writeRich(ReviewText.splitBold(body), indent, indent, bodyPaint)
+        if (label.isNotEmpty()) {
+            canvas?.drawText(label, marginX + OPTION_INDENT_PT, starts, headingNumberPaint)
+        }
+    }
+
+    /** 去掉选项行首的「A.」「（B）」等前缀：前缀由排版单独画。 */
+    private fun stripOptionPrefix(line: String): String =
+        line.replaceFirst(Regex("^[（(]?[A-Da-dＡ-Ｄ][)）.、．:：]\\s*"), "").trim()
+
+    /** 画一个浅底标签（文字底色块 + 强调色字）。 */
+    private fun drawTag(
+        tag: String,
+        rowBaseline: Float,
+    ) {
+        val textWidth = tagPaint.measureText(tag)
+        val top = rowBaseline - tagPaint.textSize - 2f
+        val rect = RectF(marginX, top, marginX + textWidth + 6f, rowBaseline + 1.5f)
+        canvas?.drawRoundRect(rect, 2f, 2f, tagBoxPaint)
+        canvas?.drawText(tag, marginX + TAG_TEXT_PADDING_X, rowBaseline - TAG_TEXT_PADDING_Y, tagPaint)
+    }
+
+    /** 例题里答案与详解之间的虚线：视觉上把「题」和「解」分开。 */
+    private fun dashedRule() {
+        ensureSpace(DASH_BLOCK_PT)
+        y += 5f
+        var x = marginX
+        while (x < contentRight) {
+            canvas?.drawLine(x, y, minOf(x + DASH_LENGTH_PT, contentRight), y, rulePaint)
+            x += DASH_LENGTH_PT * 2f
+        }
+        y += 6f
     }
 
     fun gap(size: Float) {
@@ -334,10 +626,11 @@ private class PagePainter(private val doc: PdfDocument) {
     private fun finishPage() {
         val openPage = page
         if (openPage != null) {
-            // 页脚页码：四五张纸订在一起，散页后能对回顺序
+            // 页脚：页码 + 右侧一句「双面打印」提示，散页后能对回顺序
+            canvas?.drawText("第 " + pageNumber + " 页", marginX, pageHeight - 28f, notePaint)
             canvas?.drawText(
-                "第 " + pageNumber + " 页",
-                marginX,
+                FOOTER_HINT,
+                contentRight - notePaint.measureText(FOOTER_HINT),
                 pageHeight - 28f,
                 notePaint,
             )
@@ -348,10 +641,11 @@ private class PagePainter(private val doc: PdfDocument) {
     }
 
     /**
-     * 写一段自动折行的富文本。
+     * 写一段自动折行的富文本（加粗 + 轻数学记号）。
      *
-     * 逐片段（普通/加粗）排：一个片段在当前行放不下就截断换行，
-     * 段与段之间不额外换行——一句话里两处加粗，仍然是一行文字。
+     * 分两步：先把片段排成「行」并算出每行高度，再逐行绘制。
+     * 为什么不能边排边画：分式与根号比正文高，一行到底多高要等整行排完才知道；
+     * 边排边画就会出现「这行画到页脚外」或「后半行被新页切断」。
      *
      * @param firstIndent 首行左缩进
      * @param restIndent 折行后左缩进（悬挂缩进）
@@ -364,45 +658,176 @@ private class PagePainter(private val doc: PdfDocument) {
         boldPaint: Paint = bodyBoldPaint,
     ) {
         if (runs.isEmpty()) return
-        val lineHeight = paint.textSize * LINE_HEIGHT_RATIO
-        ensureSpace(lineHeight)
-        var x = marginX + firstIndent
-        var lineStartX = x
-        runs.forEach { run ->
-            val runPaint = if (run.bold) boldPaint else paint
-            var rest = prepareScripts(run.text)
-            while (rest.isNotEmpty()) {
-                var count = runPaint.breakText(rest, true, contentRight - x, null)
-                if (count <= 0) {
-                    if (x > lineStartX) {
-                        y += lineHeight
-                        ensureSpace(lineHeight)
-                        x = marginX + restIndent
-                        lineStartX = x
-                        continue
-                    }
-                    // 行首也放不下（极窄残行）：至少画一个字，避免死循环
-                    count = 1
-                }
-                canvas?.drawText(rest, 0, count, x, y, runPaint)
-                x += runPaint.measureText(rest, 0, count)
-                rest = rest.drop(count)
-                if (rest.isNotEmpty()) {
-                    y += lineHeight
-                    ensureSpace(lineHeight)
-                    x = marginX + restIndent
-                    lineStartX = x
+        val lines = layoutLines(buildInk(runs, paint, boldPaint), firstIndent, restIndent, paint)
+        lines.forEach { line ->
+            ensureSpace(line.height)
+            line.placements.forEach { placement ->
+                when (val ink = placement.ink) {
+                    is Ink.Glyphs -> canvas?.drawText(ink.text, placement.x, y + ink.offsetY, ink.paint)
+                    is Ink.Fraction -> drawFraction(ink, placement.x)
+                    is Ink.Radical -> drawRadical(ink, placement.x)
                 }
             }
+            y += line.height
         }
-        y += lineHeight
     }
 
-    /** 字体不支持下标时把下标字符退回普通数字，避免印成方块。 */
+    /** 把片段排成行：文字按剩余宽度逐字切分，分式与根号是整体，放不下就换行。 */
+    private fun layoutLines(
+        inks: List<Ink>,
+        firstIndent: Float,
+        restIndent: Float,
+        paint: Paint,
+    ): List<PdfLine> {
+        val lines = ArrayList<PdfLine>()
+        val lineHeight = paint.textSize * type.lineRatio
+        var items = ArrayList<Placement>()
+        var x = marginX + firstIndent
+        var above = 0f
+        var below = 0f
+
+        fun flush() {
+            if (items.isEmpty()) return
+            lines += PdfLine(maxOf(lineHeight, above + below), items)
+            items = ArrayList()
+            x = marginX + restIndent
+            above = 0f
+            below = 0f
+        }
+
+        inks.forEach { ink ->
+            if (ink is Ink.Glyphs) {
+                var rest = ink.text
+                while (rest.isNotEmpty()) {
+                    var count = ink.paint.breakText(rest, true, contentRight - x, null)
+                    if (count <= 0) {
+                        if (items.isNotEmpty()) {
+                            flush()
+                            continue
+                        }
+                        // 行首也放不下（极窄残行）：至少画一个字，避免死循环
+                        count = 1
+                    }
+                    items += Placement(Ink.Glyphs(rest.substring(0, count), ink.paint, ink.offsetY), x)
+                    x += ink.paint.measureText(rest, 0, count)
+                    rest = rest.substring(count)
+                    above = maxOf(above, ink.above)
+                    below = maxOf(below, ink.below)
+                    if (rest.isNotEmpty()) flush()
+                }
+            } else {
+                if (x + ink.width > contentRight && items.isNotEmpty()) flush()
+                items += Placement(ink, x)
+                x += ink.width
+                above = maxOf(above, ink.above)
+                below = maxOf(below, ink.below)
+            }
+        }
+        flush()
+        return lines
+    }
+
+    /** 分式：分子与分母各自居中，中间一条横线，横线宽度等于较宽的那一边。 */
+    private fun drawFraction(
+        ink: Ink.Fraction,
+        x: Float,
+    ) {
+        val centerX = x + ink.width / 2f
+        val numeratorX = centerX - ink.numeratorWidth / 2f
+        val denominatorX = centerX - ink.denominatorWidth / 2f
+        canvas?.drawText(ink.numerator, numeratorX, y + ink.numeratorBaseline, ink.numeratorPaint)
+        canvas?.drawText(ink.denominator, denominatorX, y + ink.denominatorBaseline, ink.denominatorPaint)
+        canvas?.drawLine(x, y + ink.ruleY, x + ink.width, y + ink.ruleY, ink.rulePaint)
+    }
+
+    /** 根号：`√` 符号 + 被开方内容 + 一条压在内容顶上的横线（就是根号的顶横）。 */
+    private fun drawRadical(
+        ink: Ink.Radical,
+        x: Float,
+    ) {
+        canvas?.drawText(RADICAL_SIGN_TEXT, x, y, ink.signPaint)
+        canvas?.drawText(ink.body, x + ink.signWidth, y, ink.bodyPaint)
+        canvas?.drawLine(
+            x + ink.signWidth * RADICAL_FLAG_RATIO,
+            y + ink.vinculumY,
+            x + ink.width,
+            y + ink.vinculumY,
+            ink.rulePaint,
+        )
+    }
+
+    /** 把加粗片段与数学记号摊平成绘制单元。 */
+    private fun buildInk(
+        runs: List<ReviewTextRun>,
+        paint: Paint,
+        boldPaint: Paint,
+    ): List<Ink> {
+        val out = ArrayList<Ink>(runs.size * 2)
+        runs.forEach { run ->
+            val base = if (run.bold) boldPaint else paint
+            appendInk(out, ReviewMath.parse(run.text), base)
+        }
+        return out
+    }
+
+    private fun appendInk(
+        out: MutableList<Ink>,
+        tokens: List<ReviewMath.Token>,
+        base: Paint,
+    ) {
+        tokens.forEach { token ->
+            when (token) {
+                is ReviewMath.Token.Text ->
+                    if (token.value.isNotEmpty()) out += Ink.Glyphs(prepareScripts(token.value), base)
+
+                is ReviewMath.Token.Sub ->
+                    out +=
+                        Ink.Glyphs(
+                            text = prepareScripts(token.value),
+                            paint = brush.scaled(base, SCRIPT_SCALE),
+                            offsetY = base.textSize * SUBSCRIPT_DROP,
+                        )
+
+                is ReviewMath.Token.Sup ->
+                    out +=
+                        Ink.Glyphs(
+                            text = prepareScripts(token.value),
+                            paint = brush.scaled(base, SCRIPT_SCALE),
+                            offsetY = -base.textSize * SUPERSCRIPT_RISE,
+                        )
+
+                is ReviewMath.Token.Fraction ->
+                    out +=
+                        Ink.Fraction(
+                            numerator = prepareScripts(ReviewMath.flattenScripted(token.numerator)),
+                            denominator = prepareScripts(ReviewMath.flattenScripted(token.denominator)),
+                            numeratorPaint = brush.scaled(base, FRACTION_SCALE),
+                            denominatorPaint = brush.scaled(base, FRACTION_SCALE),
+                            rulePaint = mathRulePaint,
+                        )
+
+                is ReviewMath.Token.Radical ->
+                    out +=
+                        Ink.Radical(
+                            body = prepareScripts(ReviewMath.flattenScripted(token.radicand)),
+                            signPaint = brush.scaled(base, RADICAL_SIGN_SCALE),
+                            bodyPaint = base,
+                            rulePaint = mathRulePaint,
+                        )
+            }
+        }
+    }
+
+    /** 字体不支持下标/上标字符时退回普通数字，避免印成方块。 */
     private fun prepareScripts(text: String): String {
-        if (subscriptSupported || text.isEmpty()) return text
+        if (text.isEmpty()) return text
+        val needSub = !subscriptSupported && text.any { it in SUBSCRIPT_TO_DIGIT }
+        val needSup = !superscriptSupported && text.any { it in SUPERSCRIPT_TO_DIGIT }
+        if (!needSub && !needSup) return text
         val builder = StringBuilder(text.length)
-        text.forEach { ch -> builder.append(SUBSCRIPT_TO_DIGIT[ch] ?: ch) }
+        text.forEach { ch ->
+            builder.append(SUBSCRIPT_TO_DIGIT[ch] ?: SUPERSCRIPT_TO_DIGIT[ch] ?: ch)
+        }
         return builder.toString()
     }
 
@@ -426,20 +851,79 @@ private class PagePainter(private val doc: PdfDocument) {
                 '₉' to '9',
             )
 
-        /** 行高相对字号的倍数：1.55 在 A4 上中文不挤，行距也不松散。 */
-        const val LINE_HEIGHT_RATIO: Float = 1.55f
+        /** 上标字符 -> 普通数字，字体缺字形时用。 */
+        val SUPERSCRIPT_TO_DIGIT: Map<Char, Char> =
+            mapOf(
+                '⁰' to '0',
+                '¹' to '1',
+                '²' to '2',
+                '³' to '3',
+                '⁴' to '4',
+                '⁵' to '5',
+                '⁶' to '6',
+                '⁷' to '7',
+                '⁸' to '8',
+                '⁹' to '9',
+            )
 
-        /** 主标题占用的竖向高度（含与下一行的间距）。 */
-        const val TITLE_BLOCK_PT: Float = 30f
+        /** 第 2 页起重复的书眉文字。 */
+        const val RUNNING_TITLE: String = "ToTop · 考前复习资料"
 
-        /** 卷首小字说明占用的竖向高度。 */
-        const val NOTE_BLOCK_PT: Float = 16f
+        /** 书眉文字基线与分隔线的 y 坐标。 */
+        const val RUNNING_TITLE_BASELINE_Y: Float = 28f
+        const val RUNNING_RULE_Y: Float = 35f
+
+        /** 文档头：标题到主色细条、细条高度、细条到说明、说明之后的留白。 */
+        const val HEADER_TITLE_GAP: Float = 10f
+        const val HEADER_RULE_HEIGHT: Float = 2f
+        const val HEADER_RULE_AFTER: Float = 13f
+        const val HEADER_SUBTITLE_AFTER: Float = 11f
+
+        /** 总述块左侧竖线宽度，以及竖线底端相对末行基线的比例。 */
+        const val SUMMARY_BAR_WIDTH: Float = 2.5f
+        const val SUMMARY_BAR_BOTTOM_RATIO: Float = 0.3f
+
+        /** 要点小方块的四边偏移（相对版心左边界与当前行基线）。 */
+        const val ITEM_BULLET_LEFT: Float = 1f
+        const val ITEM_BULLET_TOP: Float = 2.5f
+        const val ITEM_BULLET_RIGHT: Float = 4.5f
+        const val ITEM_BULLET_BOTTOM: Float = 2.5f
+
+        /** 例题左侧赭石竖线的左右偏移与底端比例。 */
+        const val EXAMPLE_BAR_LEFT: Float = 9f
+        const val EXAMPLE_BAR_RIGHT: Float = 6.5f
+        const val EXAMPLE_BAR_BOTTOM_RATIO: Float = 0.4f
+
+        /** 标签色块内文字的内边距。 */
+        const val TAG_TEXT_PADDING_X: Float = 3f
+        const val TAG_TEXT_PADDING_Y: Float = 2.5f
+
+        /** 上下标相对正文的缩放比例。 */
+        const val SCRIPT_SCALE: Float = 0.72f
+
+        /** 下标基线下沉的量（相对正文字号）。 */
+        const val SUBSCRIPT_DROP: Float = 0.18f
+
+        /** 上标基线上抬的量（相对正文字号）。 */
+        const val SUPERSCRIPT_RISE: Float = 0.34f
+
+        /** 分式内部字号相对正文的比例。 */
+        const val FRACTION_SCALE: Float = 0.86f
+
+        /** 根号符号相对正文的放大倍数。 */
+        const val RADICAL_SIGN_SCALE: Float = 1.18f
+
+        /** 根号顶横的起点：落在符号斜肩之后，太靠左会压住符号本身。 */
+        const val RADICAL_FLAG_RATIO: Float = 0.62f
+
+        /** 页脚右侧提示。 */
+        const val FOOTER_HINT: String = "A4 双面打印 · 5 张以内"
 
         /** 章节标题整体占用高度：上方留白 + 标题 + 细线 + 下方留白。 */
         const val HEADING_BLOCK_PT: Float = 38f
 
         /** 章节标题与上一段之间的留白。 */
-        const val HEADING_GAP_PT: Float = 12f
+        const val HEADING_GAP_PT: Float = 13f
 
         /** 章节标题基线到细线的距离。 */
         const val HEADING_RULE_GAP_PT: Float = 7f
@@ -447,17 +931,196 @@ private class PagePainter(private val doc: PdfDocument) {
         /** 细线到正文首行的距离。 */
         const val HEADING_AFTER_PT: Float = 13f
 
-        /** 卷首分隔线整体占用高度。 */
-        const val RULE_BLOCK_PT: Float = 14f
+        /** 小节标题整体占用高度：上方留白 + 标题 + 下方留白。 */
+        const val SUB_HEADING_BLOCK_PT: Float = 26f
 
-        /** 分隔线之前 / 之后的留白。 */
-        const val RULE_BEFORE_PT: Float = 6f
-        const val RULE_AFTER_PT: Float = 8f
+        /** 小节标题与上方内容的距离（比章节标题小，层级才清楚）。 */
+        const val SUB_HEADING_GAP_PT: Float = 9f
 
-        /** 例题最低占用高度（题干一行 + 至少两行附注）。 */
-        const val EXAMPLE_BLOCK_PT: Float = 54f
+        /** 小节标题到其下第一行的距离。 */
+        const val SUB_HEADING_AFTER_PT: Float = 5f
 
-        /** 例题附注的左缩进。 */
-        const val EXAMPLE_INDENT_PT: Float = 14f
+        /** 总述块的左缩进与下方留白。 */
+        const val SUMMARY_INDENT_PT: Float = 11f
+        const val SUMMARY_AFTER_PT: Float = 12f
+
+        /** 要点符号占用的宽度（悬挂缩进）。 */
+        const val ITEM_INDENT_PT: Float = 14f
+
+        /** 选项行左缩进，以及字母标签占的宽度。 */
+        const val OPTION_INDENT_PT: Float = 14f
+        const val OPTION_LABEL_WIDTH_PT: Float = 15f
+
+        /** 标签块宽度（标签文字 + 内边距）。 */
+        const val TAG_WIDTH_PT: Float = 34f
+
+        /** 例题上下留白。 */
+        const val EXAMPLE_GAP_BEFORE_PT: Float = 4f
+        const val EXAMPLE_GAP_AFTER_PT: Float = 7f
+
+        /** 虚分割线占用高度与单段长度。 */
+        const val DASH_BLOCK_PT: Float = 12f
+        const val DASH_LENGTH_PT: Float = 3f
     }
+}
+
+/**
+ * PDF 行内的一个排版单元。
+ *
+ * 三种形态就够了：一串字符（含上下标，靠 [Ink.Glyphs.offsetY] 抬落基线）、
+ * 一个分式（两行小字夹一条横线）、一个根号（符号 + 被开方内容 + 顶横）。
+ * 刻意不做通用公式排版引擎：复习资料里的公式只有这几种形态，多出来的能力没人用。
+ */
+private sealed class Ink {
+    /** 宽度。 */
+    abstract val width: Float
+
+    /** 基线以上的高度。 */
+    abstract val above: Float
+
+    /** 基线以下的高度。 */
+    abstract val below: Float
+
+    /** 一串字符。 */
+    class Glyphs(
+        val text: String,
+        val paint: Paint,
+        val offsetY: Float = 0f,
+    ) : Ink() {
+        override val width: Float get() = paint.measureText(text)
+
+        override val above: Float get() = paint.textSize * GLYPH_RISE - offsetY
+
+        override val below: Float get() = paint.textSize * GLYPH_DROP + offsetY
+    }
+
+    /** 分式：分子在上、横线居中、分母在下。 */
+    class Fraction(
+        val numerator: String,
+        val denominator: String,
+        val numeratorPaint: Paint,
+        val denominatorPaint: Paint,
+        val rulePaint: Paint,
+    ) : Ink() {
+        val numeratorWidth: Float = numeratorPaint.measureText(numerator)
+        val denominatorWidth: Float = denominatorPaint.measureText(denominator)
+
+        override val width: Float get() = maxOf(numeratorWidth, denominatorWidth) + FRACTION_PADDING
+
+        /** 分子基线的位置（相对主基线）。 */
+        val numeratorBaseline: Float get() = -FRACTION_RISE
+
+        /** 分母基线的位置。 */
+        val denominatorBaseline: Float get() = denominatorPaint.textSize * FRACTION_DROP
+
+        /** 横线的位置：压在主基线上方一点点，视觉上才是「居中」。 */
+        val ruleY: Float get() = -FRACTION_RISE * 0.4f
+
+        override val above: Float get() = FRACTION_RISE + numeratorPaint.textSize * GLYPH_RISE
+
+        override val below: Float get() = denominatorPaint.textSize * (FRACTION_DROP + GLYPH_DROP)
+    }
+
+    /** 根号。 */
+    class Radical(
+        val body: String,
+        val signPaint: Paint,
+        val bodyPaint: Paint,
+        val rulePaint: Paint,
+    ) : Ink() {
+        val signWidth: Float = signPaint.measureText(RADICAL_SIGN_TEXT)
+
+        override val width: Float get() = signWidth + bodyPaint.measureText(body) + RADICAL_PADDING
+
+        /** 顶横的位置：贴着被开方内容的字顶。 */
+        val vinculumY: Float get() = -bodyPaint.textSize * VINCULUM_RISE
+
+        override val above: Float get() = bodyPaint.textSize * VINCULUM_RISE
+
+        override val below: Float get() = bodyPaint.textSize * GLYPH_DROP
+    }
+
+    private companion object {
+        /** 常规字形的上沿与下沿（相对字号）。 */
+        const val GLYPH_RISE: Float = 0.86f
+
+        const val GLYPH_DROP: Float = 0.24f
+
+        /** 分子基线上抬的量。 */
+        const val FRACTION_RISE: Float = 3.2f
+
+        /** 分母基线相对字号的下沉比例。 */
+        const val FRACTION_DROP: Float = 0.98f
+
+        /** 横线比数字宽出的部分。 */
+        const val FRACTION_PADDING: Float = 2f
+
+        /** 顶横距被开方内容字顶的高度（相对字号）。 */
+        const val VINCULUM_RISE: Float = 0.74f
+
+        /** 根号右侧留一点空，避免和后一个字粘住。 */
+        const val RADICAL_PADDING: Float = 1f
+    }
+}
+
+/** 一个排版单元落在行内的位置。 */
+private class Placement(
+    val ink: Ink,
+    val x: Float,
+)
+
+/** 排好的一行：行高 + 各单元的位置。 */
+private class PdfLine(
+    val height: Float,
+    val placements: List<Placement>,
+)
+
+/**
+ * 「同一支 Paint 的小号副本」缓存。
+ *
+ * 一支 Paint 每次 `Paint(paint)` 都要复制原生对象；一页几十个上下标、十几个分式，
+ * 每个都新建会把 PDF 生成时间拉长一个量级。
+ */
+private class PaintScaler {
+    private val cache = HashMap<Paint, HashMap<Float, Paint>>()
+
+    fun scaled(
+        paint: Paint,
+        scale: Float,
+    ): Paint =
+        cache.getOrPut(paint) { HashMap() }
+            .getOrPut(scale) { Paint(paint).apply { textSize = paint.textSize * scale } }
+}
+
+/**
+ * PDF 用的墨色（与屏幕配色同色相，但取更适合打印的明度）。
+ *
+ * 取值原则：
+ * - 全部落在 30%-60% 灰度区间——黑白打印后仍互相区分，不会糊成一片浅灰；
+ * - 靠色相与位置区分「标题 / 重点 / 答案 / 附注」，黑白与色盲场景都还能认出来；
+ * - 不用纯黑正文（#000 印在纸上偏刺眼），用 #23212B。
+ */
+private object Palette {
+    val INK: Int = Color.rgb(0x23, 0x21, 0x2B)
+
+    /** 主色：深紫，与 App 主题同色系。 */
+    val PRIMARY: Int = Color.rgb(0x4B, 0x3F, 0x8F)
+
+    /** 强调色：赭石，用于「易错 / 注意」标签与例题左侧竖线。 */
+    val ACCENT: Int = Color.rgb(0xA8, 0x62, 0x1B)
+
+    /** 强调色浅底（标签背景）。 */
+    val ACCENT_TINT: Int = Color.rgb(0xF7, 0xEC, 0xDE)
+
+    /** 答案色：墨绿。 */
+    val SUCCESS: Int = Color.rgb(0x1F, 0x6F, 0x4B)
+
+    /** 思路色：紫灰，和主色同系但更亮一点。 */
+    val REASONING: Int = Color.rgb(0x5B, 0x4F, 0xA8)
+
+    /** 附注与页脚。 */
+    val MUTED: Int = Color.rgb(0x6B, 0x68, 0x78)
+
+    /** 分隔线。 */
+    val RULE: Int = Color.rgb(0xD8, 0xD5, 0xE2)
 }

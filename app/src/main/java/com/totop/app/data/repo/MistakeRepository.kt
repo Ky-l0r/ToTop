@@ -138,6 +138,14 @@ class MistakeRepository
 
         suspend fun count(): Int = withContext(dispatcher) { mistakeDao.count() }
 
+        /**
+         * 指定科目一共有多少道错题。
+         *
+         * 复习资料要写清「本科目共 N 道，本次纳入 M 道」——只报 M 会让人以为错题本里只有这么几道。
+         */
+        suspend fun countBySubject(subject: String): Int =
+            withContext(dispatcher) { mistakeDao.countBySubject(subject) }
+
         fun observeCount(): Flow<Int> = mistakeDao.observeCount().flowOn(dispatcher)
 
         /**

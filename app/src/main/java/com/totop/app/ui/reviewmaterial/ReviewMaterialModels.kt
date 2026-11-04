@@ -62,11 +62,38 @@ data class ReviewBlock(
     val isEmpty: Boolean get() = lines.all { it.isBlank() }
 }
 
-/** 一个章节：标题 + 若干内容块。 */
+/** 一个章节：标题 + 章节导读（可选）+ 若干小节。 */
 data class ReviewSection(
     val title: String,
+    /**
+     * 章节级内容块（导读），排在小节之前。
+     *
+     * 保留这一层是为了让「这章解决什么问题」有一句话的位置；
+     * 没有小节的旧存档也仍然落在这里，解码与排版都不必分叉。
+     */
+    val blocks: List<ReviewBlock> = emptyList(),
+    /** 小节，按顺序渲染，标题由渲染器统一加「（一）（二）…」。 */
+    val subsections: List<ReviewSubsection> = emptyList(),
+) {
+    /** 是否有可打印的内容。 */
+    val isEmpty: Boolean get() = blocks.all { it.isEmpty } && subsections.all { it.isEmpty }
+}
+
+/**
+ * 一个小节：标题 + 若干内容块。
+ *
+ * 为什么要多这一层：一份六七页的资料只有七八个章节标题，
+ * 学生翻到「函数与导数」之后还要在十几个要点里再找「构造函数怎么下手」。
+ * 小节把这层定位成本压下来，代价是模型输出多一层 JSON——
+ * 比在段落里加粗「（1）」冒充层级要可靠得多。
+ */
+data class ReviewSubsection(
+    val title: String,
     val blocks: List<ReviewBlock>,
-)
+) {
+    /** 空小节不入库：模型偶尔给出空数组，渲染出来只是多余留白。 */
+    val isEmpty: Boolean get() = blocks.all { it.isEmpty }
+}
 
 /**
  * 一份考前复习资料。
@@ -89,6 +116,13 @@ data class ReviewMaterial(
     val sections: List<ReviewSection>,
     /** 本次取材的真实错题数，打印出来证明资料不是凭空生成的。 */
     val mistakesUsed: Int = 0,
+    /**
+     * 本科目一共有多少道历史错题（取材池大小）。
+     *
+     * 与 [mistakesUsed] 分开记：学生看到的应该是「本科目 32 道错题，这次用了 8 道」，
+     * 只写 8 会让人以为错题本里只有 8 道；只写 32 又说不清这份资料到底依据了什么。
+     */
+    val mistakesAvailable: Int = 0,
     /** 生成时间（UTC 毫秒），用于历史记录排序。 */
     val createdAtUtc: Long = 0L,
 ) {
@@ -97,11 +131,16 @@ data class ReviewMaterial(
         get() =
             summary.length +
                 sections.sumOf { section ->
-                    section.title.length + section.blocks.sumOf { block -> block.lines.sumOf { it.length } }
+                    section.title.length +
+                        section.blocks.sumOf { block -> block.lines.sumOf { it.length } } +
+                        section.subsections.sumOf { subsection ->
+                            subsection.title.length +
+                                subsection.blocks.sumOf { block -> block.lines.sumOf { it.length } }
+                        }
                 }
 
     /** 是否有可打印的内容。 */
-    val isRenderable: Boolean get() = sections.any { it.blocks.any { block -> !block.isEmpty } }
+    val isRenderable: Boolean get() = sections.any { !it.isEmpty }
 }
 
 /** 参与生成的真实错题摘要（输入侧，不是展示模型）。 */

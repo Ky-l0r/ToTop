@@ -135,23 +135,39 @@ class ReviewMaterialStore(
         root.put("examDate", material.examDate)
         root.put("summary", material.summary)
         root.put("mistakesUsed", material.mistakesUsed)
+        root.put("mistakesAvailable", material.mistakesAvailable)
         root.put("createdAtUtc", material.createdAtUtc)
         val sections = JSONArray()
         material.sections.forEach { section ->
             val sectionJson = JSONObject()
             sectionJson.put("title", section.title)
-            val blocks = JSONArray()
-            section.blocks.forEach { block ->
-                val blockJson = JSONObject()
-                blockJson.put("style", block.style.name)
-                blockJson.put("lines", JSONArray(block.lines))
-                blocks.put(blockJson)
+            sectionJson.put("blocks", encodeBlocks(section.blocks))
+            if (section.subsections.isNotEmpty()) {
+                val subsections = JSONArray()
+                section.subsections.forEach { subsection ->
+                    val subsectionJson = JSONObject()
+                    subsectionJson.put("title", subsection.title)
+                    subsectionJson.put("blocks", encodeBlocks(subsection.blocks))
+                    subsections.put(subsectionJson)
+                }
+                sectionJson.put("subsections", subsections)
             }
-            sectionJson.put("blocks", blocks)
             sections.put(sectionJson)
         }
         root.put("sections", sections)
         return root.toString()
+    }
+
+    /** 内容块数组的序列化；章节与小节共用。 */
+    private fun encodeBlocks(source: List<ReviewBlock>): JSONArray {
+        val blocks = JSONArray()
+        source.forEach { block ->
+            val blockJson = JSONObject()
+            blockJson.put("style", block.style.name)
+            blockJson.put("lines", JSONArray(block.lines))
+            blocks.put(blockJson)
+        }
+        return blocks
     }
 
     /** 反序列化；缺字段或格式不对时抛异常，由调用方决定跳过还是报错。 */
@@ -164,25 +180,22 @@ class ReviewMaterialStore(
             val title = sectionJson.optString("title").trim()
             if (title.isEmpty()) continue
             val blocksJson = sectionJson.optJSONArray("blocks") ?: JSONArray()
-            val blocks = ArrayList<ReviewBlock>(blocksJson.length())
-            for (blockIndex in 0 until blocksJson.length()) {
-                val blockJson = blocksJson.optJSONObject(blockIndex) ?: continue
-                val linesJson = blockJson.optJSONArray("lines") ?: continue
-                val lines = ArrayList<String>(linesJson.length())
-                for (lineIndex in 0 until linesJson.length()) {
-                    val line = linesJson.optString(lineIndex)
-                    if (line.isNotBlank()) lines.add(line)
-                }
-                if (lines.isEmpty()) continue
-                blocks.add(
-                    ReviewBlock(
-                        style = ReviewBlockStyle.parse(blockJson.optString("style")),
-                        lines = lines,
-                    ),
-                )
+            val blocks = decodeBlocks(blocksJson)
+            // 小节是可选的：老存档（格式版本 1）没有这个字段，读成空表即可，
+            // 排版层对「只有章节内容块」的资料仍然按老样子排。
+            val subsectionsJson = sectionJson.optJSONArray("subsections") ?: JSONArray()
+            val subsections = ArrayList<ReviewSubsection>(subsectionsJson.length())
+            for (subsectionIndex in 0 until subsectionsJson.length()) {
+                val subsectionJson = subsectionsJson.optJSONObject(subsectionIndex) ?: continue
+                val subsectionTitle = subsectionJson.optString("title").trim()
+                if (subsectionTitle.isEmpty()) continue
+                val subsectionBlocks =
+                    decodeBlocks(subsectionJson.optJSONArray("blocks") ?: JSONArray())
+                if (subsectionBlocks.isEmpty()) continue
+                subsections.add(ReviewSubsection(title = subsectionTitle, blocks = subsectionBlocks))
             }
-            if (blocks.isEmpty()) continue
-            sections.add(ReviewSection(title = title, blocks = blocks))
+            if (blocks.isEmpty() && subsections.isEmpty()) continue
+            sections.add(ReviewSection(title = title, blocks = blocks, subsections = subsections))
         }
         require(sections.isNotEmpty()) { "存档里没有可用章节" }
         return ReviewMaterial(
@@ -191,8 +204,32 @@ class ReviewMaterialStore(
             summary = root.optString("summary"),
             sections = sections,
             mistakesUsed = root.optInt("mistakesUsed", 0),
+            // 老存档没有这个字段：退回 mistakesUsed，至少不会显示成「共 0 道」
+            mistakesAvailable = root.optInt("mistakesAvailable", root.optInt("mistakesUsed", 0)),
             createdAtUtc = root.optLong("createdAtUtc", 0L),
         )
+    }
+
+    /** 内容块数组的反序列化；章节与小节共用。 */
+    private fun decodeBlocks(source: JSONArray): List<ReviewBlock> {
+        val blocks = ArrayList<ReviewBlock>(source.length())
+        for (blockIndex in 0 until source.length()) {
+            val blockJson = source.optJSONObject(blockIndex) ?: continue
+            val linesJson = blockJson.optJSONArray("lines") ?: continue
+            val lines = ArrayList<String>(linesJson.length())
+            for (lineIndex in 0 until linesJson.length()) {
+                val line = linesJson.optString(lineIndex)
+                if (line.isNotBlank()) lines.add(line)
+            }
+            if (lines.isEmpty()) continue
+            blocks.add(
+                ReviewBlock(
+                    style = ReviewBlockStyle.parse(blockJson.optString("style")),
+                    lines = lines,
+                ),
+            )
+        }
+        return blocks
     }
 
     private companion object {
@@ -208,7 +245,7 @@ class ReviewMaterialStore(
         /** 最多保留几份历史：再多也没人翻，还会占空间。 */
         const val MAX_FILES: Int = 30
 
-        /** 存档格式版本，将来结构变化时用于兼容判断。 */
-        const val FORMAT_VERSION: Int = 1
+        /** 存档格式版本：2 起章节可以带 subsections；1 的存档仍能读（小节读成空表）。 */
+        const val FORMAT_VERSION: Int = 2
     }
 }
