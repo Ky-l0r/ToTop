@@ -141,6 +141,39 @@ class JsonSalvageTest {
     }
 
     @Test
+    @DisplayName("截断判定：括号没配平才算截断，完整对象与纯文本都不算")
+    fun `截断判定`() {
+        assertTrue(JsonSalvage.looksTruncated("""{"steps":[{"idx":1,"content":"求导"}"""))
+        assertTrue(!JsonSalvage.looksTruncated("""{"steps":[{"idx":1,"content":"求导"}]}"""))
+        // 前后带解释但对象完整：能配平就不是截断
+        assertTrue(!JsonSalvage.looksTruncated("""好的：{"a":1} 以上。"""))
+        assertTrue(!JsonSalvage.looksTruncated("模型这次只说了句人话，没有 JSON"))
+    }
+
+    @Test
+    @DisplayName("阶段校验：字符串步骤、字符串学生过程、无 id 知识点都不再判死")
+    fun `可修形状不算错`() {
+        // 字符串数组：sanitizer 会补成 {idx, content}，不需要重试
+        assertNull(
+            AiGateway.validateStageJson(AiStage.B, """{"steps":["配方","求顶点"],"finalAnswer":"0"}"""),
+        )
+        // 整段字符串：按换行切成步骤
+        assertNull(
+            AiGateway.validateStageJson(AiStage.C, """{"studentSteps":"先代入 x=0","firstError":null}"""),
+        )
+        // 没有 id 的知识点：丢弃并降级为告警，不为它重发整次请求
+        assertNull(AiGateway.validateStageJson(AiStage.D, """{"kpoints":[{"name":"二次函数"}]}"""))
+    }
+
+    @Test
+    @DisplayName("阶段校验：真修不了的容器类型仍然判失败")
+    fun `不可修形状判失败`() {
+        assertNotNull(AiGateway.validateStageJson(AiStage.C, """{"studentSteps":123}"""))
+        assertNotNull(AiGateway.validateStageJson(AiStage.D, """{"kpoints":123}"""))
+        assertNotNull(AiGateway.validateStageJson(AiStage.B, """{"steps":[],"finalAnswer":"0"}"""))
+    }
+
+    @Test
     @DisplayName("阶段预算：求解与错因有下限，知识点压到基准以内")
     fun `阶段预算`() {
         assertEquals(2048, AiGateway.stageMaxTokens(AiStage.A, 2048))

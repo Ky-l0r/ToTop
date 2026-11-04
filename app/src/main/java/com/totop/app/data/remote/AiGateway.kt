@@ -4,6 +4,7 @@ import com.totop.app.data.prefs.LlmCredentials
 import com.totop.app.data.prefs.ModelPool
 import com.totop.app.domain.model.AiQuestion
 import com.totop.app.domain.model.AiSolutionStep
+import com.totop.app.domain.model.AiSolveResult
 import com.totop.app.domain.model.AiSolveResultCodec
 import com.totop.app.domain.model.AiSolveResultMapper
 import com.totop.app.domain.model.AiStage
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
@@ -130,6 +132,64 @@ class AiGateway(
     private val idempotencyGuard: IdempotencyGuard = IdempotencyGuard(),
 ) {
     /**
+     * 合并四阶段输出为 6.4 契约，并做严格校验。
+     *
+     * 注意：此处已不属于任何单个阶段，是四阶段结果的合并校验。旧实现把 stage 设为 D，
+     * 导致「合并校验失败」被误报成「阶段 D 失败」，掩盖了真实原因
+     * （例如其实是阶段 C 没给 studentSteps）。
+     */
+    private fun mergeStages(
+        question: AiQuestion,
+        rawSolution: String,
+        stageC: JsonObject,
+        rawD: String,
+        warnings: MutableList<String>,
+    ): AiSolveResult {
+        val contractJson =
+            buildContractJson(
+                question = question,
+                solutionObject = decodeJsonObject(rawSolution),
+                stageCObject = stageC,
+                stageDObject = decodeJsonObject(rawD),
+            )
+        val dto =
+            AiSolveResultCodec.decode(contractJson).getOrElse { failure ->
+                throw LlmException(
+                    LlmError.MalformedResponse(
+                        detail = "合并四阶段结果后仍不满足契约：" + failure.message,
+                        // 合并阶段在重试循环之外，这里失败并没有再试一次
+                        afterRetries = false,
+                    ),
+                )
+            }
+        val missing = dto.missingStructure()
+        if (missing.isNotEmpty()) {
+            // FR-1.10：结构性缺失（题干或标准解答）视为校验失败，绝不入库
+            throw LlmException(
+                LlmError.MalformedResponse(
+                    detail = "必要的契约字段缺失：" + missing.joinToString("、"),
+                    afterRetries = false,
+                ),
+            )
+        }
+        // 非致命缺失只降级为告警，不再判整次失败：
+        // - 未填解题过程 -> studentSteps 为空是契约允许的正确行为；
+        // - 候选知识点覆盖不到（非数学科目没有内置知识树）-> kpoints 为空同理。
+        val optionalMissing = dto.missingOptionalStructure()
+        if (optionalMissing.isNotEmpty()) {
+            optionalMissing.forEach { field ->
+                warnings.add(
+                    when (field) {
+                        "studentSteps" -> "本次没有学生解题过程，已跳过错因定位，只给标准解答"
+                        else -> "本题没有匹配到内置知识点，知识点区块留空（其它结果不受影响）"
+                    },
+                )
+            }
+        }
+        return dto
+    }
+
+    /**
      * 执行一次完整解题，返回事件流。
      *
      * 调用方（ViewModel）必须传入 [registry] 并在 onCleared() 中调用 cancelAll()。
@@ -178,8 +238,14 @@ class AiGateway(
                     )
                 val cacheKey = cacheKeyOf(decision, request, identifyPrompt.promptVersion)
                 val cachedRaw = cacheKey?.let { cache?.get(it) }
-                var rawA = cachedRaw
-                if (cachedRaw != null) {
+                // 命中也要过一遍结构校验：旧版本（校验更松）可能在缓存里留下不合规的 raw，
+                // 直接复用会让「再解一次」永远拿到同一份坏数据——表现就是修了像没修。
+                val usableCached = cachedRaw?.takeIf { validateStageJson(AiStage.A, it) == null }
+                if (cachedRaw != null && usableCached == null && cacheKey != null) {
+                    cache?.invalidate(cacheKey)
+                }
+                var rawA = usableCached
+                if (usableCached != null) {
                     send(SolveEvent.StageStarted(AiStage.A, cached = true))
                 } else {
                     val result =
@@ -208,7 +274,7 @@ class AiGateway(
                     rawA
                         ?: throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未产出任何内容"))
                 val question = parseStageAQuestion(rawStageA, warnings)
-                send(SolveEvent.StageCompleted(AiStage.A, if (cachedRaw != null) "命中缓存" else "识题完成"))
+                send(SolveEvent.StageCompleted(AiStage.A, if (usableCached != null) "命中缓存" else "识题完成"))
 
                 // ---------- 阶段 B：独立求解（绝不注入学生过程） ----------
                 stage = AiStage.B
@@ -359,45 +425,24 @@ class AiGateway(
                         result.raw
                     }
 
+                // 知识点没带 id 时 sanitizer 会整条丢掉，结果按「未匹配到」处理。
+                // 这是模型的形状问题，重发一次通常还是不带 id——降级 + 告警，
+                // 比让整次解答失败更省一次调用（这才是「不重试」的正确用法）。
+                if (hasCandidates && kpointsMissingId(rawD)) {
+                    warnings.add("模型给出的知识点没有带受控 ID，本次按「未匹配到知识点」处理")
+                }
+
                 // ---------- 合并四阶段输出为 6.4 契约并严格校验 ----------
-                // 注意：此处已不属于任何单个阶段，是四阶段结果的合并校验。
-                // 旧实现把 stage 设为 D，导致「合并校验失败」被误报成「阶段 D 失败」，
-                // 掩盖了真实原因（例如其实是阶段 C 没给 studentSteps）。合并阶段沿用 D 的序号
-                // 会让用户以为知识点抽取出错，实际可能只是阶段 C 的输出为空。
-                val contractJson =
-                    buildContractJson(
-                        question = question,
-                        solutionObject = decodeJsonObject(rawBText),
-                        stageCObject = stageC,
-                        stageDObject = decodeJsonObject(rawD),
-                    )
+                // 这一段单独成函数：solve 已经贴着 detekt 的 260 行上限，
+                // 合并校验（解码 + 结构校验 + 非致命缺失降级）放进来只会让它更难读。
                 val dto =
-                    AiSolveResultCodec.decode(contractJson).getOrElse { failure ->
-                        throw LlmException(
-                            LlmError.MalformedResponse(detail = "合并四阶段结果后仍不满足契约：" + failure.message),
-                        )
-                    }
-                val missing = dto.missingStructure()
-                if (missing.isNotEmpty()) {
-                    // FR-1.10：结构性缺失（题干或标准解答）视为校验失败，绝不入库
-                    throw LlmException(
-                        LlmError.MalformedResponse(detail = "必要的契约字段缺失：" + missing.joinToString("、")),
+                    mergeStages(
+                        question = question,
+                        rawSolution = rawBText,
+                        stageC = stageC,
+                        rawD = rawD,
+                        warnings = warnings,
                     )
-                }
-                // 非致命缺失只降级为告警，不再判整次失败：
-                // - 未填解题过程 -> studentSteps 为空是契约允许的正确行为；
-                // - 候选知识点覆盖不到（非数学科目没有内置知识树）-> kpoints 为空同理。
-                val optionalMissing = dto.missingOptionalStructure()
-                if (optionalMissing.isNotEmpty()) {
-                    optionalMissing.forEach { field ->
-                        warnings.add(
-                            when (field) {
-                                "studentSteps" -> "本次没有学生解题过程，已跳过错因定位，只给标准解答"
-                                else -> "本题没有匹配到内置知识点，知识点区块留空（其它结果不受影响）"
-                            },
-                        )
-                    }
-                }
                 val domainQuestion =
                     Question(
                         id = requestId,
@@ -766,11 +811,15 @@ class AiGateway(
         if (parseError == null) return Attempt.Succeeded(StageCallResult(raw = raw, usage = usage))
         // 截断导致的解析失败与「模型就不按 JSON 输出」要分开处理：
         // 前者只需加预算，后者要收紧提示词，两者同时做也不会互相干扰。
-        val truncatedJson = finishReason == FINISH_REASON_LENGTH
-        return Attempt.Retry(
-            LlmError.MalformedResponse(detail = parseError, truncated = truncatedJson),
-            boostBudgetNext = truncatedJson && !state.budgetBoosted,
-        )
+        // 截断判定不能只看 finish_reason：流式中转常把它写成 stop 或干脆省略，
+        // 残 JSON 就会被当成「不按 JSON 输出」——重试却不加预算，同一个上限再截一次。
+        val truncatedJson = finishReason == FINISH_REASON_LENGTH || JsonSalvage.looksTruncated(raw)
+        val boostBudget = truncatedJson && !state.budgetBoosted
+        val malformed = LlmError.MalformedResponse(detail = parseError, truncated = truncatedJson)
+        // 严格提示词用过、预算也加过：同一个请求再发一次不会变好，只会再收一次钱。
+        // 例外是截断——加大预算确实换了输入，值得再试一轮。
+        if (state.strict && !boostBudget) throw LlmException(malformed)
+        return Attempt.Retry(malformed, boostBudgetNext = boostBudget)
     }
 
     /**
@@ -964,14 +1013,98 @@ class AiGateway(
             }
             // 求解阶段「没有步骤」等于没答：下游只会直接抛错，
             // 在这里判失败至少还能用严格提示词再试一次。
-            if (stage == AiStage.B && (obj["steps"] as? JsonArray)?.isEmpty() != false) {
-                return "阶段 B 的 steps 为空"
+            // 口径要和 sanitizer 一致：字符串元素也算一步，否则
+            // 「steps 写成一句话数组」会被判死，而它一步都不用重试。
+            if (stage == AiStage.B && !hasUsableStep(obj["steps"])) {
+                return "阶段 B 的 steps 为空或没有可用的步骤"
             }
             // 识题阶段标题为空同理：宁可再问一次，也不要带着空题干往下走
             if (stage == AiStage.A && (obj["stem"] as? JsonPrimitive)?.content.isNullOrBlank()) {
                 return "阶段 A 的 stem 为空"
             }
-            return null
+            // 再往下是嵌套形状：能就地修的（见 [SolveWireSanitizer]）不算错，
+            // 修不了的必须在这里判失败——**合并阶段不重试**，
+            // 拖到那时才报错，用户看到的就是「试都试过了还是不行」。
+            return shapeErrorOf(stage, obj)
+        }
+
+        /**
+         * 嵌套形状校验（只看能不能被修复，不看业务语义）。
+         *
+         * 判定口径必须与 [SolveWireSanitizer] 逐条对齐：能被它纠正的偏差
+         * （字符串步骤、纯量 firstError）不算错，纠正不了的容器类型才算错。
+         * 这两处是本项目最容易改歪的地方——改一处必须同时看另一处。
+         */
+        private fun shapeErrorOf(
+            stage: AiStage,
+            obj: JsonObject,
+        ): String? =
+            when (stage) {
+                // 阶段 B 已在上面按同一口径判过 steps
+                AiStage.B -> null
+
+                AiStage.C -> {
+                    // 字符串：整段文字，sanitizer 会按换行切；数字/布尔：模型跑偏了，
+                    // 与其把「123」当成一步学生过程，不如用严格提示词再要一次。
+                    val studentSteps = obj["studentSteps"]
+                    val bad =
+                        when (studentSteps) {
+                            null, is JsonNull, is JsonArray, is JsonObject -> false
+                            is JsonPrimitive -> !studentSteps.isString
+                            else -> true
+                        }
+                    if (bad) "阶段 C 的 studentSteps 既不是数组也不是一段文字" else null
+                }
+
+                // 阶段 D 的 kpoints 里没有 id 时不判失败：受控 ID 不能编，
+                // sanitizer 会丢掉这些条目，结果按「未匹配到知识点」降级（有告警）。
+                // 为了一条没有 id 的知识点重发整次请求，是拿用户的钱换一次同样的错。
+                AiStage.D -> {
+                    val kpoints = obj["kpoints"]
+                    val bad =
+                        when (kpoints) {
+                            null, is JsonNull, is JsonArray -> false
+                            // 整段文字还能按换行拆；数字/布尔不是知识点列表，重试一次更划算
+                            is JsonPrimitive -> !kpoints.isString
+                            else -> true
+                        }
+                    if (bad) "阶段 D 的 kpoints 既不是数组也不是一段文字" else null
+                }
+
+                else -> null
+            }
+
+        /**
+         * 「有没有可用的步骤」：字符串元素也算，因为 sanitizer 会把它补成一步。
+         *
+         * 与 [SolveWireSanitizer.sanitizeSteps] 同口径：那边留下什么，这里就认什么。
+         */
+        private fun hasUsableStep(element: kotlinx.serialization.json.JsonElement?): Boolean {
+            if (element == null || element is JsonNull) return false
+            if (element is JsonPrimitive) return element.content.isNotBlank()
+            val array = element as? JsonArray ?: return false
+            return array.any { item ->
+                when (item) {
+                    is JsonObject -> !SolveWireSanitizer.textOf(item["content"]).isNullOrBlank()
+                    is JsonPrimitive -> item.content.isNotBlank()
+                    else -> false
+                }
+            }
+        }
+
+        /**
+         * 阶段 D 是否「给了知识点但一条都没带 id」。
+         *
+         * 只用于补一条可读告警：sanitizer 会把它们全丢掉，结果里知识点为空，
+         * 用户看到的是「没有匹配到」，与实际原因（模型没按受控 ID 输出）不一致。
+         */
+        fun kpointsMissingId(raw: String): Boolean {
+            val obj = JsonSalvage.parseObject(raw) ?: return false
+            val array = obj["kpoints"] as? JsonArray ?: return false
+            return array.isNotEmpty() &&
+                array.none { item ->
+                    item is JsonObject && !SolveWireSanitizer.textOf(item["id"]).isNullOrBlank()
+                }
         }
 
         /**
@@ -1013,7 +1146,9 @@ class AiGateway(
             raw: String,
             warnings: MutableList<String>,
         ): AiQuestion {
-            val obj = decodeJsonObject(raw)
+            // 先修形状再取值：选项被写成数字数组、已知条件只有一个字符串时，
+            // 直接 stringListOr 会把它们整条丢掉，而丢选项比丢字段更隐蔽。
+            val obj = SolveWireSanitizer.sanitizeQuestion(decodeJsonObject(raw))
             val question =
                 AiQuestion(
                     subject = obj.stringOr("subject", "math"),
@@ -1093,7 +1228,11 @@ class AiGateway(
                 put("knowledgePoints", stageDObject["kpoints"] ?: JsonArray(emptyList()))
                 put("summaryCard", stageCObject["summaryCard"] ?: kotlinx.serialization.json.JsonNull)
                 put("aiGenerated", true)
-            }.toString()
+            }
+                // 合并完成后再统一修一次形状：各阶段自己的 sanitize 只管本阶段，
+                // 组装时仍可能遇到「单值 vs 数组」「数字 vs 字符串」这类跨阶段拼装偏差。
+                .let { SolveWireSanitizer.sanitizeContract(it) }
+                .toString()
 
         private fun questionObject(question: AiQuestion): JsonObject =
             buildJsonObject {
@@ -1132,7 +1271,8 @@ class AiGateway(
 
         /** 解析阶段 B 的输出为 [AiStandardSolution]。 */
         fun decodeStandardSolution(raw: String): AiStandardSolution {
-            val obj = decodeJsonObject(raw)
+            // steps 写成字符串数组时，这里补成 {idx, content}，避免整份解答被判空
+            val obj = SolveWireSanitizer.sanitizeSolution(decodeJsonObject(raw))
             val stepsArray = obj["steps"] as? JsonArray
             val steps =
                 stepsArray.orEmpty().mapNotNull { element ->
@@ -1196,14 +1336,39 @@ fun AssembledPrompt.asStrict(): AssembledPrompt =
         this
     } else {
         copy(
-            userPrompt = userPrompt + "\n\n" + STRICT_SUFFIX,
+            userPrompt = userPrompt + "\n\n" + strictSuffixOf(stage),
             strict = true,
         )
     }
 
-private const val STRICT_SUFFIX: String =
+/**
+ * 严格重试的追加要求。
+ *
+ * 与旧版「一段通用要求」的区别：现在**点名这一阶段允许的顶层字段**，
+ * 并要求数组元素也必须是对象。小模型出错的位置很集中——不是「不肯输出 JSON」，
+ * 而是「JSON 里塞了自造的键」或「该是对象的地方写了一句话」。
+ * 泛泛说「必须满足 Schema」它看不见，把键名列出来才看得见。
+ *
+ * 这段文本不参与缓存键（缓存存的是阶段输出，不是提示词），
+ * 但它确实改变了请求内容，改动时仍应同步评估 [PromptRepository] 的 promptVersion。
+ */
+private fun strictSuffixOf(stage: AiStage): String =
     "上一次输出无法被解析。本次务必严格满足：\n" +
-        "1. 整个回复只包含一个 JSON 对象，前后不得有任何文字、Markdown 代码围栏或注释；\n" +
-        "2. 不要出现省略号、占位符或未闭合的数组；\n" +
-        "3. Schema 中 required 的字段必须全部出现，字符串不得为空；\n" +
-        "4. 数字字段只写数字，不加引号、不加单位。"
+        "1. 整个回复只包含一个 JSON 对象，第一个字符必须是 {，最后一个字符必须是 }，" +
+        "前后不得有任何文字、Markdown 代码围栏或注释；\n" +
+        "2. 顶层只能出现这些键：" + strictKeysOf(stage) + "，不要加别的键；\n" +
+        "3. 该是对象的地方必须是对象，不能写成一整句话；该是数组的地方必须是数组，" +
+        "数组里的每一项也必须是对象（例如 steps 的每一步写成 {idx, content, why}）；\n" +
+        "4. 不要出现省略号、占位符或未闭合的数组；字符串不得为空；\n" +
+        "5. 数字字段只写数字，不加引号、不加单位。"
+
+/** 各阶段严格重试时点名的顶层键（与 assets 里各阶段 Schema 一致）。 */
+private fun strictKeysOf(stage: AiStage): String =
+    when (stage) {
+        AiStage.A ->
+            "stem、subject、grade、known、ask、options、hasFigure、choiceType、" +
+                "handwriting、handwritingText、progress、warnings"
+        AiStage.B -> "steps（数组，每步含 idx、content、why）、finalAnswer、method、check、confidence"
+        AiStage.C -> "studentSteps（数组）、firstError（对象或 null）、summaryCard（对象）"
+        AiStage.D -> "kpoints（数组，每条含 id、name）、primaryId、unmatched"
+    }

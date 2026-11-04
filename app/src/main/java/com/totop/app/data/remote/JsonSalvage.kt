@@ -69,6 +69,24 @@ object JsonSalvage {
     }
 
     /**
+     * 判断一段文本像不像「被 max_tokens 截断的 JSON」。
+     *
+     * 为什么不只看 `finish_reason`：流式响应里不少厂商与中转会把 `length`
+     * 写成 `stop`、或者干脆不返回，于是残 JSON 被当成「模型不按 JSON 输出」——
+     * 走严格重试却不加预算，同一个上限再截一次，白付两次钱。
+     *
+     * 两个条件同时满足才判截断，避免把「解释文字里带一个 `{`」也算进去：
+     * 1. [extractBalancedObject] 取不出完整对象；
+     * 2. 开括号比闭括号多（真的断在半路）。
+     */
+    fun looksTruncated(raw: String): Boolean {
+        val text = raw.trim()
+        if (text.indexOf('{') < 0) return false
+        if (extractBalancedObject(text) != null) return false
+        return text.count { it == '{' } > text.count { it == '}' }
+    }
+
+    /**
      * 修复常见缺陷：字符串内的裸换行/制表符、对象与数组末尾的多余逗号。
      *
      * 逐个字符扫描而不是用正则，是因为这些都只对「字符串外」或「字符串内」生效，

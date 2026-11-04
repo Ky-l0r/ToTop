@@ -240,6 +240,57 @@ class AiGatewayTest {
         }
 
     @Test
+    @DisplayName("steps 写成一句话数组时就地补成对象，不重试、不多付一次调用")
+    fun stringStepsRepairedWithoutRetry() =
+        runTest {
+            val transport = FakeTransport()
+            val stringStepsB =
+                """
+                {"steps":["配方得 (x-1)^2","最小值在 x=1 处为 0"],"finalAnswer":"0","method":"配方法"}
+                """.trimIndent().replace("\n", "")
+            transport.enqueueText(stageA, stringStepsB, stageC, stageD)
+            val (gateway, _, _) = gateway(transport)
+
+            val events = mutableListOf<SolveEvent>()
+            gateway.solve(
+                credentials(),
+                request(),
+                ModelRouter(ModelPool("qwen-plus", "qwen-vl-plus")),
+            ).collect { events.add(it) }
+
+            assertTrue(events.last() is SolveEvent.Completed, "能修的偏差不该让整次失败")
+            assertEquals(4, transport.calls.size, "四个阶段各一次，没有额外重试")
+            val content = (events.last() as SolveEvent.Completed).content
+            assertEquals(2, content.standardSolution.steps.size, "两句话应当各成一步")
+            assertEquals("配方得 (x-1)^2", content.standardSolution.steps.first().content)
+        }
+
+    @Test
+    @DisplayName("kpoints 全都没带 id 时降级为空并告警，不为它重发整次请求")
+    fun kpointsWithoutIdDegrade() =
+        runTest {
+            val transport = FakeTransport()
+            val noIdD = """{"kpoints":[{"name":"二次函数"}],"primaryId":null,"unmatched":true}"""
+            transport.enqueueText(stageA, stageB, stageC, noIdD)
+            val (gateway, _, _) = gateway(transport)
+
+            val events = mutableListOf<SolveEvent>()
+            gateway.solve(
+                credentials(),
+                request(),
+                ModelRouter(ModelPool("qwen-plus", "qwen-vl-plus")),
+            ).collect { events.add(it) }
+
+            val completed = events.last()
+            assertTrue(completed is SolveEvent.Completed, "缺 id 属于可降级，不该让整次失败")
+            assertEquals(4, transport.calls.size, "不因为缺 id 再发一次")
+            assertTrue(
+                (completed as SolveEvent.Completed).warnings.any { it.contains("受控 ID") },
+                "降级必须留下可读原因，不能静默",
+            )
+        }
+
+    @Test
     @DisplayName("两次都不可解析时整次失败，绝不返回残缺结果")
     fun doubleFailureAborts() =
         runTest {
@@ -258,6 +309,7 @@ class AiGatewayTest {
             assertTrue(failed is SolveEvent.Failed, "应失败")
             assertTrue((failed as SolveEvent.Failed).error is LlmError.MalformedResponse)
             assertEquals(AiStage.A, failed.stage)
+            assertEquals(2, transport.calls.size, "严格重试一次后不再原样重发，第三次只是再付一次钱")
         }
 
     @Test
