@@ -83,15 +83,18 @@ object ProviderTemplates {
         listOf(
             ProviderTemplate(
                 id = "dashscope",
-                displayName = "阿里云百炼（通义千问）",
+                displayName = "千问 AI",
                 baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
-                textModel = "qwen-plus",
-                visionModel = "qwen-vl-plus",
-                note = "视觉模型按图片 tile 计费，已在前置流程压缩到长边 1280",
+                // 用户口径：只填一个模型就够用——Omni 模型本身能看图也能读写文本，
+                // 因此文本档与视觉档指向同一个模型，避免「识题走 A、讲解走 B」时
+                // 两套提示词在同一模型上行为不一致。
+                textModel = "Qwen3.8-Omni-Flash",
+                visionModel = "Qwen3.8-Omni-Flash",
+                note = "一个模型兼做识题与讲解；语音转写在模型配置里单独填，可用 Qwen-Audio-3.1-ASR",
             ),
             ProviderTemplate(
                 id = "dashscope-deepseek",
-                displayName = "阿里云百炼（DeepSeek 模型）",
+                displayName = "千问 AI（DeepSeek 模型）",
                 baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
                 // 【关键】百炼上的 DeepSeek 模型 ID 与 DeepSeek 官方不同：
                 // 官方叫 deepseek-flash，百炼叫 deepseek-v4.1-flash。
