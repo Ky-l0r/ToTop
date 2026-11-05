@@ -519,6 +519,7 @@ class SettingsViewModel
                     "ai_trace",
                     "outbox",
                     "cache_entry",
+                    "study_note",
                     "settings",
                 )
 

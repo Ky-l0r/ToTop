@@ -20,6 +20,7 @@ import com.totop.app.data.local.dao.QuestionDao
 import com.totop.app.data.local.dao.ReportDao
 import com.totop.app.data.local.dao.ReviewDao
 import com.totop.app.data.local.dao.SettingsDao
+import com.totop.app.data.local.dao.StudyNoteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -126,8 +127,40 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * 5 -> 6：新增「学习笔记」表。
+     *
+     * 只建表、不动旧表：笔记是增量数据，旧版本读不到它也不影响任何既有功能。
+     * `kpointId` 故意不加外键——知识点树是种子数据，重装或换库时整表会被重建，
+     * 加外键会让「笔记还在、节点重建」这个正常场景直接崩在约束上。
+     */
+    private val MIGRATION_5_6: Migration =
+        object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `study_note` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`kpointId` TEXT, " +
+                        "`questionId` TEXT, " +
+                        "`source` TEXT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`body` TEXT NOT NULL, " +
+                        "`createdAtUtc` INTEGER NOT NULL, " +
+                        "`updatedAtUtc` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_study_note_kpointId` ON `study_note` (`kpointId`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_study_note_createdAtUtc` ON `study_note` (`createdAtUtc`)",
+                )
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
-    val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+    val MIGRATIONS: Array<Migration> =
+        arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
 
     @Provides
     @Singleton
@@ -153,6 +186,9 @@ object DatabaseModule {
 
     @Provides
     fun provideLearnedMaterialDao(database: AppDatabase): LearnedMaterialDao = database.learnedMaterialDao()
+
+    @Provides
+    fun provideStudyNoteDao(database: AppDatabase): StudyNoteDao = database.studyNoteDao()
 
     @Provides
     fun provideMistakeDao(database: AppDatabase): MistakeDao = database.mistakeDao()

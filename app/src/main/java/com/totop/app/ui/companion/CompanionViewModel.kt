@@ -8,6 +8,8 @@ import com.totop.app.data.remote.CompanionAskGateway
 import com.totop.app.data.remote.LlmCallRegistry
 import com.totop.app.data.repo.CompanionInsightRepository
 import com.totop.app.data.repo.KnowledgeRepository
+import com.totop.app.data.repo.StudyNoteRepository
+import com.totop.app.domain.model.KnowledgePoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +30,10 @@ data class CompanionQa(
     val answer: String = "",
     val streaming: Boolean = false,
     val error: String? = null,
+    /** 这一条已经存成笔记。存过之后按钮变成「已存」，避免同一条存两遍。 */
+    val savedAsNote: Boolean = false,
+    /** 存笔记失败时的原因（只给一句能读的，不带堆栈）。 */
+    val noteError: String? = null,
 )
 
 /**
@@ -81,6 +87,7 @@ class CompanionViewModel
         private val askGateway: CompanionAskGateway,
         private val knowledgeRepository: KnowledgeRepository,
         private val insightRepository: CompanionInsightRepository,
+        private val noteRepository: StudyNoteRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(CompanionUiState())
         val uiState: StateFlow<CompanionUiState> = _uiState.asStateFlow()
@@ -203,6 +210,37 @@ class CompanionViewModel
         }
 
         /**
+         * 把某一条回答存成笔记。
+         *
+         * 命中受控知识点就挂上去（只挂已有节点，命中不到就存成没有归属的笔记），
+         * 不做「自动总结」：笔记的价值在于它就是当时那句原话，改写后学生复习时认不出来。
+         */
+        fun saveNote(index: Int) {
+            val item = _uiState.value.items.getOrNull(index) ?: return
+            if (item.streaming || item.answer.isBlank() || item.savedAsNote) return
+            viewModelScope.launch {
+                val kpointId = runCatching { kpointHits(item.question).firstOrNull()?.id }.getOrNull()
+                val saved =
+                    runCatching {
+                        noteRepository.saveCompanion(
+                            question = item.question,
+                            answer = item.answer,
+                            kpointId = kpointId,
+                        )
+                    }
+                _uiState.update { state ->
+                    val current = state.items.getOrNull(index) ?: return@update state
+                    val updated =
+                        current.copy(
+                            savedAsNote = saved.isSuccess,
+                            noteError = if (saved.isSuccess) null else "没存成，再点一次",
+                        )
+                    state.copy(items = state.items.toMutableList().also { it[index] = updated })
+                }
+            }
+        }
+
+        /**
          * 把这次问到的知识点记进「易忘点」。
          *
          * 匹配方式是**知识点名子串命中**：问题文本往往就是「链式法则是什么」这种短句，
@@ -211,15 +249,19 @@ class CompanionViewModel
          */
         private fun recordForgotten(question: String) {
             viewModelScope.launch {
-                val catalog = runCatching { knowledgeRepository.catalogEnsuringSeeded() }.getOrNull() ?: return@launch
-                val hits =
-                    catalog
-                        .allKnowledgePoints()
-                        .filter { point -> point.name.length >= MIN_KP_NAME_LENGTH && question.contains(point.name) }
-                        .take(MAX_KP_HITS)
+                val hits = kpointHits(question)
                 if (hits.isEmpty()) return@launch
                 runCatching { insightRepository.recordAsked(hits, System.currentTimeMillis()) }
             }
+        }
+
+        /** 按名字子串命中知识点，命中不到返回空表。 */
+        private suspend fun kpointHits(text: String): List<KnowledgePoint> {
+            val catalog = runCatching { knowledgeRepository.catalogEnsuringSeeded() }.getOrNull() ?: return emptyList()
+            return catalog
+                .allKnowledgePoints()
+                .filter { point -> point.name.length >= MIN_KP_NAME_LENGTH && text.contains(point.name) }
+                .take(MAX_KP_HITS)
         }
 
         private companion object {

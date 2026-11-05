@@ -6,6 +6,7 @@ import com.totop.app.data.repo.ExerciseRepository
 import com.totop.app.data.repo.KnowledgeRepository
 import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.data.repo.QuestionRepository
+import com.totop.app.data.repo.StudyNoteRepository
 import com.totop.app.domain.model.EdgeType
 import com.totop.app.domain.model.KnowledgePoint
 import com.totop.app.domain.model.Mastery
@@ -31,6 +32,7 @@ class KpointDetailViewModel
         private val mistakeRepository: MistakeRepository,
         private val exerciseRepository: ExerciseRepository,
         private val questionRepository: QuestionRepository,
+        private val noteRepository: StudyNoteRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(KpointDetailUiState())
         val uiState: StateFlow<KpointDetailUiState> = _uiState.asStateFlow()
@@ -62,6 +64,7 @@ class KpointDetailViewModel
                         catalog.prerequisiteIdsOf(kpointId)
                             .mapNotNull { id -> catalog.knowledgePoint(id) }
                     val mistakes = loadMistakes(kpointId)
+                    val notes = runCatching { noteRepository.listByKpoint(kpointId) }.getOrDefault(emptyList())
                     val exerciseCount =
                         runCatching {
                             exerciseRepository.verifiedOfKpoint(
@@ -78,6 +81,7 @@ class KpointDetailViewModel
                             prerequisites = prerequisites,
                             mistakes = mistakes,
                             verifiedExerciseCount = exerciseCount,
+                            notes = notes,
                         )
                 } catch (cancellation: CancellationException) {
                     throw cancellation
@@ -135,6 +139,12 @@ class KpointDetailViewModel
 
             /** 题干摘要长度。 */
             const val STEM_LIMIT: Int = 60
+
+            /** 详情页最多展示的笔记条数：再多这一页就会被笔记淹没，完整笔记留给复习资料。 */
+            const val NOTE_LIMIT: Int = 6
+
+            /** 笔记正文在详情页只给预览行数。 */
+            const val NOTE_PREVIEW_LINES: Int = 4
 
             /** 薄弱阈值。 */
             const val WEAK_THRESHOLD: Double = 60.0

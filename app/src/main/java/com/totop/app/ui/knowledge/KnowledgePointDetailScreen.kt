@@ -271,6 +271,42 @@ fun KnowledgePointDetailScreen(
             }
 
             DetailCard(
+                title = "我的笔记",
+                icon = {
+                    Icon(
+                        Icons.Filled.Book,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                },
+            ) {
+                if (uiState.notes.isEmpty()) {
+                    Text(
+                        text =
+                            "还没有这个知识点的笔记。在陪伴作业里把讲清楚的那段话点「存为笔记」，" +
+                                "命中这个知识点时就会挂到这里。",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    uiState.notes.take(KpointDetailViewModel.NOTE_LIMIT).forEach { note ->
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(text = note.title, style = MaterialTheme.typography.labelLarge)
+                            Text(
+                                text = note.body,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = KpointDetailViewModel.NOTE_PREVIEW_LINES,
+                            )
+                            Text(
+                                text = note.source.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+
+            DetailCard(
                 title = "巩固练习",
                 icon = {
                     Icon(

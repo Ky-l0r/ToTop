@@ -18,6 +18,7 @@ import com.totop.app.data.local.dao.QuestionDao
 import com.totop.app.data.local.dao.ReportDao
 import com.totop.app.data.local.dao.ReviewDao
 import com.totop.app.data.local.dao.SettingsDao
+import com.totop.app.data.local.dao.StudyNoteDao
 import com.totop.app.data.local.entity.AiTraceEntity
 import com.totop.app.data.local.entity.CacheEntryEntity
 import com.totop.app.data.local.entity.DailyStatsEntity
@@ -35,6 +36,7 @@ import com.totop.app.data.local.entity.QuestionEntity
 import com.totop.app.data.local.entity.ReportEntity
 import com.totop.app.data.local.entity.ReviewLogEntity
 import com.totop.app.data.local.entity.SettingsEntity
+import com.totop.app.data.local.entity.StudyNoteEntity
 
 /**
  * To Top 本地数据库（开发方案第五章，15 张表全部登记在 [entities]）。
@@ -67,6 +69,7 @@ import com.totop.app.data.local.entity.SettingsEntity
         CacheEntryEntity::class,
         ForgottenKpointEntity::class,
         LearnedMaterialEntity::class,
+        StudyNoteEntity::class,
     ],
     version = AppDatabase.VERSION,
     exportSchema = true,
@@ -103,6 +106,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun learnedMaterialDao(): LearnedMaterialDao
 
+    abstract fun studyNoteDao(): StudyNoteDao
+
     /** 表名常量：备份、导出与测试按名称引用，避免散落的字符串字面量。 */
     object Tables {
         const val QUESTION = "question"
@@ -122,6 +127,7 @@ abstract class AppDatabase : RoomDatabase() {
         const val CACHE_ENTRY = "cache_entry"
         const val FORGOTTEN_KPOINT = "forgotten_kpoint"
         const val LEARNED_MATERIAL = "learned_material"
+        const val STUDY_NOTE = "study_note"
 
         /** 全部业务表，备份与清库按此顺序处理。 */
         val ALL: List<String> =
@@ -143,12 +149,13 @@ abstract class AppDatabase : RoomDatabase() {
                 CACHE_ENTRY,
                 FORGOTTEN_KPOINT,
                 LEARNED_MATERIAL,
+                STUDY_NOTE,
             )
     }
 
     companion object {
         /** 当前数据库版本。 */
-        const val VERSION: Int = 5
+        const val VERSION: Int = 6
 
         /** 数据库文件名。 */
         const val NAME: String = "totop.db"

@@ -141,7 +141,9 @@ fun CompanionScreen(
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(state.items.size) { index -> QaBubbles(state.items[index]) }
+                items(state.items.size) { index ->
+                    QaBubbles(item = state.items[index], onSaveNote = { viewModel.saveNote(index) })
+                }
             }
         }
 
@@ -218,7 +220,10 @@ private fun EmptyStream(modifier: Modifier = Modifier) {
 
 /** 一条问答：右上是自己那句，左下是回答。 */
 @Composable
-private fun QaBubbles(item: CompanionQa) {
+private fun QaBubbles(
+    item: CompanionQa,
+    onSaveNote: () -> Unit,
+) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = item.question,
@@ -255,6 +260,28 @@ private fun QaBubbles(item: CompanionQa) {
                     )
 
                 else -> FormulaText(text = item.answer, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        // 存为笔记：写在气泡右下角，跟着这一条走。
+        // 不用弹窗确认——点错了再点一次也没关系（存过的会变灰，不会重复存）。
+        if (item.answer.isNotBlank() && !item.streaming) {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
+                Text(
+                    text = if (item.savedAsNote) "已存为笔记" else "存为笔记",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (item.savedAsNote) Tokens.OnSurfaceVariant else Tokens.Primary,
+                    modifier =
+                        Modifier
+                            .clickable(enabled = !item.savedAsNote, onClick = onSaveNote)
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                )
+                item.noteError?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }

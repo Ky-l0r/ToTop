@@ -97,8 +97,8 @@ class MigrationTest {
         AppDatabase.Tables.ALL.forEach { table ->
             assertTrue("库中应包含表 " + table + "，实际：" + tables, table in tables)
         }
-        // 0.5.0 加了 forgotten_kpoint，共 16 张；数字变化时必须同步这里与迁移用例
-        assertEquals(16, AppDatabase.Tables.ALL.size)
+        // 0.7.0 加了 study_note，共 18 张；数字变化时必须同步这里与迁移用例
+        assertEquals(18, AppDatabase.Tables.ALL.size)
     }
 
     @Test
@@ -233,6 +233,37 @@ class MigrationTest {
     }
 
     @Test
+    @Throws(IOException::class)
+    fun migrate5To6AddsStudyNote() {
+        // v6 只新增 study_note 一张表（学习笔记）；kpointId 刻意不加外键，
+        // 因此这里顺带断言「笔记可以挂在任意 kpointId 上、节点不存在也不报错」。
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt, selfMasteredAt, imagePathsJson) " +
+                    "VALUES ('q1', 'chemistry', '高二', '题干', '[]', '', '[]', 0, NULL, 'sha1', " +
+                    "'MANUAL', 1, NULL, '[]')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 6, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.execSQL(
+                "INSERT INTO study_note (id, kpointId, questionId, source, title, body, createdAtUtc, updatedAtUtc) " +
+                    "VALUES ('n1', 'KP_CHEM_0001', NULL, 'companion', '标题', '正文', 1, 1)",
+            )
+            db.query("SELECT title, body FROM study_note WHERE id = 'n1'").use { cursor ->
+                assertTrue("迁移后笔记必须读得出来", cursor.moveToFirst())
+                assertEquals("标题", cursor.getString(0))
+                assertEquals("正文", cursor.getString(1))
+            }
+            db.query("SELECT stemText FROM question WHERE id = 'q1'").use { cursor ->
+                assertTrue("迁移后题目必须还在", cursor.moveToFirst())
+                assertEquals("题干", cursor.getString(0))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {
@@ -256,7 +287,18 @@ class MigrationTest {
         assertEquals("schema v1 应包含 15 张表", 15, entities.length())
         assertEquals(1, databaseJson.getInt("version"))
         val names = (0 until entities.length()).map { entities.getJSONObject(it).getString("tableName") }
-        AppDatabase.Tables.ALL.forEach { table ->
+        // 只校验 v1 当时就存在的表：Tables.ALL 会随版本增长，
+        // 拿今天的全量名单去比 v1 快照，每加一张表这条断言就会假失败。
+        val v1Tables =
+            listOf(
+                AppDatabase.Tables.QUESTION,
+                AppDatabase.Tables.MISTAKE_RECORD,
+                AppDatabase.Tables.KNOWLEDGE_POINT,
+                AppDatabase.Tables.MISTAKE_KPOINT,
+                AppDatabase.Tables.REVIEW_LOG,
+                AppDatabase.Tables.SETTINGS,
+            )
+        v1Tables.forEach { table ->
             assertTrue("schema v1 缺少表 " + table + "，实际：" + names, table in names)
         }
     }

@@ -292,6 +292,8 @@ data class KpointDetailUiState(
     val prerequisites: List<KnowledgePoint> = emptyList(),
     val mistakes: List<MistakeCardUiLite> = emptyList(),
     val verifiedExerciseCount: Int = 0,
+    /** 我自己在这个知识点上存过的笔记。 */
+    val notes: List<com.totop.app.domain.model.StudyNote> = emptyList(),
 ) {
     /** 掌握度分数（无数据时为 null）。 */
     val score: Double? get() = masteries?.score
