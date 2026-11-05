@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.QuestionDraft
+import com.totop.app.ml.CaptureQuality
 import com.totop.app.ui.theme.Tokens
 import com.totop.app.util.ImageFit
 import com.totop.app.util.NormalizedRect
@@ -102,6 +103,14 @@ fun PagePreviewScreen(
                 )
             }
         }
+    // 拍完即检：只在换图时重算一次；用户点「知道了」后这一页不再打扰。
+    // 判据全在本地位图指标里（ml/CaptureQuality），不额外发起任何请求。
+    val qualityIssues =
+        remember(bitmap) {
+            bitmap?.let { qualityIssuesOf(it) } ?: emptyList()
+        }
+    var qualityDismissed by remember(bitmap) { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxSize().background(Color.Black)) {
         // 顶部：取消 + 页序 + 重拍（重拍从整行按钮收进标题栏，省下一整行高度）
         Row(
@@ -123,6 +132,30 @@ fun PagePreviewScreen(
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onRetake) { Text("重拍这页", color = Color.White) }
+        }
+
+        // 拍得不好时给一句提示，主按钮仍是「用这张」——只提示、不拦截。
+        if (qualityIssues.isNotEmpty() && !qualityDismissed) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 2.dp)
+                        .clip(RoundedCornerShape(Tokens.RadiusMedium))
+                        .background(Color.White.copy(alpha = 0.14f))
+                        .padding(start = 10.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = qualityIssues.joinToString("\n") { it.message },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.92f),
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(onClick = { qualityDismissed = true }) {
+                    Text("知道了", color = Color.White)
+                }
+            }
         }
 
         // 中间：照片 + 框选层
@@ -322,3 +355,36 @@ const val PREVIEW_LONG_SIDE: Int = 1280
 
 /** 页缩略图边长：够看清页序与大致内容，又不和框选区抢高度。 */
 private val THUMB_SIZE = 52.dp
+
+/** 质量检查用的采样长边。判「糊/歪/反光」不需要 1280 的精度，480 足够且算得快。 */
+private const val QUALITY_SAMPLE_SIDE = 480
+
+/**
+ * 把预览位图缩到 [QUALITY_SAMPLE_SIDE] 后做检查。
+ *
+ * 缩放在本地完成、结果是新位图，用完立刻回收：这一步每次换图只跑一次，
+ * 但位图是 1280 长边的，不回收会在连续重拍几次后堆出可观的内存。
+ */
+private fun qualityIssuesOf(bitmap: android.graphics.Bitmap): List<CaptureQuality.Issue> {
+    val longSide = maxOf(bitmap.width, bitmap.height)
+    if (longSide <= 0) return emptyList()
+    val scale = QUALITY_SAMPLE_SIDE.toFloat() / longSide
+    val scaled =
+        if (scale >= 1f) {
+            bitmap
+        } else {
+            android.graphics.Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * scale).toInt().coerceAtLeast(1),
+                (bitmap.height * scale).toInt().coerceAtLeast(1),
+                true,
+            )
+        }
+    return try {
+        val pixels = IntArray(scaled.width * scaled.height)
+        scaled.getPixels(pixels, 0, scaled.width, 0, 0, scaled.width, scaled.height)
+        CaptureQuality.inspect(scaled.width, scaled.height, pixels)
+    } finally {
+        if (scaled !== bitmap) scaled.recycle()
+    }
+}
