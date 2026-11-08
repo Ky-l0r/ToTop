@@ -413,17 +413,20 @@ private class PagePainter(
         // 标题后面至少留三行正文，避免「标题孤零零挂在页脚」
         ensureSpace(HEADING_BLOCK_PT + bodyPaint.textSize * type.lineRatio * 3f)
         y += HEADING_GAP_PT
+        // 基线必须从「块顶」往下让出字顶，不能直接拿 y 当基线：
+        // 直接当基线时字顶会向上溢出 ascent，压住上一段的最后一行（截图里的重影就是这么来的）。
+        val baseline = ReviewPdfFlow.baselineOf(y, headingPaint.textSize)
         val number = text.substringBefore('、', "")
         val rest = if (number.isEmpty()) text else text.substringAfter('、', text)
         var x = marginX
         if (number.isNotEmpty()) {
-            canvas?.drawText(number + "、", x, y, headingNumberPaint)
+            canvas?.drawText(number + "、", x, baseline, headingNumberPaint)
             x += headingNumberPaint.measureText(number + "、")
         }
-        canvas?.drawText(rest, x, y, headingPaint)
-        y += HEADING_RULE_GAP_PT
-        canvas?.drawLine(marginX, y, contentRight, y, rulePaint)
-        y += HEADING_AFTER_PT
+        canvas?.drawText(rest, x, baseline, headingPaint)
+        val ruleY = baseline + HEADING_RULE_GAP_PT
+        canvas?.drawLine(marginX, ruleY, contentRight, ruleY, rulePaint)
+        y = ReviewPdfFlow.nextTopAfter(baseline, headingPaint.textSize, HEADING_AFTER_PT)
     }
 
     /**
@@ -435,17 +438,20 @@ private class PagePainter(
     fun subheading(text: String) {
         ensureSpace(SUB_HEADING_BLOCK_PT + bodyPaint.textSize * type.lineRatio * 2f)
         y += SUB_HEADING_GAP_PT
+        // 与章节标题同一套几何：块顶 -> 基线 -> 块底。原来只推进 5pt，
+        // 下一段正文的第一行几乎与标题同基线，屏幕上看到的就是两行字叠在一起。
+        val baseline = ReviewPdfFlow.baselineOf(y, subheadingPaint.textSize)
         val close = text.indexOf('）')
         val hasLabel = text.startsWith("（") && close > 0
         val label = if (hasLabel) text.substring(0, close + 1) else ""
         val rest = if (hasLabel) text.substring(close + 1) else text
         var x = marginX
         if (label.isNotEmpty()) {
-            canvas?.drawText(label, x, y, subheadingNumberPaint)
+            canvas?.drawText(label, x, baseline, subheadingNumberPaint)
             x += subheadingNumberPaint.measureText(label)
         }
-        canvas?.drawText(rest, x, y, subheadingPaint)
-        y += SUB_HEADING_AFTER_PT
+        canvas?.drawText(rest, x, baseline, subheadingPaint)
+        y = ReviewPdfFlow.nextTopAfter(baseline, subheadingPaint.textSize, SUB_HEADING_AFTER_PT)
     }
 
     /**
@@ -1041,10 +1047,10 @@ private sealed class Ink {
     }
 
     private companion object {
-        /** 常规字形的上沿与下沿（相对字号）。 */
-        const val GLYPH_RISE: Float = 0.86f
+        /** 常规字形的上沿与下沿（相对字号）；与 [ReviewPdfFlow] 共用同一组比例，避免两处各调各的。 */
+        val GLYPH_RISE: Float = ReviewPdfFlow.GLYPH_RISE
 
-        const val GLYPH_DROP: Float = 0.24f
+        val GLYPH_DROP: Float = ReviewPdfFlow.GLYPH_DROP
 
         /** 分子基线上抬的量。 */
         const val FRACTION_RISE: Float = 3.2f
@@ -1123,4 +1129,41 @@ private object Palette {
 
     /** 分隔线。 */
     val RULE: Int = Color.rgb(0xD8, 0xD5, 0xE2)
+}
+
+/**
+ * 标题块的纵向几何：块顶 → 基线 → 下一个块顶。
+ *
+ * 抽成纯函数是因为「文字重叠」这类问题在 Canvas 上只能靠肉眼发现：
+ * 出了 PDF 才知道两行叠在一起，改一次要重新生成一整份资料。
+ * 这里把三段推进量单独拿出来，用单测守住一条不变式——
+ * **标题之后的下一个块顶必须落在整行字高的下方**，否则下一段正文一定压上来。
+ */
+internal object ReviewPdfFlow {
+    /** 字顶相对基线的比例。与 [Ink.Glyphs] 的上沿取值保持一致。 */
+    const val GLYPH_RISE: Float = 0.86f
+
+    /** 字底相对基线的比例。 */
+    const val GLYPH_DROP: Float = 0.24f
+
+    /**
+     * 标题块需要的净空（相对字号）。
+     *
+     * 取 1.05 而不是 1.0：中文字体里「（一）」这种全角括号的实测下缘比 0.24 略深，
+     * 留 5% 余量后打印出来不会出现「括号尾巴蹭到下一行」。
+     */
+    const val BLOCK_CLEARANCE_RATIO: Float = 1.05f
+
+    /** 块顶 -> 基线：让出字顶的高度。 */
+    fun baselineOf(
+        top: Float,
+        textSize: Float,
+    ): Float = top + textSize * GLYPH_RISE
+
+    /** 基线 -> 下一个块顶：先让出整行字高，再叠加段后间距。 */
+    fun nextTopAfter(
+        baseline: Float,
+        textSize: Float,
+        after: Float,
+    ): Float = baseline + textSize * BLOCK_CLEARANCE_RATIO + after
 }
