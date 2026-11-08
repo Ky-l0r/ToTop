@@ -19,8 +19,6 @@ data class ByokForm(
     val baseUrl: String = "",
     val apiKey: String = "",
     val model: String = "",
-    val textModel: String = "",
-    val visionModel: String = "",
     /** 用户已确认「仅本机使用」说明。 */
     val localOnlyAcknowledged: Boolean = false,
     /** 表单是否被修改过（决定「保存」按钮是否可用）。 */
@@ -48,8 +46,11 @@ data class ByokForm(
             baseUrl = LlmEndpoints.normalizeBaseUrl(baseUrl),
             apiKey = apiKey.trim(),
             model = model.trim(),
-            textModel = textModel.trim(),
-            visionModel = visionModel.trim(),
+            // 只留一个模型：识题与讲解共用同一个（支持看图的）模型，
+            // 留空即回退到 model。旧的「文本档 / 视觉档」不再单独填写——
+            // 一个 Omni 模型既能识图也能读写文本，分开填只会让人以为必须填两遍。
+            textModel = "",
+            visionModel = "",
             localOnlyAcknowledged = localOnlyAcknowledged,
         )
 
@@ -70,9 +71,9 @@ data class ByokForm(
             ByokForm(
                 baseUrl = credentials.baseUrl,
                 apiKey = credentials.apiKey,
+                // 旧配置里可能存过单独的文本档/视觉档模型名，这里统一收敛成默认模型：
+                // 界面上只保留一个模型字段，回显成「两个模型里的哪一个」都会让人困惑。
                 model = credentials.model,
-                textModel = credentials.textModel,
-                visionModel = credentials.visionModel,
                 localOnlyAcknowledged = credentials.localOnlyAcknowledged,
                 dirty = false,
             )
@@ -186,6 +187,8 @@ data class ProviderTemplateUi(
 
 /**
  * 应用模板到表单：**保留用户已填的 Key**，只替换 Base URL 与模型名。
+ *
+ * 取模板的视觉档模型名：它才是能看图的那个，而识题与讲解现在共用同一个模型。
  */
 fun applyTemplate(
     form: ByokForm,
@@ -193,9 +196,7 @@ fun applyTemplate(
 ): ByokForm =
     form.copy(
         baseUrl = template.baseUrl,
-        model = template.textModel,
-        textModel = template.textModel,
-        visionModel = template.visionModel,
+        model = template.visionModel,
         dirty = true,
     )
 

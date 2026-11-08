@@ -175,7 +175,7 @@ fun SettingsScreen(
                     title = "模型与连接",
                     subtitle =
                         if (uiState.keyStored) {
-                            (uiState.form.visionModel.ifBlank { uiState.form.model }).ifBlank { "已保存 Key" }
+                            uiState.form.model.ifBlank { "已保存 Key" }
                         } else {
                             "未配置：点进去填 Base URL、Key 与模型名"
                         },
@@ -358,25 +358,10 @@ internal fun ByokSection(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 label = { Text(text = "模型名") },
-                placeholder = { Text(text = "deepseek-chat / qwen-plus / moonshot-v1-8k") },
-            )
-
-            OutlinedTextField(
-                value = form.textModel,
-                onValueChange = viewModel::updateTextModel,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(text = "文本档模型（可选）") },
-                supportingText = { Text(text = "留空则与上面的模型名相同；纯文本阶段用这个更省钱") },
-            )
-
-            OutlinedTextField(
-                value = form.visionModel,
-                onValueChange = viewModel::updateVisionModel,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(text = "视觉档模型（可选）") },
-                supportingText = { Text(text = "含图 / 手写 / 低置信度时使用；留空则回退到模型名") },
+                placeholder = { Text(text = "Qwen3.8-Omni-Flash") },
+                supportingText = {
+                    Text(text = "识题、解题、讲解都用这一个模型，请填支持看图的模型；无需再单独填文本档与视觉档")
+                },
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {

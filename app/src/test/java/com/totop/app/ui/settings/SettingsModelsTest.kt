@@ -74,7 +74,10 @@ class SettingsModelsTest {
         assertEquals(credentials.baseUrl, back.baseUrl)
         assertEquals(credentials.apiKey, back.apiKey)
         assertEquals(credentials.model, back.model)
-        assertEquals(credentials.visionModel, back.visionModel)
+        // 只留一个模型：保存后文本档与视觉档一律留空，由 model 兜底。
+        assertEquals("", back.textModel)
+        assertEquals("", back.visionModel)
+        assertEquals(credentials.model, back.effectiveVisionModel)
         assertTrue(back.localOnlyAcknowledged)
     }
 
@@ -85,8 +88,8 @@ class SettingsModelsTest {
         val template = ProviderTemplateUi.all().first { it.id == "dashscope" }
         val applied = applyTemplate(form, template)
         assertEquals(template.baseUrl, applied.baseUrl)
-        assertEquals(template.textModel, applied.model)
-        assertEquals(template.visionModel, applied.visionModel)
+        // 填的是视觉档模型名：能看图的那个才同时胜任识题与讲解
+        assertEquals(template.visionModel, applied.model)
         assertEquals("sk-user-key-1234", applied.apiKey)
         assertTrue(applied.dirty)
     }

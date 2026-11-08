@@ -136,14 +136,6 @@ class SettingsViewModel
             updateForm(_uiState.value.form.copy(model = value, dirty = true))
         }
 
-        fun updateTextModel(value: String) {
-            updateForm(_uiState.value.form.copy(textModel = value, dirty = true))
-        }
-
-        fun updateVisionModel(value: String) {
-            updateForm(_uiState.value.form.copy(visionModel = value, dirty = true))
-        }
-
         fun setLocalOnlyAcknowledged(value: Boolean) {
             updateForm(_uiState.value.form.copy(localOnlyAcknowledged = value, dirty = true))
         }
