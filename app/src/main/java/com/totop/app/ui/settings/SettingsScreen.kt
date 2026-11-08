@@ -399,6 +399,67 @@ internal fun ByokSection(
     }
 }
 
+/**
+ * 语音转写（独立一套端点 / Key / 模型）。
+ *
+ * 为什么单独一段而不是并进上面的主模型表单：这是另一条协议（WebSocket 双工），
+ * 端点是 `/api-ws/v1/inference`、模型是 ASR 模型，和对话模型不是同一个东西；
+ * 混在一张表单里，用户会以为「填了主模型 Key 语音就能用」。
+ */
+@Composable
+private fun AsrSection(
+    uiState: SettingsUiState,
+    viewModel: SettingsViewModel,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = "语音转写（可选）",
+            style = MaterialTheme.typography.titleSmall,
+        )
+        Text(
+            text =
+                if (uiState.asrConfigured) {
+                    "已配置：长按说话会边录边转，文字直接出现在输入框。"
+                } else {
+                    "留空则使用系统语音识别。填了下面的端点与 Key，才会走千问的流式识别。"
+                },
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = uiState.asrEndpoint,
+            onValueChange = viewModel::updateAsrEndpoint,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text(text = "转写端点（wss://）") },
+            supportingText = { Text(text = "默认：maas.qianwenaiapi.com/api-ws/v1/inference") },
+        )
+        OutlinedTextField(
+            value = uiState.asrKey,
+            onValueChange = viewModel::updateAsrKey,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text(text = "转写 Key") },
+            supportingText = { Text(text = "与主模型的 Key 分开保存，换主模型不会冲掉它") },
+        )
+        OutlinedTextField(
+            value = uiState.asrModel,
+            onValueChange = viewModel::updateAsrModel,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text(text = "转写模型") },
+            supportingText = { Text(text = "默认：qwen-audio-3.1-asr-flash-streaming") },
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = viewModel::saveAsr) { Text(text = "保存语音转写") }
+            TextButton(onClick = viewModel::clearAsr) { Text(text = "清空 Key") }
+        }
+    }
+}
+
 /** 连通性结果（分类提示）。 */
 @Composable
 private fun ConnectionSection(
@@ -847,6 +908,7 @@ fun ModelSettingsScreen(
         }
         ByokSection(uiState = uiState, viewModel = viewModel)
         ConnectionSection(uiState = uiState, viewModel = viewModel)
+        AsrSection(uiState = uiState, viewModel = viewModel)
         Text(
             text =
                 "说明：Key 只写进本机的加密存储，任何提示、日志与导出文件里都不会出现明文；" +

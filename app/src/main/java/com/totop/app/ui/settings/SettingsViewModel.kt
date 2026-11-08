@@ -2,6 +2,7 @@ package com.totop.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.totop.app.data.prefs.AsrCredentials
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.ConnectivityResult
 import com.totop.app.data.remote.LlmClient
@@ -45,6 +46,14 @@ data class SettingsUiState(
     val confirmClearAll: Boolean = false,
     /** 清除全部数据的结果。 */
     val clearAllDone: Boolean = false,
+    /** 语音转写端点（默认千问的 inference 地址）。 */
+    val asrEndpoint: String = AsrCredentials.DEFAULT_ENDPOINT,
+    /** 语音转写 Key（只在内存里短暂存在，落盘走加密存储）。 */
+    val asrKey: String = "",
+    /** 语音转写模型名。 */
+    val asrModel: String = AsrCredentials.DEFAULT_MODEL,
+    /** 是否已配好（配好才走流式识别，否则退回系统识别）。 */
+    val asrConfigured: Boolean = false,
 ) {
     /** 是否需要提示「未配置 Key 时进入本地模式」。 */
     val localMode: Boolean get() = !keyStored
@@ -81,6 +90,7 @@ class SettingsViewModel
         fun bootstrap() {
             viewModelScope.launch {
                 loadCredentials()
+                loadAsr()
                 loadToggles()
                 refreshCacheStats()
                 val availability = runCatching { ttsEngine.initialize() }.getOrNull()
@@ -101,6 +111,69 @@ class SettingsViewModel
                     keyStored = runCatching { secretStore.hasApiKey() }.getOrDefault(false),
                     storageAvailable = runCatching { secretStore.isAvailable() }.getOrDefault(true),
                 )
+        }
+
+        /** 读语音转写凭据：未配置时保持默认端点与模型名，只把 Key 留空。 */
+        private fun loadAsr() {
+            val asr = runCatching { secretStore.readAsr() }.getOrDefault(AsrCredentials.EMPTY)
+            _uiState.value =
+                _uiState.value.copy(
+                    asrEndpoint = asr.endpoint,
+                    asrKey = asr.apiKey,
+                    asrModel = asr.model,
+                    asrConfigured = asr.isConfigured,
+                )
+        }
+
+        fun updateAsrEndpoint(value: String) {
+            _uiState.value = _uiState.value.copy(asrEndpoint = value)
+        }
+
+        fun updateAsrKey(value: String) {
+            _uiState.value = _uiState.value.copy(asrKey = value)
+        }
+
+        fun updateAsrModel(value: String) {
+            _uiState.value = _uiState.value.copy(asrModel = value)
+        }
+
+        /**
+         * 保存语音转写配置。
+         *
+         * 与主模型的 Key 分开存：两条链路的端点与厂商可能不同，
+         * 共用一份会在换主模型时把语音的 Key 冲掉。
+         */
+        fun saveAsr() {
+            val state = _uiState.value
+            val credentials =
+                AsrCredentials(
+                    endpoint = state.asrEndpoint.trim().ifBlank { AsrCredentials.DEFAULT_ENDPOINT },
+                    apiKey = state.asrKey.trim(),
+                    model = state.asrModel.trim().ifBlank { AsrCredentials.DEFAULT_MODEL },
+                )
+            runCatching { secretStore.saveAsr(credentials) }
+            _uiState.value =
+                _uiState.value.copy(
+                    asrConfigured = credentials.isConfigured,
+                    message =
+                        if (credentials.isConfigured) {
+                            "语音转写已保存：长按说话会走流式识别"
+                        } else {
+                            "已清空语音转写的 Key，语音将退回系统识别"
+                        },
+                )
+        }
+
+        /** 清空语音转写 Key（端点与模型名保留）。 */
+        fun clearAsr() {
+            val state = _uiState.value
+            runCatching {
+                secretStore.saveAsr(
+                    AsrCredentials(endpoint = state.asrEndpoint, apiKey = "", model = state.asrModel),
+                )
+            }
+            _uiState.value =
+                _uiState.value.copy(asrKey = "", asrConfigured = false, message = "已清空语音转写 Key")
         }
 
         private suspend fun loadToggles() {
