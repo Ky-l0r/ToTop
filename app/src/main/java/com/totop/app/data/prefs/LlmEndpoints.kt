@@ -84,7 +84,10 @@ object ProviderTemplates {
             ProviderTemplate(
                 id = "dashscope",
                 displayName = "千问 AI",
-                baseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                // 用户实测的地址（2026-11-08 文档截图）：不是 dashscope 的兼容域名，
+                // 而是千问 AI 平台自己的 maas 入口。填错这里会得到一个 404，
+                // 而 404 在设置页会被报成「Base URL 错误」，排查时容易走偏。
+                baseUrl = "https://maas.qianwenaiapi.com/compatible-mode/v1",
                 // 用户口径：只填一个模型就够用——Omni 模型本身能看图也能读写文本，
                 // 因此文本档与视觉档指向同一个模型，避免「识题走 A、讲解走 B」时
                 // 两套提示词在同一模型上行为不一致。
