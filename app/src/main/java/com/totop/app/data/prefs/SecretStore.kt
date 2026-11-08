@@ -40,6 +40,17 @@ interface SecretStore {
 
     /** 存储后端是否可用（Keystore 损坏时为 false，设置页需提示）。 */
     fun isAvailable(): Boolean
+
+    /**
+     * 读取语音转写凭据（0.7.0）。
+     *
+     * 给默认实现是为了让测试里的内存实现不必跟着改：语音转写是可选能力，
+     * 未实现时按「未配置」处理即可。
+     */
+    fun readAsr(): AsrCredentials = AsrCredentials.EMPTY
+
+    /** 保存语音转写凭据（独立一套，与主模型互不覆盖）。 */
+    fun saveAsr(credentials: AsrCredentials) = Unit
 }
 
 /**
@@ -139,6 +150,26 @@ class EncryptedSecretStore(
 
     override fun isAvailable(): Boolean = prefs != null
 
+    override fun readAsr(): AsrCredentials {
+        val store = prefs ?: return AsrCredentials.EMPTY
+        return runCatching {
+            AsrCredentials(
+                endpoint = store.getString(KEY_ASR_ENDPOINT, AsrCredentials.DEFAULT_ENDPOINT).orEmpty(),
+                apiKey = store.getString(KEY_ASR_KEY, "").orEmpty(),
+                model = store.getString(KEY_ASR_MODEL, AsrCredentials.DEFAULT_MODEL).orEmpty(),
+            )
+        }.getOrElse { AsrCredentials.EMPTY }
+    }
+
+    override fun saveAsr(credentials: AsrCredentials) {
+        val store = prefs ?: return
+        store.edit()
+            .putString(KEY_ASR_ENDPOINT, credentials.endpoint.trim().ifBlank { AsrCredentials.DEFAULT_ENDPOINT })
+            .putString(KEY_ASR_KEY, credentials.apiKey.trim())
+            .putString(KEY_ASR_MODEL, credentials.model.trim().ifBlank { AsrCredentials.DEFAULT_MODEL })
+            .commit()
+    }
+
     companion object {
         /** 加密文件名；与 data_extraction_rules.xml 中的排除规则对应，绝不进入备份。 */
         const val FILE_NAME: String = "totop_secrets"
@@ -148,6 +179,11 @@ class EncryptedSecretStore(
         const val KEY_MODEL: String = "llm_model"
         const val KEY_TEXT_MODEL: String = "llm_text_model"
         const val KEY_VISION_MODEL: String = "llm_vision_model"
+
+        /** 语音转写（独立一套，与主模型互不覆盖）。 */
+        const val KEY_ASR_ENDPOINT: String = "asr_endpoint"
+        const val KEY_ASR_KEY: String = "asr_api_key"
+        const val KEY_ASR_MODEL: String = "asr_model"
         const val KEY_LOCAL_ONLY: String = "llm_local_only_ack"
     }
 }
