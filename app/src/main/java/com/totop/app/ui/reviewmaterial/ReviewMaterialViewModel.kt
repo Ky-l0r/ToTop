@@ -57,6 +57,7 @@ class ReviewMaterialViewModel
         private val mistakeRepository: MistakeRepository,
         private val questionRepository: com.totop.app.data.repo.QuestionRepository,
         private val insights: com.totop.app.data.repo.CompanionInsightRepository,
+        private val noteRepository: com.totop.app.data.repo.StudyNoteRepository,
     ) : ViewModel() {
         private val pdfWriter = ReviewMaterialPdfWriter()
 
@@ -194,7 +195,12 @@ class ReviewMaterialViewModel
                     is ReviewMaterialResult.Success -> {
                         // 补上「取材池有多大」：资料正文与卷首说明都按这个数写。
                         val material =
-                            outcome.material.copy(mistakesAvailable = maxOf(available, outcome.material.mistakesUsed))
+                            materialWithNotes(
+                                outcome.material.copy(
+                                    mistakesAvailable = maxOf(available, outcome.material.mistakesUsed),
+                                ),
+                                subjectLabel,
+                            )
                         // 先存档再更新界面：学生退出页面是常态，
                         // 存档失败必须在这句话里说出来，不能让人以为「生成过却不见了」。
                         val saved = materialStore.save(material)
@@ -228,6 +234,46 @@ class ReviewMaterialViewModel
                             )
                 }
             }
+        }
+
+        /**
+         * 把「我的笔记」作为一节插进资料里。
+         *
+         * 这一节刻意不交给模型写：笔记是学生自己的原话，模型一转述就变成「系统总结」，
+         * 复习时反而认不出来；而且笔记根本不在提示词里，让模型写只能靠编。
+         * 因此由客户端原样拼进去，位置按定稿放在「易忘点回顾」之后。
+         */
+        private suspend fun materialWithNotes(
+            material: ReviewMaterial,
+            subjectLabel: String,
+        ): ReviewMaterial {
+            val notes =
+                runCatching { noteRepository.forReviewMaterial(Subjects.codeOf(subjectLabel)) }
+                    .getOrDefault(emptyList())
+            if (notes.isEmpty()) return material
+            val section =
+                ReviewSection(
+                    title = NOTES_SECTION_TITLE,
+                    blocks = listOf(ReviewBlock(ReviewBlockStyle.PARAGRAPH, listOf(NOTES_INTRO))),
+                    subsections =
+                        notes.map { note ->
+                            ReviewSubsection(
+                                title = note.title,
+                                blocks =
+                                    listOf(
+                                        ReviewBlock(
+                                            ReviewBlockStyle.PARAGRAPH,
+                                            note.body.lines().filter { it.isNotBlank() },
+                                        ),
+                                    ),
+                            )
+                        },
+                )
+            val sections = material.sections.toMutableList()
+            // 找不到「易忘点」就放到最后：位置表是产品口径，但缺了这一章也不该让整节消失。
+            val forgottenIndex = sections.indexOfFirst { it.title.contains(FORGOTTEN_KEYWORD) }
+            sections.add(if (forgottenIndex >= 0) forgottenIndex + 1 else sections.size, section)
+            return material.copy(sections = sections)
         }
 
         /**
@@ -359,5 +405,19 @@ class ReviewMaterialViewModel
 
             /** 一次最多纳入几条易忘点，见 loadForgotten 的说明。 */
             const val MAX_FORGOTTEN: Int = 6
+
+            /** 「我的笔记」这一节的标题。 */
+            const val NOTES_SECTION_TITLE: String = "我的笔记"
+
+            /**
+             * 这一节的开场说明。
+             *
+             * 写死这句是产品口径：让学生一眼看出「这些是我自己问过的」，
+             * 而不是又一段系统推荐的通用要点。
+             */
+            const val NOTES_INTRO: String = "以下是你自己在陪伴作业里问过、核过的内容，原文照录，没有改写。"
+
+            /** 用来定位「我的笔记」该插在谁的后面。 */
+            const val FORGOTTEN_KEYWORD: String = "易忘点"
         }
     }
