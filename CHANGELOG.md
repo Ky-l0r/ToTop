@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+### 语音转写填错时当场说清楚
+
+#### Fixed
+
+- **转发写模型只回一句「URL error, please check URL」**：`*-filetrans`（文件转写）与 `*-message`
+  都不是双工流式，服务端要等握手成功、run-task 之后才拒绝，用户看不出是模型不对。
+  现在 `AsrCredentials.problem()` 在建连前就拦下来，直接说「文件转写模型不支持边录边出字，
+  请填 qwen-audio-3.1-asr-flash-streaming」；服务端仍返回这句话时也会翻译成人话。
+- **端点可以直接粘控制台给的地址**：控制台给的是
+  `https://<区域>.maas.qianwenaiapi.com/api/v1/services/audio/asr/transcription`，
+  粘进「转写端点」连不上。现在保存时自动归一化成 `wss://<同一主机>/api-ws/v1/inference`，
+  只保留主机、路径一律换成流式那条，区域域名（如 cn-beijing）原样保留。
+- 握手失败按状态码给结论：401/403 是 Key 或权限、404 是路径、并在提示里带上「实际端点」。
+
 ### 真机验证后的两处修补
 
 #### Fixed

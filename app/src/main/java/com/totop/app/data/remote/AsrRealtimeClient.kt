@@ -85,14 +85,25 @@ class AsrRealtimeClient
             }
         }
 
+        /**
+         * 建连。配置有问题时**不发起连接**，直接把原因回给 [listener] 并返回 null。
+         *
+         * 为什么不连一下试试：模型填错时服务端要先握手再回 task-failed 的
+         * 「URL error, please check URL」，用户要多等几秒还看不出问题在哪。
+         */
         fun start(
             credentials: AsrCredentials,
             listener: Listener,
-        ): Session {
+        ): Session? {
+            credentials.problem()?.let { problem ->
+                listener.onFailed(problem)
+                return null
+            }
+            val endpoint = credentials.resolvedEndpoint
             val request =
                 Request
                     .Builder()
-                    .url(credentials.endpoint)
+                    .url(endpoint)
                     .header("Authorization", "bearer " + credentials.apiKey)
                     .build()
             val taskId = UUID.randomUUID().toString().replace("-", "").take(TASK_ID_LENGTH)
@@ -122,7 +133,7 @@ class AsrRealtimeClient
                             throwable: Throwable,
                             response: Response?,
                         ) {
-                            listener.onFailed(throwable.message ?: "语音识别连接中断")
+                            listener.onFailed(describeFailure(throwable, response, endpoint))
                         }
 
                         override fun onClosing(
@@ -149,7 +160,9 @@ class AsrRealtimeClient
                 "task-finished" -> listener.onFinished()
                 "task-failed" ->
                     listener.onFailed(
-                        root.header()?.get("error_message")?.jsonPrimitive?.content ?: "语音识别任务失败",
+                        friendlyTaskError(
+                            root.header()?.get("error_message")?.jsonPrimitive?.content.orEmpty(),
+                        ),
                     )
                 "result-generated" -> {
                     val sentence = root.sentence() ?: return
@@ -168,6 +181,42 @@ class AsrRealtimeClient
             val output = payload["output"] as? JsonObject ?: return null
             return output["sentence"] as? JsonObject
         }
+
+        /**
+         * 握手失败翻译成人话。
+         *
+         * 服务端在 WebSocket 升级阶段只给 HTTP 状态码，OkHttp 的原始 message 是
+         * 「Expected HTTP 101 response but was '404 Not Found'」，看不出该改哪里。
+         */
+        private fun describeFailure(
+            throwable: Throwable,
+            response: Response?,
+            endpoint: String,
+        ): String {
+            val code = response?.code
+            val head =
+                when (code) {
+                    401, 403 -> "Key 无效或没有语音识别权限（HTTP " + code + "）。"
+                    404 -> "端点路径不对（HTTP 404）：实际连的是 " + endpoint + "，应指向 " + AsrCredentials.WS_PATH + "。"
+                    400 -> "请求被拒（HTTP 400），多半是模型名不对。"
+                    null -> throwable.message ?: "语音识别连接中断"
+                    else -> "连接失败（HTTP " + code + "）。"
+                }
+            return head + "\n实际端点：" + endpoint
+        }
+
+        /**
+         * run-task 之后服务端才报的错，最常见的一句是
+         * 「URL error, please check URL」——它其实是在说「这个模型不接这个端点」，
+         * 直接透传用户会以为是地址写错了。
+         */
+        private fun friendlyTaskError(raw: String): String =
+            if (raw.contains("URL", true) || raw.contains("url error", true)) {
+                "服务端拒绝了这次识别：「" + raw + "」，通常是模型名与流式端点不匹配。" +
+                    "\n请把模型名改成 " + AsrCredentials.DEFAULT_MODEL + "。"
+            } else {
+                raw.ifBlank { "语音识别任务失败" }
+            }
 
         private fun runTask(
             taskId: String,

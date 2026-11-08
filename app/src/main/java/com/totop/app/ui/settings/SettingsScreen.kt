@@ -435,7 +435,13 @@ private fun AsrSection(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             label = { Text(text = "转写端点（wss://）") },
-            supportingText = { Text(text = "默认：maas.qianwenaiapi.com/api-ws/v1/inference") },
+            supportingText = {
+                Text(
+                    text =
+                        "默认 maas.qianwenaiapi.com/api-ws/v1/inference。" +
+                            "从控制台复制来的 https 地址也能直接粘，保存时会自动改成 wss 与流式路径。",
+                )
+            },
         )
         OutlinedTextField(
             value = uiState.asrKey,
@@ -445,13 +451,32 @@ private fun AsrSection(
             label = { Text(text = "转写 Key") },
             supportingText = { Text(text = "与主模型的 Key 分开保存，换主模型不会冲掉它") },
         )
+        val modelIsStreaming =
+            com.totop.app.data.prefs.AsrCredentials(model = uiState.asrModel).isStreamingModel
         OutlinedTextField(
             value = uiState.asrModel,
             onValueChange = viewModel::updateAsrModel,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
+            isError = uiState.asrModel.isNotBlank() && !modelIsStreaming,
             label = { Text(text = "转写模型") },
-            supportingText = { Text(text = "默认：qwen-audio-3.1-asr-flash-streaming") },
+            supportingText = {
+                Text(
+                    text =
+                        if (uiState.asrModel.isNotBlank() && !modelIsStreaming) {
+                            "这个模型不能用于按住说话：filetrans / message 都不是流式。" +
+                                "请填 qwen-audio-3.1-asr-flash-streaming。"
+                        } else {
+                            "必须是 *-streaming 那一支，默认 qwen-audio-3.1-asr-flash-streaming"
+                        },
+                    color =
+                        if (uiState.asrModel.isNotBlank() && !modelIsStreaming) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            },
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = viewModel::saveAsr) { Text(text = "保存语音转写") }

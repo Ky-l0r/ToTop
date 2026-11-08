@@ -145,21 +145,27 @@ class SettingsViewModel
          */
         fun saveAsr() {
             val state = _uiState.value
-            val credentials =
+            val raw =
                 AsrCredentials(
                     endpoint = state.asrEndpoint.trim().ifBlank { AsrCredentials.DEFAULT_ENDPOINT },
                     apiKey = state.asrKey.trim(),
                     model = state.asrModel.trim().ifBlank { AsrCredentials.DEFAULT_MODEL },
                 )
+            // 存归一化之后的地址：用户粘的可能是控制台的 https 文件转写地址，
+            // 存进去要么连着失败、要么下次打开看不出被改过，不如当场显示成实际会连的那条。
+            val credentials = raw.copy(endpoint = raw.resolvedEndpoint)
             runCatching { secretStore.saveAsr(credentials) }
+            val problem = credentials.problem()
             _uiState.value =
                 _uiState.value.copy(
+                    asrEndpoint = credentials.endpoint,
+                    asrModel = credentials.model,
                     asrConfigured = credentials.isConfigured,
                     message =
-                        if (credentials.isConfigured) {
-                            "语音转写已保存：长按说话会走流式识别"
-                        } else {
-                            "已清空语音转写的 Key，语音将退回系统识别"
+                        when {
+                            problem != null -> problem
+                            credentials.isConfigured -> "语音转写已保存：长按说话会走流式识别"
+                            else -> "已清空语音转写的 Key，语音将退回系统识别"
                         },
                 )
         }
