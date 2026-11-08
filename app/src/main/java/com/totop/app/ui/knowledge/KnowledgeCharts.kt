@@ -325,7 +325,14 @@ object KnowledgeCharts {
         }
     }
 
-    /** 折线图点的坐标（等距横轴 + 线性纵轴，min/max 自动扩展以避免除零）。 */
+    /**
+     * 折线图点的坐标（等距横轴 + 线性纵轴）。
+     *
+     * 刻度分两种：
+     * - 区间够宽（最高 - 最低 ≥ [MIN_RELATIVE_SPAN]）：按区间自适应，看的是「涨没涨」；
+     * - 区间几乎为 0：改用 0..100 的绝对刻度。否则「连着几天都是 30 分」会被画成
+     *   贴着底边的一条线，配上「最低 30 · 最高 30」读起来像掌握度为零（真机实测踩过）。
+     */
     fun lineVertices(
         data: TrendData,
         width: Float,
@@ -334,12 +341,24 @@ object KnowledgeCharts {
         if (data.points.isEmpty()) return emptyList()
         val min = data.minValue
         val max = max(data.maxValue, min + 1.0)
+        val flat = (max - min) < MIN_RELATIVE_SPAN
         val stepX = if (data.points.size == 1) 0f else width / (data.points.size - 1).toFloat()
         return data.points.mapIndexed { index, point ->
-            val ratio = ((point.value - min) / (max - min)).coerceIn(0.0, 1.0)
+            val ratio =
+                if (flat) {
+                    (point.value / MASTERY_FULL).coerceIn(0.0, 1.0)
+                } else {
+                    ((point.value - min) / (max - min)).coerceIn(0.0, 1.0)
+                }
             xOf(stepX, index) to (height - (height * ratio).toFloat())
         }
     }
+
+    /** 区间小于这个跨度就改成绝对刻度（掌握度满分 100 的 5%）。 */
+    private const val MIN_RELATIVE_SPAN: Double = 5.0
+
+    /** 掌握度满分。 */
+    private const val MASTERY_FULL: Double = 100.0
 
     private fun xOf(
         stepX: Float,

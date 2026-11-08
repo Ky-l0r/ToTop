@@ -228,4 +228,18 @@ class KnowledgeChartsTest {
         assertEquals(0f, vertices.first().first, 0.01f)
         assertEquals(100f, vertices.last().first, 0.01f)
     }
+
+    @Test
+    @DisplayName("折线顶点：全段同分时按 0..100 绝对刻度，不贴底")
+    fun lineVerticesFlatSeries() {
+        // 真机踩过：连着几天都是 30 分时，相对刻度把线画在底边，看着像掌握度 0。
+        val trend =
+            KnowledgeCharts.trend(
+                listOf(MasterySnapshot(1L, 30.0), MasterySnapshot(2L, 30.0), MasterySnapshot(3L, 30.0)),
+            )
+        val vertices = KnowledgeCharts.lineVertices(trend, width = 100f, height = 100f)
+        assertEquals(3, vertices.size)
+        // 30 分应落在 30% 高度处：y = 100 - 30
+        vertices.forEach { (_, y) -> assertEquals(70f, y, 0.01f) }
+    }
 }
