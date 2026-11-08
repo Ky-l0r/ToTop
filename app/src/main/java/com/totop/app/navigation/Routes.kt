@@ -72,5 +72,15 @@ object Routes {
 
     fun kpointDetail(kpointId: String): String = "kpoint_detail/" + kpointId
 
+    /** 变式刷题：按知识点出三题，两题对上即过关。 */
+    const val PRACTICE_ARG = "kpointId"
+    const val PRACTICE_NAME_ARG = "name"
+    const val PRACTICE = "practice/{$PRACTICE_ARG}?$PRACTICE_NAME_ARG={$PRACTICE_NAME_ARG}"
+
+    fun practice(
+        kpointId: String,
+        name: String = "",
+    ): String = "practice/" + kpointId + "?name=" + java.net.URLEncoder.encode(name, "UTF-8")
+
     fun mistakeDetail(mistakeId: String): String = "mistake_detail/" + mistakeId
 }

@@ -65,6 +65,7 @@ import com.totop.app.ui.knowledge.KnowledgePointDetailScreen
 import com.totop.app.ui.knowledge.KnowledgeScreen
 import com.totop.app.ui.mistakes.MistakesScreen
 import com.totop.app.ui.mistakes.ReviewScreen
+import com.totop.app.ui.practice.PracticeScreen
 import com.totop.app.ui.report.ReportScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
@@ -608,6 +609,25 @@ fun ToTopNavHost(
                     }
                 },
                 onOpenMistake = { navController.navigate(Routes.MISTAKES) },
+                onPractice = { kpointId -> navController.navigate(Routes.practice(kpointId)) },
+            )
+        }
+
+        composable(
+            route = Routes.PRACTICE,
+            arguments =
+                listOf(
+                    navArgument(Routes.PRACTICE_ARG) { type = NavType.StringType },
+                    navArgument(Routes.PRACTICE_NAME_ARG) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+        ) { entry ->
+            PracticeScreen(
+                kpointId = entry.arguments?.getString(Routes.PRACTICE_ARG).orEmpty(),
+                kpointName = entry.arguments?.getString(Routes.PRACTICE_NAME_ARG).orEmpty(),
+                onBack = { navController.popBackStack() },
             )
         }
 

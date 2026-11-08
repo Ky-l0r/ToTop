@@ -9,7 +9,9 @@
     "D": "stage_d_kpoints.md"
   },
   "auxiliary": {
-    "reviewMaterial": "review_material.md"
+    "reviewMaterial": "review_material.md",
+    "exerciseGenerate": "exercise_generate.md",
+    "exerciseVerify": "exercise_verify.md"
   },
   "rules": [
     "版本号采用语义化版本：提示词措辞调整升 PATCH，输出字段变化升 MINOR，阶段边界变化升 MAJOR",
