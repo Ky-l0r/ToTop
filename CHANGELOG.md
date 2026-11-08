@@ -5,6 +5,27 @@
 
 ## [Unreleased]
 
+### 语音转写换成千问流式识别
+
+#### Added
+
+- **按住说话改为边录边转**：配置了语音转写后，长按说话会自己录音（16k 单声道 PCM，
+  每 100ms 一片）并通过 WebSocket 推给 `wss://maas.qianwenaiapi.com/api-ws/v1/inference`，
+  服务端返回的句子边收边填进输入框，松手前就能看到字。没配置就还是原来的系统识别器。
+- **协议按模型选对了**：走 `qwen-audio-3.1-asr-flash-streaming` 那套双工协议
+  （`run-task` → 收到 `task-started` 才推流 → 二进制音频帧 → `finish-task`），
+  结果取 `payload.output.sentence.text`，`sentence_end=true` 为定稿。
+  刻意不用 OpenAI realtime 那套（`session.update` / `input_audio_buffer.append`）——
+  那是 `qwen3-asr-flash-realtime` 的协议，事件名不通用，混用会一直停在「等任务开始」。
+- **语音转写独立一套凭据**：端点 / Key / 模型名与主模型分开存（`AsrCredentials`），
+  设置页「模型与连接」里单独一段，换主模型不会把语音的 Key 冲掉。
+
+#### Notes
+
+- 中间结果只覆盖当前句、定稿才并进累积串：服务端会修正中间结果，逐条拼会得到重复的半句。
+- 录音不做降噪与增益：识别端已有 VAD 与降噪，客户端再处理一遍只会引入延迟。
+- 最后一片按实际长度发送，不补零——补零会在句尾多送一段静音，VAD 容易判成「说完了」。
+
 ### 变式刷题与过关
 
 #### Added

@@ -28,6 +28,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import com.totop.app.data.prefs.AsrCredentials
+import com.totop.app.data.prefs.EncryptedSecretStore
+import com.totop.app.data.remote.AsrRealtimeClient
+import com.totop.app.data.remote.LlmRequestFactory
 
 /** 系统默认识别服务在偏好里的 ID。 */
 private const val SYSTEM_ENGINE_ID = "system"
@@ -169,6 +173,15 @@ object VoiceEngines {
 @Stable
 class VoiceInputController internal constructor(
     private val context: Context,
+    /**
+     * 语音转写配置（0.7.0）。配好就走千问的流式识别，否则用系统识别器。
+     *
+     * 为什么放在同一个控制器里而不是抽接口：界面直接读它的 listening / level 等
+     * Compose 状态，抽接口要动两个页面的共用组件；而两条链路对外行为一致，
+     * 分支留在内部代价最小。
+     */
+    private val asr: AsrCredentials = AsrCredentials.EMPTY,
+    private val asrClient: AsrRealtimeClient? = null,
 ) {
     /** 正在录音（含松手后等待结果的一小段）。 */
     var listening: Boolean by mutableStateOf(false)
@@ -209,6 +222,17 @@ class VoiceInputController internal constructor(
     /** 本轮已经试过的引擎（按 id），用于「换一个引擎再试」，避免同一引擎反复重试。 */
     private val triedEngines = mutableSetOf<String>()
 
+    // ---------- 流式语音转写（0.7.0） ----------
+
+    private var asrRecorder: AsrRecorder? = null
+    private var asrSession: AsrRealtimeClient.Session? = null
+
+    /** 已经定稿的句子（sentence_end=true 的累积）。 */
+    private val asrCommitted = StringBuilder()
+
+    /** 当前句的中间结果：会被后续中间结果覆盖，不能逐条拼接。 */
+    private var asrPartial: String = ""
+
     /** 最近一次部分结果：引擎不回调 onResults 时用它兜底，比丢掉整句话好。 */
     private var lastPartial: String = ""
 
@@ -237,6 +261,10 @@ class VoiceInputController internal constructor(
         this.onEngineSwitched = onEngineSwitched
         triedEngines.clear()
         delivered = false
+        if (asr.isConfigured && asrClient != null) {
+            startAsr()
+            return
+        }
         listen(VoiceEngines.find(context, engineId))
     }
 
@@ -247,12 +275,21 @@ class VoiceInputController internal constructor(
 
     /** 松手。锁定态下不结束；普通态下结束本轮并等待结果。 */
     fun release() {
+        if (asrSession != null) {
+            if (!locked) finishAsr()
+            return
+        }
         if (!listening || finishing || locked) return
         stopAndWait()
     }
 
     /** 明确结束（锁定态点按钮、或到达单轮上限）。 */
     fun finish() {
+        if (asrSession != null) {
+            locked = false
+            finishAsr()
+            return
+        }
         if (!listening) return
         locked = false
         stopAndWait()
@@ -260,6 +297,7 @@ class VoiceInputController internal constructor(
 
     /** 取消本轮，丢弃结果（页面销毁、切到键盘输入时用）。 */
     fun cancel() {
+        stopAsr()
         handler.removeCallbacksAndMessages(null)
         listening = false
         locked = false
@@ -277,6 +315,90 @@ class VoiceInputController internal constructor(
         runCatching { recognizer?.destroy() }
         recognizer = null
         engine = null
+    }
+
+    /** 开一轮流式转写：先连服务端，收到 task-started 才推音频。 */
+    private fun startAsr() {
+        asrCommitted.setLength(0)
+        asrPartial = ""
+        listening = true
+        finishing = false
+        val client = asrClient ?: return
+        asrSession =
+            client.start(
+                credentials = asr,
+                listener =
+                    object : AsrRealtimeClient.Listener {
+                        override fun onReady() {
+                            startAsrRecording()
+                        }
+
+                        override fun onText(
+                            text: String,
+                            sentenceEnd: Boolean,
+                        ) {
+                            // 定稿就并进累积串，中间结果只覆盖当前句——
+                            // 中间结果会被服务端修正，逐条拼会得到重复的半句。
+                            if (sentenceEnd) {
+                                asrCommitted.append(text)
+                                asrPartial = ""
+                            } else {
+                                asrPartial = text
+                            }
+                            val spoken = asrCommitted.toString() + asrPartial
+                            handler.post { onText?.invoke(spoken) }
+                        }
+
+                        override fun onFailed(message: String) {
+                            handler.post {
+                                onError?.invoke(message)
+                                stopAsr()
+                            }
+                        }
+
+                        override fun onFinished() {
+                            handler.post { stopAsr() }
+                        }
+                    },
+            )
+    }
+
+    private fun startAsrRecording() {
+        val recorder = AsrRecorder()
+        asrRecorder = recorder
+        val started =
+            recorder.start(
+                onChunk = { chunk -> asrSession?.sendAudio(chunk) },
+                onError = { message ->
+                    handler.post {
+                        onError?.invoke(message)
+                        stopAsr()
+                    }
+                },
+            )
+        if (!started) stopAsr()
+    }
+
+    /** 音频推完：让服务端出最终结果，等它回 task-finished 再收尾。 */
+    private fun finishAsr() {
+        asrRecorder?.stop()
+        asrRecorder = null
+        finishing = true
+        runCatching { asrSession?.finish() }
+    }
+
+    /** 收尾并复位所有状态（可重复调用）。 */
+    private fun stopAsr() {
+        asrRecorder?.stop()
+        asrRecorder = null
+        asrSession?.cancel()
+        asrSession = null
+        listening = false
+        locked = false
+        finishing = false
+        speaking = false
+        level = 0f
+        hasVolume = false
     }
 
     private fun listen(target: VoiceEngine) {
@@ -574,7 +696,17 @@ class VoiceInputController internal constructor(
 @Composable
 fun rememberVoiceInput(): VoiceInputController {
     val context = LocalContext.current
-    val controller = remember(context) { VoiceInputController(context) }
+    val controller =
+        remember(context) {
+            // 配置只读一次：这一页的生命周期内不会有人中途改设置，
+            // 而每次重组都读一次加密存储既慢又可能触发 Keystore 初始化。
+            val asr = runCatching { EncryptedSecretStore(context).readAsr() }.getOrDefault(AsrCredentials.EMPTY)
+            VoiceInputController(
+                context = context,
+                asr = asr,
+                asrClient = AsrRealtimeClient(LlmRequestFactory.defaultHttpClient()),
+            )
+        }
     DisposableEffect(controller) {
         onDispose { controller.destroy() }
     }
