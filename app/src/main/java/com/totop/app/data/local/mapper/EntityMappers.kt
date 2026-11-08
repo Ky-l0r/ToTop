@@ -30,6 +30,7 @@ import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.QuestionSourceType
 import com.totop.app.domain.model.RecallSelfResult
 import com.totop.app.domain.model.ReviewLog
+import com.totop.app.domain.model.ReviewSource
 import com.totop.app.domain.model.TeachingMode
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -193,6 +194,7 @@ object EntityMappers {
             mistakeId = mistakeId,
             reviewedAt = reviewedAtUtc,
             selfResult = selfResult.wire,
+            source = source.wire,
         )
 
     /** 自评结果无法识别时回退为「还是不会」，避免把无效记录算成「会」而虚抬掌握度。 */
@@ -202,6 +204,7 @@ object EntityMappers {
             mistakeId = mistakeId,
             reviewedAtUtc = reviewedAt,
             selfResult = RecallSelfResult.fromWire(selfResult) ?: RecallSelfResult.STILL_LOST,
+            source = ReviewSource.fromWire(source),
         )
 
     fun HintLog.toEntity(): HintLogEntity =

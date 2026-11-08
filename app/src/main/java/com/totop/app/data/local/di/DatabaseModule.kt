@@ -158,9 +158,22 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * 6 -> 7：复习记录加「来源」列。
+     *
+     * 默认 'self'：历史记录全部是学生在复习页自己填的自评，
+     * 不能因为新列默认空串而在统计里变成「来源未知」。
+     */
+    private val MIGRATION_6_7: Migration =
+        object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE review_log ADD COLUMN source TEXT NOT NULL DEFAULT 'self'")
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
-        arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
 
     @Provides
     @Singleton

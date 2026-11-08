@@ -69,6 +69,7 @@ object AiSolveResultMapper {
             steps = steps,
             finalAnswer = dto?.finalAnswer?.trim().orEmpty(),
             method = dto?.method?.trim().orEmpty(),
+            check = dto?.check?.trim().orEmpty(),
         )
     }
 

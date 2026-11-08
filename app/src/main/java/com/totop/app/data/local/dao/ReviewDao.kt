@@ -57,6 +57,22 @@ interface ReviewDao {
     @Query("SELECT COUNT(*) FROM review_log WHERE mistakeId = :mistakeId")
     suspend fun countOfMistake(mistakeId: String): Int
 
+    /**
+     * 某题在某个时间区间内、由某个来源写入的复习记录条数。
+     *
+     * 用于「核对同一天只记一次」：学生反复点「我核对过，一致」不该把掌握度一直往上抬。
+     */
+    @Query(
+        "SELECT COUNT(*) FROM review_log WHERE mistakeId = :mistakeId AND source = :source " +
+            "AND reviewedAt >= :fromUtc AND reviewedAt < :toUtc",
+    )
+    suspend fun countOfSourceBetween(
+        mistakeId: String,
+        source: String,
+        fromUtc: Long,
+        toUtc: Long,
+    ): Int
+
     @Upsert
     suspend fun upsert(entity: ReviewLogEntity)
 

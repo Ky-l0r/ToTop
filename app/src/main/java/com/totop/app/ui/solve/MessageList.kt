@@ -70,6 +70,8 @@ internal fun MessageItem(
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
     onSaveMaterial: (String) -> Unit = {},
+    onSelfCheckAgree: (String?) -> Unit = {},
+    onSelfCheckDisagree: (String?) -> Unit = {},
 ) {
     when {
         message.fromStudent -> StudentBubble(message)
@@ -82,6 +84,8 @@ internal fun MessageItem(
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
                 onSaveMaterial = onSaveMaterial,
+                onSelfCheckAgree = onSelfCheckAgree,
+                onSelfCheckDisagree = onSelfCheckDisagree,
             )
         else ->
             AssistantTextBubble(
@@ -315,6 +319,8 @@ private fun SolutionBubble(
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
     onSaveMaterial: (String) -> Unit,
+    onSelfCheckAgree: (String?) -> Unit,
+    onSelfCheckDisagree: (String?) -> Unit,
 ) {
     // 来源输入框：存资料前问一句「这是哪来的」，因为资料的可信度全靠这条标注。
     var materialDialogOpen by remember { mutableStateOf(false) }
@@ -505,6 +511,13 @@ private fun SolutionBubble(
                 )
             }
         }
+
+        // 自检：折叠着放，默认不展开——每张卡都摊开会把解答挤到看不见。
+        SelfCheckCard(
+            payload = payload,
+            onAgree = { onSelfCheckAgree(payload.mistakeId) },
+            onDisagree = { onSelfCheckDisagree(payload.mistakeId) },
+        )
 
         // 落库提示：入库成功给一句确认，用户才知道错题本里有东西了
         if (payload.mistakeId != null) {
@@ -893,6 +906,75 @@ private fun SmallAction(
                 .padding(horizontal = 14.dp, vertical = 9.dp),
     ) {
         Text(text = text, style = MaterialTheme.typography.labelMedium, color = Tokens.OnSurface)
+    }
+}
+
+/**
+ * 「怎么验算」折叠卡。
+ *
+ * 取阶段 B 已经算好的 `check`（回代 / 量纲 / 范围），不额外调用模型。
+ * 默认收起：每张解答卡都摊开一块验算，正文会被挤到看不见；
+ * 而它本来就是「做完想再确认一下」才需要的东西。
+ *
+ * 三个动作的取舍：一致 -> 写复习记录并转「理解」；不一致 -> 把这题预填进追问
+ * （我们还不知道他算出几，替他写死一个数就是编）；跳过 -> 什么都不记，不污染统计。
+ */
+@Composable
+private fun SelfCheckCard(
+    payload: SolutionPayload,
+    onAgree: () -> Unit,
+    onDisagree: () -> Unit,
+) {
+    if (payload.check.isBlank()) return
+    var expanded by remember { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "怎么验算",
+                style = MaterialTheme.typography.labelLarge,
+                color = Tokens.Primary,
+            )
+            Text(
+                text = if (expanded) "收起" else "展开",
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+        if (expanded) {
+            FormulaText(text = payload.check, style = MaterialTheme.typography.bodySmall)
+            when (payload.selfCheckAgreed) {
+                true ->
+                    Text(
+                        text = "已核对一致：这道题转成「理解」，今天记一次复习",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.Success,
+                    )
+                false ->
+                    Text(
+                        text = "已把追问填进输入框，补上你算出的结果再发送",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.OnSurfaceVariant,
+                    )
+                null ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        SmallAction(text = "我核对过，一致", onClick = onAgree)
+                        SmallAction(text = "核出来不一样", onClick = onDisagree)
+                        Text(
+                            text = "跳过",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Tokens.OnSurfaceVariant,
+                            modifier = Modifier.clickable { expanded = false },
+                        )
+                    }
+            }
+        }
     }
 }
 

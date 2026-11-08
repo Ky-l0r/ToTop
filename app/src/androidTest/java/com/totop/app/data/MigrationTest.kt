@@ -264,6 +264,37 @@ class MigrationTest {
     }
 
     @Test
+    @Throws(IOException::class)
+    fun migrate6To7AddsReviewSource() {
+        // v7 给 review_log 加 source（默认 'self'）：旧记录全是自评，
+        // 不能让它们在报告里变成「来源未知」，所以在这里断言默认值。
+        helper.createDatabase(TEST_DB, 6).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt, selfMasteredAt, imagePathsJson) " +
+                    "VALUES ('q1', 'math', '高一', '题干', '[]', '', '[]', 0, NULL, 'sha1', " +
+                    "'MANUAL', 1, NULL, '[]')",
+            )
+            db.execSQL(
+                "INSERT INTO mistake_record (id, questionId, errorType, firstErrorStepIdx, recurrenceIndex, " +
+                    "createdAt, status, source) VALUES ('m1', 'q1', 'concept', NULL, 0, 1, 'wrong', 'solve')",
+            )
+            db.execSQL(
+                "INSERT INTO review_log (id, mistakeId, reviewedAt, selfResult) " +
+                    "VALUES ('r1', 'm1', 1, 'good')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 7, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT selfResult, source FROM review_log WHERE id = 'r1'").use { cursor ->
+                assertTrue("迁移后旧复习记录必须还在", cursor.moveToFirst())
+                assertEquals("good", cursor.getString(0))
+                assertEquals("self", cursor.getString(1))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {

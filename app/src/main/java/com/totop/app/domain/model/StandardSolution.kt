@@ -18,6 +18,13 @@ data class StandardSolution(
     val finalAnswer: String = "",
     /** 使用的方法，例如「导数法」。 */
     val method: String = "",
+    /**
+     * 自检说明：把答案代回去、看量纲、看边界，一句能照着做的验算。
+     *
+     * 空串表示模型没给（旧缓存、或模型漏写），此时解答卡不显示「怎么验算」这一栏，
+     * 而不是显示一句空白。
+     */
+    val check: String = "",
 ) {
     val stepCount: Int get() = steps.size
 

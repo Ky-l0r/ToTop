@@ -35,7 +35,31 @@ data class ReviewLog(
     val reviewedAtUtc: Long,
     /** 自评结果。 */
     val selfResult: RecallSelfResult,
+    /**
+     * 这条记录是怎么来的。
+     *
+     * 报告页要把「学生自己打的」与「按解答卡核对出来的」分开统计：
+     * 只写一个自评结果，家长分不清这一次是学生主动复习，还是照着答案点了一下。
+     */
+    val source: ReviewSource = ReviewSource.SELF,
 )
+
+/** 复习记录来源。 */
+enum class ReviewSource(
+    val wire: String,
+    val label: String,
+) {
+    /** 复习页里自己填的自评。 */
+    SELF("self", "自评"),
+
+    /** 解答卡底部「我核对过，一致」。 */
+    CHECK("check", "核对"),
+    ;
+
+    companion object {
+        fun fromWire(raw: String): ReviewSource = entries.firstOrNull { it.wire == raw } ?: SELF
+    }
+}
 
 /**
  * 提示记录（开发方案 5.1 `hint_log`，level 1..3）。

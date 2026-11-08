@@ -134,6 +134,18 @@ data class SolutionPayload(
     val mistakeId: String? = null,
     /** 落库失败原因（非致命，仅提示）。 */
     val persistMessage: String? = null,
+    /**
+     * 阶段 B 的自检说明（回代 / 量纲 / 范围）。
+     *
+     * 空串表示模型没给：此时解答卡不显示「怎么验算」，而不是显示一个空白卡。
+     */
+    val check: String = "",
+    /**
+     * 学生对这个自检的结论：null 未操作，true 核对一致，false 核出来不一样。
+     *
+     * 只存展示状态，真正的数据落在 review_log（source = 核对）。
+     */
+    val selfCheckAgreed: Boolean? = null,
 ) {
     /** 科目中文名。 */
     val subjectLabel: String get() = Subjects.label(subjectCode)
@@ -622,6 +634,7 @@ object SolutionMapper {
             fullSolutionRevealed = mode == TeachingMode.DIRECT,
             hints = hints,
             mistakeId = mistakeId,
+            check = content.standardSolution.check,
         )
     }
 
@@ -647,6 +660,7 @@ object SolutionMapper {
                         },
                     finalAnswer = payload.finalAnswer,
                     method = payload.method,
+                    check = payload.check,
                 ),
             studentSteps = emptyList<StudentStep>(),
             firstError =

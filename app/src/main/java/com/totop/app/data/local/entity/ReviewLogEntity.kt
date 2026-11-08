@@ -1,5 +1,6 @@
 package com.totop.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -28,4 +29,7 @@ data class ReviewLogEntity(
     val reviewedAt: Long,
     /** [com.totop.app.domain.model.RecallSelfResult] 的 wire 值。 */
     val selfResult: String,
+    /** [com.totop.app.domain.model.ReviewSource] 的 wire 值（v7 新增，旧记录默认自评）。 */
+    @ColumnInfo(defaultValue = "self")
+    val source: String = "self",
 )

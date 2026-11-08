@@ -92,6 +92,7 @@ class SolveViewModel
         private val sessionRepository: SolveSessionRepository,
         private val masteryRecorder: com.totop.app.data.repo.MasteryRecorder,
         private val learnedMaterials: com.totop.app.data.repo.LearnedMaterialRepository,
+        private val selfCheckRepository: com.totop.app.data.repo.SelfCheckRepository,
     ) : ViewModel() {
         private val registry = LlmCallRegistry()
 
@@ -895,6 +896,54 @@ class SolveViewModel
                     pages = supplementPages,
                     solution = solution,
                 )
+            }
+        }
+
+        /**
+         * 「我核对过，一致」：写一条复习记录（来源=核对），并把这道题推到「理解」。
+         *
+         * 同一天只记一次：反复点不该把掌握度刷上去，重复点击只更新卡片状态。
+         */
+        fun onSelfCheckAgree(mistakeId: String?) {
+            if (mistakeId.isNullOrBlank()) {
+                showToast("这道题还没进错题本，先看解答就好")
+                return
+            }
+            viewModelScope.launch {
+                val recorded = runCatching { selfCheckRepository.recordAgreement(mistakeId) }.getOrDefault(false)
+                markSelfCheck(mistakeId, agreed = true)
+                showToast(
+                    if (recorded) "已记为核对过：这道题转成「理解」，计入今天的复习" else "今天已经记过一次，同一天不重复计入掌握度",
+                )
+            }
+        }
+
+        /**
+         * 「我核出来不一样」：把追问预填进输入框，由学生补上自己算出的数再发送。
+         *
+         * 不自动发送：此时还不知道他算出的是几，替他写死一个数就是编。
+         */
+        fun onSelfCheckDisagree(mistakeId: String?) {
+            markSelfCheck(mistakeId, agreed = false)
+            _draft.update { it.copy(studentProcess = "我按解答里的验算核对了一遍，得到的结果和答案不一致：") }
+            showToast("已填进输入框，补上你算出的结果再发送")
+        }
+
+        /** 更新某一题的核对状态（按 mistakeId 找到那张解答卡）。 */
+        private fun markSelfCheck(
+            mistakeId: String?,
+            agreed: Boolean,
+        ) {
+            if (mistakeId.isNullOrBlank()) return
+            _messages.update { list ->
+                list.map { message ->
+                    val current = message.solution
+                    if (current != null && current.mistakeId == mistakeId) {
+                        message.copy(solution = current.copy(selfCheckAgreed = agreed))
+                    } else {
+                        message
+                    }
+                }
             }
         }
 

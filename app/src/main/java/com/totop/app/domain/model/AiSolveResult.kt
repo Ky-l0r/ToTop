@@ -54,6 +54,13 @@ data class AiStandardSolution(
     val steps: List<AiSolutionStep> = emptyList(),
     val finalAnswer: String? = null,
     val method: String? = null,
+    /**
+     * 自检说明（回代 / 量纲 / 范围的一次自查）。
+     *
+     * 提示词一直要求模型输出这个字段，但早期模型里没接，等于白算了一遍。
+     * 现在收进模型：解答卡底部的「怎么验算」直接用它，不再额外调用一次模型。
+     */
+    val check: String? = null,
 )
 
 /** 学生过程单步（6.4 `studentSteps[]`，status 取值 correct|wrong|missing）。 */
