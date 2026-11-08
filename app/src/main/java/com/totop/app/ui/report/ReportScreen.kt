@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -46,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
 import com.totop.app.domain.usecase.ReportPeriod
 import com.totop.app.domain.usecase.ReportStats
+import com.totop.app.ui.common.SkeletonList
 
 /**
  * 学情周报 / 月报（FR-5，M5）。
@@ -105,13 +105,7 @@ fun ReportScreen(
             OfflineBanner()
 
             when {
-                uiState.loading ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    }
+                uiState.loading -> SkeletonList(rows = 4)
 
                 uiState.errorMessage != null ->
                     ErrorCard(
