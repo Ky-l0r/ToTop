@@ -292,12 +292,41 @@ class FormulaRenderer private constructor(
         if (active.id != id) return
         val width = widthPx.coerceIn(MIN_WIDTH_PX, active.maxWidthPx)
         val height = heightPx.coerceIn(MIN_HEIGHT_PX, MAX_HEIGHT_PX)
-        val bitmap = capture(width, height)
-        if (bitmap == null) {
-            finish(active, FormulaRenderResult.Failed(IF_CAPTURE_FAILED))
-        } else {
-            finish(active, FormulaRenderResult.Rendered(bitmap))
+        val view = webView
+        if (view == null) {
+            finish(active, FormulaRenderResult.Failed(IF_WEBVIEW_UNAVAILABLE))
+            return
         }
+        // 先按内容尺寸排版，再等一帧截图。
+        //
+        // 桥接回调里的尺寸是页面排版完成后的尺寸（物理像素），而 WebView 当前的实际
+        // 布局尺寸是宿主给的宽高，两者不同。measure/layout 之后 WebView 会重新排版，
+        // 但 Chromium 的 reflow 与合成是异步的：同一帧内立刻 draw 有可能拿到
+        // 「上一次尺寸」的画面（表现为公式只剩左上角一块）。队列本来就是串行的，
+        // 多等一帧不影响吞吐，却能把这类偶发空白彻底消掉。
+        runCatching {
+            view.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY),
+            )
+            view.layout(0, 0, width, height)
+        }
+        view.post { captureAndFinish(active, width, height) }
+    }
+
+    /** 等一帧之后真正取像素并推进队列。 */
+    private fun captureAndFinish(
+        active: QueuedRequest,
+        widthPx: Int,
+        heightPx: Int,
+    ) {
+        // 超时可能已经先把这次请求结束掉了，此时不能再重复 finish（会推进两次队列）
+        if (current !== active) return
+        val bitmap = capture(widthPx, heightPx)
+        finish(
+            active,
+            if (bitmap == null) FormulaRenderResult.Failed(IF_CAPTURE_FAILED) else FormulaRenderResult.Rendered(bitmap),
+        )
     }
 
     /** JS 回调：渲染失败（KaTeX 缺失或语法错误）。 */
@@ -310,18 +339,13 @@ class FormulaRenderer private constructor(
         finish(active, FormulaRenderResult.Failed(message.ifBlank { IF_KATEX_FAILED }))
     }
 
-    /** 把已排版的 WebView 画到 Bitmap 上。 */
+    /** 把已排版的 WebView 画到 Bitmap 上（布局尺寸由 [onPageRendered] 提前设好）。 */
     private fun capture(
         widthPx: Int,
         heightPx: Int,
     ): Bitmap? {
         val view = webView ?: return null
         return runCatching {
-            view.measure(
-                View.MeasureSpec.makeMeasureSpec(widthPx, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(heightPx, View.MeasureSpec.EXACTLY),
-            )
-            view.layout(0, 0, widthPx, heightPx)
             val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
             view.draw(Canvas(bitmap))
             bitmap

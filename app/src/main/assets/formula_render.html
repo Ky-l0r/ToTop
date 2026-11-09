@@ -15,7 +15,16 @@
   - ToTop.render(id, latex, displayMode, maxWidthPx)
   - 成功：window.ToTopBridge.onRendered(id, widthPx, heightPx)
   - 失败：window.ToTopBridge.onFailed(id, message)
-  #slot 的宽度被固定为 maxWidthPx，保证 JS 排版宽度与 Kotlin 截图宽度一致。
+
+  像素单位约定（曾导致「公式只显示出一个头」的根因）：
+  - Kotlin 侧 maxWidthPx / 回调的 widthPx、heightPx 一律是**物理像素**；
+  - 本页面的 CSS px 是**逻辑像素**，1 CSS px = devicePixelRatio 物理像素。
+  把 CSS px 直接当物理像素用，在 density 2.75 的手机上位图只有实际内容的
+  1/2.75，截图就只剩公式左上角那一小块。因此这里两个方向都做换算：
+    slot 宽度（CSS）= maxWidthPx / dpr
+    回调尺寸（物理）= getBoundingClientRect() × dpr
+  换算后 WebView 被 measure 成 maxWidthPx 物理宽时，CSS 视口宽度恰好等于
+  slot 宽度，不会二次重排，截取的区域也就是完整内容。
 -->
 <link rel="stylesheet" href="katex/katex.min.css" />
 <link rel="stylesheet" href="katex/totop-latex.min.css" />
@@ -36,9 +45,12 @@
         line-height: 1.5;
         word-break: break-word;
     }
+    /* 行间公式的上下留白必须走 padding：margin 不计入 getBoundingClientRect().height，
+       会让 WebView 顶部先空出一条，底部反过来被裁掉几个像素。 */
     #slot.display {
         text-align: center;
-        margin: 2px 0;
+        padding-top: 4px;
+        padding-bottom: 6px;
     }
     .katex-error {
         color: #9B2C2C;
@@ -60,13 +72,24 @@
         var hasKatex = typeof katex !== "undefined" && katex !== null && typeof katex.render === "function";
         var hasFallback = typeof window.ToTopLatexFallback !== "undefined";
 
+        /** CSS px -> 物理 px 的倍率；取不到就按 1 处理，至少不会比原来更糟。 */
+        function pixelRatio() {
+            var ratio = window.devicePixelRatio;
+            return (typeof ratio === "number" && ratio > 0) ? ratio : 1;
+        }
+
         function reportOk(id) {
             if (!bridge) {
                 return;
             }
             try {
                 var rect = slot.getBoundingClientRect();
-                bridge.onRendered(String(id), Math.ceil(rect.width) || 1, Math.ceil(rect.height) || 1);
+                var ratio = pixelRatio();
+                bridge.onRendered(
+                    String(id),
+                    Math.ceil(rect.width * ratio) || 1,
+                    Math.ceil(rect.height * ratio) || 1
+                );
             } catch (e) {
                 // 桥接异常不得抛回页面，否则后续渲染会被阻断
             }
@@ -93,8 +116,10 @@
              */
             render: function (id, latex, display, maxWidth) {
                 var width = maxWidth > 0 ? maxWidth : 720;
+                // maxWidth 是物理像素：换回 CSS 宽度，否则在高 density 设备上公式会
+                // 被排成「物理宽度那么宽」的逻辑宽度，截图却按物理像素裁剪。
                 slot.className = display ? "display" : "";
-                slot.style.width = width + "px";
+                slot.style.width = (width / pixelRatio()) + "px";
                 slot.textContent = "";
 
                 if (hasKatex) {

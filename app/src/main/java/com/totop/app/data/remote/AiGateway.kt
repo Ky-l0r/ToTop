@@ -145,33 +145,26 @@ class AiGateway(
         rawD: String,
         warnings: MutableList<String>,
     ): AiSolveResult {
+        val solutionObject = decodeJsonObject(rawSolution)
+        val stageDObject = decodeJsonObject(rawD)
         val contractJson =
             buildContractJson(
                 question = question,
-                solutionObject = decodeJsonObject(rawSolution),
+                solutionObject = solutionObject,
                 stageCObject = stageC,
-                stageDObject = decodeJsonObject(rawD),
+                stageDObject = stageDObject,
             )
-        val dto =
-            AiSolveResultCodec.decode(contractJson).getOrElse { failure ->
-                throw LlmException(
-                    LlmError.MalformedResponse(
-                        detail = "合并四阶段结果后仍不满足契约：" + failure.message,
-                        // 合并阶段在重试循环之外，这里失败并没有再试一次
-                        afterRetries = false,
-                    ),
-                )
-            }
-        val missing = dto.missingStructure()
-        if (missing.isNotEmpty()) {
-            // FR-1.10：结构性缺失（题干或标准解答）视为校验失败，绝不入库
-            throw LlmException(
-                LlmError.MalformedResponse(
-                    detail = "必要的契约字段缺失：" + missing.joinToString("、"),
-                    afterRetries = false,
-                ),
-            )
-        }
+        // 两条路：严格解码通过且结构齐全 -> 直接用；否则按字段重建。
+        //
+        // 为什么不再「解码失败就整次作废」：走到这里时阶段 A/B/C/D 都已经跑完、
+        // token 已经花掉，而失败原因往往只是一处类型不符（某个 confidence 是 NaN、
+        // 某个步骤数组里套了数组）。把这种形状问题判成「本次解答无效」，
+        // 用户只能再点一次重试，而重试大概率再踩同一处——这是反复复发的真正成因。
+        val strict =
+            AiSolveResultCodec.decode(contractJson)
+                .getOrNull()
+                ?.takeIf { it.missingStructure().isEmpty() }
+        val dto = strict ?: rebuildOrFail(question, solutionObject, stageC, stageDObject, warnings)
         // 非致命缺失只降级为告警，不再判整次失败：
         // - 未填解题过程 -> studentSteps 为空是契约允许的正确行为；
         // - 候选知识点覆盖不到（非数学科目没有内置知识树）-> kpoints 为空同理。
@@ -187,6 +180,34 @@ class AiGateway(
             }
         }
         return dto
+    }
+
+    /**
+     * 严格解码失败时的兜底：按字段重建，只要还有解答内容就继续往下走。
+     *
+     * 只有「题干为空」或「步骤为空且连原文都捞不出内容」才判失败——
+     * 那时确实没有任何可展示的解答，重试才是正确的动作。
+     */
+    private fun rebuildOrFail(
+        question: AiQuestion,
+        solutionObject: JsonObject,
+        stageC: JsonObject,
+        stageDObject: JsonObject,
+        warnings: MutableList<String>,
+    ): AiSolveResult {
+        val rebuilt = ContractRebuilder.rebuild(question, solutionObject, stageC, stageDObject)
+        val steps = rebuilt.result.standardSolution?.steps.orEmpty()
+        if (question.stem.isNullOrBlank() || steps.isEmpty()) {
+            throw LlmException(
+                LlmError.MalformedResponse(
+                    detail = "合并四阶段结果后仍不满足契约：题干或解答步骤为空",
+                    // 合并阶段在重试循环之外，这里失败并没有再试一次
+                    afterRetries = false,
+                ),
+            )
+        }
+        warnings.addAll(rebuilt.notes)
+        return rebuilt.result
     }
 
     /**

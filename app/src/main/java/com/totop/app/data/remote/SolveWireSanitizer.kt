@@ -85,11 +85,15 @@ object SolveWireSanitizer {
             stepItemsOf(element).forEach { item ->
                 when (item) {
                     is JsonObject -> {
+                        // 小模型常把这一步的文字写成 `text` 而不是 `content`。
+                        // 只认 `content` 会让每一步都变成空对象：步骤数组非空、内容全空，
+                        // 界面上就是一串空白行，比报错更难查。
+                        val content = textOf(item["content"]) ?: textOf(item["text"])
                         // 模型已经给了 idx 就照用（它可能跳号，但那是它的语义）
                         add(
                             buildJsonObject {
                                 intOf(item["idx"])?.let { put("idx", it) }
-                                textOf(item["content"])?.let { put("content", it) }
+                                content?.let { put("content", it) }
                                 textOf(item["why"])?.let { put("why", it) }
                             },
                         )
@@ -225,11 +229,14 @@ object SolveWireSanitizer {
         return text.toIntOrNull() ?: text.toDoubleOrNull()?.toInt()
     }
 
-    /** 取小数：兼容 `0.9`、`"0.9"`、`"90%"`。 */
+    /** 取小数：兼容 `0.9`、`"0.9"`、`"90%"`；NaN / Infinity 一律丢弃。 */
     private fun doubleOf(element: JsonElement?): Double? {
         val raw = textOf(element)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         val percent = raw.endsWith("%")
         val number = raw.removeSuffix("%").trim().toDoubleOrNull() ?: return null
+        // 模型偶尔把 `NaN`、`Infinity` 原样写进 confidence。放过它会写出非法 JSON，
+        // 后续整份契约解码失败——一处小数毁掉四阶段的结果。
+        if (!number.isFinite()) return null
         return if (percent) number / 100.0 else number
     }
 
