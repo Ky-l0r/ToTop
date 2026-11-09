@@ -6,7 +6,6 @@ import com.totop.app.data.prefs.SubjectPrefs
 import com.totop.app.data.repo.DailyStatsRepository
 import com.totop.app.data.repo.ExamRepository
 import com.totop.app.data.repo.SettingsRepository
-import com.totop.app.data.repo.UtcDay
 import com.totop.app.domain.model.ExamDefaults
 import com.totop.app.domain.model.ExamKind
 import com.totop.app.domain.model.ExamRecord
@@ -194,7 +193,7 @@ class StudyViewModel
             val ordered = Subjects.ORDER.filter { allowed.contains(it) }
             val overrideStart =
                 settings.getLong(SettingsRepository.Keys.EXAM_TERM_START, -1L).takeIf { it > 0L }
-            val today = UtcDay.of(System.currentTimeMillis())
+            val today = todayLocalEpochDay()
             val terms = TermCalendar.recent(today, overrideStart, TERM_COUNT)
             val targets = LinkedHashMap<String, Double>()
             ordered.forEach { code ->

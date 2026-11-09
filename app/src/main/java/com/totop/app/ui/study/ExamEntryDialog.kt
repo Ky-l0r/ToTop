@@ -41,7 +41,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.totop.app.data.repo.UtcDay
 import com.totop.app.domain.model.ExamDefaults
 import com.totop.app.domain.model.ExamKind
 import com.totop.app.domain.model.ExamRecord
@@ -79,7 +78,7 @@ fun ExamEntryDialog(
     onSave: (ExamRecord) -> Unit,
     onDelete: (() -> Unit)? = null,
 ) {
-    val today = remember { UtcDay.of(System.currentTimeMillis()) }
+    val today = remember { todayLocalEpochDay() }
     val pool = remember(subjects) { subjects.ifEmpty { Subjects.ORDER.take(6) } }
     val existing = initial?.scores.orEmpty()
 

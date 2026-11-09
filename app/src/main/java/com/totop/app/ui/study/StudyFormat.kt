@@ -1,13 +1,25 @@
 package com.totop.app.ui.study
 
+import com.totop.app.data.repo.UtcDay
 import com.totop.app.domain.model.TermCalendar
 
-/**
+/*
  * 学情页的日期文案。
  *
- * 日期列存的是 UTC 日序号，这里是纯整数换算，不经过 java.time：
+ * 日期列存的是日序号（某一天在民用历里的编号），这里是纯整数换算，不经过 java.time：
  * minSdk 24 上 java.time 不可用，而成绩日期只需要「年月日」三个数。
  */
+
+/**
+ * 设备本地时区的「今天」。
+ *
+ * 为什么不用 UTC 今天：成绩日期是学生填的日历日，凌晨 0 点到 8 点之间（东八区）
+ * UTC 还停在前一天，直接用 UTC 会把「今天考的」默认成昨天。
+ * 日序号本身与时区无关，这里只是把「本地墙上的日期」换算成对应的日序号。
+ */
+fun todayLocalEpochDay(nowMillis: Long = System.currentTimeMillis()): Long =
+    UtcDay.of(nowMillis + java.util.TimeZone.getDefault().getOffset(nowMillis))
+
 fun formatFullDay(epochDay: Long): String {
     val (year, month, day) = TermCalendar.civilOf(epochDay)
     return year.toString() + "-" + pad2(month) + "-" + pad2(day)

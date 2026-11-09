@@ -478,9 +478,11 @@ private fun targetHint(
 ): String =
     when {
         rate >= target -> "已达成"
-        remaining == null -> "还差 " + formatRate(target - rate) + " 分"
+        // 这里是「得分率差几个点」，不是卷面分差多少分：写「29 分」会被理解成
+        // 150 分制还差 29 分（其实差 43.5 分），单位必须是百分比
+        remaining == null -> "还差 " + formatRate(target - rate) + "%"
         remaining == 0 -> "已达成"
-        else -> "还差 " + formatRate(target - rate) + " 分 · 约 " + remaining + " 次"
+        else -> "还差 " + formatRate(target - rate) + "% · 约 " + remaining + " 次"
     }
 
 /** 排名行：年级为主，班级为辅。 */
