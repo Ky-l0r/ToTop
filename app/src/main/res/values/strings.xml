@@ -8,7 +8,6 @@
     <string name="nav_solve">拍题</string>
     <string name="nav_mistakes">易错题</string>
     <string name="nav_knowledge">知识点</string>
-    <string name="nav_report">学情报告</string>
     <string name="nav_settings">设置</string>
     <string name="nav_settings_model">模型与连接</string>
     <string name="nav_settings_about">关于与帮助</string>
@@ -25,7 +24,6 @@
     <string name="placeholder_review">重做错题并自评，驱动间隔重复</string>
     <string name="placeholder_knowledge">掌握度雷达、章节热力与趋势</string>
     <string name="placeholder_kpoint_detail">知识点定义、通用思路、易错点与我的错题</string>
-    <string name="placeholder_report">周报与月报，全部本地统计</string>
     <string name="placeholder_settings">配置模型 Base URL、Key 与教学偏好</string>
     <string name="placeholder_backup">本地备份与恢复，用于换机迁移</string>
 

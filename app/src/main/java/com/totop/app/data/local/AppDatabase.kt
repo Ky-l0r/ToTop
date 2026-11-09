@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.totop.app.data.local.dao.AiTraceDao
 import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
+import com.totop.app.data.local.dao.ExamDao
 import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
@@ -22,6 +23,8 @@ import com.totop.app.data.local.dao.StudyNoteDao
 import com.totop.app.data.local.entity.AiTraceEntity
 import com.totop.app.data.local.entity.CacheEntryEntity
 import com.totop.app.data.local.entity.DailyStatsEntity
+import com.totop.app.data.local.entity.ExamScoreEntity
+import com.totop.app.data.local.entity.ExamSessionEntity
 import com.totop.app.data.local.entity.ExerciseEntity
 import com.totop.app.data.local.entity.ForgottenKpointEntity
 import com.totop.app.data.local.entity.HintLogEntity
@@ -70,6 +73,8 @@ import com.totop.app.data.local.entity.StudyNoteEntity
         ForgottenKpointEntity::class,
         LearnedMaterialEntity::class,
         StudyNoteEntity::class,
+        ExamSessionEntity::class,
+        ExamScoreEntity::class,
     ],
     version = AppDatabase.VERSION,
     exportSchema = true,
@@ -108,6 +113,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun studyNoteDao(): StudyNoteDao
 
+    abstract fun examDao(): ExamDao
+
     /** 表名常量：备份、导出与测试按名称引用，避免散落的字符串字面量。 */
     object Tables {
         const val QUESTION = "question"
@@ -128,6 +135,8 @@ abstract class AppDatabase : RoomDatabase() {
         const val FORGOTTEN_KPOINT = "forgotten_kpoint"
         const val LEARNED_MATERIAL = "learned_material"
         const val STUDY_NOTE = "study_note"
+        const val EXAM_SESSION = "exam_session"
+        const val EXAM_SCORE = "exam_score"
 
         /** 全部业务表，备份与清库按此顺序处理。 */
         val ALL: List<String> =
@@ -150,12 +159,14 @@ abstract class AppDatabase : RoomDatabase() {
                 FORGOTTEN_KPOINT,
                 LEARNED_MATERIAL,
                 STUDY_NOTE,
+                EXAM_SESSION,
+                EXAM_SCORE,
             )
     }
 
     companion object {
         /** 当前数据库版本。 */
-        const val VERSION: Int = 7
+        const val VERSION: Int = 8
 
         /** 数据库文件名。 */
         const val NAME: String = "totop.db"

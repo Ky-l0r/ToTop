@@ -65,12 +65,19 @@ object Routes {
     // 带参数页面
     const val KPOINT_DETAIL_ARG = "kpointId"
 
+    /** 复习资料详情：按生成时间戳（文件主键）打开一份历史资料。 */
+    const val REVIEW_MATERIAL_DETAIL_ARG = "createdAtUtc"
+    const val REVIEW_MATERIAL_DETAIL = "review_material_detail/{$REVIEW_MATERIAL_DETAIL_ARG}"
+
     /** 错题回顾详情（只读回看，不进入复习流程）。 */
     const val MISTAKE_DETAIL_ARG = "mistakeId"
     const val MISTAKE_DETAIL = "mistake_detail/{$MISTAKE_DETAIL_ARG}"
     const val KPOINT_DETAIL = "kpoint_detail/{$KPOINT_DETAIL_ARG}"
 
     fun kpointDetail(kpointId: String): String = "kpoint_detail/" + kpointId
+
+    /** 复习资料详情的跳转：时间戳是存档文件名，天然是字符串安全参数。 */
+    fun reviewMaterialDetail(createdAtUtc: Long): String = "review_material_detail/" + createdAtUtc
 
     /** 变式刷题：按知识点出三题，两题对上即过关。 */
     const val PRACTICE_ARG = "kpointId"

@@ -97,8 +97,8 @@ class MigrationTest {
         AppDatabase.Tables.ALL.forEach { table ->
             assertTrue("库中应包含表 " + table + "，实际：" + tables, table in tables)
         }
-        // 0.7.0 加了 study_note，共 18 张；数字变化时必须同步这里与迁移用例
-        assertEquals(18, AppDatabase.Tables.ALL.size)
+        // 0.8.0 加了 exam_session / exam_score，共 20 张；数字变化时必须同步这里与迁移用例
+        assertEquals(20, AppDatabase.Tables.ALL.size)
     }
 
     @Test
@@ -290,6 +290,47 @@ class MigrationTest {
                 assertTrue("迁移后旧复习记录必须还在", cursor.moveToFirst())
                 assertEquals("good", cursor.getString(0))
                 assertEquals("self", cursor.getString(1))
+            }
+        }
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate7To8AddsExamTables() {
+        // v8 新增 exam_session / exam_score 两张表（学情页）。
+        // 断言点：旧表数据不动；新表可写；删场次会连带删科目（外键级联）。
+        helper.createDatabase(TEST_DB, 7).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, imageSha256, sourceType, createdAt, selfMasteredAt, imagePathsJson) " +
+                    "VALUES ('q1', 'math', '高一', '题干', '[]', '', '[]', 0, NULL, 'sha1', " +
+                    "'MANUAL', 1, NULL, '[]')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 8, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.execSQL(
+                "INSERT INTO exam_session (id, occurredOn, kind, name, gradeSize, classSize, " +
+                    "gradeRank, classRank, createdAt, updatedAt) " +
+                    "VALUES ('s1', 20000, 'major', '10月月考', 480, 45, 56, 8, 1, 1)",
+            )
+            db.execSQL(
+                "INSERT INTO exam_score (id, sessionId, subject, score, fullScore, gradeRank, classRank) " +
+                    "VALUES ('s1#math', 's1', 'math', 128.0, 150.0, 12, 3)",
+            )
+            db.query("SELECT score, fullScore FROM exam_score WHERE sessionId = 's1'").use { cursor ->
+                assertTrue("迁移后成绩必须读得出来", cursor.moveToFirst())
+                assertEquals(128.0, cursor.getDouble(0), 0.001)
+                assertEquals(150.0, cursor.getDouble(1), 0.001)
+            }
+            db.query("SELECT stemText FROM question WHERE id = 'q1'").use { cursor ->
+                assertTrue("迁移后题目必须还在", cursor.moveToFirst())
+                assertEquals("题干", cursor.getString(0))
+            }
+            db.execSQL("DELETE FROM exam_session WHERE id = 's1'")
+            db.query("SELECT COUNT(*) FROM exam_score").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("删场次应连带删科目", 0, cursor.getInt(0))
             }
         }
     }

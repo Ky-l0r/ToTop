@@ -120,13 +120,12 @@ class SettingsModelsTest {
     }
 
     @Test
-    @DisplayName("开关默认值：引导模式 + 语音开 + 周报 AI 关")
+    @DisplayName("开关默认值：引导模式 + 语音开")
     fun togglesDefaults() {
         val toggles = SettingsToggles()
         assertEquals(com.totop.app.domain.model.TeachingMode.GUIDED, toggles.mode)
         assertTrue(toggles.ttsEnabled)
         assertEquals(TtsSpeed.NORMAL, toggles.ttsSpeed)
-        assertFalse(toggles.reportAiEnabled)
         assertTrue(toggles.generateExercise)
         assertTrue(toggles.modeDescription.contains("提示"))
     }

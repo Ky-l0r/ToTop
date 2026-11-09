@@ -8,6 +8,7 @@ import com.totop.app.data.local.AppDatabase
 import com.totop.app.data.local.dao.AiTraceDao
 import com.totop.app.data.local.dao.CacheEntryDao
 import com.totop.app.data.local.dao.DailyStatsDao
+import com.totop.app.data.local.dao.ExamDao
 import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
@@ -171,9 +172,73 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * 7 -> 8：新增「考试场次 / 各科成绩」两张表（docs/学情与成绩趋势.md）。
+     *
+     * 只建表、不动已有表：成绩是增量数据，旧版本读不到它也不影响任何既有功能。
+     * `exam_score.sessionId` 加外键并级联删除，但仓库层仍会先删子表再删父表，
+     * 不依赖运行时 foreign_keys 开关是否打开。
+     */
+    private val MIGRATION_7_8: Migration =
+        object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `exam_session` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`occurredOn` INTEGER NOT NULL, " +
+                        "`kind` TEXT NOT NULL, " +
+                        "`name` TEXT, " +
+                        "`gradeSize` INTEGER, " +
+                        "`classSize` INTEGER, " +
+                        "`gradeRank` INTEGER, " +
+                        "`classRank` INTEGER, " +
+                        "`createdAt` INTEGER NOT NULL, " +
+                        "`updatedAt` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_exam_session_occurredOn` " +
+                        "ON `exam_session` (`occurredOn`)",
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `exam_score` (" +
+                        "`id` TEXT NOT NULL, " +
+                        "`sessionId` TEXT NOT NULL, " +
+                        "`subject` TEXT NOT NULL, " +
+                        "`score` REAL NOT NULL, " +
+                        "`fullScore` REAL NOT NULL, " +
+                        "`gradeRank` INTEGER, " +
+                        "`classRank` INTEGER, " +
+                        "PRIMARY KEY(`id`), " +
+                        "FOREIGN KEY(`sessionId`) REFERENCES `exam_session`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_exam_score_sessionId` " +
+                        "ON `exam_score` (`sessionId`)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_exam_score_subject` " +
+                        "ON `exam_score` (`subject`)",
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_exam_score_sessionId_subject` " +
+                        "ON `exam_score` (`sessionId`, `subject`)",
+                )
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
-        arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+        arrayOf(
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+            MIGRATION_4_5,
+            MIGRATION_5_6,
+            MIGRATION_6_7,
+            MIGRATION_7_8,
+        )
 
     @Provides
     @Singleton
@@ -202,6 +267,9 @@ object DatabaseModule {
 
     @Provides
     fun provideStudyNoteDao(database: AppDatabase): StudyNoteDao = database.studyNoteDao()
+
+    @Provides
+    fun provideExamDao(database: AppDatabase): ExamDao = database.examDao()
 
     @Provides
     fun provideMistakeDao(database: AppDatabase): MistakeDao = database.mistakeDao()

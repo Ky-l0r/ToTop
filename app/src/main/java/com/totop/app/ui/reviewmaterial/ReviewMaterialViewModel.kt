@@ -1,6 +1,6 @@
 package com.totop.app.ui.reviewmaterial
 
-import android.content.Intent
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.prefs.SecretStore
@@ -8,70 +8,68 @@ import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.domain.model.Subjects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 
+/** 列表页（选科目 + 生成 + 历史）的状态。 */
 data class ReviewMaterialUiState(
     /** 可选科目：十科全部列出（按课程顺序），不再写死「全部 + 数学优先」。 */
     val subjects: List<String> = Subjects.ALL_LABELS,
     val selectedSubject: String = Subjects.label("math"),
+    /** 生成状态；Success 只用来把按钮切成「重新生成」，正文渲染在详情页。 */
     val materialState: ReviewMaterialState = ReviewMaterialState.Idle,
     /** 以往的复习资料，最新在前；生成成功后会立刻刷新。 */
     val history: List<ReviewMaterialSummary> = emptyList(),
     /** 历史列表是否还在读取。 */
     val historyLoading: Boolean = false,
-    /** 操作反馈（导出成功等），一次性提示。 */
+    /** 操作反馈，一次性提示。 */
     val message: String? = null,
-    /** 最近一次导出的文件信息；非空时界面显示「打开 / 分享」入口。 */
-    val exportedFile: ExportArtifactInfo? = null,
-    /** 导出进行中。 */
-    val exporting: Boolean = false,
 ) {
     /** 当前选中的科目代码。 */
     val selectedCode: String get() = Subjects.codeOf(selectedSubject)
 }
 
 /**
- * 复习资料 ViewModel。
+ * 复习资料列表页 ViewModel。
  *
- * 生成流程与解题流程同构：
- * 取本地错题 → 组装提示词 → 调用模型 → 严格校验 JSON → 失败可重试。
- * 复用同一套错误分类与重试语义，「模型没通」和「生成失败」在界面上表达一致。
+ * 拆页后职责收窄为：选科目 → 生成 → 存档 → 让界面进详情。
+ * 正文预览与 PDF 导出全部移到 [ReviewMaterialDetailViewModel]——
+ * 列表页不再为「预读一份上万字的资料」付出 IO 与内存，
+ * 点击历史项也不再需要先把整份资料 decode 出来。
  *
- * 导出的关键修复：
- * 旧实现只把 PDF 写进 cacheDir 并在界面打一行文件名，用户在文件管理器里根本找不到。
- * 现在导出后交给 [ExportSink] 发布到系统「下载」目录，并保留 content:// Uri，
- * 界面据此提供「打开」「分享/打印」两个真实可用的出口。
+ * 生成流程与解题流程同构：取本地错题 → 组装提示词 → 调用模型 → 严格校验 JSON → 失败可重试。
  */
 @HiltViewModel
 class ReviewMaterialViewModel
     @Inject
     constructor(
-        @ApplicationContext private val context: android.content.Context,
+        @ApplicationContext private val context: Context,
         private val gateway: ReviewMaterialGateway,
         private val secretStore: SecretStore,
         private val mistakeRepository: MistakeRepository,
         private val questionRepository: com.totop.app.data.repo.QuestionRepository,
         private val insights: com.totop.app.data.repo.CompanionInsightRepository,
         private val noteRepository: com.totop.app.data.repo.StudyNoteRepository,
+        private val materialStore: ReviewMaterialStore,
     ) : ViewModel() {
-        private val pdfWriter = ReviewMaterialPdfWriter()
-
-        private val sink = ExportSink(context)
-
-        /** 历史资料存档（文件形态，见 [ReviewMaterialStore] 的取舍说明）。 */
-        private val materialStore = ReviewMaterialStore(context)
-
         private val _uiState = MutableStateFlow(ReviewMaterialUiState())
         val uiState: StateFlow<ReviewMaterialUiState> = _uiState.asStateFlow()
 
-        /** 待分享的 Intent；界面消费后调用 [consumePendingIntent]。 */
-        private val _pendingIntent = MutableStateFlow<Intent?>(null)
-        val pendingIntent: StateFlow<Intent?> = _pendingIntent.asStateFlow()
+        /**
+         * 生成成功后的一次性跳转信号。
+         *
+         * 用 Channel 而不是 StateFlow：导航事件只能被消费一次，
+         * 存进 StateFlow 会在旋转/重建时重放，造成反复进详情页。
+         */
+        private val _openDetail = Channel<Long>(Channel.BUFFERED)
+        val openDetail: Flow<Long> get() = _openDetail.receiveAsFlow()
 
         init {
             // 一进页面就把历史读出来：学生退出后再进来，最想看到的是「上次那份还在不在」。
@@ -84,24 +82,6 @@ class ReviewMaterialViewModel
                 _uiState.value = _uiState.value.copy(historyLoading = true)
                 val history = materialStore.list()
                 _uiState.value = _uiState.value.copy(history = history, historyLoading = false)
-            }
-        }
-
-        /** 打开一份历史资料：直接复用预览与导出链路，不需要重新生成。 */
-        fun openHistory(createdAtUtc: Long) {
-            viewModelScope.launch {
-                val material = materialStore.load(createdAtUtc)
-                if (material == null) {
-                    _uiState.value = _uiState.value.copy(message = "这份资料已经读取不到了，可能已被删除。")
-                    refreshHistory()
-                    return@launch
-                }
-                _uiState.value =
-                    _uiState.value.copy(
-                        materialState = ReviewMaterialState.Success(material),
-                        exportedFile = null,
-                        message = "已打开 " + material.subjectLabel + " 的这份资料，可以再导出一次 PDF。",
-                    )
             }
         }
 
@@ -122,7 +102,6 @@ class ReviewMaterialViewModel
                 _uiState.value.copy(
                     selectedSubject = label,
                     materialState = ReviewMaterialState.Idle,
-                    exportedFile = null,
                 )
         }
 
@@ -201,8 +180,10 @@ class ReviewMaterialViewModel
                                 ),
                                 subjectLabel,
                             )
-                        // 先存档再更新界面：学生退出页面是常态，
-                        // 存档失败必须在这句话里说出来，不能让人以为「生成过却不见了」。
+                        // 先存档，存档成功才发跳转：详情页按时间戳读文件，
+                        // 存档失败还跳过去只会看到一个「读取不到」的空页面。
+                        // 失败原因必须在这里说清楚，不能包装成「模型失败请重试」——
+                        // 那会诱导学生再付一次生成费用。
                         val saved = materialStore.save(material)
                         val origin =
                             when {
@@ -218,10 +199,14 @@ class ReviewMaterialViewModel
                                 materialState = ReviewMaterialState.Success(material),
                                 message =
                                     origin +
-                                        if (saved) "已存入「以往的复习资料」。" else "本地存档失败，退出后可能看不到这份。",
-                                exportedFile = null,
-                                history = materialStore.list(),
+                                        if (saved) {
+                                            "已存入「以往的复习资料」。"
+                                        } else {
+                                            "本地存档失败，这份资料暂时打不开；可以重新生成，不会重复扣模型的费用。"
+                                        },
                             )
+                        refreshHistory()
+                        if (saved) _openDetail.send(material.createdAtUtc)
                     }
                     is ReviewMaterialResult.Failure ->
                         _uiState.value =
@@ -308,82 +293,6 @@ class ReviewMaterialViewModel
         private suspend fun questionStemOf(questionId: String): String =
             runCatching { questionRepository.byId(questionId)?.stemText.orEmpty() }.getOrDefault("")
 
-        /**
-         * 导出 A4 PDF。
-         *
-         * 三步：渲染到临时文件 → 发布到下载目录 → 记住可分享 Uri。
-         * 任何一步失败都把具体原因写进 message（例如磁盘不可写、空间不足），
-         * 而不是笼统提示「导出失败」。
-         */
-        fun exportPdf() {
-            val material =
-                (_uiState.value.materialState as? ReviewMaterialState.Success)?.material
-                    ?: return
-            if (_uiState.value.exporting) return
-            _uiState.value = _uiState.value.copy(exporting = true, message = "正在生成 PDF…")
-            viewModelScope.launch {
-                when (val result = pdfWriter.write(context, material)) {
-                    is PdfWriteResult.Success -> {
-                        val displayName =
-                            ReviewMaterialPdfWriter.FILE_STEM + System.currentTimeMillis() + ".pdf"
-                        when (val published = sink.publish(result.file, PDF_MIME, displayName)) {
-                            is PublishResult.Success ->
-                                _uiState.value =
-                                    _uiState.value.copy(
-                                        exporting = false,
-                                        exportedFile = published.info,
-                                        message =
-                                            if (published.info.visibleInDownloads) {
-                                                "已保存到「下载/ToTop/" + published.info.displayName + "」，共 " +
-                                                    result.pageCount + " 页（双面打印 " +
-                                                    (result.pageCount + 1) / 2 + " 张），可直接打开或分享。"
-                                            } else {
-                                                "已生成 " + published.info.displayName + "（" + result.pageCount +
-                                                    " 页），可点下方按钮打开或分享。"
-                                            },
-                                    )
-                            is PublishResult.Failure ->
-                                _uiState.value =
-                                    _uiState.value.copy(
-                                        exporting = false,
-                                        message = "PDF 已生成但保存失败：" + published.reason + "（可改用分享按钮）",
-                                    )
-                        }
-                    }
-                    is PdfWriteResult.Failure ->
-                        _uiState.value =
-                            _uiState.value.copy(exporting = false, message = "导出失败：" + result.reason)
-                }
-            }
-        }
-
-        /** 打开刚导出的 PDF。 */
-        fun openExported() {
-            val info = _uiState.value.exportedFile ?: return
-            val intent = sink.openIntent(info, PDF_MIME)
-            if (intent == null) {
-                _uiState.value = _uiState.value.copy(message = "本机没有能打开 PDF 的应用，可以用「分享/打印」发到别处。")
-            } else {
-                _pendingIntent.value = intent
-            }
-        }
-
-        /** 分享或打印刚导出的 PDF。 */
-        fun shareExported() {
-            val info = _uiState.value.exportedFile ?: return
-            val intent = sink.shareIntent(info, PDF_MIME)
-            if (intent == null) {
-                _uiState.value = _uiState.value.copy(message = "没有可用的分享入口，请检查文件是否还在。")
-            } else {
-                _pendingIntent.value = intent
-            }
-        }
-
-        /** 界面已消费 Intent。 */
-        fun consumePendingIntent() {
-            _pendingIntent.value = null
-        }
-
         /** 科目中文名转代码，供后续按科目取数据。 */
         fun subjectCode(): String = Subjects.codeOf(_uiState.value.selectedSubject)
 
@@ -400,9 +309,6 @@ class ReviewMaterialViewModel
             }.getOrDefault(emptyList())
 
         private companion object {
-            /** PDF 的 MIME 类型。 */
-            const val PDF_MIME: String = "application/pdf"
-
             /** 一次最多纳入几条易忘点，见 loadForgotten 的说明。 */
             const val MAX_FORGOTTEN: Int = 6
 

@@ -608,12 +608,6 @@ private fun PreferenceSection(
         }
 
         ToggleRow(
-            title = "AI 周报解读",
-            subtitle = "关闭后周报只显示数字（0 token）；开启会额外调用一次模型写约 200 字建议",
-            checked = toggles.reportAiEnabled,
-            onCheckedChange = viewModel::setReportAiEnabled,
-        )
-        ToggleRow(
             title = "解题时生成练习题",
             subtitle = "关闭后不再自动出变式题，可省 token；知识点详情页仍可手动生成",
             checked = toggles.generateExercise,

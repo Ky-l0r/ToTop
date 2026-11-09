@@ -127,8 +127,22 @@ class OpenAiWireTest {
     @Test
     @DisplayName("增量 delta.content 被解析为 Delta")
     fun parseDelta() {
-        val chunk = OpenAiWire.parseChunk("{\"choices\":[{\"delta\":{\"content\":\"所以\"},\"index\":0}]}")
-        assertEquals(LlmChunk.Delta("所以"), chunk)
+        val chunks = OpenAiWire.parseChunks("{\"choices\":[{\"delta\":{\"content\":\"所以\"},\"index\":0}]}")
+        assertEquals(listOf<LlmChunk>(LlmChunk.Delta("所以")), chunks)
+    }
+
+    @Test
+    @DisplayName("同一帧带正文与 finish_reason 时产出 [Delta, Finished]，正文不再被丢弃")
+    fun sameFrameTextThenFinish() {
+        val json =
+            "{\"choices\":[{\"delta\":{\"content\":\"}\"},\"finish_reason\":\"stop\"}]," +
+                "\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":2}}"
+        val chunks = OpenAiWire.parseChunks(json)
+        assertEquals(2, chunks.size, "兼容网关把末尾正文与结束信息放同一帧，两个事件都必须保留")
+        assertEquals(LlmChunk.Delta("}"), chunks[0], "正文必须在 Finished 之前")
+        val finished = chunks[1] as LlmChunk.Finished
+        assertEquals("stop", finished.finishReason)
+        assertEquals(2, finished.usage.outputTokens)
     }
 
     @Test
@@ -137,7 +151,7 @@ class OpenAiWireTest {
         val json =
             "{\"choices\":[{\"delta\":{},\"finish_reason\":\"stop\"}]," +
                 "\"usage\":{\"prompt_tokens\":120,\"completion_tokens\":80}}"
-        val chunk = OpenAiWire.parseChunk(json) as LlmChunk.Finished
+        val chunk = OpenAiWire.parseChunks(json).single() as LlmChunk.Finished
         assertEquals("stop", chunk.finishReason)
         assertEquals(120, chunk.usage.inputTokens)
         assertEquals(80, chunk.usage.outputTokens)
@@ -146,22 +160,24 @@ class OpenAiWireTest {
     @Test
     @DisplayName("只带 usage 的收尾帧（stream_options.include_usage）")
     fun usageOnlyFrame() {
-        val chunk = OpenAiWire.parseChunk("{\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":20}}")
+        val chunk =
+            OpenAiWire.parseChunks("{\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":20}}")
+                .single()
         assertTrue(chunk is LlmChunk.Finished)
         assertEquals(30, (chunk as LlmChunk.Finished).usage.totalTokens)
     }
 
     @Test
-    @DisplayName("空 delta 且无 finish_reason 返回 null，不产生噪声事件")
+    @DisplayName("空 delta 且无 finish_reason 返回空列表，不产生噪声事件")
     fun emptyDeltaIgnored() {
-        assertNull(OpenAiWire.parseChunk("{\"choices\":[{\"delta\":{}}]}"))
-        assertNull(OpenAiWire.parseChunk("{\"choices\":[]}"))
+        assertTrue(OpenAiWire.parseChunks("{\"choices\":[{\"delta\":{}}]}").isEmpty())
+        assertTrue(OpenAiWire.parseChunks("{\"choices\":[]}").isEmpty())
     }
 
     @Test
     @DisplayName("非法 JSON 判为 MalformedResponse，不抛异常")
     fun malformedJson() {
-        val chunk = OpenAiWire.parseChunk("not-a-json") as LlmChunk.Failed
+        val chunk = OpenAiWire.parseChunks("not-a-json").single() as LlmChunk.Failed
         assertTrue(chunk.error is LlmError.MalformedResponse)
     }
 
@@ -169,21 +185,21 @@ class OpenAiWireTest {
     @DisplayName("流内 error 帧按关键字分类")
     fun errorFrameClassification() {
         val invalidKey =
-            OpenAiWire.parseChunk(
+            OpenAiWire.parseChunks(
                 "{\"error\":{\"code\":\"invalid_api_key\",\"message\":\"Incorrect API key provided\"}}",
-            ) as LlmChunk.Failed
+            ).single() as LlmChunk.Failed
         assertTrue(invalidKey.error is LlmError.InvalidKey)
 
         val quota =
-            OpenAiWire.parseChunk(
+            OpenAiWire.parseChunks(
                 "{\"error\":{\"code\":\"insufficient_quota\",\"message\":\"You exceeded your current quota\"}}",
-            ) as LlmChunk.Failed
+            ).single() as LlmChunk.Failed
         assertTrue(quota.error is LlmError.InsufficientBalance)
 
         val rate =
-            OpenAiWire.parseChunk(
+            OpenAiWire.parseChunks(
                 "{\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"slow down\"}}",
-            ) as LlmChunk.Failed
+            ).single() as LlmChunk.Failed
         assertTrue(rate.error is LlmError.RateLimited)
     }
 

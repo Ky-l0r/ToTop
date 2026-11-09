@@ -1,4 +1,4 @@
-package com.totop.app.ui.report
+package com.totop.app.ui.study
 
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.ChatMessage
@@ -8,40 +8,39 @@ import com.totop.app.data.remote.LlmChunk
 import com.totop.app.data.remote.LlmClient
 import com.totop.app.data.remote.LlmException
 import com.totop.app.data.remote.TokenUsage
-import com.totop.app.domain.usecase.port.ReportNarrator
 import com.totop.app.domain.usecase.port.TokenUsageCount
+import com.totop.app.domain.usecase.port.TrendNarrator
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 周报 AI 解读的实现（FR-5.3 / FR-5.4）。
+ * 学情趋势解读的实现。
  *
- * 依赖边界：
- * - 只用 data 层的 [LlmClient] 门面（SSE + 错误分类 + 超时 + 退避），**不直接构造 OkHttp/Retrofit**；
- * - 只写文字，**不参与任何数字计算**：提示词里明确禁止改动统计数字，
- *   并且渲染模板 [com.totop.app.domain.usecase.BuildWeeklyReportUseCase.renderMarkdown]
- *   会把 AI 段落单独放在「五、AI 解读与建议（AI 生成）」小节，数字段落全部来自本地统计。
+ * 与周报解读的区别（不是重复实现，是两套约束）：
+ * - 周报要求「指出最值得补的知识点」，学情页明确**不点名知识点**——学生看「多练的知识点」页就够了，
+ *   让模型点知识点只会得到看起来专业的空话；
+ * - 只给正向建议，不做退步评价；
+ * - 数字只读：摘要由本机算好，模型不得改写或新增数字。
  *
- * 提示词位置说明：四阶段提示词外置在 assets/prompts 并参与缓存键；
- * 周报解读是一次性短文本生成（约 200 字），不参与 sha256 缓存，因此提示词就近定义在这里。
- * 若后续要把提示词也外置，只需在 assets/prompts 增加 report_narrate.md 并改这里读取。
+ * 依赖边界与 `ReportNarratorImpl` 一致：只用 data 层的 `LlmClient` 门面，
+ * 不直接构造 OkHttp，也不参与任何统计计算。
  */
 @Singleton
-class ReportNarratorImpl
+class TrendNarratorImpl
     @Inject
     constructor(
         private val secretStore: SecretStore,
         private val llmClient: LlmClient,
-    ) : ReportNarrator {
+    ) : TrendNarrator {
         override suspend fun narrate(
-            statsJson: String,
+            summaryJson: String,
             requestId: String,
-        ): ReportNarrator.NarrativeOutcome {
+        ): TrendNarrator.Outcome {
             val credentials = secretStore.read()
             if (!credentials.canCall) {
-                return ReportNarrator.NarrativeOutcome.Failure(
-                    "尚未配置模型（Base URL / API Key / 模型名），已输出纯统计版周报。",
+                return TrendNarrator.Outcome.Failure(
+                    "尚未配置模型（Base URL / API Key / 模型名），本次只显示数据。",
                 )
             }
             val registry = LlmCallRegistry()
@@ -53,11 +52,10 @@ class ReportNarratorImpl
                     messages =
                         listOf(
                             ChatMessage.system(SYSTEM_PROMPT),
-                            ChatMessage.user(userPrompt(statsJson)),
+                            ChatMessage.user(userPrompt(summaryJson)),
                         ),
                     maxTokens = MAX_TOKENS,
-                    temperature = 0.3,
-                    // 解读是自然语言段落，不需要 JSON 模式（部分本地模型不支持该字段）
+                    temperature = 0.4,
                     jsonObject = false,
                     includeUsage = true,
                     stream = true,
@@ -66,7 +64,6 @@ class ReportNarratorImpl
                 llmClient.stream(credentials, config, requestId, registry, allowRetry = true).collect { chunk ->
                     when (chunk) {
                         is LlmChunk.Delta -> buffer.append(chunk.text)
-                        // 思考链不计入解读正文，丢弃即可（周报只要结论段落）
                         is LlmChunk.Reasoning -> Unit
                         is LlmChunk.Finished -> usage = chunk.usage
                         is LlmChunk.Failed -> throw LlmException(chunk.error)
@@ -74,9 +71,9 @@ class ReportNarratorImpl
                 }
                 val text = trimToBudget(buffer.toString())
                 if (text.isBlank()) {
-                    ReportNarrator.NarrativeOutcome.Failure("模型没有返回可用的解读文本，已输出纯统计版周报。")
+                    TrendNarrator.Outcome.Failure("模型没有返回可用文本，本次只显示数据。")
                 } else {
-                    ReportNarrator.NarrativeOutcome.Success(
+                    TrendNarrator.Outcome.Success(
                         text = text,
                         usage = TokenUsageCount(inputTokens = usage.inputTokens, outputTokens = usage.outputTokens),
                     )
@@ -84,10 +81,10 @@ class ReportNarratorImpl
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: LlmException) {
-                ReportNarrator.NarrativeOutcome.Failure(error.error.userMessage)
+                TrendNarrator.Outcome.Failure(error.error.userMessage)
             } catch (throwable: Throwable) {
-                ReportNarrator.NarrativeOutcome.Failure(
-                    "生成 AI 解读失败：" + (throwable.message ?: throwable.javaClass.simpleName) + "，已输出纯统计版周报。",
+                TrendNarrator.Outcome.Failure(
+                    "生成解读失败：" + (throwable.message ?: throwable.javaClass.simpleName) + "，本次只显示数据。",
                 )
             } finally {
                 registry.cancelAll()
@@ -95,31 +92,29 @@ class ReportNarratorImpl
         }
 
         companion object {
-            /** 解读目标长度（字）。 */
-            const val TARGET_CHARS: Int = 200
+            /** 硬上限：超出后按句号收敛。 */
+            const val MAX_CHARS: Int = 320
 
-            /** 硬上限：超出后截断，避免一段话占满整页。 */
-            const val MAX_CHARS: Int = 420
-
-            /** 输出 token 上限（约 420 汉字）。 */
-            const val MAX_TOKENS: Int = 700
+            /** 输出 token 上限。 */
+            const val MAX_TOKENS: Int = 600
 
             private const val SYSTEM_PROMPT: String =
-                "你是中学数学学习助手。你只根据给定统计写一段约 200 字的中文学习建议，语气平实、具体、可执行。"
+                "你是中学学习助手，只根据给定的考试成绩摘要写一段约 150 字的中文说明。" +
+                    "语气平实、具体、正向，不评价学生本人。"
 
-            /** 用户提示词：把统计 JSON 与硬性约束一起交给模型。 */
-            fun userPrompt(statsJson: String): String =
+            /** 用户提示词：摘要 JSON + 硬性约束。 */
+            fun userPrompt(summaryJson: String): String =
                 buildString {
-                    append("下面是本周的学习统计（JSON，数字全部由本机统计生成）：\n")
-                    append(statsJson)
-                    append("\n\n请输出一段约 200 字的中文解读与建议，必须遵守：\n")
+                    append("下面是某学生最近几次考试的成绩摘要（JSON，数字全部由本机统计生成）：\n")
+                    append(summaryJson)
+                    append("\n\n请输出一段约 150 字的中文说明，必须遵守：\n")
                     append("1. 不得改写、重新计算或新增任何数字，只能引用 JSON 里已有的数字；\n")
-                    append("2. 不得使用任何评判性、比率式表述（不把错题数折算成得分或比率），也不对学生做评价；\n")
-                    append("3. 先指出最值得优先补的一到两个知识点，再给一条今天就能执行的具体动作；\n")
+                    append("2. 只描述趋势与进步之处，不做退步评价、不使用评判性词汇；\n")
+                    append("3. 不要点名任何知识点或题目，不要给书单，不要说「去练某某」；\n")
                     append("4. 不要 Markdown 标题、不要列表符号、不要客套话，直接给一段连续文字。")
                 }
 
-            /** 截断到 [MAX_CHARS] 个字符（按句号收敛，避免半句话结尾）。 */
+            /** 截断到 [MAX_CHARS]，按句号收敛，避免半句话。 */
             fun trimToBudget(raw: String): String {
                 val text = raw.trim().replace(Regex("\\n{2,}"), "\n")
                 if (text.length <= MAX_CHARS) return text

@@ -100,9 +100,6 @@ class SettingsRepository
             /** TTS 语速倍率。 */
             const val TTS_SPEED: String = "ttsSpeed"
 
-            /** 是否启用周报 AI 点评（关闭可省 token）。 */
-            const val REPORT_AI_ENABLED: String = "reportAiEnabled"
-
             /** 本次是否生成练习题（FR-9.4 开关）。 */
             const val GENERATE_EXERCISE: String = "generateExercise"
 
@@ -120,5 +117,25 @@ class SettingsRepository
 
             /** 种子数据全局版本号。 */
             const val SEED_VERSION: String = SettingsEntity.KEY_SEED_VERSION
+
+            // ---------- 学情页（docs/学情与成绩趋势.md） ----------
+
+            /** 班级人数，用于「前 X%」。 */
+            const val EXAM_CLASS_SIZE: String = "examClassSize"
+
+            /** 年级人数，用于「前 X%」。 */
+            const val EXAM_GRADE_SIZE: String = "examGradeSize"
+
+            /** 学生修改过的本学期开学日（UTC 日序号）；未改过时不存在。 */
+            const val EXAM_TERM_START: String = "examTermStart"
+
+            /** 全局目标得分率（百分比）。 */
+            const val EXAM_TARGET_GLOBAL: String = "examTargetGlobal"
+
+            /** 某科的目标得分率键。 */
+            fun examTarget(subject: String): String = "examTarget_" + subject
+
+            /** 某科的默认满分键。 */
+            fun examFullScore(subject: String): String = "examFullScore_" + subject
         }
     }

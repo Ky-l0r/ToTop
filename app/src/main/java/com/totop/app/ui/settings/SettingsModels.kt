@@ -144,7 +144,6 @@ data class SettingsToggles(
     val mode: TeachingMode = TeachingMode.DEFAULT,
     val ttsEnabled: Boolean = true,
     val ttsSpeed: TtsSpeed = TtsSpeed.NORMAL,
-    val reportAiEnabled: Boolean = false,
     val generateExercise: Boolean = true,
 ) {
     /** 模式说明。 */

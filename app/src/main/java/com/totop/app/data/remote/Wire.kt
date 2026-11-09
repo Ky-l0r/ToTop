@@ -353,19 +353,27 @@ object OpenAiWire {
         }
 
     /**
-     * 解析一个 SSE data 帧。
+     * 解析一个 SSE data 帧，按序产出事件列表。
      *
-     * @return 增量文本、结束事件、错误或 null（该帧无有效内容）
+     * 为什么返回列表而不是单个事件：不少兼容网关把「最后一个正文 token」与
+     * finish_reason 放进同一帧，旧的「单事件」实现会先命中 Finished 而丢掉正文——
+     * 对 JSON 输出场景来说，丢掉的往往恰是结尾那个 `}`，随后整份输出被判为
+     * 「不是约定的 JSON 结构」。改为列表后，同帧正文与结束信息都能保留，
+     * 且正文事件永远排在 Finished 之前。
+     *
+     * @return 错误帧只含 [LlmChunk.Failed]；普通帧为 [LlmChunk.Delta]（或
+     *         思考链 [LlmChunk.Reasoning]）加可选的 [LlmChunk.Finished]；
+     *         只带 usage 的收尾帧只含 Finished；无有效内容时返回空列表
      */
-    fun parseChunk(data: String): LlmChunk? {
+    fun parseChunks(data: String): List<LlmChunk> {
         val root =
             runCatching { json.parseToJsonElement(data).jsonObject }.getOrElse {
-                return LlmChunk.Failed(LlmError.MalformedResponse(detail = "无法解析为 JSON：" + data.take(120)))
+                return listOf(LlmChunk.Failed(LlmError.MalformedResponse(detail = "无法解析为 JSON：" + data.take(120))))
             }
 
         val errorElement = root["error"]
         if (errorElement != null) {
-            return LlmChunk.Failed(errorFromPayload(errorElement))
+            return listOf(LlmChunk.Failed(errorFromPayload(errorElement)))
         }
 
         val usage = parseUsage(root["usage"])
@@ -374,7 +382,7 @@ object OpenAiWire {
 
         if (firstChoice == null) {
             // 只带 usage 的收尾帧（stream_options.include_usage 的最后一帧）
-            return if (usage != null) LlmChunk.Finished(usage = usage) else null
+            return if (usage != null) listOf(LlmChunk.Finished(usage = usage)) else emptyList()
         }
 
         val delta = firstChoice["delta"]?.let { runCatching { it.jsonObject }.getOrNull() }
@@ -384,12 +392,16 @@ object OpenAiWire {
         val reasoning = delta?.get("reasoning_content")?.let { contentToText(it) }.orEmpty()
         val finishReason = firstChoice["finish_reason"]?.let { primOrNull(it) }.orEmpty()
 
-        if (finishReason.isNotEmpty()) {
-            return LlmChunk.Finished(usage = usage ?: TokenUsage.EMPTY, finishReason = finishReason)
+        val events = ArrayList<LlmChunk>(2)
+        if (text.isNotEmpty()) {
+            events.add(LlmChunk.Delta(text))
+        } else if (reasoning.isNotEmpty()) {
+            events.add(LlmChunk.Reasoning(reasoning))
         }
-        if (text.isNotEmpty()) return LlmChunk.Delta(text)
-        if (reasoning.isNotEmpty()) return LlmChunk.Reasoning(reasoning)
-        return null
+        if (finishReason.isNotEmpty()) {
+            events.add(LlmChunk.Finished(usage = usage ?: TokenUsage.EMPTY, finishReason = finishReason))
+        }
+        return events
     }
 
     /** 非流式响应体（连通性校验或降级情况下使用）的纯文本提取。 */

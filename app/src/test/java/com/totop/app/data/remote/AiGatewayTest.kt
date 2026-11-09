@@ -54,7 +54,10 @@ class FakeTransport : LlmTransport {
                 model = config.model,
                 hasImage = userMessage.parts.any { it is ChatPart.Image },
                 userPrompt = userText,
-                systemPrompt = config.messages.first().parts.filterIsInstance<ChatPart.Text>().joinToString(""),
+                systemPrompt =
+                    config.messages.first().parts
+                        .filterIsInstance<ChatPart.Text>()
+                        .joinToString("") { it.text },
                 requestId = requestId,
             )
         calls.add(call)

@@ -142,6 +142,22 @@ class LlmClient(
         var response: okhttp3.Response? = null
         var failure: LlmException? = null
 
+        // 正常数据帧与「厂商不发 [DONE]」的尾帧共用同一段消费逻辑：
+        // 正文/思考链立即下传，结束信息只累计不发送，错误抛出。
+        // 旧实现的尾帧只取 usage、丢弃 Delta 正文，而尾帧恰好常带 JSON 的结尾 `}`。
+        fun consumeEvents(events: List<LlmChunk>) {
+            events.forEach { chunk ->
+                when (chunk) {
+                    is LlmChunk.Delta, is LlmChunk.Reasoning -> onChunk(chunk)
+                    is LlmChunk.Finished -> {
+                        if (chunk.usage.totalTokens > 0) usage = chunk.usage
+                        if (chunk.finishReason.isNotEmpty()) finishReason = chunk.finishReason
+                    }
+                    is LlmChunk.Failed -> throw LlmException(chunk.error)
+                }
+            }
+        }
+
         try {
             response = call.execute()
             if (!response.isSuccessful) {
@@ -171,23 +187,14 @@ class LlmClient(
                     throw LlmException(frame.error)
                 }
                 if (frame is ParsedFrame.Data) {
-                    val chunk = OpenAiWire.parseChunk(frame.payload)
-                    if (chunk is LlmChunk.Delta || chunk is LlmChunk.Reasoning) {
-                        onChunk(chunk)
-                    } else if (chunk is LlmChunk.Finished) {
-                        if (chunk.usage.totalTokens > 0) usage = chunk.usage
-                        if (chunk.finishReason.isNotEmpty()) finishReason = chunk.finishReason
-                    } else if (chunk is LlmChunk.Failed) {
-                        throw LlmException(chunk.error)
-                    }
+                    consumeEvents(OpenAiWire.parseChunks(frame.payload))
                 }
                 line = source.readUtf8Line()
             }
-            // 部分厂商不发 [DONE]，用残留缓冲兜底
+            // 部分厂商不发 [DONE]，用残留缓冲兜底；尾帧正文同样不能丢
             val tailFrame = parser.finish()
             if (tailFrame is ParsedFrame.Data) {
-                val tailChunk = OpenAiWire.parseChunk(tailFrame.payload)
-                if (tailChunk is LlmChunk.Finished && tailChunk.usage.totalTokens > 0) usage = tailChunk.usage
+                consumeEvents(OpenAiWire.parseChunks(tailFrame.payload))
             }
             onChunk(
                 LlmChunk.Finished(usage = usage ?: TokenUsage.EMPTY, finishReason = finishReason.ifEmpty { "stop" }),
@@ -331,6 +338,22 @@ class LlmClient(
             var sawAnyFrame = false
             var streamError: LlmError? = null
 
+            // 与 runAttempt 的消费逻辑同构：正文/思考链累计，结束信息只累计一次。
+            // 抽成局部函数既是复用也是控深：内联写在 while>when>Data 里会超出嵌套上限。
+            fun absorb(events: List<LlmChunk>) {
+                events.forEach { chunk ->
+                    when (chunk) {
+                        is LlmChunk.Delta -> content.append(chunk.text)
+                        is LlmChunk.Reasoning -> reasoning.append(chunk.text)
+                        is LlmChunk.Failed -> streamError = chunk.error
+                        is LlmChunk.Finished -> {
+                            if (chunk.usage.totalTokens > 0) usage = chunk.usage
+                            if (chunk.finishReason.isNotEmpty()) finishReason = chunk.finishReason
+                        }
+                    }
+                }
+            }
+
             var line = source.readUtf8Line()
             while (line != null && streamError == null) {
                 when (val frame = parser.feed(line)) {
@@ -341,16 +364,9 @@ class LlmClient(
                     is ParsedFrame.Failed -> streamError = frame.error
                     is ParsedFrame.Data -> {
                         sawAnyFrame = true
-                        when (val chunk = OpenAiWire.parseChunk(frame.payload)) {
-                            is LlmChunk.Delta -> content.append(chunk.text)
-                            is LlmChunk.Reasoning -> reasoning.append(chunk.text)
-                            is LlmChunk.Failed -> streamError = chunk.error
-                            is LlmChunk.Finished -> {
-                                if (chunk.usage.totalTokens > 0) usage = chunk.usage
-                                if (chunk.finishReason.isNotEmpty()) finishReason = chunk.finishReason
-                            }
-                            null -> Unit
-                        }
+                        // 探测与正式调用共用 parseChunks：同帧「正文 + finish_reason」
+                        // 不再丢正文，否则测试连接会在兼容网关上误报「正文为空」。
+                        absorb(OpenAiWire.parseChunks(frame.payload))
                     }
                     null -> Unit
                 }

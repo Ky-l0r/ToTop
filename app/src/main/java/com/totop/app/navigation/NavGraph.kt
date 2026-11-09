@@ -66,7 +66,6 @@ import com.totop.app.ui.knowledge.KnowledgeScreen
 import com.totop.app.ui.mistakes.MistakesScreen
 import com.totop.app.ui.mistakes.ReviewScreen
 import com.totop.app.ui.practice.PracticeScreen
-import com.totop.app.ui.report.ReportScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
 import com.totop.app.ui.settings.SettingsScreen
@@ -498,7 +497,6 @@ fun ToTopNavHost(
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                onOpenCompanion = { navController.navigateTopLevel(Routes.COMPANION) },
             )
         }
 
@@ -542,7 +540,11 @@ fun ToTopNavHost(
         }
 
         composable(route = Routes.REPORT) {
-            ReportScreen(onBack = { navController.popBackStack() })
+            // 学情页（原「学情报告」）：成绩趋势 + 本学期概览 + AI 解读
+            com.totop.app.ui.study.StudyScreen(
+                onBack = { navController.popBackStack() },
+                onOpenKnowledge = { navController.navigate(Routes.KNOWLEDGE) },
+            )
         }
 
         composable(route = Routes.SETTINGS_SUBJECTS) {
@@ -590,7 +592,26 @@ fun ToTopNavHost(
         }
 
         composable(route = Routes.REVIEW_MATERIAL) {
-            ReviewMaterialScreen(onBack = { navController.popBackStack() })
+            ReviewMaterialScreen(
+                onBack = { navController.popBackStack() },
+                // 点历史 / 生成成功后进详情；详情按时间戳自行加载，列表页不预读长文
+                onOpenDetail = { createdAtUtc -> navController.navigate(Routes.reviewMaterialDetail(createdAtUtc)) },
+            )
+        }
+
+        composable(
+            route = Routes.REVIEW_MATERIAL_DETAIL,
+            arguments =
+                listOf(
+                    navArgument(Routes.REVIEW_MATERIAL_DETAIL_ARG) { type = NavType.StringType },
+                ),
+        ) { entry ->
+            // 时间戳解析失败只影响这一页：显示可返回的错误态，不崩溃、不触发生成
+            val createdAtUtc = entry.arguments?.getString(Routes.REVIEW_MATERIAL_DETAIL_ARG).orEmpty().toLongOrNull()
+            com.totop.app.ui.reviewmaterial.ReviewMaterialDetailScreen(
+                createdAtUtc = createdAtUtc,
+                onBack = { navController.popBackStack() },
+            )
         }
 
         composable(

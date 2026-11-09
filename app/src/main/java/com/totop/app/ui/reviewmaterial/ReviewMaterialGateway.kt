@@ -3,6 +3,7 @@ package com.totop.app.ui.reviewmaterial
 import com.totop.app.data.prefs.LlmCredentials
 import com.totop.app.data.remote.ChatMessage
 import com.totop.app.data.remote.ChatRequestConfig
+import com.totop.app.data.remote.JsonSalvage
 import com.totop.app.data.remote.LlmChunk
 import com.totop.app.data.remote.LlmError
 import com.totop.app.data.remote.LlmException
@@ -12,7 +13,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -91,10 +91,13 @@ class ReviewMaterialGateway
                     return@channelFlow
                 }
                 val userPrompt = buildUserPrompt(subjectLabel, mistakes, forgottenPoints)
-                // 先按较大预算请求（目标六七页）；厂商若拒绝这个大值，退回保守预算再试一次。
-                // 只降一次：再失败就是模型本身的问题，反复试只会烧钱。
+                // 两类重试彼此独立、各至多一次，避免同一请求原样重发反复扣费：
+                // 1. 预算降级——厂商拒绝大 max_tokens 时退回保守值；
+                // 2. 严格 JSON 重试——本地解析失败且不是截断。截断换提示词没有意义，
+                //    同样的预算只会再截一次，所以截断直接失败并如实告知用户。
                 var budget = MAX_TOKENS_REVIEW
-                var outcome =
+                var jsonRetried = false
+                var attempt =
                     requestOnce(
                         credentials = credentials,
                         subjectLabel = subjectLabel,
@@ -104,31 +107,61 @@ class ReviewMaterialGateway
                         requestId = requestId,
                         maxTokens = budget,
                     )
-                // 只降一次：厂商嫌大就换保守值，再失败就是模型本身的问题
-                while (outcome is ReviewMaterialResult.Failure &&
-                    outcome.error is LlmError.ParameterNotSupported &&
-                    budget > FALLBACK_MAX_TOKENS
-                ) {
-                    budget = FALLBACK_MAX_TOKENS
-                    outcome =
-                        requestOnce(
-                            credentials = credentials,
-                            subjectLabel = subjectLabel,
-                            mistakes = mistakes,
-                            systemPrompt = systemPrompt,
-                            userPrompt = userPrompt,
-                            requestId = requestId,
-                            maxTokens = budget,
-                        )
+                while (attempt.result is ReviewMaterialResult.Failure) {
+                    val failure = attempt.result as ReviewMaterialResult.Failure
+                    val downgradeBudget =
+                        failure.error is LlmError.ParameterNotSupported && budget > FALLBACK_MAX_TOKENS
+                    when {
+                        downgradeBudget -> {
+                            budget = FALLBACK_MAX_TOKENS
+                            attempt =
+                                requestOnce(
+                                    credentials = credentials,
+                                    subjectLabel = subjectLabel,
+                                    mistakes = mistakes,
+                                    systemPrompt = systemPrompt,
+                                    userPrompt = userPrompt,
+                                    requestId = requestId,
+                                    maxTokens = budget,
+                                )
+                        }
+                        attempt.jsonRetryable && !jsonRetried -> {
+                            jsonRetried = true
+                            attempt =
+                                requestOnce(
+                                    credentials = credentials,
+                                    subjectLabel = subjectLabel,
+                                    mistakes = mistakes,
+                                    systemPrompt = systemPrompt + STRICT_JSON_SUFFIX,
+                                    userPrompt = userPrompt,
+                                    requestId = requestId,
+                                    maxTokens = budget,
+                                )
+                        }
+                        // 其余情况（截断、已重试过、网络/Key/余额错误）就此打住
+                        else -> break
+                    }
                 }
-                send(outcome)
+                send(attempt.result)
             }
+
+        /**
+         * 单次请求的内部结果。
+         *
+         * @param jsonRetryable true 表示失败来自本地 JSON/结构解析且不是截断，
+         *   追加「只输出合法 JSON」的严格后缀再试一次有现实意义；传输层与
+         *   HTTP 错误重发同样的请求只是再扣一次费，必须区分开
+         */
+        private data class Attempt(
+            val result: ReviewMaterialResult,
+            val jsonRetryable: Boolean = false,
+        )
 
         /**
          * 发一次请求：流式收集 → 截断判断 → 解析。
          *
-         * 失败一律作为返回值而不是直接 send：调用方要据此决定「换个小一点的预算再试」，
-         * 早退就把这个机会堵死了。
+         * 失败一律作为返回值而不是直接 send：调用方要据此决定
+         * 「换个小一点的预算」还是「追加严格 JSON 要求」，早退就把机会堵死了。
          */
         @Suppress("LongParameterList")
         private suspend fun requestOnce(
@@ -139,7 +172,7 @@ class ReviewMaterialGateway
             userPrompt: String,
             requestId: String,
             maxTokens: Int,
-        ): ReviewMaterialResult {
+        ): Attempt {
             val config =
                 ChatRequestConfig(
                     model = credentials.effectiveTextModel,
@@ -176,27 +209,51 @@ class ReviewMaterialGateway
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (exception: LlmException) {
-                return ReviewMaterialResult.Failure(exception.error)
+                return Attempt(ReviewMaterialResult.Failure(exception.error))
             }
-            streamError?.let { return ReviewMaterialResult.Failure(it) }
+            streamError?.let { return Attempt(ReviewMaterialResult.Failure(it)) }
             // 被 max_tokens 截断时 JSON 必然不完整，继续解析只会报一个
             // 「不是合法 JSON」的假原因，掩盖真正的问题。
             if (finishReason == FINISH_REASON_LENGTH) {
-                return ReviewMaterialResult.Failure(
-                    LlmError.Unknown(
-                        detail = "模型输出超出单次上限被截断（finish_reason=length），这次资料不完整，请重试一次",
+                return Attempt(
+                    ReviewMaterialResult.Failure(
+                        LlmError.MalformedResponse(
+                            detail = "模型输出超出单次上限被截断（finish_reason=length），这次资料不完整",
+                            truncated = true,
+                            // 复习资料不做预算提升，文案不能谎称「已自动加大预算重试」
+                            afterRetries = false,
+                        ),
                     ),
                 )
             }
             val raw = buffer.toString()
             if (raw.isBlank()) {
-                return ReviewMaterialResult.Failure(
-                    LlmError.EmptyCompletion(detail = "模型没有返回内容（复习资料生成）"),
+                return Attempt(
+                    ReviewMaterialResult.Failure(
+                        LlmError.EmptyCompletion(detail = "模型没有返回内容（复习资料生成）"),
+                    ),
                 )
             }
             // 把真实 usage 传下去：旧实现固定返回 TokenUsage.EMPTY，
             // 导致界面上的 token 统计永远是 0，用户无法判断这次花了多少。
-            return parse(raw, subjectLabel, mistakes).withUsage(usage)
+            val parsed = parse(raw, subjectLabel, mistakes)
+            if (parsed is ReviewMaterialResult.Failure) {
+                // finish_reason 不总可靠（不少中转把 length 写成 stop），
+                // 再用括号配平兜底：真断在半路的输出，追加提示词重试只会再截一次。
+                if (JsonSalvage.looksTruncated(raw)) {
+                    return Attempt(
+                        ReviewMaterialResult.Failure(
+                            LlmError.MalformedResponse(
+                                detail = "模型输出疑似被长度上限截断，JSON 不完整",
+                                truncated = true,
+                                afterRetries = false,
+                            ),
+                        ),
+                    )
+                }
+                return Attempt(parsed, jsonRetryable = true)
+            }
+            return Attempt(parsed.withUsage(usage))
         }
 
         /** 解析模型输出；解析失败要给出明确原因而不是空资料。 */
@@ -205,11 +262,12 @@ class ReviewMaterialGateway
             subjectLabel: String,
             mistakes: List<ReviewMistake>,
         ): ReviewMaterialResult {
+            // 走抢救器而不是「截取首尾大括号 + 严格解析」：
+            // 提示词要求写 \frac、\sqrt 这类 LaTeX，模型常只写一个反斜杠，
+            // \s 并非合法 JSON 转义，旧实现会把「其实是公式」误判成整份非法。
             val json =
-                runCatching { Json.parseToJsonElement(trimToJsonObject(raw)) as JsonObject }
-                    .getOrElse { failure ->
-                        return failureOf("复习资料不是合法 JSON：" + (failure.message ?: "未知原因"))
-                    }
+                JsonSalvage.parseObject(raw)
+                    ?: return failureOf("复习资料不是合法 JSON（已自动尝试修复围栏、转义与尾逗号）")
             val summaryText = (json["summary"] as? JsonPrimitive)?.content.orEmpty().trim()
             val summary = ReviewText.formatChemical(summaryText)
             val sections =
@@ -321,15 +379,6 @@ class ReviewMaterialGateway
                 com.totop.app.data.remote.LlmError.MalformedResponse(detail = detail),
             )
 
-        /** 从可能含 Markdown 围栏或前置说明的输出里截出 JSON 对象。 */
-        private fun trimToJsonObject(raw: String): String {
-            val text = raw.trim()
-            val start = text.indexOf('{')
-            val end = text.lastIndexOf('}')
-            require(start >= 0 && end > start) { "输出中没有 JSON 对象" }
-            return text.substring(start, end + 1)
-        }
-
         companion object {
             /** 最多带几道真实错题进教材。 */
             const val MAX_MISTAKES: Int = 8
@@ -367,6 +416,17 @@ class ReviewMaterialGateway
 
             /** 厂商表示「被 max_tokens 截断」的 finish_reason。 */
             private const val FINISH_REASON_LENGTH: String = "length"
+
+            /**
+             * 严格 JSON 重试时追加到 system 末尾的硬性要求。
+             *
+             * response_format=json_object 已在请求参数里，这里是对部分厂商
+             * 「参数收了但不执行」的再保险。只追加这一段、其余参数保持不变，
+             * 保证第二次是「同一个请求 + 更严格约束」，而不是一次新的随机尝试。
+             */
+            const val STRICT_JSON_SUFFIX: String =
+                "\n\n【输出硬性要求】只输出一个合法的 JSON 对象：不要 Markdown 代码围栏，" +
+                    "不要任何解释文字；字符串内的反斜杠必须写成双反斜杠（例如 \\\\frac）。"
 
             /**
              * 组装用户消息：把真实错题与易忘点交给模型。

@@ -186,7 +186,6 @@ class SettingsViewModel
             val mode = TeachingMode.fromWire(settingsRepository.get(SettingsRepository.Keys.MODE))
             val ttsEnabled = settingsRepository.getBoolean(SettingsRepository.Keys.TTS_ENABLED, true)
             val speedRate = settingsRepository.getDouble(SettingsRepository.Keys.TTS_SPEED, 1.0)
-            val reportAi = settingsRepository.getBoolean(SettingsRepository.Keys.REPORT_AI_ENABLED, false)
             val generateExercise = settingsRepository.getBoolean(SettingsRepository.Keys.GENERATE_EXERCISE, true)
             _uiState.value =
                 _uiState.value.copy(
@@ -195,7 +194,6 @@ class SettingsViewModel
                             mode = mode,
                             ttsEnabled = ttsEnabled,
                             ttsSpeed = TtsSpeed.nearest(speedRate.toFloat()),
-                            reportAiEnabled = reportAi,
                             generateExercise = generateExercise,
                         ),
                 )
@@ -370,14 +368,6 @@ class SettingsViewModel
             viewModelScope.launch {
                 settingsRepository.put(SettingsRepository.Keys.TTS_SPEED, speed.rate.toString())
                 runCatching { ttsEngine.setSpeed(speed) }
-                loadToggles()
-            }
-        }
-
-        /** AI 周报解读开关。 */
-        fun setReportAiEnabled(enabled: Boolean) {
-            viewModelScope.launch {
-                settingsRepository.putBoolean(SettingsRepository.Keys.REPORT_AI_ENABLED, enabled)
                 loadToggles()
             }
         }
@@ -591,6 +581,9 @@ class SettingsViewModel
                     "outbox",
                     "cache_entry",
                     "study_note",
+                    // 先子后父：科目成绩挂在考试场次上
+                    "exam_score",
+                    "exam_session",
                     "settings",
                 )
 

@@ -86,6 +86,49 @@ class LlmClientMockWebServerTest {
         }
 
     @Test
+    @DisplayName("正文与 finish_reason 同帧：正文不丢，仍只收到一个 Finished")
+    fun sameFrameTextAndFinish() =
+        runTest {
+            // 兼容网关常把最后一个正文 token 与结束信息放同一帧；
+            // 旧实现丢正文后 JSON 恰好缺结尾 `}`，被误报「不是约定的 JSON 结构」。
+            server.enqueue(
+                MockResponse().setHeader("Content-Type", "text/event-stream").setBody(
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"{\\\"a\\\":\"}}]}\n\n" +
+                        "data: {\"choices\":[{\"delta\":{\"content\":\"1}\"},\"finish_reason\":\"stop\"}]," +
+                        "\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":2}}\n\n" +
+                        "data: [DONE]\n\n",
+                ),
+            )
+            val client = LlmClient(sleeper = Sleeper.NOOP)
+            val chunks = client.stream(credentials(), config(), "req-2").toList()
+
+            val deltas = chunks.filterIsInstance<LlmChunk.Delta>().map { it.text }
+            assertEquals(listOf("{\"a\":", "1}"), deltas, "同帧正文必须完整保留")
+            assertEquals(1, chunks.filterIsInstance<LlmChunk.Finished>().count(), "结束事件只应有一次")
+            assertEquals("stop", (chunks.last() as LlmChunk.Finished).finishReason)
+        }
+
+    @Test
+    @DisplayName("厂商不发 [DONE]：残留尾帧的正文也要交给下游")
+    fun tailFrameWithoutDone() =
+        runTest {
+            // 最后一个事件没有空行结尾（流被服务端直接关闭），
+            // 内容落在 parser.finish() 的残留缓冲里，且同帧带 finish_reason。
+            server.enqueue(
+                MockResponse().setHeader("Content-Type", "text/event-stream").setBody(
+                    "data: {\"choices\":[{\"delta\":{\"content\":\"开头\"}}]}\n\n" +
+                        "data: {\"choices\":[{\"delta\":{\"content\":\"收尾\"},\"finish_reason\":\"stop\"}]}",
+                ),
+            )
+            val client = LlmClient(sleeper = Sleeper.NOOP)
+            val chunks = client.stream(credentials(), config(), "req-3").toList()
+
+            val deltas = chunks.filterIsInstance<LlmChunk.Delta>().map { it.text }
+            assertEquals(listOf("开头", "收尾"), deltas, "尾帧正文不得只取 usage 而丢弃")
+            assertEquals("stop", (chunks.last() as LlmChunk.Finished).finishReason)
+        }
+
+    @Test
     @DisplayName("请求头携带 Authorization 与 client_request_id，路径自动补 /chat/completions")
     fun requestHeadersAndPath() =
         runTest {
