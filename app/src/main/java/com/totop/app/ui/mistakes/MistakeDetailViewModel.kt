@@ -17,7 +17,7 @@ data class MistakeDetailState(
     val detail: MistakeDetailUi? = null,
     val errorMessage: String? = null,
     val deleted: Boolean = false,
-    /** 当前状态（不会 / 待校对 / 错误 / 理解），详情页可改。 */
+    /** 当前状态（不会 / 错误 / 存疑 / 理解），详情页可改。 */
     val status: MistakeStatus = MistakeStatus.DEFAULT,
 ) {
     /** 是否真的找不到这道题（区别于「加载中」与「读取失败」）。 */

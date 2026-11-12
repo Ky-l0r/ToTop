@@ -106,6 +106,9 @@ class FormulaRenderer private constructor(
 
     private var destroyed: Boolean = false
 
+    /** 是否已经成功渲染过至少一条公式；用于区分「首帧预算」与「常规预算」。 */
+    private var renderedOnce: Boolean = false
+
     /** 页面是否已加载完成并可接收渲染指令。 */
     val isReady: StateFlow<Boolean> = readyState.asStateFlow()
 
@@ -222,23 +225,53 @@ class FormulaRenderer private constructor(
         maxWidthPx: Int,
     ): FormulaRequest {
         val request = FormulaRequest()
-        if (destroyed || !readyState.value) {
-            // 尚未就绪：直接失败，由调用方降级为纯文本；不阻塞用户阅读。
-            // 用 failNow 而不是直接调 onResult——此刻调用方还没拿到句柄，回调必然是 null。
-            request.failNow(FormulaRenderResult.Failed(IF_NOT_READY))
+        if (destroyed) {
+            // 已销毁（页面退出）：这里只能失败，调用方会降级成原文，下次进页面重新渲染。
+            request.failNow(FormulaRenderResult.Failed(IF_WEBVIEW_UNAVAILABLE))
             return request
         }
-        queue.addLast(
+        val queued =
             QueuedRequest(
                 id = nextId++,
                 latex = latex,
                 displayMode = displayMode,
                 maxWidthPx = maxWidthPx.coerceIn(MIN_WIDTH_PX, MAX_WIDTH_PX),
                 request = request,
-            ),
-        )
+            )
+        queue.addLast(queued)
+        if (!readyState.value) {
+            // 页面还没加载完（刚进页面、刚重建 WebView）：先排队，onPageFinished 后统一放行。
+            //
+            // 旧实现这里直接 failNow。调用方按 LaTeX 源码缓存结果，所以降级出来的原文
+            // 会一直挂在屏幕上，表现为「首屏公式偶尔是纯文本、退出重进才好」。
+            // 排队 + 一个兜底截止时间，既不会永久占位，也不会白扔首屏那几条公式。
+            scheduleNotReadyDeadline(queued)
+        }
         drainQueue()
         return request
+    }
+
+    /**
+     * 未就绪期的兜底：超过 [NOT_READY_BUDGET_MILLIS] 还没放行就判失败。
+     *
+     * 覆盖「宿主没挂进窗口、WebView 被系统回收」这类永远不会 onPageFinished 的情况，
+     * 避免公式位置一直显示占位条。
+     */
+    private fun scheduleNotReadyDeadline(queued: QueuedRequest) {
+        val view = webView ?: return
+        view.postDelayed({ failQueued(queued, IF_NOT_READY) }, NOT_READY_BUDGET_MILLIS)
+    }
+
+    /** 把一条还在队列里（尚未开始）的请求判失败。 */
+    private fun failQueued(
+        queued: QueuedRequest,
+        reason: String,
+    ) {
+        if (!queue.remove(queued)) return
+        if (!queued.request.cancelled) {
+            queued.request.onResult?.invoke(FormulaRenderResult.Failed(reason))
+        }
+        queued.request.onResult = null
     }
 
     /** 依次执行队列：WebView 只能串行渲染。 */
@@ -259,13 +292,33 @@ class FormulaRenderer private constructor(
             "ToTop.render(" + next.id + "," + jsString(next.latex) + "," +
                 next.displayMode + "," + next.maxWidthPx + ")"
         view.evaluateJavascript(script, null)
-        view.postDelayed({ onRenderTimeout(next.id) }, RENDER_BUDGET_MILLIS)
+        // 首条公式要等 WebView 首帧合成 + KaTeX 首次解析，300ms 必然不够；
+        // 渲染成功过一次之后回到 300ms（真机实测单条公式稳定在 50ms 以内）。
+        view.postDelayed({ onRenderTimeout(next.id) }, budgetOfCurrent())
     }
 
-    /** 超时兜底：预算内没有回调即判失败并推进队列。 */
+    /** 当前这条公式允许的渲染时间：首条放宽，之后收紧。 */
+    private fun budgetOfCurrent(): Long = if (renderedOnce) RENDER_BUDGET_MILLIS else FIRST_RENDER_BUDGET_MILLIS
+
+    /** 调用方（FormulaText）的等待上限：必须不短于渲染器自己给的预算。 */
+    fun waitBudgetMillis(): Long = budgetOfCurrent()
+
+    /**
+     * 超时兜底：预算内没有回调即判失败并推进队列。
+     *
+     * 首条超时会原样重排一次再判失败：这一步专门对付「低端机首帧慢」——
+     * 重排几乎总能成功，而直接降级会让首屏几行公式全变成 LaTeX 源码。
+     */
     private fun onRenderTimeout(id: Long) {
         val active = current ?: return
         if (active.id != id) return
+        current = null
+        if (!active.retried) {
+            active.retried = true
+            queue.addFirst(active)
+            drainQueue()
+            return
+        }
         finish(active, FormulaRenderResult.Failed(IF_TIMEOUT))
     }
 
@@ -275,6 +328,8 @@ class FormulaRenderer private constructor(
         result: FormulaRenderResult,
     ) {
         if (current === request) current = null
+        // 记住「这台设备已经成功渲染过」：之后不必再给首帧那么长的预算
+        if (result is FormulaRenderResult.Rendered) renderedOnce = true
         if (!request.request.cancelled) {
             request.request.onResult?.invoke(result)
         }
@@ -362,7 +417,15 @@ class FormulaRenderer private constructor(
         if (destroyed) return
         destroyed = true
         readyState.value = false
-        queue.clear()
+        // 队列里排着的请求也要逐个判失败：它们还没开始渲染，不会有人再回调，
+        // 不主动收尾就只能在界面上一直显示占位条。
+        while (true) {
+            val pending = queue.pollFirst() ?: break
+            if (!pending.request.cancelled) {
+                pending.request.onResult?.invoke(FormulaRenderResult.Failed(IF_DISPOSED))
+            }
+            pending.request.onResult = null
+        }
         current?.let { request ->
             if (!request.request.cancelled) {
                 request.request.onResult?.invoke(FormulaRenderResult.Failed(IF_DISPOSED))
@@ -420,7 +483,10 @@ class FormulaRenderer private constructor(
         val displayMode: Boolean,
         val maxWidthPx: Int,
         val request: FormulaRequest,
-    )
+    ) {
+        /** 是否已经为超时重排过一次：只给一次机会，避免死循环。 */
+        var retried: Boolean = false
+    }
 
     companion object {
         /** 宿主的固定布局宽度（CSS/物理像素）。 */
@@ -428,6 +494,18 @@ class FormulaRenderer private constructor(
 
         /** 单条公式的渲染预算（毫秒）：超出即降级为纯文本。 */
         const val RENDER_BUDGET_MILLIS: Long = 300L
+
+        /**
+         * 首条公式的渲染预算（毫秒）。
+         *
+         * 必须覆盖「WebView 首帧合成 + KaTeX 首次解析」：低端机上这两件事加起来常超过 1 秒，
+         * 沿用 300ms 会让每次进页面的头几条公式直接降级成 LaTeX 源码。
+         * 渲染成功过一次后自动回到 [RENDER_BUDGET_MILLIS]。
+         */
+        const val FIRST_RENDER_BUDGET_MILLIS: Long = 2000L
+
+        /** 页面未就绪时的排队上限（毫秒）：超过即判失败，避免公式位置一直空占位。 */
+        private const val NOT_READY_BUDGET_MILLIS: Long = 5000L
 
         /** 默认排版宽度上限（物理像素）。 */
         const val DEFAULT_MAX_WIDTH_PX: Int = 720

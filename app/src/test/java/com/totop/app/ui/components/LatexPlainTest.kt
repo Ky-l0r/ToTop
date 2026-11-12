@@ -66,6 +66,31 @@ class LatexPlainTest {
     }
 
     @Test
+    @DisplayName("括号尺寸命令去掉，括号本身保留")
+    fun `括号尺寸`() {
+        // 真机反馈「括号直接以纯文本显示」：\left \right 原先按「认不出的命令」原样漏出
+        assertEquals("(x+1)", normalize("\\left(x+1\\right)"))
+        assertEquals("{x", normalize("\\left\\{x\\right."))
+        // \leftarrow 是箭头，不能被当成 \left
+        assertEquals("a ← b", normalize("a \\leftarrow b"))
+    }
+
+    @Test
+    @DisplayName("环境标记与对齐符号去掉，内容保留")
+    fun `环境标记`() {
+        assertEquals("x=1\ny=2", normalize("\\begin{cases}x=1\\\\y=2\\end{cases}"))
+    }
+
+    @Test
+    @DisplayName("不带花括号的参数也能识别")
+    fun `裸参数`() {
+        assertEquals("√(2)", normalize("\\sqrt2"))
+        assertEquals("1/2", normalize("\\frac12"))
+        // 中文不是数学记号：命令原样保留，不能把「面积」当分子
+        assertEquals("\\frac 面积", normalize("\\frac 面积"))
+    }
+
+    @Test
     @DisplayName("路径里的反斜杠不被当成命令")
     fun `路径不误伤`() {
         val text = "文件在 C:\\Users\\demo 下"

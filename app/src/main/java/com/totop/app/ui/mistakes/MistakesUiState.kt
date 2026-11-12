@@ -114,7 +114,7 @@ data class MistakeCardUi(
     val thumbnailPath: String?,
     val finalAnswer: String,
     val hasLocatedErrorStep: Boolean,
-    /** 易错题状态（不会 / 待校对 / 错误 / 理解）。 */
+    /** 易错题状态（不会 / 错误 / 存疑 / 理解）。 */
     val status: MistakeStatus = MistakeStatus.DEFAULT,
 ) {
     /** 复发徽标：首次不显示，第 2 次起显示「第 N 次错」（FR-4.5）。 */

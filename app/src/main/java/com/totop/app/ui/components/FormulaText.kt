@@ -219,18 +219,27 @@ fun FormulaText(
 ) {
     // 先把裸 \frac / \sqrt 补上定界符：没有这一步，分式会被压成 1/2，
     // 「分子在上、分母在下」的排版就丢了（数学题里 sinx/2 到底是谁除以谁读不出来）。
-    val prepared = remember(text) { BareLatex.wrap(text) }
+    //
+    // 顺序很重要：**先压 Markdown 记号，再补定界符**。反过来的话，
+    // `**\frac{1}{2}**` 会先被包成「星号 + 公式 + 星号」，两个星号各自成了
+    // 无配对的文字片段，之后无论怎么归一化都吃不掉它们。
+    val prepared = remember(text) { BareLatex.wrap(MarkdownPlain.normalize(text)) }
     val content = remember(prepared) { FormulaParser.parse(prepared) }
     when (content) {
         is FormulaContent.PlainText -> {
             // 没有 LaTeX 定界符：先剥掉裸命令，再走「朴素数学记号」排版。
             //
-            // 两处修复叠在一起：
+            // 三处修复叠在一起：
             // 1. 「x^2 直接显示成 x∧2」——上下标交给 MathMarkup 排；
             // 2. 「H_2SO_4 \cdot xSO_3 原样显示」——模型常把公式写成没有 $ 定界符的
             //    LaTeX 片段，`\cdot`、`\frac{a}{b}` 会原样留在屏幕上，由 LatexPlain
-            //    换成 ·、a/b 这类字符。认不出的命令原样保留，不吞字符。
-            val normalized = remember(content.text) { LatexPlain.normalize(content.text) }
+            //    换成 ·、a/b 这类字符。认不出的命令原样保留，不吞字符；
+            // 3. 「**关键** 的两个星号漏出来」——模型顺手写的 Markdown 加粗在这里没有
+            //    渲染方，交给 MarkdownPlain 压成纯文本（成对且两侧不是字母数字才处理）。
+            val normalized =
+                remember(content.text) {
+                    LatexPlain.normalize(MarkdownPlain.normalize(content.text))
+                }
             PlainMathText(text = normalized, modifier = modifier, style = style)
         }
         is FormulaContent.Pieces ->
@@ -400,7 +409,8 @@ private fun InlineFormulaRun(
         // 兜底：行内公式没有逐条超时判断，一旦结果永远不回来（WebView 被回收、
         // 宿主被别的列表项带走），这条式子会永久占着一块空白。
         // 这里统一等一个预算，仍未出结果的按失败处理，交给下面的降级分支显示原文。
-        delay(FormulaRenderer.RENDER_BUDGET_MILLIS + RENDER_GRACE_MILLIS)
+        // 预算跟着渲染器走：首帧是 2 秒，之后 300ms——固定 420ms 会让首屏公式集体降级。
+        delay(renderer.waitBudgetMillis() + RENDER_GRACE_MILLIS)
         latexes.distinct().forEach { latex ->
             if (!rendered.containsKey(latex)) {
                 rendered[latex] = FormulaRenderResult.Failed(RENDER_TIMEOUT_TEXT)
@@ -416,8 +426,9 @@ private fun InlineFormulaRun(
             pieces.forEach { piece ->
                 when (piece) {
                     // 公式之间的正文同样可能夹着裸命令（例如 `速度 v=s/t` 后面紧跟 `\cdot`），
-                    // 这里一并归一化，避免一段话里中文正常、公式处露出反斜杠。
-                    is FormulaContent.Piece.Text -> append(LatexPlain.normalize(piece.value))
+                    // 这里一并归一化，避免一段话里中文正常、公式处露出反斜杠；
+                    // Markdown 记号也在这里兜一层（流式输出时 `**` 可能落在这段正文里）。
+                    is FormulaContent.Piece.Text -> append(LatexPlain.normalize(MarkdownPlain.normalize(piece.value)))
                     is FormulaContent.Piece.Formula -> {
                         val result = rendered[piece.latex]
                         if (result is FormulaRenderResult.Failed) {
@@ -549,8 +560,9 @@ private fun FormulaBlock(
     LaunchedEffect(key) {
         val handle = renderer.request(latex, displayMode, maxWidthPx)
         handle.onResult = { outcome -> result = outcome }
-        // 双重保险：渲染器自身有 300ms 超时，这里再加一层宽限，确保迟到也不会卡住
-        delay(FormulaRenderer.RENDER_BUDGET_MILLIS + RENDER_GRACE_MILLIS)
+        // 双重保险：渲染器自身有超时（首帧 2 秒 / 之后 300ms），这里再加一层宽限，
+        // 确保迟到也不会卡住。两处必须用同一个预算，否则外层会先于渲染器判失败。
+        delay(renderer.waitBudgetMillis() + RENDER_GRACE_MILLIS)
         if (result == null) {
             handle.cancel()
             result = FormulaRenderResult.Failed(RENDER_TIMEOUT_TEXT)

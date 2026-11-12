@@ -130,6 +130,8 @@ fun SolveConversationScreen(
     onSelfCheckAgree: (String?) -> Unit = {},
     /** 自检「核出来不一样」：把这题预填进追问。 */
     onSelfCheckDisagree: (String?) -> Unit = {},
+    /** 解答卡「这题我不会」：就地把这道题改回「不会」。 */
+    onMarkUnknown: (String?) -> Unit = {},
     /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
     masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
@@ -182,7 +184,7 @@ fun SolveConversationScreen(
                     } else {
                         onNotice(
                             if (isSolving) {
-                                "还在生成解答，答完就能标记「已掌握」"
+                                "还在生成解答，答完就能标记「理解」"
                             } else {
                                 "这道题还没有解答，拍一张或写一句话先问一问"
                             },
@@ -206,6 +208,7 @@ fun SolveConversationScreen(
                 onSaveMaterial = { messageId, source -> onSaveMaterial(messageId, source) },
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
+                onMarkUnknown = onMarkUnknown,
                 modifier = Modifier.weight(1f),
             )
             if (!networkOnline) OfflineHint()
@@ -298,9 +301,9 @@ private fun ConversationTopBar(
                 imageVector = Icons.Filled.CheckCircle,
                 contentDescription =
                     when {
-                        mastered -> "这道题已标记掌握"
-                        masteredEnabled -> "标记这道题已掌握，并开下一题"
-                        else -> "这道题还没有解答，暂时不能标记掌握"
+                        mastered -> "这道题已标记为理解"
+                        masteredEnabled -> "标记这道题为理解，并开下一题"
+                        else -> "这道题还没有解答，暂时不能标记"
                     },
                 tint =
                     when {
@@ -332,6 +335,7 @@ private fun ConversationList(
     onSaveMaterial: (String, String) -> Unit,
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
+    onMarkUnknown: (String?) -> Unit,
     // 由调用方传入 Modifier.weight(1f)：weight 是 ColumnScope 的扩展，
     // 在被抽出的独立 Composable 里没有 ColumnScope 上下文，只能从外面带进来。
     modifier: Modifier = Modifier,
@@ -362,6 +366,7 @@ private fun ConversationList(
                 onSaveMaterial = { source -> onSaveMaterial(item.id, source) },
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
+                onMarkUnknown = onMarkUnknown,
             )
         }
     }

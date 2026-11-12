@@ -142,7 +142,14 @@ fun CompanionScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(state.items.size) { index ->
-                    QaBubbles(item = state.items[index], onSaveNote = { viewModel.saveNote(index) })
+                    val isLast = index == state.items.lastIndex
+                    QaBubbles(
+                        item = state.items[index],
+                        onSaveNote = { viewModel.saveNote(index) },
+                        // 只有最后一条能重试：重试复用「往最后一条气泡里填答案」的既有逻辑，
+                        // 允许对中间某条重试就会把新答案写到最后一条上。
+                        onRetry = if (isLast) viewModel::retryLast else null,
+                    )
                 }
             }
         }
@@ -223,6 +230,7 @@ private fun EmptyStream(modifier: Modifier = Modifier) {
 private fun QaBubbles(
     item: CompanionQa,
     onSaveNote: () -> Unit,
+    onRetry: (() -> Unit)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -246,11 +254,25 @@ private fun QaBubbles(
         ) {
             when {
                 item.error != null ->
-                    Text(
-                        text = item.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Tokens.Error,
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = item.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Tokens.Error,
+                        )
+                        // 重试只重发原问题，不新增气泡：写作业时最烦的是「网断了还得重新打一遍」
+                        if (onRetry != null) {
+                            Text(
+                                text = "重试这一问",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Tokens.Primary,
+                                modifier =
+                                    Modifier
+                                        .clickable(onClick = onRetry)
+                                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                            )
+                        }
+                    }
 
                 item.answer.isEmpty() ->
                     Text(

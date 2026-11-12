@@ -27,6 +27,7 @@ import com.totop.app.domain.model.ErrorType
 import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
 import com.totop.app.domain.model.MistakeRecord
+import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.PageRole
 import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.QuestionDraft
@@ -299,16 +300,29 @@ class SolveViewModel
         }
 
         /**
-         * 「已掌握」：标记这道题，然后开下一题。
+         * 顶栏勾选「已理解」：把这道题推到「理解」，然后开下一题。
          *
-         * 只写题目级的 selfMasteredAt，不动 mastery 表——掌握度由复习自评、错题频次、
-         * 覆盖度推导，学生自评直接改分数会让推荐路径失真（口径见 docs/需求定稿-0.5.0.md）。
-         * 标记失败不拦下一步：题目可能已被删除，提示一句继续做题比卡住体验更好。
+         * 与解答卡「我核对过，一致」走**同一条通道**（[SelfCheckRepository.recordAgreement]）：
+         * 写一条复习记录 + 改状态。旧实现只写 `question.selfMasteredAt`，状态还停在
+         * 「错误/不会」、掌握度也不变，学生勾完回到错题本会发现「跟没勾一样」——
+         * 同一件事两个入口必须产生同一个结果。
+         *
+         * 掌握度仍由复习自评、错题频次、覆盖度推导，勾选只是补上一次「做对了」的自评，
+         * 不做任何机器打分（口径见 docs/需求定稿-0.5.0.md）。
          */
         fun markMasteredAndNext() {
-            val questionId = latestSolution()?.questionId
+            val solution = latestSolution()
+            val questionId = solution?.questionId
+            val mistakeId = solution?.mistakeId
             if (questionId != null) {
                 viewModelScope.launch {
+                    // 同一天重复勾选不重复计入（recordAgreement 内部按 source+日期幂等）
+                    val recorded =
+                        if (mistakeId.isNullOrBlank()) {
+                            false
+                        } else {
+                            runCatching { selfCheckRepository.recordAgreement(mistakeId) }.getOrDefault(false)
+                        }
                     runCatching {
                         questionRepository.markMastered(questionId, System.currentTimeMillis())
                     }.onSuccess { hit ->
@@ -317,10 +331,15 @@ class SolveViewModel
                     }.onFailure { failure ->
                         showToast("标记失败：" + (failure.message ?: "未知原因"))
                     }
+                    if (recorded) {
+                        showToast("已记为「理解」，今天计入一次复习")
+                    } else {
+                        // 没有错题记录、或今天已经记过一次：仍然给一句收尾，不要静默
+                        showToast(com.totop.app.util.CopyDeck.encouragement(appContext))
+                    }
                 }
             }
             startNewSession()
-            showToast(com.totop.app.util.CopyDeck.encouragement(appContext))
         }
 
         /**
@@ -927,6 +946,28 @@ class SolveViewModel
             markSelfCheck(mistakeId, agreed = false)
             _draft.update { it.copy(studentProcess = "我按解答里的验算核对了一遍，得到的结果和答案不一致：") }
             showToast("已填进输入框，补上你算出的结果再发送")
+        }
+
+        /**
+         * 解答卡「这题我不会」：把这道题改回「不会」。
+         *
+         * 状态现在是自动判定的（有错因→错误，其余→不会），但自动判定只看模型能不能指出
+         * 错在哪一步，看不出「学生自己觉得没懂」。看完解答才反应过来「我其实不会」很常见，
+         * 所以给一个就地出口，不必进错题本绕「找题 → 点开 → 改状态」四步。
+         *
+         * 只改状态，不写复习记录：这不是一次复习自评，写成自评会把掌握度算成「做对了」。
+         */
+        fun markUnknown(mistakeId: String?) {
+            if (mistakeId.isNullOrBlank()) {
+                showToast("这道题还没进错题本，先看解答就好")
+                return
+            }
+            viewModelScope.launch {
+                val ok =
+                    runCatching { mistakeRepository.setStatus(mistakeId, MistakeStatus.UNKNOWN) }
+                        .getOrDefault(false)
+                showToast(if (ok) "已归类为「不会」" else "没改成功，稍后再试")
+            }
         }
 
         /** 更新某一题的核对状态（按 mistakeId 找到那张解答卡）。 */
@@ -1805,13 +1846,16 @@ class SolveViewModel
                         ),
                     )
                 val firstError = content.firstError
-                // 卷面上有手写过程 → 这道题属于「自己做过、答案还没核对」，落成「待校对」。
+                // 状态只由「有没有定位到具体错误步骤」决定（口径 2026-11-12）：
+                // 定位到 → 错误；没定位到（写了过程但指不出错、什么都没写、明说不会）→ 不会。
                 //
-                // 为什么不在界面上让用户选：他拍卷子这个动作本身就说明了「我做了」，
-                // 再问一句「你做完了吗」只是多一次点击。核对（⑨）通过之后状态会被推到「理解」，
-                // 这条自动写入只是起点。
+                // 为什么不再按「卷面上有没有手写」单开一档「待校对」：写了字本身不代表任何
+                // 可执行的处置，而学生既然把题拍进来问，就说明这道题还没掌握。
+                // 判定实现只有一处，见 MistakeStatus.decide。
                 val handwritingDetected =
                     HANDWRITING_WITH_WORK.contains(content.handwriting?.lowercase().orEmpty())
+                // 手写信息仍然保留，但只用于两件事：来源标注（详情页要能看出这是卷面读出来的）
+                // 与兜底文案的措辞——不再参与状态判定。
                 val record =
                     MistakeRecord(
                         id = UUID.randomUUID().toString(),
@@ -1820,20 +1864,23 @@ class SolveViewModel
                         firstErrorStepIdx = firstError?.stepIdx,
                         // 没有错因时用兜底类，但仍然入库：这样才能出现在错题本里
                         errorType = firstError?.type ?: ErrorType.FALLBACK,
+                        // 兜底文案必须分情况：老文案一律说「没有你的解题过程」，
+                        // 在新规则下会直接骗人——学生可能明明写了过程，只是没定位到错点。
                         errorExplain =
                             firstError?.explain
-                                ?: "本次没有你的解题过程，暂时无法定位具体错在哪一步。补上思路再解一次，就能定位到第一个出错的步骤。",
+                                ?: if (content.sawStudentWork) {
+                                    "看到了你写的过程，但没有找到明确的错误点——说明这类题的入手方式还没稳定。" +
+                                        "可以再想想第一步该从哪个条件下手。"
+                                } else {
+                                    "这次没有看到你的解题过程，暂时无法定位具体错在哪一步。" +
+                                        "补上思路再解一次，就能定位到第一个出错的步骤。"
+                                },
                         correctSolution = content.standardSolution,
                         finalAnswer = content.standardSolution.finalAnswer,
                         mode = _mode.value,
                         createdAtUtc = System.currentTimeMillis(),
                         recurrenceIndex = 1,
-                        status =
-                            if (handwritingDetected) {
-                                com.totop.app.domain.model.MistakeStatus.PENDING_CHECK
-                            } else {
-                                com.totop.app.domain.model.MistakeStatus.DEFAULT
-                            },
+                        status = MistakeStatus.decide(hasFirstError = firstError != null),
                         source = if (handwritingDetected) "handwriting" else "solve",
                     )
                 val assignments =

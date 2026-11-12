@@ -72,6 +72,7 @@ internal fun MessageItem(
     onSaveMaterial: (String) -> Unit = {},
     onSelfCheckAgree: (String?) -> Unit = {},
     onSelfCheckDisagree: (String?) -> Unit = {},
+    onMarkUnknown: (String?) -> Unit = {},
 ) {
     when {
         message.fromStudent -> StudentBubble(message)
@@ -86,6 +87,7 @@ internal fun MessageItem(
                 onSaveMaterial = onSaveMaterial,
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
+                onMarkUnknown = onMarkUnknown,
             )
         else ->
             AssistantTextBubble(
@@ -321,6 +323,7 @@ private fun SolutionBubble(
     onSaveMaterial: (String) -> Unit,
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
+    onMarkUnknown: (String?) -> Unit,
 ) {
     // 来源输入框：存资料前问一句「这是哪来的」，因为资料的可信度全靠这条标注。
     var materialDialogOpen by remember { mutableStateOf(false) }
@@ -532,6 +535,17 @@ private fun SolutionBubble(
                     text = "  已收进错题本",
                     style = MaterialTheme.typography.labelSmall,
                     color = Tokens.Success,
+                )
+            }
+            // 状态快捷出口：看完解答才反应过来「我其实不会」很常见，而自动判定只能看
+            // 模型有没有指出错在哪一步，看不出学生自己没懂。这里给一个就地入口，
+            // 不必进错题本绕「找题 → 点开 → 改状态」四步。
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SmallAction(text = "这题我不会", onClick = { onMarkUnknown(payload.mistakeId) })
+                Text(
+                    text = "归到「不会」，复习先讲思路",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Tokens.OnSurfaceVariant,
                 )
             }
         }

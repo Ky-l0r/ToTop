@@ -198,6 +198,35 @@ class CompanionViewModel
             }
         }
 
+        /**
+         * 重发最后一条提问。
+         *
+         * 写作业时网络断一下很常见，失败后让学生把整句话重打一遍是最没必要的成本。
+         * 只重跑请求、不新增气泡；同时清掉上一次的错误文案——否则重试成功了红字还挂着。
+         *
+         * 只允许「最后一条」：复用 [runAsk] 里「往最后一条气泡填答案」的既有逻辑，
+         * 对中间某条重试会把新答案写到最后一条上。
+         */
+        fun retryLast() {
+            val state = _uiState.value
+            val last = state.items.lastOrNull() ?: return
+            if (state.asking || last.streaming) return
+            val text = last.question.trim()
+            if (text.isEmpty()) return
+            _uiState.update { current ->
+                current.copy(
+                    asking = true,
+                    items = current.items.dropLast(1) + last.copy(answer = "", error = null, streaming = true),
+                )
+            }
+            askJob?.cancel()
+            askJob =
+                viewModelScope.launch {
+                    runCatching { runAsk(text) }
+                    _uiState.update { it.copy(asking = false) }
+                }
+        }
+
         private fun updateLast(block: (CompanionQa) -> CompanionQa) {
             _uiState.update { state ->
                 val last = state.items.lastOrNull() ?: return@update state

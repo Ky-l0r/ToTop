@@ -11,7 +11,8 @@
   "auxiliary": {
     "reviewMaterial": "review_material.md",
     "exerciseGenerate": "exercise_generate.md",
-    "exerciseVerify": "exercise_verify.md"
+    "exerciseVerify": "exercise_verify.md",
+    "companionAsk": "companion_ask.md"
   },
   "rules": [
     "版本号采用语义化版本：提示词措辞调整升 PATCH，输出字段变化升 MINOR，阶段边界变化升 MAJOR",
@@ -20,6 +21,7 @@
     "auxiliary 里是不参与四阶段缓存键的辅助模板（如复习资料），改动它不必单独升版本，但仍随本文件一同登记"
   ],
   "changes": [
+    "1.9.2-aux：陪伴问答模板新增「禁止任何 Markdown 记号」（** 加粗 / # 标题 / - 列表 / 反引号）；属 auxiliary，不参与四阶段缓存键，故未升 promptVersion",
     "1.5.1：陪伴问答禁止裸 LaTeX 命令与公式单独换行；追问新增 [[核对]] 行，允许推翻原答案",
     "1.5.2：阶段 C 明确「结果陈述不是解题过程」，只知道答案对错时 firstError 取 null，不许反推错因类型",
     "1.6.0：阶段 A 新增 handwriting / handwritingText / progress（输出字段变化，升 MINOR）；阶段 C 增加手写识别结果的容错说明",

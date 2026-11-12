@@ -180,7 +180,7 @@ fun HomeScreen(
             )
             QuickEntry(
                 title = "易错题",
-                subtitle = "不会、待校对、做错的都在这",
+                subtitle = "不会、做错、存疑的都在这",
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 onClick = onOpenMistakes,
                 modifier = Modifier.weight(1f),

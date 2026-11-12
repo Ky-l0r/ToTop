@@ -170,6 +170,34 @@ object LatexPlain {
         setOf("quad", "qquad", "enspace", "thinspace", "medspace", "thickspace", "space")
 
     /**
+     * 只控制括号尺寸、不改变内容的命令。
+     *
+     * 真机反馈「括号直接以纯文本显示」就是它们造成的：`\left(` `\right)` 原先既不在符号表
+     * 也不在包装表里，于是按「认不出的命令原样保留」处理，屏幕上出现的是
+     * `\left(x+1\right)`。这里把它们整条丢掉，后面的括号字符本来就会原样留下。
+     */
+    private val DELIMITER_SIZERS: Set<String> =
+        setOf(
+            "left",
+            "right",
+            "middle",
+            "big",
+            "Big",
+            "bigg",
+            "Bigg",
+            "bigl",
+            "bigr",
+            "Bigl",
+            "Bigr",
+            "biggl",
+            "biggr",
+            "Biggl",
+            "Biggr",
+            "bigm",
+            "Bigm",
+        )
+
+    /**
      * 归一化一段纯文本。
      *
      * 不含反斜杠时**原样返回**（绝大多数正文走这条路径，零开销）。
@@ -222,52 +250,158 @@ object LatexPlain {
         }
         var end = start + 1
         while (end < raw.length && raw[end].isLetter()) end++
-        val name = raw.substring(start + 1, end)
-        // \frac{a}{b} / \sqrt{a} / \sqrt[n]{a}：带参数的先处理
+        return consumeNamed(raw, end, raw.substring(start + 1, end))
+    }
+
+    /**
+     * 命名命令的分派。
+     *
+     * 拆出来不是因为好看：`\frac`、`\begin`、`\left` 各自要读参数，全塞进 [consumeCommand]
+     * 会同时踩到「圈复杂度」与「返回点过多」两条规则；按命令族拆开后每条都好验证。
+     */
+    private fun consumeNamed(
+        raw: String,
+        end: Int,
+        name: String,
+    ): Consumed? =
         when (name) {
-            "frac", "dfrac", "tfrac" -> {
-                val numerator = readGroup(raw, end) ?: return null
-                val denominator = readGroup(raw, numerator.endExclusive) ?: return null
-                val up = normalize(numerator.inner)
-                val down = normalize(denominator.inner)
-                return Consumed(wrapFraction(up, down), denominator.endExclusive)
-            }
-            "sqrt" -> {
-                var cursor = end
-                var degree = ""
-                if (cursor < raw.length && raw[cursor] == '[') {
-                    val closeAt = raw.indexOf(']', cursor + 1)
-                    if (closeAt > cursor + 1) {
-                        degree = normalize(raw.substring(cursor + 1, closeAt))
-                        cursor = closeAt + 1
-                    }
-                }
-                val body = readGroup(raw, cursor) ?: return null
-                val prefix = if (degree.isEmpty()) "√" else degree + "√"
-                return Consumed(prefix + "(" + normalize(body.inner) + ")", body.endExclusive)
+            "frac", "dfrac", "tfrac" -> consumeFraction(raw, end)
+            "sqrt" -> consumeRoot(raw, end)
+            "begin" -> consumeEnvironment(raw, end, opening = true)
+            "end" -> consumeEnvironment(raw, end, opening = false)
+            in DELIMITER_SIZERS -> consumeDelimiterSizer(raw, end)
+            in SPACES -> consumeSpace(raw, end)
+            in CONTENT_ONLY -> consumeContentOnly(raw, end)
+            // 认不出的命令：原样保留，不能把公式改坏
+            else -> SYMBOLS[name]?.let { Consumed(it, end) } ?: Consumed("\\" + name, end)
+        }
+
+    /** `\frac{a}{b}`，也支持 `\frac12` 这种省花括号的写法。 */
+    private fun consumeFraction(
+        raw: String,
+        end: Int,
+    ): Consumed? {
+        val numerator = readArgument(raw, end) ?: return null
+        val denominator = readArgument(raw, numerator.endExclusive) ?: return null
+        val up = normalize(numerator.inner)
+        val down = normalize(denominator.inner)
+        return Consumed(wrapFraction(up, down), denominator.endExclusive)
+    }
+
+    /** `\sqrt{a}` / `\sqrt[3]{a}` / `\sqrt2`。 */
+    private fun consumeRoot(
+        raw: String,
+        end: Int,
+    ): Consumed? {
+        var cursor = end
+        var degree = ""
+        if (cursor < raw.length && raw[cursor] == '[') {
+            val closeAt = raw.indexOf(']', cursor + 1)
+            if (closeAt > cursor + 1) {
+                degree = normalize(raw.substring(cursor + 1, closeAt))
+                cursor = closeAt + 1
             }
         }
-        if (name in SPACES) {
-            // 源文本里本来就跟着空格时不再补一个，否则 `a\quad b` 会变成两个空格
-            val nextIsSpace = end < raw.length && raw[end].isWhitespace()
-            return Consumed(if (nextIsSpace) "" else " ", end)
+        val body = readArgument(raw, cursor) ?: return null
+        val prefix = if (degree.isEmpty()) "√" else degree + "√"
+        return Consumed(prefix + "(" + normalize(body.inner) + ")", body.endExclusive)
+    }
+
+    /**
+     * `\begin{cases}…\end{cases}` 与落单的 `\end{…}`。
+     *
+     * 环境标记整条丢掉、内容留下；环境里的 `&` 只是对齐占位，一并去掉
+     * （否则屏幕上会出现「x&=1」）。
+     */
+    private fun consumeEnvironment(
+        raw: String,
+        end: Int,
+        opening: Boolean,
+    ): Consumed {
+        val env = readGroup(raw, skipSpaces(raw, end))
+        if (!opening) {
+            // 落单的 \end：只丢标记，不吞后面的正文
+            return Consumed("", env?.endExclusive ?: end)
         }
-        if (name in CONTENT_ONLY) {
-            // 允许 \text{...} 前面带一个可选参数（如 \text[1]{...}），直接跳过
-            var cursor = end
-            if (cursor < raw.length && raw[cursor] == '[') {
-                val closeAt = raw.indexOf(']', cursor + 1)
-                if (closeAt > cursor) cursor = closeAt + 1
-            }
-            if (cursor < raw.length && raw[cursor] == '{') {
-                val group = readGroup(raw, cursor) ?: return null
-                return Consumed(normalize(group.inner), group.endExclusive)
-            }
-            return Consumed("", end)
+        if (env == null) return Consumed("", end)
+        val endToken = "\\end{" + env.inner + "}"
+        val endAt = raw.indexOf(endToken, env.endExclusive)
+        if (endAt < 0) return Consumed("", env.endExclusive)
+        val body = raw.substring(env.endExclusive, endAt).replace("&", "")
+        return Consumed(normalize(body), endAt + endToken.length)
+    }
+
+    /**
+     * `\left` / `\right` / `\big…`：只丢命令，括号字符本身保留。
+     *
+     * `\left.`、`\right.` 里的点是隐形定界符，一起吃掉，否则屏幕上会多出一个句点。
+     */
+    private fun consumeDelimiterSizer(
+        raw: String,
+        end: Int,
+    ): Consumed {
+        val after = skipSpaces(raw, end)
+        val endExclusive = if (after < raw.length && raw[after] == '.') after + 1 else end
+        return Consumed("", endExclusive)
+    }
+
+    /** `\quad` 之类：压成一个空格；源文本本来就跟着空格时不再补。 */
+    private fun consumeSpace(
+        raw: String,
+        end: Int,
+    ): Consumed {
+        val nextIsSpace = end < raw.length && raw[end].isWhitespace()
+        return Consumed(if (nextIsSpace) "" else " ", end)
+    }
+
+    /** `\text{…}` / `\mathrm{…}`：只取内容；无参数时整条丢掉。 */
+    private fun consumeContentOnly(
+        raw: String,
+        end: Int,
+    ): Consumed? {
+        var cursor = end
+        if (cursor < raw.length && raw[cursor] == '[') {
+            val closeAt = raw.indexOf(']', cursor + 1)
+            if (closeAt > cursor) cursor = closeAt + 1
         }
-        SYMBOLS[name]?.let { return Consumed(it, end) }
-        // 认不出的命令：原样保留，不能把公式改坏
-        return Consumed("\\" + name, end)
+        if (cursor < raw.length && raw[cursor] == '{') {
+            val group = readGroup(raw, cursor) ?: return null
+            return Consumed(normalize(group.inner), group.endExclusive)
+        }
+        return Consumed("", end)
+    }
+
+    /**
+     * 读一个参数：优先 `{…}`；没有花括号时按 LaTeX 惯例只取一个字符（`\frac12`、`\sqrt2`）。
+     *
+     * 花括号不配对、或后面紧跟另一条命令时返回 null——交给「认不出的命令原样保留」，
+     * 宁可露出原文，也不要把后文吃掉。
+     */
+    private fun readArgument(
+        raw: String,
+        start: Int,
+    ): Group? {
+        val cursor = skipSpaces(raw, start)
+        readGroup(raw, cursor)?.let { return it }
+        if (cursor >= raw.length) return null
+        val ch = raw[cursor]
+        // 只认 ASCII 记号：`\frac 面积` 多半是正文误写了命令，把中文当参数会改坏句子
+        if (!isBareArgument(ch)) return null
+        return Group(ch.toString(), cursor + 1)
+    }
+
+    /** 不带花括号的参数：ASCII 且不是结构字符（反斜杠、花括号）。 */
+    private fun isBareArgument(ch: Char): Boolean = ch.code < NON_ASCII_LIMIT && !isStructural(ch)
+
+    private fun isStructural(ch: Char): Boolean = ch == '\\' || ch == '{' || ch == '}'
+
+    private fun skipSpaces(
+        raw: String,
+        from: Int,
+    ): Int {
+        var cursor = from
+        while (cursor < raw.length && raw[cursor].isWhitespace()) cursor++
+        return cursor
     }
 
     /** 读一个 `{...}` 分组（[start] 必须是左花括号）。 */
@@ -307,4 +441,7 @@ object LatexPlain {
         if (value.startsWith("(") && value.endsWith(")")) return value
         return "(" + value + ")"
     }
+
+    /** ASCII 上界：不带花括号的参数只接受这之前的字符（数字、字母、运算符）。 */
+    private const val NON_ASCII_LIMIT: Int = 128
 }

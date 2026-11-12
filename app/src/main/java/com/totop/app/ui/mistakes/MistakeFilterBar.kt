@@ -472,21 +472,23 @@ fun KpointTag(
     }
 }
 
-/** 状态徽标：不会 / 待校对 / 错误 / 存疑 / 理解，只做区分，不用高饱和色抢注意力。 */
+/** 状态徽标：不会 / 错误 / 存疑 / 理解，只做区分，不用高饱和色抢注意力。 */
 @Composable
 fun StatusBadge(
     status: MistakeStatus,
     modifier: Modifier = Modifier,
 ) {
+    // 配色按「语义轻重」而非按状态顺序：
+    // - 不会（黄）：还没掌握，提示味；它是自动判定里最常见的一类，用红会满屏警戒；
+    // - 错误（红）：确认做错且指到了具体步骤，是唯一需要立刻重做的；
+    // - 存疑（紫）：结论还没定，颜色必须与「错误」拉开，否则又是「一条要背的错题」；
+    // - 理解（绿）：过关，与顶栏勾选变绿同一套色（Tokens.Success）。
     val (background, foreground) =
         when (status) {
-            MistakeStatus.UNKNOWN -> Tokens.ErrorContainer to Tokens.Error
-            MistakeStatus.PENDING_CHECK -> Tokens.WarningContainer to Tokens.Warning
-            MistakeStatus.WRONG -> Tokens.SurfaceVariant to Tokens.OnSurfaceVariant
-            // 存疑用紫色：与「错误」的灰、「待校对」的黄都不一样，一眼能认出
-            // 「这条还没定论」，而不是又一条要背的错题。
+            MistakeStatus.UNKNOWN -> Tokens.WarningContainer to Tokens.Warning
+            MistakeStatus.WRONG -> Tokens.ErrorContainer to Tokens.Error
             MistakeStatus.DISPUTED -> Tokens.ReasoningContainer to Tokens.Reasoning
-            MistakeStatus.UNDERSTOOD -> Tokens.PrimaryContainer to Tokens.Primary
+            MistakeStatus.UNDERSTOOD -> Tokens.SuccessContainer to Tokens.Success
         }
     Box(
         modifier =

@@ -292,7 +292,9 @@ fun KnowledgePointDetailScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text(text = note.title, style = MaterialTheme.typography.labelLarge)
                             Text(
-                                text = note.body,
+                                // 笔记存的是原话，但模型偶尔会带 `**` 加粗记号；
+                                // 这里只压掉成对的记号，不改动文字本身。
+                                text = com.totop.app.ui.components.MarkdownPlain.normalize(note.body),
                                 style = MaterialTheme.typography.bodyMedium,
                                 maxLines = KpointDetailViewModel.NOTE_PREVIEW_LINES,
                             )

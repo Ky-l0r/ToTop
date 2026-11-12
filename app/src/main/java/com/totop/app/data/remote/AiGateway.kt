@@ -197,12 +197,16 @@ class AiGateway(
     ): AiSolveResult {
         val rebuilt = ContractRebuilder.rebuild(question, solutionObject, stageC, stageDObject)
         val steps = rebuilt.result.standardSolution?.steps.orEmpty()
-        if (question.stem.isNullOrBlank() || steps.isEmpty()) {
+        // 题干为空单独判：它不是「模型没按 JSON 输出」，而是「这张图里没有题」，
+        // 提示语必须指向重拍，而不是让用户去调输出档位或换模型。
+        val stemEmpty = question.stem.isNullOrBlank()
+        if (stemEmpty || steps.isEmpty()) {
             throw LlmException(
                 LlmError.MalformedResponse(
-                    detail = "合并四阶段结果后仍不满足契约：题干或解答步骤为空",
+                    detail = if (stemEmpty) "合并四阶段结果后题干仍为空：图里没有读到题目" else "解答步骤为空",
                     // 合并阶段在重试循环之外，这里失败并没有再试一次
                     afterRetries = false,
+                    stemEmpty = stemEmpty,
                 ),
             )
         }
@@ -563,7 +567,7 @@ class AiGateway(
                 hasFigure = obj.booleanOr("hasFigure", false),
             )
         if (question.stem.isNullOrBlank()) {
-            throw LlmException(LlmError.MalformedResponse(detail = "补拍后仍未识别出题干"))
+            throw LlmException(LlmError.MalformedResponse("补拍后仍未识别出题干", stemEmpty = true))
         }
         return IdentifyOutcome(question = question, usage = result.usage)
     }
@@ -1186,7 +1190,9 @@ class AiGateway(
                     progress = obj.progressOr("progress"),
                 )
             if (question.stem.isNullOrBlank()) {
-                throw LlmException(LlmError.MalformedResponse(detail = "阶段 A 未识别出题干（stem 为空）"))
+                // stemEmpty 让界面给出「重拍」而不是「改输出档位/换模型」：
+                // 识题读不到题干是照片问题，不是模型的 JSON 能力问题。
+                throw LlmException(LlmError.MalformedResponse("阶段 A 未识别出题干", stemEmpty = true))
             }
             warnings.addAll(obj.stringListOr("warnings"))
             return question
@@ -1267,8 +1273,9 @@ class AiGateway(
                 // 题型跟着 question 一起进契约：阶段 C/D 与最终 DTO 都需要它，
                 // 少写这一项会让「单选/多选校验」在合并后的结果里丢掉依据。
                 put("choiceType", ChoiceAnswerGuard.normalize(question.choiceType))
-                // 手写过程与逐问进度同样要带过去：它们决定错题状态（待校对）与进度条，
-                // 不写进契约就等于阶段 A 白读了这张卷子。
+                // 手写过程与逐问进度同样要带过去：前者是「没打字也能定位错因」的唯一来源，
+                // 后者决定进度条；不写进契约就等于阶段 A 白读了这张卷子。
+                // 注意：手写不再决定错题状态（状态只看有没有定位到错误步骤）。
                 put("handwriting", question.handwriting ?: "none")
                 put("handwritingText", question.handwritingText.orEmpty())
                 put(

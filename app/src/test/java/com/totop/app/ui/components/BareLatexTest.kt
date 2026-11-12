@@ -63,6 +63,20 @@ class BareLatexTest {
     }
 
     @Test
+    @DisplayName("不带花括号的单字符参数也能包成公式")
+    fun `裸参数`() {
+        // `\sqrt2`、`\frac12` 是模型省括号的常见写法：以前判「不完整」，只能退化成 √(2)
+        assertEquals("$\\sqrt2$", BareLatex.wrap("\\sqrt2"))
+        assertEquals("$\\frac12$", BareLatex.wrap("\\frac12"))
+    }
+
+    @Test
+    @DisplayName("中文不当参数，命令原样保留")
+    fun `中文参数`() {
+        assertEquals("\\frac 面积", BareLatex.wrap("\\frac 面积"))
+    }
+
+    @Test
     @DisplayName("没有反斜杠的纯文本原样返回")
     fun `纯文本`() {
         val text = "把 x 移到右边，两边同除以 2。"

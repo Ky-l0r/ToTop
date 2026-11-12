@@ -226,6 +226,7 @@ fun SolveRoute(
         onSaveMaterial = { messageId, source -> viewModel.saveAsMaterial(messageId, source) },
         onSelfCheckAgree = viewModel::onSelfCheckAgree,
         onSelfCheckDisagree = viewModel::onSelfCheckDisagree,
+        onMarkUnknown = viewModel::markUnknown,
         masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,

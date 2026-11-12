@@ -87,8 +87,18 @@ object BareLatex {
             cursor = skipSpaces(raw, close + 1)
         }
         for (index in 0 until groups) {
-            if (cursor >= raw.length || raw[cursor] != '{') return null
-            cursor = endOfGroup(raw, cursor) ?: return null
+            if (cursor >= raw.length) return null
+            cursor =
+                when {
+                    raw[cursor] == '{' -> endOfGroup(raw, cursor) ?: return null
+                    // 不带花括号的单字符参数：`\sqrt2`、`\frac12`。KaTeX 同样接受这种写法，
+                    // 以前这里直接判「不完整」，整条命令就退化成纯文本 `√(2)`。
+                    raw[cursor] == '\\' -> return null
+                    // 只认 ASCII 记号：`\frac 面积` 这种其实是正文里误写了命令，
+                    // 把中文当参数包进公式会直接渲染失败，不如不动
+                    raw[cursor].code >= NON_ASCII_LIMIT -> return null
+                    else -> cursor + 1
+                }
             // 只在「后面还有参数」时才跳过空格。
             // 最后一组之后若也跳，会把命令后面的普通文字前的空格一起包进公式里，
             // 渲染出来就是「公式 + 多余空白」，与原文的空格重了一次。
@@ -125,4 +135,7 @@ object BareLatex {
         while (cursor < raw.length && raw[cursor].isWhitespace()) cursor++
         return cursor
     }
+
+    /** ASCII 上界：不带花括号的参数只接受这之前的字符（数字、字母、运算符）。 */
+    private const val NON_ASCII_LIMIT: Int = 128
 }
