@@ -11,6 +11,7 @@ import com.totop.app.data.remote.FollowUpCorrection
 import com.totop.app.data.remote.FollowUpEvent
 import com.totop.app.data.remote.FollowUpGateway
 import com.totop.app.data.remote.FollowUpTurn
+import com.totop.app.data.remote.KpointMethodGateway
 import com.totop.app.data.remote.LlmCallRegistry
 import com.totop.app.data.remote.LlmException
 import com.totop.app.data.remote.SolveContextBuilder
@@ -26,6 +27,8 @@ import com.totop.app.domain.model.AiSolvedContent
 import com.totop.app.domain.model.ErrorType
 import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
+import com.totop.app.domain.model.KpointMethod
+import com.totop.app.domain.model.KpointMethodRewrite
 import com.totop.app.domain.model.MethodEvidence
 import com.totop.app.domain.model.MistakeRecord
 import com.totop.app.domain.model.MistakeStatus
@@ -87,6 +90,7 @@ class SolveViewModel
         private val secretStore: SecretStore,
         private val gateway: AiGateway,
         private val followUpGateway: FollowUpGateway,
+        private val methodGateway: KpointMethodGateway,
         private val knowledgeCatalog: KnowledgeCatalogReader,
         private val questionRepository: QuestionRepository,
         private val mistakeRepository: MistakeRepository,
@@ -2024,6 +2028,10 @@ class SolveViewModel
          * 2. **适用条件取本题的「求」**：`ask` 就是这道题问的东西，比让模型再编一句
          *    「适用于求最值的题」更贴近事实，也不需要多一次调用；
          * 3. **失败不提示**：方法卡是增强数据，写不进去不该让本次解答看起来出错。
+         *
+         * 合并完成后再判断要不要整卡重写：只有在攒够样本的那一次（见 [KpointMethodRewrite]），
+         * 且**放到后台协程里跑**——它是纯增强，不该让学生在解答已经出来之后
+         * 还盯着输入框的转圈等它。
          */
         private suspend fun absorbMethodCard(content: AiSolvedContent) {
             val kpoint = content.kpointAssignments.firstOrNull { it.hasControlledId } ?: return
@@ -2046,7 +2054,33 @@ class SolveViewModel
                         ),
                     title = content.question.stemText.lineSequence().firstOrNull().orEmpty().take(MATERIAL_TITLE_CHARS),
                 )
-            runCatching { methodCards.absorb(evidence) }
+            val merged = runCatching { methodCards.absorb(evidence) }.getOrNull() ?: return
+            if (!KpointMethodRewrite.shouldRewrite(merged.sampleCount)) return
+            rewriteMethodCard(merged)
+        }
+
+        /**
+         * 攒够样本后整卡重写一次（后台，不阻塞解答）。
+         *
+         * 为什么用 viewModelScope 而不是「等页面销毁也继续跑」的作用域：
+         * 这是纯增强，一次失败或被打断的代价只是这张卡继续停在合并态，
+         * 下次做同类题仍能正常召回。反过来，为了它引入应用级作用域与额外生命周期，
+         * 会让这条链路多一个只在特定时机才跑的隐藏任务，更难排查。
+         */
+        private fun rewriteMethodCard(card: KpointMethod) {
+            viewModelScope.launch {
+                runCatching {
+                    val credentials = secretStore.read()
+                    if (!credentials.canCall) return@runCatching
+                    val skeleton =
+                        methodGateway.rewrite(
+                            credentials = credentials,
+                            card = card,
+                            requestId = UUID.randomUUID().toString(),
+                        ) ?: return@runCatching
+                    methodCards.applyRewrite(card.id, skeleton)
+                }
+            }
         }
 
         /** 提示记录（经 domain 的 HintLog 与 Repository 接口写 hint_log）。 */

@@ -4,7 +4,9 @@ import com.totop.app.data.local.dao.KpointMethodDao
 import com.totop.app.data.local.entity.KpointMethodEntity
 import com.totop.app.domain.model.KpointMethod
 import com.totop.app.domain.model.KpointMethodMerge
+import com.totop.app.domain.model.KpointMethodRewrite
 import com.totop.app.domain.model.MethodEvidence
+import com.totop.app.domain.model.MethodSkeleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -24,9 +26,9 @@ import javax.inject.Singleton
  * 读：按本题的候选知识点取最多的两张，按被验证次数排序。
  *
  * 刻意不做的事：
- * - **不额外调模型做归纳**。多一次调用就多一次延迟与费用，而这一步需要的能力
- *   （把同类题的步骤骨架对齐）在本地用字符串与计数就能做到；真要「重新归纳」
- *   应该等积累了足够样本后整卡重写，不是每做一题调一次。
+ * - **不每做一题都调模型**。多一次调用就多一次延迟与费用，而「把同类题的步骤叠起来」
+ *   这件事在本地用字符串与计数就能做到。唯一一次额外的模型调用发生在
+ *   攒够样本之后的**整卡重写**（[KpointMethodRewrite]），一张卡一辈子只此一次。
  * - **不把原文存进这张表**。原文留在 `learned_material`，方法卡只留骨架，
  *   这样进提示词的预算与资料条数解耦。
  */
@@ -47,14 +49,15 @@ class KpointMethodRepository
          *
          * 失败不抛：方法卡是「锦上添花」的数据，写不进去不该让本次解题失败。
          *
-         * @return 是否写入成功；同知识点同类方法会累加计数而不是新增
+         * @return 合并后的那张卡（调用方据此判断要不要整卡重写）；未写入时返回 null。
+         *   同知识点同类方法会累加计数而不是新增。
          */
-        suspend fun absorb(evidence: MethodEvidence): Boolean =
+        suspend fun absorb(evidence: MethodEvidence): KpointMethod? =
             withContext(dispatcher) {
-                if (evidence.kpointId.isBlank() || evidence.name.isBlank()) return@withContext false
+                if (evidence.kpointId.isBlank() || evidence.name.isBlank()) return@withContext null
                 runCatching {
                     val key = KpointMethodMerge.nameKey(evidence.name)
-                    if (key.isBlank()) return@runCatching false
+                    if (key.isBlank()) return@runCatching null
                     val existing = dao.find(evidence.kpointId, key)?.toDomain()
                     val merged =
                         KpointMethodMerge.merge(
@@ -64,6 +67,30 @@ class KpointMethodRepository
                             nowUtc = System.currentTimeMillis(),
                         )
                     dao.upsert(merged.toEntity(nameKey = key))
+                    merged
+                }.getOrNull()
+            }
+
+        /**
+         * 整卡重写：把模型给的骨架贴回卡片。
+         *
+         * 必须重新读一次库里的最新行，不能用手上那份快照：
+         * 重写是在后台跑的，这期间同一张卡可能又被另一道题合并过一次，
+         * 直接 upsert 旧快照会把那次合并（计数与步骤）覆盖掉。
+         *
+         * @return 是否真的写了库。模型给的步骤为空、或与当前一致时返回 false
+         */
+        suspend fun applyRewrite(
+            id: String,
+            skeleton: MethodSkeleton,
+        ): Boolean =
+            withContext(dispatcher) {
+                runCatching {
+                    val row = dao.findById(id) ?: return@runCatching false
+                    val current = row.toDomain()
+                    val rewritten = KpointMethodRewrite.apply(current, skeleton, System.currentTimeMillis())
+                    if (rewritten == current) return@runCatching false
+                    dao.upsert(rewritten.toEntity(nameKey = row.nameKey))
                     true
                 }.getOrDefault(false)
             }

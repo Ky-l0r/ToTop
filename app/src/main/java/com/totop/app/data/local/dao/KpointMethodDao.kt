@@ -22,6 +22,10 @@ interface KpointMethodDao {
         nameKey: String,
     ): KpointMethodEntity?
 
+    /** 按主键取一行：整卡重写前要拿最新的计数与步骤，不能用手上那份旧快照覆盖。 */
+    @Query("SELECT * FROM kpoint_method WHERE id = :id LIMIT 1")
+    suspend fun findById(id: String): KpointMethodEntity?
+
     /**
      * 按候选知识点召回。
      *

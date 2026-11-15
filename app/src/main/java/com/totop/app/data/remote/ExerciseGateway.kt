@@ -3,7 +3,6 @@ package com.totop.app.data.remote
 import android.content.Context
 import com.totop.app.data.prefs.LlmCredentials
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -81,46 +80,23 @@ class ExerciseGateway
             user: String,
             requestId: String,
             maxTokens: Int,
-        ): String {
-            val text = StringBuilder()
-            val flow: Flow<LlmChunk> =
-                client.stream(
-                    credentials = credentials,
-                    config =
-                        ChatRequestConfig(
-                            model = credentials.effectiveTextModel,
-                            messages = listOf(ChatMessage("system", system), ChatMessage("user", user)),
-                            maxTokens = maxTokens,
-                            temperature = 0.4,
-                            jsonObject = true,
-                            stream = true,
-                            thinkingMode = ChatRequestConfig.THINKING_DISABLED,
-                        ),
-                    requestId = requestId,
-                    registry = null,
-                    allowRetry = true,
-                )
-            flow.collect { chunk ->
-                when (chunk) {
-                    is LlmChunk.Delta -> text.append(chunk.text)
-                    is LlmChunk.Failed -> throw IllegalStateException(chunk.error.userMessage)
-                    // Completed / Reasoning 不影响正文；思考链不能拼进 JSON，否则解析必然失败。
-                    else -> Unit
-                }
-            }
-            return text.toString()
-        }
+        ): String =
+            // 出题要多样性，温度比其他一次性调用高
+            OneShotCompletion.ask(
+                client = client,
+                credentials = credentials,
+                system = system,
+                user = user,
+                requestId = requestId,
+                maxTokens = maxTokens,
+                temperature = GENERATE_TEMPERATURE,
+            )
 
         /** 去掉可能的代码围栏与前后解释，只留第一个完整对象。 */
         private fun <T> parseJson(
             raw: String,
             serializer: kotlinx.serialization.KSerializer<T>,
-        ): T {
-            val start = raw.indexOf('{')
-            val end = raw.lastIndexOf('}')
-            require(start in 0 until end) { "模型没有返回 JSON 对象" }
-            return json.decodeFromString(serializer, raw.substring(start, end + 1))
-        }
+        ): T = OneShotCompletion.parseObject(raw, serializer, json)
 
         private fun loadAsset(path: String): String =
             context.assets.open(path).use { stream ->
@@ -149,6 +125,9 @@ class ExerciseGateway
             const val VERIFY_ASSET: String = "prompts/exercise_verify.md"
             const val GENERATE_MAX_TOKENS: Int = 2048
             const val VERIFY_MAX_TOKENS: Int = 1024
+
+            /** 出题要多样性：三道题的考法必须不同，温度低于 0.3 时会得到三道同型题。 */
+            const val GENERATE_TEMPERATURE: Double = 0.4
 
             val json: Json =
                 Json {
