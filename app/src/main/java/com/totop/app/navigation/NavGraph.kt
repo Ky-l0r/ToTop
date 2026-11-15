@@ -493,6 +493,7 @@ fun ToTopNavHost(
                 onOpenMistakes = { navController.navigate(Routes.MISTAKES) },
                 onOpenKnowledge = { navController.navigate(Routes.KNOWLEDGE) },
                 onOpenLibrary = { navController.navigate(Routes.LIBRARY) },
+                onOpenNotes = { navController.navigate(Routes.NOTES) },
                 onOpenReport = { navController.navigate(Routes.REPORT) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
                 onOpenReview = { navController.navigate(Routes.REVIEW) },
@@ -528,6 +529,10 @@ fun ToTopNavHost(
 
         composable(route = Routes.LIBRARY) {
             com.totop.app.ui.library.LibraryScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(route = Routes.NOTES) {
+            com.totop.app.ui.notes.NotesScreen(onBack = { navController.popBackStack() })
         }
 
         composable(route = Routes.KNOWLEDGE) {

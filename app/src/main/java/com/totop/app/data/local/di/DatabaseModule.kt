@@ -228,6 +228,21 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * 8 -> 9：学习笔记加「分类」列（重点 / 卡点）。
+     *
+     * 默认 'key'：v8 之前存下来的笔记全部来自「陪伴问答里讲清楚的那段话」，
+     * 本质是结论而不是卡点。SQLite 的 ADD COLUMN 会把默认值回填到已有行，
+     * 因此不需要额外 UPDATE；下面仍显式写一遍，避免以后有人误以为旧数据没有分类。
+     */
+    private val MIGRATION_8_9: Migration =
+        object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE study_note ADD COLUMN kind TEXT NOT NULL DEFAULT 'key'")
+                db.execSQL("UPDATE study_note SET kind = 'key' WHERE kind = ''")
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
         arrayOf(
@@ -238,6 +253,7 @@ object DatabaseModule {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
+            MIGRATION_8_9,
         )
 
     @Provides

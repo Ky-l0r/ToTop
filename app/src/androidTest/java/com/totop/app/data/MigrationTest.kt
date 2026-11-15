@@ -336,6 +336,37 @@ class MigrationTest {
     }
 
     @Test
+    @Throws(IOException::class)
+    fun migrate8To9AddsNoteKind() {
+        // v9 给 study_note 加 kind（重点 / 卡点）。
+        // 断言点：旧笔记还在、被回填成 'key'；新分类可写可读；总数不变（没有凭空多出/丢行）。
+        helper.createDatabase(TEST_DB, 8).use { db ->
+            db.execSQL(
+                "INSERT INTO study_note (id, kpointId, questionId, source, title, body, " +
+                    "createdAtUtc, updatedAtUtc) " +
+                    "VALUES ('n1', NULL, NULL, 'companion', '旧笔记', '正文', 1, 1)",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 9, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT kind, title FROM study_note WHERE id = 'n1'").use { cursor ->
+                assertTrue("迁移后旧笔记必须还在", cursor.moveToFirst())
+                assertEquals("旧笔记默认归为「重点」", "key", cursor.getString(0))
+                assertEquals("旧笔记", cursor.getString(1))
+            }
+            db.execSQL(
+                "INSERT INTO study_note (id, kpointId, questionId, source, kind, title, body, " +
+                    "createdAtUtc, updatedAtUtc) " +
+                    "VALUES ('n2', NULL, NULL, 'companion', 'stuck', '卡点', '正文', 2, 2)",
+            )
+            db.query("SELECT COUNT(*) FROM study_note").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("迁移不应该丢行或多行", 2, cursor.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {

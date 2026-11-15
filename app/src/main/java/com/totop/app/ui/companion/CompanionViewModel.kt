@@ -10,6 +10,7 @@ import com.totop.app.data.repo.CompanionInsightRepository
 import com.totop.app.data.repo.KnowledgeRepository
 import com.totop.app.data.repo.StudyNoteRepository
 import com.totop.app.domain.model.KnowledgePoint
+import com.totop.app.domain.model.StudyNoteKind
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +31,8 @@ data class CompanionQa(
     val answer: String = "",
     val streaming: Boolean = false,
     val error: String? = null,
-    /** 这一条已经存成笔记。存过之后按钮变成「已存」，避免同一条存两遍。 */
-    val savedAsNote: Boolean = false,
+    /** 这一条回答是否已经存成笔记，以及存成了哪一类。存过之后按钮变成「已存为…」，避免重复存。 */
+    val savedKind: StudyNoteKind? = null,
     /** 存笔记失败时的原因（只给一句能读的，不带堆栈）。 */
     val noteError: String? = null,
 )
@@ -243,10 +244,16 @@ class CompanionViewModel
          *
          * 命中受控知识点就挂上去（只挂已有节点，命中不到就存成没有归属的笔记），
          * 不做「自动总结」：笔记的价值在于它就是当时那句原话，改写后学生复习时认不出来。
+         *
+         * @param kind 由学生点「记重点 / 记卡点」决定，不给默认值——
+         *   一旦有默认值，所有人都会存成同一类，分类也就失去意义。
          */
-        fun saveNote(index: Int) {
+        fun saveNote(
+            index: Int,
+            kind: StudyNoteKind,
+        ) {
             val item = _uiState.value.items.getOrNull(index) ?: return
-            if (item.streaming || item.answer.isBlank() || item.savedAsNote) return
+            if (item.streaming || item.answer.isBlank() || item.savedKind != null) return
             viewModelScope.launch {
                 val kpointId = runCatching { kpointHits(item.question).firstOrNull()?.id }.getOrNull()
                 val saved =
@@ -255,13 +262,14 @@ class CompanionViewModel
                             question = item.question,
                             answer = item.answer,
                             kpointId = kpointId,
+                            kind = kind,
                         )
                     }
                 _uiState.update { state ->
                     val current = state.items.getOrNull(index) ?: return@update state
                     val updated =
                         current.copy(
-                            savedAsNote = saved.isSuccess,
+                            savedKind = if (saved.isSuccess) kind else null,
                             noteError = if (saved.isSuccess) null else "没存成，再点一次",
                         )
                     state.copy(items = state.items.toMutableList().also { it[index] = updated })

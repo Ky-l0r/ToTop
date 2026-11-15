@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
@@ -66,6 +67,7 @@ fun HubScreen(
     onOpenMistakes: () -> Unit,
     onOpenKnowledge: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenNotes: () -> Unit,
     onOpenReport: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
     onOpenReview: () -> Unit,
@@ -80,6 +82,8 @@ fun HubScreen(
             HubEntry("多练的知识点", "薄弱点排行与变式训练", Icons.Filled.Star, onOpenKnowledge),
             HubEntry("复习打卡", "今天该复习的都在这", Icons.Filled.Refresh, onOpenReview),
             HubEntry("复习资料", "AI 生成的考前资料", Icons.AutoMirrored.Filled.List, onOpenReviewMaterial),
+            // 笔记紧挨着复习资料：两者是同一件事的两端（自己记的 vs 系统生成的）。
+            HubEntry("卡点笔记", "重点与还没想通的地方", Icons.Filled.Edit, onOpenNotes),
             HubEntry("资料库", "自己攒的好解析", Icons.Filled.Book, onOpenLibrary),
             HubEntry("学情", "成绩趋势与学习报告", Icons.Filled.DateRange, onOpenReport),
             HubEntry("设置", "模型、偏好与数据", Icons.Filled.Tune, onOpenSettings),

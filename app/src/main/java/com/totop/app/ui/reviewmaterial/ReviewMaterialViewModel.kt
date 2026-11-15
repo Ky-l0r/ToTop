@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.repo.MistakeRepository
+import com.totop.app.domain.model.StudyNoteDigest
+import com.totop.app.domain.model.StudyNoteKind
 import com.totop.app.domain.model.Subjects
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -222,11 +224,14 @@ class ReviewMaterialViewModel
         }
 
         /**
-         * 把「我的笔记」作为一节插进资料里。
+         * 把「我的重点 / 我的卡点」两节插进资料里。
          *
          * 这一节刻意不交给模型写：笔记是学生自己的原话，模型一转述就变成「系统总结」，
          * 复习时反而认不出来；而且笔记根本不在提示词里，让模型写只能靠编。
          * 因此由客户端原样拼进去，位置按定稿放在「易忘点回顾」之后。
+         *
+         * 取哪几条由 `StudyNoteDigest` 决定：先按分类分节、再按字数预算取。
+         * 不再「取最近 8 条」——条数既不反映篇幅，也会让最近常问的卡点把重点全挤掉。
          */
         private suspend fun materialWithNotes(
             material: ReviewMaterial,
@@ -236,30 +241,42 @@ class ReviewMaterialViewModel
                 runCatching { noteRepository.forReviewMaterial(Subjects.codeOf(subjectLabel)) }
                     .getOrDefault(emptyList())
             if (notes.isEmpty()) return material
-            val section =
-                ReviewSection(
-                    title = NOTES_SECTION_TITLE,
-                    blocks = listOf(ReviewBlock(ReviewBlockStyle.PARAGRAPH, listOf(NOTES_INTRO))),
-                    subsections =
-                        notes.map { note ->
-                            ReviewSubsection(
-                                title = note.title,
-                                blocks =
-                                    listOf(
-                                        ReviewBlock(
-                                            ReviewBlockStyle.PARAGRAPH,
-                                            note.body.lines().filter { it.isNotBlank() },
+            val picked = StudyNoteDigest.pick(notes)
+            if (picked.isEmpty()) return material
+            val noteSections =
+                StudyNoteDigest.sections(picked).map { section ->
+                    ReviewSection(
+                        title = NOTES_SECTION_PREFIX + section.kind.label,
+                        blocks = listOf(ReviewBlock(ReviewBlockStyle.PARAGRAPH, listOf(introOf(section)))),
+                        subsections =
+                            section.notes.map { note ->
+                                ReviewSubsection(
+                                    title = note.title,
+                                    blocks =
+                                        listOf(
+                                            ReviewBlock(
+                                                ReviewBlockStyle.PARAGRAPH,
+                                                note.body.lines().filter { it.isNotBlank() },
+                                            ),
                                         ),
-                                    ),
-                            )
-                        },
-                )
+                                )
+                            },
+                    )
+                }
             val sections = material.sections.toMutableList()
             // 找不到「易忘点」就放到最后：位置表是产品口径，但缺了这一章也不该让整节消失。
             val forgottenIndex = sections.indexOfFirst { it.title.contains(FORGOTTEN_KEYWORD) }
-            sections.add(if (forgottenIndex >= 0) forgottenIndex + 1 else sections.size, section)
+            sections.addAll(if (forgottenIndex >= 0) forgottenIndex + 1 else sections.size, noteSections)
             return material.copy(sections = sections)
         }
+
+        /** 每节的一句导读：重点与卡点的用法不同，不能共用一句。 */
+        private fun introOf(section: StudyNoteDigest.Section): String =
+            if (section.kind == StudyNoteKind.KEY) {
+                NOTES_INTRO_KEY
+            } else {
+                NOTES_INTRO_STUCK
+            }
 
         /**
          * 从本地错题里取该科目的典型错题摘要。
@@ -312,18 +329,20 @@ class ReviewMaterialViewModel
             /** 一次最多纳入几条易忘点，见 loadForgotten 的说明。 */
             const val MAX_FORGOTTEN: Int = 6
 
-            /** 「我的笔记」这一节的标题。 */
-            const val NOTES_SECTION_TITLE: String = "我的笔记"
+            /** 笔记两节的标题前缀：`我的` + 分类名（我的重点 / 我的卡点）。 */
+            const val NOTES_SECTION_PREFIX: String = "我的"
 
             /**
-             * 这一节的开场说明。
+             * 两节各自的开场说明。
              *
-             * 写死这句是产品口径：让学生一眼看出「这些是我自己问过的」，
-             * 而不是又一段系统推荐的通用要点。
+             * 写死这两句是产品口径：让学生一眼看出「这些是我自己记的」，
+             * 而不是又一段系统推荐的通用要点；两类用法不同，也不能共用一句。
              */
-            const val NOTES_INTRO: String = "以下是你自己在陪伴作业里问过、核过的内容，原文照录，没有改写。"
+            const val NOTES_INTRO_KEY: String = "以下是你自己记下的结论与公式，原文照录，没有改写。"
+            const val NOTES_INTRO_STUCK: String =
+                "以下是你标记为「还没想通」的点，原文照录。考前先看这一节，比刷题更划算。"
 
-            /** 用来定位「我的笔记」该插在谁的后面。 */
+            /** 用来定位笔记该插在谁的后面。 */
             const val FORGOTTEN_KEYWORD: String = "易忘点"
         }
     }

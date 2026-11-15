@@ -271,7 +271,7 @@ fun KnowledgePointDetailScreen(
             }
 
             DetailCard(
-                title = "我的笔记",
+                title = "这个知识点的笔记",
                 icon = {
                     Icon(
                         Icons.Filled.Book,
@@ -283,7 +283,7 @@ fun KnowledgePointDetailScreen(
                 if (uiState.notes.isEmpty()) {
                     Text(
                         text =
-                            "还没有这个知识点的笔记。在陪伴作业里把讲清楚的那段话点「存为笔记」，" +
+                            "这个知识点还没有笔记。在陪伴作业里问完一句，点「记重点」或「记卡点」，" +
                                 "命中这个知识点时就会挂到这里。",
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -299,7 +299,7 @@ fun KnowledgePointDetailScreen(
                                 maxLines = KpointDetailViewModel.NOTE_PREVIEW_LINES,
                             )
                             Text(
-                                text = note.source.label,
+                                text = note.kind.label + " · " + note.source.label,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

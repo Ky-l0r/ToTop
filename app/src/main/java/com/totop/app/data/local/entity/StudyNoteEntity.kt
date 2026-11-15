@@ -29,6 +29,13 @@ data class StudyNoteEntity(
     val questionId: String?,
     /** [com.totop.app.domain.model.StudyNoteSource] 的 wire 值。 */
     val source: String,
+    /**
+     * 分类的 wire 值：`key`（重点）/ `stuck`（卡点）。
+     *
+     * 默认 `key` 与 v9 迁移的 `DEFAULT 'key'` 保持一致：v8 之前存下来的笔记
+     * 都是「陪伴问答里讲清楚的那段话」，本质是结论，不该被当成卡点。
+     */
+    val kind: String = "key",
     val title: String,
     val body: String,
     val createdAtUtc: Long,

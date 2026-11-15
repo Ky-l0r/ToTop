@@ -22,6 +22,19 @@ interface StudyNoteDao {
     suspend fun byKpoint(kpointId: String): List<StudyNoteEntity>
 
     /**
+     * 全部笔记：重点在前，同类内新到旧。
+     *
+     * 排序放在 SQL 里而不是内存：卡点笔记板块与复习资料都用同一种顺序，
+     * 两处各写一遍迟早会不一致。`CASE` 而不是按 kind 字母序：
+     * 字母序恰好也对（key < stuck），但那是巧合，改 wire 值就会悄悄错。
+     */
+    @Query(
+        "SELECT * FROM study_note " +
+            "ORDER BY CASE kind WHEN 'key' THEN 0 ELSE 1 END ASC, createdAtUtc DESC",
+    )
+    fun observeAll(): Flow<List<StudyNoteEntity>>
+
+    /**
      * 按科目取笔记，供复习资料「我的笔记」一节使用。
      *
      * 走 knowledge_point 的 subject 列而不是在 study_note 里冗余一列：

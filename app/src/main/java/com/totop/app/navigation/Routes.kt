@@ -30,6 +30,9 @@ object Routes {
     /** 资料库：学生自己攒的解析。 */
     const val LIBRARY = "library"
 
+    /** 卡点笔记：学生自己记下的重点与卡点（原文照录）。 */
+    const val NOTES = "notes"
+
     /** 考前针对性复习资料。 */
     const val REVIEW_MATERIAL = "review_material"
 

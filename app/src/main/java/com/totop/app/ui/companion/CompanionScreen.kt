@@ -58,6 +58,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.totop.app.data.prefs.VoiceEnginePrefs
+import com.totop.app.domain.model.StudyNoteKind
 import com.totop.app.ml.rememberRecordAudioPermissionRequester
 import com.totop.app.ml.rememberVoiceInput
 import com.totop.app.ui.common.HoldToTalk
@@ -145,7 +146,7 @@ fun CompanionScreen(
                     val isLast = index == state.items.lastIndex
                     QaBubbles(
                         item = state.items[index],
-                        onSaveNote = { viewModel.saveNote(index) },
+                        onSaveNote = { kind -> viewModel.saveNote(index, kind) },
                         // 只有最后一条能重试：重试复用「往最后一条气泡里填答案」的既有逻辑，
                         // 允许对中间某条重试就会把新答案写到最后一条上。
                         onRetry = if (isLast) viewModel::retryLast else null,
@@ -229,7 +230,7 @@ private fun EmptyStream(modifier: Modifier = Modifier) {
 @Composable
 private fun QaBubbles(
     item: CompanionQa,
-    onSaveNote: () -> Unit,
+    onSaveNote: (StudyNoteKind) -> Unit,
     onRetry: (() -> Unit)? = null,
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -285,18 +286,24 @@ private fun QaBubbles(
             }
         }
         // 存为笔记：写在气泡右下角，跟着这一条走。
-        // 不用弹窗确认——点错了再点一次也没关系（存过的会变灰，不会重复存）。
+        //
+        // 分类必须让学生点一下，而不是给默认值：两类混在一起，复习时就得自己再分一次。
+        // 也不用弹窗——两个两个字并排就够清楚，多点一次只是多一次打断。
         if (item.answer.isNotBlank() && !item.streaming) {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
-                Text(
-                    text = if (item.savedAsNote) "已存为笔记" else "存为笔记",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (item.savedAsNote) Tokens.OnSurfaceVariant else Tokens.Primary,
-                    modifier =
-                        Modifier
-                            .clickable(enabled = !item.savedAsNote, onClick = onSaveNote)
-                            .padding(horizontal = 4.dp, vertical = 2.dp),
-                )
+                if (item.savedKind != null) {
+                    Text(
+                        text = "已存为「" + item.savedKind.label + "」",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Tokens.OnSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                    )
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        NoteSaveAction(text = "记重点", onClick = { onSaveNote(StudyNoteKind.KEY) })
+                        NoteSaveAction(text = "记卡点", onClick = { onSaveNote(StudyNoteKind.STUCK) })
+                    }
+                }
                 item.noteError?.let { message ->
                     Text(
                         text = message,
@@ -307,6 +314,23 @@ private fun QaBubbles(
             }
         }
     }
+}
+
+/** 气泡右下角的一个「存为笔记」动作。 */
+@Composable
+private fun NoteSaveAction(
+    text: String,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = Tokens.Primary,
+        modifier =
+            Modifier
+                .clickable(onClick = onClick)
+                .padding(horizontal = 4.dp, vertical = 2.dp),
+    )
 }
 
 /**
