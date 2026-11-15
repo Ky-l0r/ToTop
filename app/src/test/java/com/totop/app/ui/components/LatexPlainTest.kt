@@ -91,6 +91,20 @@ class LatexPlainTest {
     }
 
     @Test
+    @DisplayName("装饰命令：单字符贴合成符，多字符只丢命令")
+    fun `装饰命令`() {
+        // 单个字母：合成符贴上去，读起来就是向量 a / x 的均值
+        assertEquals("a\u20D7", normalize("\\vec{a}"))
+        assertEquals("x\u0304", normalize("\\bar{x}"))
+        assertEquals("x\u0302", normalize("\\hat{x}"))
+        // 多字符：Unicode 没有跨字符的上划线，硬贴会错位，宁可不画线
+        assertEquals("AB", normalize("\\overline{AB}"))
+        // 裸参数与空参数都不该漏出反斜杠
+        assertEquals("v\u20D7", normalize("\\vec v"))
+        assertEquals("", normalize("\\vec{}"))
+    }
+
+    @Test
     @DisplayName("路径里的反斜杠不被当成命令")
     fun `路径不误伤`() {
         val text = "文件在 C:\\Users\\demo 下"

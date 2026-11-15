@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+### 公式兜底渲染认得 `\vec` / `\bar` 这类装饰命令了
+
+#### Fixed
+
+- **纯文本兜底不再露出 `\vec{a}`、`\overline{AB}` 原文**：`\vec` `\overrightarrow` `\overline`
+  `\bar` `\hat` `\widehat` `\tilde` `\widetilde` `\dot` `\ddot` `\underline` 现在会被消费掉。
+  单字符参数贴 Unicode 合成符（`\vec{a}` → `a⃗`、`\bar{x}` → `x̄`）；
+  多字符参数（`\overline{AB}`）只丢命令留内容——Unicode 没有跨字符的上划线，
+  硬贴会变成「A 加一个漫出来的横线」，比不画更误导。
+- 空参数（`\vec{}`）连命令一起丢掉，屏幕上不会留下一个孤零零的箭头。
+
+这是 WebView 渲染失败时的兜底路径；正常渲染仍由 KaTeX 负责，不受影响。
+
 ### 输入框「+」菜单里能直接要标准解法 / 其他做法
 
 #### Added

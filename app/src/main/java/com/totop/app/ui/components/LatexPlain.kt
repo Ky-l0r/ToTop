@@ -139,6 +139,31 @@ object LatexPlain {
             "Omega" to "Ω",
         )
 
+    /**
+     * 装饰（重音）命令 → Unicode 合成符。
+     *
+     * 这些命令原先一律走「认不出的命令原样保留」，学生看到的是 `\vec{a}`、`\overline{AB}`；
+     * 而它们又几乎只出现在矢量、线段、均值这些基础记号上，读题时绕不过去。
+     *
+     * 合成符（combining mark）会**贴到前一个字符上**，所以只对单字符参数有意义：
+     * `\vec{a}` → `a⃗`、`\bar{x}` → `x̄`。多字符参数（`\overline{AB}`）宁可不画线，
+     * 也不把符号贴到最后一个字上——那会变成 `A` 加一个漫出来的箭头，比不画更误导。
+     */
+    private val DECORATIONS: Map<String, String> =
+        mapOf(
+            "vec" to "\u20D7",
+            "overrightarrow" to "\u20D7",
+            "overline" to "\u0305",
+            "bar" to "\u0304",
+            "hat" to "\u0302",
+            "widehat" to "\u0302",
+            "tilde" to "\u0303",
+            "widetilde" to "\u0303",
+            "dot" to "\u0307",
+            "ddot" to "\u0308",
+            "underline" to "\u0332",
+        )
+
     /** 只取花括号内容的命令：字体与文本包装类。 */
     private val CONTENT_ONLY: Set<String> =
         setOf(
@@ -270,6 +295,7 @@ object LatexPlain {
             "begin" -> consumeEnvironment(raw, end, opening = true)
             "end" -> consumeEnvironment(raw, end, opening = false)
             in DELIMITER_SIZERS -> consumeDelimiterSizer(raw, end)
+            in DECORATIONS -> consumeDecoration(raw, end, DECORATIONS.getValue(name))
             in SPACES -> consumeSpace(raw, end)
             in CONTENT_ONLY -> consumeContentOnly(raw, end)
             // 认不出的命令：原样保留，不能把公式改坏
@@ -343,6 +369,26 @@ object LatexPlain {
         val after = skipSpaces(raw, end)
         val endExclusive = if (after < raw.length && raw[after] == '.') after + 1 else end
         return Consumed("", endExclusive)
+    }
+
+    /**
+     * `\vec{a}` / `\bar{x}` 这类装饰命令：单字符贴合成符，多字符只丢命令留内容。
+     *
+     * @param mark 该命令对应的 Unicode 合成符（U+0300 段，或 U+20D7 这个「上方箭头」）
+     */
+    private fun consumeDecoration(
+        raw: String,
+        end: Int,
+        mark: String,
+    ): Consumed? {
+        val body = readArgument(raw, end) ?: return null
+        val inner = normalize(body.inner)
+        // 空参数（`\vec{}`）连命令一起丢掉：屏幕上不该留一个孤零零的箭头
+        if (inner.isEmpty()) return Consumed("", body.endExclusive)
+        // 合成符只贴得上一个字。`\overline{AB}` 贴成 A̅B̅ 在纯文本里会错位成
+        // 「A 加一个漫出来的横线」，比不画更误导，所以多字时只丢命令。
+        val text = if (inner.length == 1) inner + mark else inner
+        return Consumed(text, body.endExclusive)
     }
 
     /** `\quad` 之类：压成一个空格；源文本本来就跟着空格时不再补。 */
