@@ -367,6 +367,51 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate9To10CreatesKpointMethod() {
+        // v10 新增 kpoint_method（按知识点归纳的通用解法卡）。
+        // 只建表不迁数据：断言点是「表可写可读、唯一索引真的挡得住同知识点同名方法」，
+        // 以及迁移后旧表（这里是 study_note）不受影响。
+        helper.createDatabase(TEST_DB, 9).use { db ->
+            db.execSQL(
+                "INSERT INTO study_note (id, kpointId, questionId, source, kind, title, body, " +
+                    "createdAtUtc, updatedAtUtc) " +
+                    "VALUES ('n1', NULL, NULL, 'companion', 'stuck', '卡点', '正文', 1, 1)",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 10, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.execSQL(
+                "INSERT INTO kpoint_method (id, kpointId, kpointName, subject, name, nameKey, " +
+                    "keyStepsJson, applicable, pitfallsJson, sampleCount, lastTitle, createdAtUtc, updatedAtUtc) " +
+                    "VALUES ('m1', 'MATH-FUNC-001', '二次函数', 'math', '配方法', '配方法', " +
+                    "'[\"配方\"]', '', '[]', 1, '求最值', 10, 10)",
+            )
+            db.query("SELECT name, sampleCount FROM kpoint_method WHERE id = 'm1'").use { cursor ->
+                assertTrue("方法卡必须能写能读", cursor.moveToFirst())
+                assertEquals("配方法", cursor.getString(0))
+                assertEquals(1, cursor.getInt(1))
+            }
+            // 唯一索引：同一知识点下同名方法不能有第二行（合并逻辑靠它兜底）
+            var duplicated = false
+            try {
+                db.execSQL(
+                    "INSERT INTO kpoint_method (id, kpointId, kpointName, subject, name, nameKey, " +
+                        "keyStepsJson, applicable, pitfallsJson, sampleCount, lastTitle, createdAtUtc, updatedAtUtc) " +
+                        "VALUES ('m2', 'MATH-FUNC-001', '二次函数', 'math', '配方法', '配方法', " +
+                        "'[]', '', '[]', 1, '', 11, 11)",
+                )
+            } catch (expected: android.database.sqlite.SQLiteConstraintException) {
+                duplicated = true
+            }
+            assertTrue("同知识点 + 同名方法必须只能有一行", duplicated)
+            db.query("SELECT kind FROM study_note WHERE id = 'n1'").use { cursor ->
+                assertTrue("迁移不能影响已有笔记", cursor.moveToFirst())
+                assertEquals("stuck", cursor.getString(0))
+            }
+        }
+    }
+
+    @Test
     fun migrationsArrayMatchesVersion() {
         // 首发版本无迁移；升到 v2 时本断言会提醒补迁移（MIGRATIONS 必须非空）
         if (AppDatabase.VERSION == 1) {

@@ -61,6 +61,13 @@ data class SolveRequest(
      * 宁可参考得杂一点，也不要在学生刚存完资料时一条都不用。
      */
     val materials: List<LearnedMaterial> = emptyList(),
+    /**
+     * 方法卡：**按本题候选知识点**召回的通用解法骨架，已渲染成文本块。
+     *
+     * 与 [materials] 的区别是召回锚点：资料按科目与时间取，方法卡按知识点取。
+     * 前者回答「别人怎么讲」，后者回答「这类题通常怎么做」，后者才是学生复习时能迁移的东西。
+     */
+    val methodHints: List<String> = emptyList(),
     /** 「简洁 / 详细」两档输出上限。 */
     val maxTokens: Int = ChatRequestConfig.MAX_TOKENS_CONCISE,
     /** 幂等请求 ID；为空时自动生成。 */
@@ -304,13 +311,18 @@ class AiGateway(
                 // ---------- 阶段 B：独立求解（绝不注入学生过程） ----------
                 stage = AiStage.B
                 send(SolveEvent.StageStarted(stage))
-                // 参考资料：按科目收敛到最多 3 条，每条渲染成不超过 400 字的文本块。
-                // 它们进的是阶段 B——这是用户明确要求的（「不加进去第一次还是会错」），
-                // 代价是阶段 B 不再是纯独立求解，因此提示词里写死了「冲突时说明差异，不许照抄」。
-                val referenceBlocks = selectMaterials(request.materials, question.subject)
+                // 方法卡优先占两张（按知识点召回），剩下的槽位给资料（按科目收敛）。
+                // 方法卡只给骨架与适用条件，本题结论仍必须由模型自己从条件推出。
+                val hintBlocks = request.methodHints.take(MAX_METHOD_HINTS)
+                val referenceBlocks =
+                    selectMaterials(
+                        materials = request.materials,
+                        subject = question.subject,
+                        limit = if (hintBlocks.isEmpty()) MAX_REFERENCE_MATERIALS else MAX_REFERENCE_WITH_HINTS,
+                    )
                 val solvePrompt =
                     promptRepository.assemble(
-                        StageInput.Solve(question, referenceBlocks),
+                        StageInput.Solve(question, referenceBlocks, hintBlocks),
                         requestId = requestId,
                     )
                 var rawB =
@@ -1208,16 +1220,23 @@ class AiGateway(
         fun selectMaterials(
             materials: List<LearnedMaterial>,
             subject: String?,
+            limit: Int = MAX_REFERENCE_MATERIALS,
         ): List<String> {
-            if (materials.isEmpty()) return emptyList()
+            if (materials.isEmpty() || limit <= 0) return emptyList()
             val normalized = Subjects.normalize(subject)
             val matched = materials.filter { Subjects.normalize(it.subject) == normalized }
-            val chosen = (matched.ifEmpty { materials }).take(MAX_REFERENCE_MATERIALS)
+            val chosen = (matched.ifEmpty { materials }).take(limit)
             return chosen.map { it.promptBlock() }
         }
 
         /** 单次解答最多参考几条资料。 */
         const val MAX_REFERENCE_MATERIALS: Int = 3
+
+        /** 进阶段 B 的方法卡上限：两张已经占了参考预算的三分之二。 */
+        const val MAX_METHOD_HINTS: Int = 2
+
+        /** 有方法卡时资料只剩一个槽位：两者合计仍控制在 3 条文本块的预算内。 */
+        const val MAX_REFERENCE_WITH_HINTS: Int = 1
 
         /**
          * 拼出交给阶段 C 的「学生过程」。

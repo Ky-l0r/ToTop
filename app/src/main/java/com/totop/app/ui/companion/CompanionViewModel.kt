@@ -141,9 +141,12 @@ class CompanionViewModel
                 )
             }
             askJob?.cancel()
+            // 新气泡就是最后一条，下标由追加前的长度决定：
+            // 之后所有增量都按这个下标回填，不再依赖「最后一条」。
+            val index = _uiState.value.items.lastIndex
             askJob =
                 viewModelScope.launch {
-                    runCatching { runAsk(text) }
+                    runCatching { runAsk(text, index) }
                     _uiState.update { it.copy(asking = false) }
                 }
         }
@@ -165,10 +168,21 @@ class CompanionViewModel
             }
         }
 
-        private suspend fun runAsk(text: String) {
+        /**
+         * 跑一次提问，增量按 [index] 回填。
+         *
+         * 为什么不再「往最后一条填」：中间某条失败后学生也想重试，
+         * 而按「最后一条」回填会把重试的结果写到别处去。
+         * 下标在请求期间是稳定的——[asking] 为 true 时不允许再提问，
+         * 期间 items 只会被同一条的增量修改，不会插入或删除。
+         */
+        private suspend fun runAsk(
+            text: String,
+            index: Int,
+        ) {
             val credentials = runCatching { secretStore.read() }.getOrNull()
             if (credentials == null || !credentials.canCall) {
-                markLast("还没配置模型。请到设置页填写 Base URL、API Key 与模型名后再问。")
+                markAt(index, "还没配置模型。请到设置页填写 Base URL、API Key 与模型名后再问。")
                 return
             }
             var failure: String? = null
@@ -181,9 +195,9 @@ class CompanionViewModel
                         requestId = UUID.randomUUID().toString(),
                     ).collect { event ->
                         when (event) {
-                            is CompanionAskEvent.Delta -> updateLast { it.copy(answer = it.answer + event.text) }
+                            is CompanionAskEvent.Delta -> updateAt(index) { it.copy(answer = it.answer + event.text) }
                             is CompanionAskEvent.Completed -> {
-                                updateLast { it.copy(answer = event.text, streaming = false) }
+                                updateAt(index) { it.copy(answer = event.text, streaming = false) }
                                 recordForgotten(text)
                             }
                             is CompanionAskEvent.Failed -> failure = event.error.userMessage
@@ -194,49 +208,60 @@ class CompanionViewModel
             }
             // 流没有给出结论就结束了（网络断在半路、被取消）：收尾，
             // 否则气泡会一直停在「正在想」。
-            if (_uiState.value.items.lastOrNull()?.streaming == true) {
-                markLast(failure ?: "模型没有返回内容，可以再问一次。")
+            if (_uiState.value.items.getOrNull(index)?.streaming == true) {
+                markAt(index, failure ?: "模型没有返回内容，可以再问一次。")
             }
         }
 
         /**
-         * 重发最后一条提问。
+         * 重发某一条提问。
          *
          * 写作业时网络断一下很常见，失败后让学生把整句话重打一遍是最没必要的成本。
          * 只重跑请求、不新增气泡；同时清掉上一次的错误文案——否则重试成功了红字还挂着。
          *
-         * 只允许「最后一条」：复用 [runAsk] 里「往最后一条气泡填答案」的既有逻辑，
-         * 对中间某条重试会把新答案写到最后一条上。
+         * 任意一条都能重试（不只是最后一条）：中途某条断了，学生往下问的时候
+         * 未必想回头处理，等想起来时那条早就不是最后一条了。
          */
-        fun retryLast() {
+        fun retryAt(index: Int) {
             val state = _uiState.value
-            val last = state.items.lastOrNull() ?: return
-            if (state.asking || last.streaming) return
-            val text = last.question.trim()
+            val item = state.items.getOrNull(index) ?: return
+            if (state.asking || item.streaming) return
+            val text = item.question.trim()
             if (text.isEmpty()) return
             _uiState.update { current ->
                 current.copy(
                     asking = true,
-                    items = current.items.dropLast(1) + last.copy(answer = "", error = null, streaming = true),
+                    items =
+                        current.items.toMutableList().also { list ->
+                            list[index] = item.copy(answer = "", error = null, streaming = true)
+                        },
                 )
             }
             askJob?.cancel()
             askJob =
                 viewModelScope.launch {
-                    runCatching { runAsk(text) }
+                    runCatching { runAsk(text, index) }
                     _uiState.update { it.copy(asking = false) }
                 }
         }
 
-        private fun updateLast(block: (CompanionQa) -> CompanionQa) {
+        private fun updateAt(
+            index: Int,
+            block: (CompanionQa) -> CompanionQa,
+        ) {
             _uiState.update { state ->
-                val last = state.items.lastOrNull() ?: return@update state
-                state.copy(items = state.items.dropLast(1) + block(last))
+                val target = state.items.getOrNull(index) ?: return@update state
+                state.copy(
+                    items = state.items.toMutableList().also { it[index] = block(target) },
+                )
             }
         }
 
-        private fun markLast(error: String) {
-            updateLast { it.copy(streaming = false, error = error) }
+        private fun markAt(
+            index: Int,
+            error: String,
+        ) {
+            updateAt(index) { it.copy(streaming = false, error = error) }
         }
 
         /**

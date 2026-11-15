@@ -13,6 +13,7 @@ import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
+import com.totop.app.data.local.dao.KpointMethodDao
 import com.totop.app.data.local.dao.LearnedMaterialDao
 import com.totop.app.data.local.dao.MasteryDao
 import com.totop.app.data.local.dao.MistakeDao
@@ -243,6 +244,41 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * v9 -> v10：新增「知识点通用解法卡」表。
+     *
+     * 只建表、不迁移数据：方法卡是从**以后的**解答里归纳出来的，
+     * 历史错题里虽然有标准解，但批量重新归纳一遍等于把整库重算，
+     * 收益（老题也能参考）远小于风险（一次写错就污染全部知识点）。
+     * 学生继续做同类题时，这张表会自然长起来。
+     */
+    private val MIGRATION_9_10: Migration =
+        object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS kpoint_method (" +
+                        "id TEXT NOT NULL, kpointId TEXT NOT NULL, kpointName TEXT NOT NULL, " +
+                        "subject TEXT NOT NULL, name TEXT NOT NULL, nameKey TEXT NOT NULL, " +
+                        "keyStepsJson TEXT NOT NULL, applicable TEXT NOT NULL, " +
+                        "pitfallsJson TEXT NOT NULL, sampleCount INTEGER NOT NULL, " +
+                        "lastTitle TEXT NOT NULL, createdAtUtc INTEGER NOT NULL, " +
+                        "updatedAtUtc INTEGER NOT NULL, PRIMARY KEY(id))",
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_kpoint_method_kpointId_nameKey " +
+                        "ON kpoint_method(kpointId, nameKey)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_kpoint_method_kpointId " +
+                        "ON kpoint_method(kpointId)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_kpoint_method_updatedAtUtc " +
+                        "ON kpoint_method(updatedAtUtc)",
+                )
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
         arrayOf(
@@ -254,6 +290,7 @@ object DatabaseModule {
             MIGRATION_6_7,
             MIGRATION_7_8,
             MIGRATION_8_9,
+            MIGRATION_9_10,
         )
 
     @Provides
@@ -283,6 +320,9 @@ object DatabaseModule {
 
     @Provides
     fun provideStudyNoteDao(database: AppDatabase): StudyNoteDao = database.studyNoteDao()
+
+    @Provides
+    fun provideKpointMethodDao(database: AppDatabase): KpointMethodDao = database.kpointMethodDao()
 
     @Provides
     fun provideExamDao(database: AppDatabase): ExamDao = database.examDao()

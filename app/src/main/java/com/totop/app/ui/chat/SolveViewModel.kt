@@ -26,6 +26,7 @@ import com.totop.app.domain.model.AiSolvedContent
 import com.totop.app.domain.model.ErrorType
 import com.totop.app.domain.model.HintLog
 import com.totop.app.domain.model.KpointAssignment
+import com.totop.app.domain.model.MethodEvidence
 import com.totop.app.domain.model.MistakeRecord
 import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.PageRole
@@ -93,6 +94,7 @@ class SolveViewModel
         private val sessionRepository: SolveSessionRepository,
         private val masteryRecorder: com.totop.app.data.repo.MasteryRecorder,
         private val learnedMaterials: com.totop.app.data.repo.LearnedMaterialRepository,
+        private val methodCards: com.totop.app.data.repo.KpointMethodRepository,
         private val selfCheckRepository: com.totop.app.data.repo.SelfCheckRepository,
     ) : ViewModel() {
         private val registry = LlmCallRegistry()
@@ -1457,6 +1459,15 @@ class SolveViewModel
             // 阶段 A 识别出科目后，网关里才有依据做筛选。
             val materials =
                 runCatching { learnedMaterials.recent(MATERIAL_QUERY_LIMIT) }.getOrDefault(emptyList())
+            // 方法卡：按**本题粗筛出的候选知识点**召回，最多两张。
+            // 与上面那条的差别就是召回锚点——对齐知识点，而不是「学生最近存了什么」。
+            // 候选知识点本来就是本地纯函数算的，这里不多花一次调用。
+            val methodHints =
+                runCatching {
+                    methodCards
+                        .forCandidates(candidates.map { it.id })
+                        .map { it.promptBlock() }
+                }.getOrDefault(emptyList())
             val request =
                 SolveRequest(
                     // ocr 字段保留为「题目文本」通道，但**不再来自 OCR**：
@@ -1475,6 +1486,7 @@ class SolveViewModel
                     studentRawText = question.studentRawText,
                     candidateKpoints = candidates,
                     materials = materials,
+                    methodHints = methodHints,
                     requestId = requestId,
                 )
             try {
@@ -1906,6 +1918,8 @@ class SolveViewModel
                         kpointIds = content.kpointAssignments.map { it.kpointId },
                     )
                 }
+                // 归纳：把本题的方法与步骤叠进知识点方法卡（同知识点 + 同方法名只累加）。
+                absorbMethodCard(content)
                 updateMessage(replyId) { message ->
                     val current = message.solution ?: return@updateMessage message
                     message.copy(solution = current.copy(mistakeId = stored.id))
@@ -1920,6 +1934,40 @@ class SolveViewModel
                     )
                 }
             }
+        }
+
+        /**
+         * 把这次解答的方法叠进「知识点通用解法卡」。
+         *
+         * 三处取舍：
+         * 1. **只认第一个受控知识点**：一道题挂三个知识点时，方法骨架通常只属于主考点，
+         *    给三个节点各写一份会让「配方法」出现在完全无关的知识点下；
+         * 2. **适用条件取本题的「求」**：`ask` 就是这道题问的东西，比让模型再编一句
+         *    「适用于求最值的题」更贴近事实，也不需要多一次调用；
+         * 3. **失败不提示**：方法卡是增强数据，写不进去不该让本次解答看起来出错。
+         */
+        private suspend fun absorbMethodCard(content: AiSolvedContent) {
+            val kpoint = content.kpointAssignments.firstOrNull { it.hasControlledId } ?: return
+            val solution = content.standardSolution
+            val steps = solution.steps.map { it.content.trim() }.filter { it.isNotBlank() }
+            if (solution.method.isBlank() || steps.isEmpty()) return
+            val ask = content.question.ask.trim()
+            val error = content.firstError
+            val evidence =
+                MethodEvidence(
+                    kpointId = kpoint.kpointId,
+                    kpointName = kpoint.name,
+                    subject = Subjects.normalize(content.question.subject),
+                    name = solution.method,
+                    keySteps = steps,
+                    applicable = if (ask.isBlank()) "" else "题干求「" + ask.take(APPLICABLE_CHARS) + "」时",
+                    pitfalls =
+                        listOfNotNull(
+                            error?.let { "第 " + it.stepIdx + " 步容易" + it.type.label },
+                        ),
+                    title = content.question.stemText.lineSequence().firstOrNull().orEmpty().take(MATERIAL_TITLE_CHARS),
+                )
+            runCatching { methodCards.absorb(evidence) }
         }
 
         /** 提示记录（经 domain 的 HintLog 与 Repository 接口写 hint_log）。 */
@@ -2021,6 +2069,9 @@ class SolveViewModel
 
             /** 资料标题取题干前多少字。 */
             const val MATERIAL_TITLE_CHARS: Int = 24
+
+            /** 方法卡「适用条件」里引用的「求」最多写多长。 */
+            const val APPLICABLE_CHARS: Int = 40
 
             /** 一条资料最多带几步：再多就不是要点，而是整篇解析。 */
             const val MATERIAL_STEP_LIMIT: Int = 5

@@ -143,13 +143,13 @@ fun CompanionScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(state.items.size) { index ->
-                    val isLast = index == state.items.lastIndex
                     QaBubbles(
                         item = state.items[index],
                         onSaveNote = { kind -> viewModel.saveNote(index, kind) },
-                        // 只有最后一条能重试：重试复用「往最后一条气泡里填答案」的既有逻辑，
-                        // 允许对中间某条重试就会把新答案写到最后一条上。
-                        onRetry = if (isLast) viewModel::retryLast else null,
+                        // 任意一条失败都能重试：增量按这条的下标回填，
+                        // 对中间某条重试不会把答案写到别处。
+                        // 正在等别的回答时不给入口，免得点了没反应。
+                        onRetry = if (state.asking) null else ({ viewModel.retryAt(index) }),
                     )
                 }
             }

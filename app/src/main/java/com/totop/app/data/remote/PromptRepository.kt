@@ -62,6 +62,14 @@ sealed class StageInput {
     data class Solve(
         val question: AiQuestion,
         val referenceMaterials: List<String> = emptyList(),
+        /**
+         * 按本题知识点召回的方法卡（通用解法骨架），**已渲染成文本块**。
+         *
+         * 与 [referenceMaterials] 分开传而不是拼在一起：两者在提示词里的处置规则不同——
+         * 资料可以对齐「术语与讲法」，方法卡只能对齐「切入路径」，
+         * 混成一个数组会让模型把骨架当成本题步骤照抄。
+         */
+        val methodHints: List<String> = emptyList(),
     ) : StageInput() {
         override val stage: AiStage get() = AiStage.B
     }
@@ -249,6 +257,12 @@ class PromptRepository(
                         put(
                             "referenceMaterials",
                             buildJsonArray { input.referenceMaterials.forEach { add(JsonPrimitive(it)) } },
+                        )
+                    }
+                    if (input.methodHints.isNotEmpty()) {
+                        put(
+                            "methodHints",
+                            buildJsonArray { input.methodHints.forEach { add(JsonPrimitive(it)) } },
                         )
                     }
                 }

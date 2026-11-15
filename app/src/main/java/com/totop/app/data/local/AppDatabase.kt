@@ -11,6 +11,7 @@ import com.totop.app.data.local.dao.ExerciseDao
 import com.totop.app.data.local.dao.ForgottenKpointDao
 import com.totop.app.data.local.dao.HintDao
 import com.totop.app.data.local.dao.KnowledgeDao
+import com.totop.app.data.local.dao.KpointMethodDao
 import com.totop.app.data.local.dao.LearnedMaterialDao
 import com.totop.app.data.local.dao.MasteryDao
 import com.totop.app.data.local.dao.MistakeDao
@@ -30,6 +31,7 @@ import com.totop.app.data.local.entity.ForgottenKpointEntity
 import com.totop.app.data.local.entity.HintLogEntity
 import com.totop.app.data.local.entity.KnowledgePointEntity
 import com.totop.app.data.local.entity.KpointEdgeEntity
+import com.totop.app.data.local.entity.KpointMethodEntity
 import com.totop.app.data.local.entity.LearnedMaterialEntity
 import com.totop.app.data.local.entity.MasteryEntity
 import com.totop.app.data.local.entity.MistakeKpointEntity
@@ -72,6 +74,7 @@ import com.totop.app.data.local.entity.StudyNoteEntity
         CacheEntryEntity::class,
         ForgottenKpointEntity::class,
         LearnedMaterialEntity::class,
+        KpointMethodEntity::class,
         StudyNoteEntity::class,
         ExamSessionEntity::class,
         ExamScoreEntity::class,
@@ -111,6 +114,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun learnedMaterialDao(): LearnedMaterialDao
 
+    abstract fun kpointMethodDao(): KpointMethodDao
+
     abstract fun studyNoteDao(): StudyNoteDao
 
     abstract fun examDao(): ExamDao
@@ -134,6 +139,7 @@ abstract class AppDatabase : RoomDatabase() {
         const val CACHE_ENTRY = "cache_entry"
         const val FORGOTTEN_KPOINT = "forgotten_kpoint"
         const val LEARNED_MATERIAL = "learned_material"
+        const val KPOINT_METHOD = "kpoint_method"
         const val STUDY_NOTE = "study_note"
         const val EXAM_SESSION = "exam_session"
         const val EXAM_SCORE = "exam_score"
@@ -158,6 +164,7 @@ abstract class AppDatabase : RoomDatabase() {
                 CACHE_ENTRY,
                 FORGOTTEN_KPOINT,
                 LEARNED_MATERIAL,
+                KPOINT_METHOD,
                 STUDY_NOTE,
                 EXAM_SESSION,
                 EXAM_SCORE,
@@ -166,7 +173,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** 当前数据库版本。 */
-        const val VERSION: Int = 9
+        const val VERSION: Int = 10
 
         /** 数据库文件名。 */
         const val NAME: String = "totop.db"
