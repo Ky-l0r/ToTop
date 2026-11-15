@@ -20,11 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreHoriz
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.totop.app.data.prefs.VoiceEnginePrefs
 import com.totop.app.data.repo.SolveSession
+import com.totop.app.domain.model.SolutionAsk
 import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.rememberRecordAudioPermissionRequester
 import com.totop.app.ml.rememberVoiceInput
@@ -132,6 +136,8 @@ fun SolveConversationScreen(
     onSelfCheckDisagree: (String?) -> Unit = {},
     /** 解答卡「这题我不会」：就地把这道题改回「不会」。 */
     onMarkUnknown: (String?) -> Unit = {},
+    /** 输入框「+」菜单：要一份标准解法 / 另一种做法。 */
+    onRequestSolution: (SolutionAsk) -> Unit = {},
     /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
     masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
@@ -229,6 +235,7 @@ fun SolveConversationScreen(
                 onOpenAlbum = onOpenAlbum,
                 onRemovePage = onRemovePage,
                 onOpenPage = onOpenPage,
+                onRequestSolution = onRequestSolution,
                 onNotice = onNotice,
             )
         }
@@ -508,6 +515,7 @@ private fun Composer(
     onOpenAlbum: () -> Unit,
     onRemovePage: (Int) -> Unit,
     onOpenPage: (Int) -> Unit,
+    onRequestSolution: (SolutionAsk) -> Unit,
     onNotice: (String) -> Unit,
 ) {
     var attachMenuOpen by remember { mutableStateOf(false) }
@@ -691,6 +699,12 @@ private fun Composer(
                         voice.cancel()
                         onOpenAlbum()
                     },
+                    onRequestSolution = { kind ->
+                        // 与拍照一致：先把语音识别掐掉，否则识别结果会在提问发出后
+                        // 才迟到落进输入框，看起来像「点了菜单却多出一段字」。
+                        voice.cancel()
+                        onRequestSolution(kind)
+                    },
                 )
             }
 
@@ -716,13 +730,24 @@ private fun Composer(
     }
 }
 
-/** 输入框右侧的常驻动作：拍照 + 更多（相册）。 */
+/**
+ * 输入框右侧的常驻动作：拍照 + 更多。
+ *
+ * 菜单里三行分成两组，中间用分隔线隔开：
+ * - 上组「从相册选」是**输入**动作，加的是这道题的素材；
+ * - 下组「标准解法 / 其他解法」是**提问**动作，前提是这道题已经有解答。
+ *
+ * 为什么不做成禁用态而是让它一直可点：
+ * 下拉菜单里灰掉的项没有解释、也不知道差什么条件，学生只会觉得「又坏了」；
+ * 点下去由上层给一句「这道题还没有解答，先拍一张」更清楚（与顶栏「理解」一致）。
+ */
 @Composable
 private fun ComposerActionIcons(
     menuOpen: Boolean,
     onMenuOpenChange: (Boolean) -> Unit,
     onOpenCamera: () -> Unit,
     onOpenAlbum: () -> Unit,
+    onRequestSolution: (SolutionAsk) -> Unit,
 ) {
     IconButton(onClick = onOpenCamera, modifier = Modifier.size(40.dp)) {
         Icon(
@@ -750,6 +775,26 @@ private fun ComposerActionIcons(
                     onOpenAlbum()
                 },
             )
+            HorizontalDivider(color = Tokens.Outline)
+            SolutionAsk.entries.forEach { kind ->
+                DropdownMenuItem(
+                    text = { Text("看" + kind.label) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector =
+                                when (kind) {
+                                    SolutionAsk.STANDARD -> Icons.AutoMirrored.Filled.MenuBook
+                                    SolutionAsk.ALTERNATE -> Icons.Filled.Lightbulb
+                                },
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = {
+                        onMenuOpenChange(false)
+                        onRequestSolution(kind)
+                    },
+                )
+            }
         }
     }
 }

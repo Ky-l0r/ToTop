@@ -227,6 +227,7 @@ fun SolveRoute(
         onSelfCheckAgree = viewModel::onSelfCheckAgree,
         onSelfCheckDisagree = viewModel::onSelfCheckDisagree,
         onMarkUnknown = viewModel::markUnknown,
+        onRequestSolution = viewModel::requestSolution,
         masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,

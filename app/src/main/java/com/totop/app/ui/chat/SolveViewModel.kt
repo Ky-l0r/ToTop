@@ -34,6 +34,8 @@ import com.totop.app.domain.model.Question
 import com.totop.app.domain.model.QuestionDraft
 import com.totop.app.domain.model.QuestionPage
 import com.totop.app.domain.model.QuestionSourceType
+import com.totop.app.domain.model.SolutionAsk
+import com.totop.app.domain.model.SolutionAskPolicy
 import com.totop.app.domain.model.StudentStepStatus
 import com.totop.app.domain.model.Subjects
 import com.totop.app.domain.model.TeachingMode
@@ -207,6 +209,23 @@ class SolveViewModel
         private data class FollowUpRequest(
             val text: String,
             val pages: List<PreparedPage>,
+            /**
+             * 留在对话流里的学生气泡。
+             *
+             * 与 [text] 分开的原因是「标准解法 / 其他解法」这两个菜单项：
+             * 发给模型的是一段带约束的长指令，而聊天记录里应该只有一句人话。
+             * 重试时也要原样还原，否则点一次重试，气泡就变成一整段指令了。
+             */
+            val display: String = text,
+            /**
+             * 是否采信回答里的 `[[订正]]` / `[[核对]]` 标记。
+             *
+             * 「展示另一种做法」不该改写已存的答案：新做法可能是错的，
+             * 模型一旦写了订正行，错题本就被一个还没有人验证过的结论覆盖了。
+             */
+            val respectMarkers: Boolean = true,
+            /** 发出后是否清空了输入区。重试要按原样来，不能顺手把学生正在写的东西吃掉。 */
+            val clearDraft: Boolean = true,
         )
 
         private var solveJob: Job? = null
@@ -669,6 +688,35 @@ class SolveViewModel
         /** 当前会话里是否已经有解答。 */
         private fun hasSolutionInConversation(): Boolean = _messages.value.any { it.solution != null }
 
+        /**
+         * 输入框「+」菜单：要一份标准解法，或要另一种做法。
+         *
+         * 它走的还是追问链路（[sendFollowUp]），不是重跑四阶段：
+         * 学生要的是「换个角度讲这道题」，题目、答案、错因都已经有了，
+         * 再跑一遍识别与定位既费钱，也会把当前这条对话切成两半。
+         *
+         * 与手打追问只有三处不同，都在这里显式给定，不散落在链路里：
+         * 气泡用一句人话而不是整段指令、不清空输入区、不采信回答里的订正标记。
+         */
+        fun requestSolution(kind: SolutionAsk) {
+            val blocked =
+                SolutionAskPolicy.blockedReason(
+                    kind = kind,
+                    hasSolution = hasSolutionInConversation(),
+                    solving = solveJob?.isActive == true,
+                )
+            if (blocked != null) {
+                showToast(blocked)
+                return
+            }
+            sendFollowUp(
+                text = kind.prompt,
+                displayText = kind.bubble,
+                clearDraft = false,
+                respectMarkers = false,
+            )
+        }
+
         /** 取最近一次解答的上下文。 */
         private fun latestSolution(): SolutionPayload? = _messages.value.lastOrNull { it.solution != null }?.solution
 
@@ -679,21 +727,37 @@ class SolveViewModel
          * 图片一并交给**视觉模型**，并明确告知「这是对当前题的补充，不是新题」。
          *
          * 只带最近一次解答而不是全部，是为了让模型始终围绕「当前这道题」回答。
+         *
+         * @param displayText 显示在对话流里的学生气泡；默认与 [text] 相同。
+         *   「标准解法 / 其他解法」这类菜单提问的 [text] 是一段指令，气泡要另给一句人话。
+         * @param clearDraft 发完是否清空输入区。菜单提问不清空：
+         *   学生可能正在写自己的思路，点一下菜单不该把他写了一半的字吃掉。
+         * @param respectMarkers 是否采信回答里的机器标记（订正 / 核对 / 小问 / 老师答案）。
          */
         private fun sendFollowUp(
             text: String,
             supplementPages: List<PreparedPage> = emptyList(),
+            displayText: String = text,
+            clearDraft: Boolean = true,
+            respectMarkers: Boolean = true,
         ) {
             val solution = latestSolution()
             val pages = supplementPages
             val hasSupplement = pages.isNotEmpty()
-            lastFollowUp = FollowUpRequest(text = text, pages = pages)
+            lastFollowUp =
+                FollowUpRequest(
+                    text = text,
+                    pages = pages,
+                    display = displayText,
+                    respectMarkers = respectMarkers,
+                    clearDraft = clearDraft,
+                )
             val studentMessage =
                 ConversationMessage(
                     id = UUID.randomUUID().toString(),
                     fromStudent = true,
                     // 只补拍不写字时给一条可读的说明，消息流里不能出现空气泡
-                    text = text.ifBlank { if (hasSupplement) "补拍了一张" else "" },
+                    text = displayText.ifBlank { if (hasSupplement) "补拍了一张" else "" },
                     pages = pages.map { it.imagePath },
                     createdAtUtc = System.currentTimeMillis(),
                 )
@@ -708,7 +772,9 @@ class SolveViewModel
                 )
             _messages.update { it + studentMessage + replyMessage }
             // 立刻清空输入区：文字与图片都已经进入对话流，留着会让人以为没发出去
-            _draft.update { it.copy(studentProcess = "") }
+            if (clearDraft) {
+                _draft.update { it.copy(studentProcess = "") }
+            }
             if (hasSupplement) {
                 _draftPages.value = QuestionDraft.EMPTY
                 _activePage.value = 0
@@ -832,6 +898,7 @@ class SolveViewModel
                                             questionId = solution?.questionId,
                                             solution = solution,
                                             supplementPages = if (hasSupplement) encoded else emptyList(),
+                                            respectMarkers = respectMarkers,
                                         )
                                     }
                                     is FollowUpEvent.Failed -> {
@@ -884,9 +951,13 @@ class SolveViewModel
             questionId: String?,
             solution: SolutionPayload?,
             supplementPages: List<UploadPage>,
+            respectMarkers: Boolean = true,
         ) {
             val parsed = FollowUpCorrection.parse(raw)
             updateMessage(replyId) { it.copy(text = parsed.text, streaming = false) }
+            // 「标准解法 / 其他解法」只是展示另一种写法：标记行照样剥掉不显示，
+            // 但一律不落库——新做法算错时，写进去的就是一个没人验证过的答案。
+            if (!respectMarkers) return
             // 老师给的答案优先于一切：它不需要「重算验证」，直接写库。
             // 与 AI 结论不一致时会被标成「存疑」，因此这里不再叠加订正逻辑——
             // 两个都写会让最终答案在两条路径之间来回覆盖。
@@ -1306,7 +1377,15 @@ class SolveViewModel
                 _messages.update { list -> list.filterNot { it.id == lastFailed.id } }
                 _messages.update { list -> list.filterNot { it.id == studentBefore.id } }
                 val previous = lastFollowUp ?: FollowUpRequest(text = studentBefore.text, pages = emptyList())
-                sendFollowUp(text = previous.text, supplementPages = previous.pages)
+                // 原样重发：气泡文案和「要不要采信标记」都是这一轮提问的属性，
+                // 丢掉它们会让「重试看其他解法」变成一次会改写答案的普通追问。
+                sendFollowUp(
+                    text = previous.text,
+                    supplementPages = previous.pages,
+                    displayText = previous.display,
+                    clearDraft = previous.clearDraft,
+                    respectMarkers = previous.respectMarkers,
+                )
                 return
             }
             // 解题失败重试：优先用「上一次真正发出去的那份题目」。
