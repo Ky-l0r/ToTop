@@ -80,8 +80,11 @@ android {
         // 0.6.3：复习资料正文接入轻数学记号（下标/上标/分式/根号），屏上与 PDF 同一套排版；正文改 16sp 并合并段落。
         // 0.7.0：自检示范与核对计入掌握度（DB v7）、陪伴笔记进复习资料、拍完即检、变式刷题与过关、
         //        首帧骨架、单模型配置、千问流式语音转写。
-        versionCode = 10
-        versionName = "0.7.0"
+        // 0.8.0：易错题状态由五态收成四态（不再有「待校对」），配色重排；公式与星号渲染兜底修复；
+        //        理解与「这题我不会」统一入口；笔记分类与卡点笔记板块（DB v9）；
+        //        方法卡按知识点归纳、攒够 3 道同类题后整卡重写一次（DB v10）；加号菜单可要解法。
+        versionCode = 11
+        versionName = "0.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
