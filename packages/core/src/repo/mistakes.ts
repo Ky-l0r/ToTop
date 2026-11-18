@@ -8,6 +8,7 @@ import type {
   StudentStepSpec,
 } from "../solve/contracts";
 import { createId } from "../util/id";
+import { applyMastery } from "./knowledge";
 
 /**
  * 错题的写入与读取。
@@ -108,6 +109,9 @@ export async function saveSolvedQuestion(
         "INSERT OR REPLACE INTO mistake_kpoint (mistakeId, kpointId, confidence) VALUES (?, ?, ?)",
         [mistakeId, kpoint.id, kpoint.confidence],
       );
+      // 错题是掌握度的输入之一。写在这里而不是页面里，
+      // 是为了让"任何路径写进来的错题都会影响掌握度"——包括将来的旧数据导入。
+      await applyMastery(db, kpoint.id, "mistake", input.nowUtc);
     }
   });
 

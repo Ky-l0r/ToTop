@@ -47,6 +47,18 @@
       "style": {
         "navigationBarTitleText": "设置"
       }
+    },
+    {
+      "path": "pages/knowledge/index",
+      "style": {
+        "navigationBarTitleText": "知识点"
+      }
+    },
+    {
+      "path": "pages/knowledge/detail",
+      "style": {
+        "navigationBarTitleText": "知识点详情"
+      }
     }
   ],
   "globalStyle": {

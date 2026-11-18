@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getDatabase } from "@/services/db";
-import { getMistake, labelOf, type MistakeDetail, type Subject } from "@totop/core";
+import { getMistake, labelOf, markMistakeMastered, type MistakeDetail, type Subject } from "@totop/core";
 import { onLoad } from "@dcloudio/uni-app";
 import { computed, ref } from "vue";
 
@@ -13,6 +13,7 @@ import { computed, ref } from "vue";
 const detail = ref<MistakeDetail | null>(null);
 const error = ref("");
 const showStudentSteps = ref(false);
+const mastered = ref(false);
 
 onLoad((query) => {
   const id = query?.id ?? "";
@@ -33,6 +34,27 @@ async function load(id: string): Promise<void> {
 const subjectName = computed(() =>
   detail.value ? labelOf(detail.value.subject as Subject) : "",
 );
+
+/**
+ * 学生自己判断"这题我会了"。
+ *
+ * 1.0 删掉了错题的状态（不熟/存疑/理解），但掌握度需要一个上行入口，
+ * 否则它只会因为新错题一路下跌。这里按该题关联的知识点各记一次"做对"。
+ */
+async function markMastered(): Promise<void> {
+  if (!detail.value || mastered.value) return;
+  try {
+    const { db } = await getDatabase();
+    const touched = await markMistakeMastered(db, detail.value.mistakeId, Date.now());
+    mastered.value = true;
+    uni.showToast({
+      title: touched > 0 ? "记下了，相关知识点加分" : "这题没关联知识点",
+      icon: "none",
+    });
+  } catch (caught) {
+    uni.showToast({ title: caught instanceof Error ? caught.message : "没记上", icon: "none" });
+  }
+}
 
 function formatDate(utc: number): string {
   const date = new Date(utc);
@@ -99,6 +121,11 @@ function formatDate(utc: number): string {
         <text class="block-title">这题考的是</text>
         <text class="kpoint">{{ detail.kpointName }}</text>
       </view>
+
+      <view v-if="!mastered" class="ghost" @tap="markMastered">
+        <text class="ghost-text">这题我会了</text>
+      </view>
+      <text v-else class="hint">已经记下，相关知识点掌握度已更新</text>
     </template>
   </view>
 </template>
@@ -215,6 +242,22 @@ function formatDate(utc: number): string {
   font-size: 13px;
   color: var(--tt-on-surface-variant);
   line-height: 1.5;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--tt-on-surface-variant);
+}
+
+.ghost {
+  align-self: flex-start;
+  padding: 8px 16px;
+  border-radius: var(--tt-radius-sm);
+  border: 1px solid var(--tt-outline-strong);
+}
+.ghost-text {
+  font-size: 13px;
+  color: var(--tt-on-surface);
 }
 
 .kpoint {

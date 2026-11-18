@@ -45,6 +45,29 @@ export {
   type SaveExamInput,
 } from "./repo/exams";
 export {
+  applyMasteryEvent,
+  bandOf,
+  clampScore,
+  HEAT_THRESHOLDS,
+  heatOf,
+  INITIAL_MASTERY,
+  masteredRatio,
+  type HeatLevel,
+  type MasteryBand,
+  type MasteryEventKind,
+} from "./mastery/algorithm";
+export {
+  applyMastery,
+  chapterHeat,
+  kpointDetail,
+  listKpoints,
+  markMistakeMastered,
+  type ChapterHeat,
+  type KpointFilter,
+  type KpointListItem,
+  type MasterySnapshot,
+} from "./repo/knowledge";
+export {
   homeStats,
   MASTERY_MASTERED_THRESHOLD,
   weakKpoints,
