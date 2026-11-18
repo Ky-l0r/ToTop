@@ -1,0 +1,14 @@
+# 仓库统一 LF。Windows 上编辑不会再把整个文件变成"全行改动"，
+# diff 里只出现真正改过的那几行。
+* text=auto eol=lf
+
+# 二进制资源不做换行处理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.zip binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
