@@ -5,6 +5,36 @@
 
 ## [Unreleased]
 
+### 1.0 数据层（T3）：库结构、旧备份导入、设置读写
+
+#### Added
+
+- **`packages/core/src/db/schema.ts`**：1.0 的 20 张表与索引。删掉 outbox / daily_stats / report
+  （无后端队列与日汇总周报，1.0 都不做）；新增 `solution_revision`（改写前一版，一题一版）、
+  `material`（资料库单表，`source` 区分标准答案与旧方法卡）；`question` 加 `questionType` 与
+  `choiceType`；`exam_score` 加 `importedAt`。
+- **`db/migrate.ts`**：建表 + `PRAGMA user_version`，可重复调用；打开外键约束。
+- **`db/legacy.ts`**：从 0.8.0 备份库导入。按**列名交集**拷贝，v1 到 v10 的旧备份都能进来；
+  设置项过滤掉 `key` / `token` / `secret` 类；成绩的 `importedAt` 取考试场次 `createdAt`；
+  旧方法卡迁成 `material` 里 `source='legacy_card'`。整个导入一个事务，失败整体回滚。
+- **`db/sql-text.ts`**：`plus.sqlite` 没有参数绑定，转义与占位符替换做成纯函数，可穷举测试。
+- **`repo/settings.ts`**：设置读写，键名沿用 0.8.0（`mode`、`subjects`、`examTermStart` 等），
+  导入来的偏好直接生效。
+- **`apps/mobile/src/platform/db/plus-sqlite.ts`**：端上驱动，负责打开库、绑定参数、事务。
+- **26 条单测**：真跑 `node:sqlite`，不是 mock。覆盖建表幂等、外键级联、旧库导入计数与字段映射、
+  设置过滤、重复导入不重复、转义边界。
+
+#### Changed
+
+- **导入方式改了**：原计划让 0.8.0 新增"导出 JSON"，实际 0.8.0 的备份 zip 里就有 `db/totop.db`，
+  直接读它即可，**旧版不需要任何改动**。指南 3.5 已按实测重写。
+- **资料库不再拆两张表**：`material` + `material_source` 合成一张，来源只是属性，拆表只会多一次 join。
+
+#### Notes
+
+- 端上驱动只在 App 端可用（`plus.sqlite`），H5 调试时构造会明确报错，不静默降级。
+- 页面级仓储（错题筛选、知识点聚合、成绩查询）随各自页面落地，本批只做底座。
+
 ### 质量门禁接入：ESLint 10 与 Vitest
 
 #### Added

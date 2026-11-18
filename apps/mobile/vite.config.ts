@@ -9,6 +9,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // 领域层直接指到源码：它没有构建产物，也不该有（端上与测试共用同一份 TS）。
+      "@totop/core": fileURLToPath(new URL("../../packages/core/src/index.ts", import.meta.url)),
     },
   },
 });
