@@ -1,5 +1,6 @@
 import type { PromptSet } from "@totop/core";
 import versionInfo from "../assets/prompts/prompt_version.json";
+import companionAsk from "../assets/prompts/companion_ask.md?raw";
 import materialExplain from "../assets/prompts/material_explain.md?raw";
 import materialImport from "../assets/prompts/material_import.md?raw";
 import stageA from "../assets/prompts/stage_a_identify.md?raw";
@@ -31,4 +32,5 @@ export const PROMPTS: PromptSet = {
 export const AUX_PROMPTS = {
   materialImport,
   materialExplain,
+  companionAsk,
 } as const;

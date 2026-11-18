@@ -224,6 +224,8 @@ export interface SingleCallArgs {
   transport: LlmTransport;
   model: string;
   signal: AbortSignal;
+  /** 之前的对话（多轮场景）。 */
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
   /** 边跑边把正文推给界面（拍题的阶段 B 用）。 */
   streamDeltas?: boolean;
   emit?: (event: SolveEvent) => void;
@@ -254,6 +256,7 @@ export async function runSingleCall(args: SingleCallArgs): Promise<string> {
       jsonMode: args.jsonMode ?? true,
       messages: [
         { role: "system", content: args.prompt },
+        ...(args.history ?? []),
         { role: "user", content: args.userText, images: args.images ?? [] },
       ],
     },

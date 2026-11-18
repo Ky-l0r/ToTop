@@ -74,6 +74,18 @@ function openSaved(): void {
 
     <!-- 结果区 -->
     <view v-if="store.outcome" class="card">
+      <!-- 改写结果：说清"已按标准答案改过"，并给回退 -->
+      <view v-if="store.rewriteNote" class="rewrite-bar">
+        <text class="rewrite-text">{{ store.rewriteNote }}</text>
+        <text
+          v-if="store.previousSolution"
+          class="rewrite-action"
+          @tap="store.undoRewrite()"
+        >
+          回退
+        </text>
+      </view>
+
       <view class="answer">
         <text class="answer-label">答案</text>
         <text class="answer-text">{{ store.outcome.solution.finalAnswer }}</text>
@@ -154,6 +166,16 @@ function openSaved(): void {
       </text>
       <text v-if="store.savedMistakeId" class="saved" @tap="openSaved">已存进错题本</text>
       <text v-if="store.saveError" class="notice">{{ store.saveError }}</text>
+
+      <!-- 改错：导入标准答案，整段替换这道题的解答过程 -->
+      <view v-if="store.savedMistakeId" class="rewrite-actions">
+        <view class="ghost" @tap="store.rewriteFromImages('camera')">
+          <text class="ghost-text">{{ store.rewriting ? "正在读答案…" : "改错：拍标准答案" }}</text>
+        </view>
+        <view class="ghost" @tap="store.rewriteFromImages('album')">
+          <text class="ghost-text">从相册选</text>
+        </view>
+      </view>
     </view>
 
     <!-- 失败：说清是什么问题，再给重试 -->
@@ -445,6 +467,31 @@ function openSaved(): void {
   font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
+.rewrite-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-8) var(--tt-space-10);
+  border-radius: var(--tt-radius-sm);
+  background: var(--tt-success-container);
+}
+.rewrite-text {
+  flex: 1;
+  font-size: var(--tt-text-12);
+  color: var(--tt-success);
+  line-height: var(--tt-leading-normal);
+}
+.rewrite-action {
+  font-size: var(--tt-text-12);
+  font-weight: 600;
+  color: var(--tt-success);
+}
+.rewrite-actions {
+  display: flex;
+  gap: var(--tt-space-8);
+}
+
 .saved {
   font-size: var(--tt-text-12);
   color: var(--tt-primary);

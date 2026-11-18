@@ -1,5 +1,5 @@
 {
-  "promptVersion": "1.12.1",
+  "promptVersion": "1.12.2",
   "releasedAt": "2026-11-19",
   "description": "1.0 的四阶段提示词版本号。参与缓存键计算：缓存键 = sha256(图片) + promptVersion + model。任一阶段提示词文本变更都必须同步升级本版本号，否则旧缓存会被错误复用。",
   "stages": {
@@ -16,9 +16,11 @@
   ],
   "auxiliary": {
     "materialImport": "material_import.md",
-    "materialExplain": "material_explain.md"
+    "materialExplain": "material_explain.md",
+    "companionAsk": "companion_ask.md"
   },
   "changes": [
+    "1.12.2-aux：新增陪伴问答模板 companion_ask.md；仍不参与四阶段缓存键",
     "1.12.1-aux：新增标准答案导入与「讲一遍」两个辅助模板；不参与四阶段缓存键，故未升 promptVersion",
     "1.12.0：阶段 A 新增 questionType（学科×题型，受控枚举），客户端据此给阶段 B 追加解析骨架；输出字段变化，升 MINOR",
     "1.11.0：阶段 A 新增 title（12 字内的一句话概括，用作会话标题），输出字段变化，升 MINOR。1.0 自 1.10.0 起独立维护本目录，0.8.0 的完整变更史随原生工程冻结"

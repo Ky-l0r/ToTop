@@ -182,6 +182,28 @@ export {
   type ResolvedQuestionType,
 } from "./solve/question-type";
 export {
+  buildChatMessages,
+  CHAT_WINDOW,
+  isBlankQuestion,
+  trimChat,
+  type ChatTurn,
+} from "./solve/chat";
+export {
+  checkRewrite,
+  type RewriteCheck,
+  type RewriteInput,
+  type RewriteRejection,
+} from "./solve/rewrite";
+export {
+  applyRewrite,
+  getRevision,
+  revertRewrite,
+  type ApplyRewriteArgs,
+  type ApplyRewriteResult,
+  type RevertResult,
+  type RevisionInfo,
+} from "./repo/rewrite";
+export {
   extractChoiceLetters,
   judgeChoice,
   markOptions,

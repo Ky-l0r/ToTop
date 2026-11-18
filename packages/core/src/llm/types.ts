@@ -44,7 +44,11 @@ export type LlmChunk =
 
 /** 一条对话消息。图片以 data URL 或本地路径给出，由驱动决定怎么塞进请求体。 */
 export interface ChatMessage {
-  role: "system" | "user";
+  /**
+   * `assistant` 是多轮对话必需的：没有它就只能单选问答，
+   * 陪伴页的"再讲细一点"会变成一次全新的提问，模型不知道在讲哪道题。
+   */
+  role: "system" | "user" | "assistant";
   content: string;
   images?: string[];
 }

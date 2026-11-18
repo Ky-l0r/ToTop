@@ -1,6 +1,6 @@
 import { createTransport, defaultTransportMode } from "@/platform/net/transport";
 import { getDatabase } from "@/services/db";
-import { PROMPTS } from "@/solve/prompts";
+import { AUX_PROMPTS, PROMPTS } from "@/solve/prompts";
 import { useLlmStore } from "@/stores/llm";
 import {
   MAX_PAGES,
@@ -10,11 +10,17 @@ import {
   type PreparedImage,
 } from "@/platform/image";
 import {
+  applyRewrite,
+  checkRewrite,
   EMPTY_USAGE,
   judgeChoice,
   markOptions,
+  parseMaterialDraft,
+  revertRewrite,
+  runSingleCall,
   runSolve,
   saveSolvedQuestion,
+  SingleCallError,
   SolveError,
   type ChoiceVerdict,
   type LlmFailure,
@@ -69,6 +75,15 @@ export const useSolveStore = defineStore("solve", () => {
   /** 落库结果。存不下时不能把已经算出来的解答丢掉，所以只提示、不清屏。 */
   const savedMistakeId = ref("");
   const saveError = ref("");
+
+  // ---------- 改写 ----------
+  const rewriting = ref(false);
+  /** 改写后的提示，成功与拒绝都写在这里（拒绝时学生要知道为什么没改）。 */
+  const rewriteNote = ref("");
+  /** 改写前的解答，供当场回退显示用；真正的旧版在库里。 */
+  const previousSolution = ref<{ steps: SolveOutcome["solution"]["steps"]; finalAnswer: string } | null>(
+    null,
+  );
 
   let controller: AbortController | null = null;
 
@@ -170,6 +185,120 @@ export const useSolveStore = defineStore("solve", () => {
 
   function stop(): void {
     controller?.abort();
+  }
+
+  /**
+   * 改错：导入一份标准答案，用它**整段替换**这道题的解答过程。
+   *
+   * 三个入口共用一套规则（导入标准答案 / 解答卡改错 / 对话订正），这里是最朴素的那个：
+   * 拍一张答案 → 解析成结构化 → 自洽校验 → 落库。
+   * 校验不过就不写库，只在气泡上说清原因——绝不拿旧步骤配新答案。
+   */
+  async function rewriteFromImages(source: "camera" | "album"): Promise<void> {
+    if (!outcome.value || !savedMistakeId.value || rewriting.value) return;
+    rewriting.value = true;
+    rewriteNote.value = "";
+    try {
+      const paths = await pickImages({ source, remaining: 2 });
+      if (paths.length === 0) return;
+
+      const profile = resolveProfile();
+      const dataUrls: string[] = [];
+      for (const path of paths) {
+        const prepared = await prepareImage(path, profile);
+        dataUrls.push(prepared.dataUrl);
+      }
+
+      const text = await runSingleCall({
+        prompt: AUX_PROMPTS.materialImport,
+        userText: "（学生没有写备注）",
+        images: dataUrls,
+        transport: createTransport(defaultTransportMode(), llm.endpoint),
+        model: llm.model.trim(),
+        signal: new AbortController().signal,
+        jsonMode: true,
+        temperature: 0.1,
+      });
+
+      const parsed = parseMaterialDraft(text);
+      if (!parsed.ok) {
+        rewriteNote.value = `没读出这份答案：${parsed.reason}`;
+        return;
+      }
+
+      const checked = checkRewrite({
+        steps: parsed.value.steps,
+        finalAnswer: parsed.value.answer,
+        options: outcome.value.spec.options,
+        choiceType: outcome.value.spec.choiceType,
+      });
+      if (!checked.ok) {
+        rewriteNote.value = checked.message;
+        return;
+      }
+
+      const { db } = await getDatabase();
+      const result = await applyRewrite(db, {
+        mistakeId: savedMistakeId.value,
+        steps: checked.steps,
+        finalAnswer: checked.finalAnswer,
+        reason: "standard_answer",
+        nowUtc: Date.now(),
+      });
+
+      if (!result.ok) {
+        rewriteNote.value =
+          result.reason === "not_found"
+            ? "这道题没有存进错题本，改写无处可写。先把解答留着，等写库成功再改。"
+            : "这份答案和现有过程一样，没有改动。";
+        return;
+      }
+
+      previousSolution.value = {
+        steps: outcome.value.solution.steps,
+        finalAnswer: outcome.value.solution.finalAnswer,
+      };
+      outcome.value = {
+        ...outcome.value,
+        solution: {
+          ...outcome.value.solution,
+          steps: checked.steps,
+          finalAnswer: checked.finalAnswer,
+        },
+      };
+      choiceConfirmed.value = false;
+      rewriteNote.value = "已改写这道题的解答过程";
+    } catch (error) {
+      const failure = error instanceof SingleCallError ? error.failure : null;
+      rewriteNote.value = failure ? failure.message : "这次没改成，可以再试一次";
+    } finally {
+      rewriting.value = false;
+    }
+  }
+
+  /** 回退到上一版：界面与库同时回到旧版，不留半套。 */
+  async function undoRewrite(): Promise<void> {
+    if (!outcome.value || !savedMistakeId.value || !previousSolution.value) return;
+    try {
+      const { db } = await getDatabase();
+      const result = await revertRewrite(db, savedMistakeId.value);
+      if (!result.ok) {
+        rewriteNote.value = "没有可回退的旧版";
+        return;
+      }
+      outcome.value = {
+        ...outcome.value,
+        solution: {
+          ...outcome.value.solution,
+          steps: previousSolution.value.steps,
+          finalAnswer: previousSolution.value.finalAnswer,
+        },
+      };
+      previousSolution.value = null;
+      rewriteNote.value = "已回到改写前的版本";
+    } catch {
+      rewriteNote.value = "回退失败，稍后再试";
+    }
   }
 
   /**
@@ -275,6 +404,9 @@ export const useSolveStore = defineStore("solve", () => {
     usage,
     savedMistakeId,
     saveError,
+    rewriting,
+    rewriteNote,
+    previousSolution,
     running,
     title,
     stageLabel,
@@ -290,6 +422,8 @@ export const useSolveStore = defineStore("solve", () => {
     stop,
     send,
     reset,
+    rewriteFromImages,
+    undoRewrite,
   };
 });
 
