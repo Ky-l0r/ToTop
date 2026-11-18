@@ -25,6 +25,10 @@ export const SETTINGS_KEYS = {
   performanceTier: "performanceTier",
   /** 新增：上次从 0.8.0 导入的时间，用来在设置页显示"已迁移"。 */
   legacyImportedAt: "import.legacy.at",
+
+  /** 新增：模型端点与模型名。**API Key 不在这里**——它只能进系统钥匙串。 */
+  llmBaseUrl: "llmBaseUrl",
+  llmModel: "llmModel",
 } as const;
 
 export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];

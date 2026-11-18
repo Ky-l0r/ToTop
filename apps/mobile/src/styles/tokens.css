@@ -1,0 +1,41 @@
+/**
+ * 设计 token（1.0 版，第一批）。
+ *
+ * 色值全部照 0.8.0 的 `ui/theme/Tokens.kt` 抄过来，不重新设计——
+ * 双端观感要一致，最省事的办法就是沿用已经调过对比度的那一套。
+ *
+ * 规矩：页面里禁止写死色值，一律用 `var(--tt-*)`。
+ * 这一批只收颜色，圆角、间距、字号等 T2 补齐时一起进来。
+ */
+page,
+:root {
+  /* 主色 */
+  --tt-primary: #6d5bd0;
+  --tt-primary-dark: #5445a6;
+  --tt-primary-container: #efebff;
+  --tt-on-primary-container: #2b2450;
+
+  /* 背景与表面 */
+  --tt-background: #ffffff;
+  --tt-surface: #ffffff;
+  --tt-surface-variant: #f6f5fa;
+  --tt-outline: #e3e1ec;
+  --tt-outline-strong: #c9c5d9;
+
+  /* 文字 */
+  --tt-on-surface: #1c1b22;
+  --tt-on-surface-variant: #69667a;
+
+  /* 语义色 */
+  --tt-error: #b3261e;
+  --tt-error-container: #fdecea;
+  --tt-success: #2e7d5b;
+  --tt-success-container: #e7f5ee;
+  --tt-warning: #9a6b00;
+  --tt-warning-container: #fdf3dd;
+
+  /* 圆角（页面只用这两档） */
+  --tt-radius-sm: 8px;
+  --tt-radius-md: 12px;
+  --tt-radius-lg: 18px;
+}

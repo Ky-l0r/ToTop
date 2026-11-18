@@ -1,12 +1,13 @@
 <script setup lang="ts">
-// 应用级全局样式留在这里：页面背景与基础字号。
-// 具体色值一律走 src/styles/tokens.scss（T2 落地），此处不写死品牌色。
+// 应用级全局样式留在这里：设计 token 与页面底色。
 </script>
 
 <style>
+@import "./styles/tokens.css";
+
 page {
-  background-color: #ffffff;
-  color: #1c1b22;
+  background-color: var(--tt-background);
+  color: var(--tt-on-surface);
   font-size: 16px;
 }
 </style>

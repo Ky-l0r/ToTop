@@ -3,6 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "noUnusedLocals": true,
+    "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
