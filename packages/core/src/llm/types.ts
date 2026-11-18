@@ -58,6 +58,12 @@ export interface LlmRequest {
   jsonMode?: boolean;
 }
 
+/** 用户自备的模型端点。Key 只出现在请求头，任何日志与错误信息里都不许带。 */
+export interface LlmEndpoint {
+  baseUrl: string;
+  apiKey: string;
+}
+
 /**
  * 传输层接口。
  *

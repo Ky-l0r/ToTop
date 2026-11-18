@@ -5,6 +5,34 @@
 
 ## [Unreleased]
 
+### 1.0 传输层（T5b）：fetch 流式与非流式兜底
+
+#### Added
+
+- **`createFetchTransport`**：fetch + ReadableStream 的流式驱动。用 Web 标准而不是 uni 通道，
+  H5 与 Node 都能跑；把字节切回文本、把 SSE 帧交给协议层，重试与渲染不掺进来。
+- **`chatCompletionsUrl`**：Base URL 三种写法（带 `/v1`、不带、直接抄接口地址）统一收敛。
+- **`parseCompletion`**：非流式响应解析，与流式共用同一套契约（正文 + 用量 + finish_reason）。
+- **`apps/mobile/src/platform/net/`**：App 端的 `uni.request` 非流式驱动 + 选型入口
+  `createTransport`。App 默认走非流式，H5 走流式。
+- **11 条传输层用例**（累计 81 条）：本地真 HTTP 服务验证分片到达、请求体带 stream、
+  401 归到 Key 无效、404 提到 model 归到模型名错、中途取消给"已取消"而不是网络错误、连不上降级。
+
+#### Changed
+
+- **`buildChatBody` 增加 `stream` 开关**：流式与非流式必须由同一处控制。
+  开着流却按非流式读，只会拿到一串 SSE 文本；反过来则永远等不到 chunk。
+- **取消必须真的断连接**：`uni.request` 的 task 在页面销毁或用户点停止时 abort，
+  否则请求在后台继续跑、继续计费。
+
+#### Notes
+
+- **App 端流式仍未验证**：`uni.request` 的 `enableChunked` 只在微信小程序可用，
+  fetch 在 App 的 webview 里会不会被跨域拦住，只能真机验。当前 App 默认非流式，
+  代价是首字延迟 10-30 秒，界面必须给分阶段进度，不能只转圈。
+- 端到端用例跑通一次"真 HTTP + 真四阶段"：传输层交出的 chunk 能被编排层拼成完整解答。
+  这条用例是两层之间那条缝的唯一守卫。
+
 ### 1.0 解答链路（T5）：四阶段编排、流式解析、标题概括
 
 #### Added

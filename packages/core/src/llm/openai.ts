@@ -11,18 +11,79 @@ import type { ChatMessage, LlmChunk, LlmRequest, TokenUsage } from "./types";
 
 export const DONE_MARKER = "[DONE]";
 
-/** 拼请求体。stream 与 include_usage 必须同时开，否则拿不到 token 用量。 */
-export function buildChatBody(request: LlmRequest): Record<string, unknown> {
+/**
+ * 拼请求体。
+ *
+ * `stream` 由传输层决定：能收 chunk 就开流，收不到（App 端没有 chunked 通道）就关掉，
+ * 一次性拿整段正文。**开着流却按非流式读**只会拿到一串 SSE 文本，
+ * 所以这两个开关必须由同一个地方控制。
+ */
+export function buildChatBody(
+  request: LlmRequest,
+  options: { stream?: boolean } = {},
+): Record<string, unknown> {
+  const stream = options.stream ?? true;
   const body: Record<string, unknown> = {
     model: request.model,
-    stream: true,
-    stream_options: { include_usage: true },
+    stream,
     messages: request.messages.map(toWireMessage),
   };
+  // include_usage 只在流式下有意义，非流式的用量本来就在响应体里。
+  if (stream) body.stream_options = { include_usage: true };
   if (request.temperature !== undefined) body.temperature = request.temperature;
   if (request.maxTokens !== undefined) body.max_tokens = request.maxTokens;
   if (request.jsonMode) body.response_format = { type: "json_object" };
   return body;
+}
+
+/** 非流式响应的解析结果。 */
+export interface CompletionResult {
+  text: string;
+  usage: TokenUsage;
+  finishReason: string;
+}
+
+/**
+ * 解析非流式的 `/chat/completions` 响应体。
+ *
+ * 与流式走同一套契约（text + usage + finish_reason），
+ * 这样编排层不必知道自己拿到的是一段流还是一整个响应。
+ */
+export function parseCompletion(raw: string): CompletionResult | { error: string } {
+  let payload: {
+    choices?: Array<{ message?: { content?: string | null }; finish_reason?: string | null }>;
+    usage?: { prompt_tokens?: number; completion_tokens?: number } | null;
+  };
+  try {
+    payload = JSON.parse(raw) as typeof payload;
+  } catch {
+    return { error: "模型返回的不是 JSON" };
+  }
+  const content = payload.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || content.trim() === "") {
+    return { error: "模型没有返回内容" };
+  }
+  return {
+    text: content,
+    usage: {
+      inputTokens: payload.usage?.prompt_tokens ?? 0,
+      outputTokens: payload.usage?.completion_tokens ?? 0,
+    },
+    finishReason: payload.choices?.[0]?.finish_reason ?? "",
+  };
+}
+
+/**
+ * 拼 `/chat/completions` 的完整地址。
+ *
+ * 用户填的 Base URL 三种写法都见过：带 `/v1`、不带 `/v1`、直接抄了整条接口地址。
+ * 这里统一收敛，避免"设置里少写一个斜杠就报 404"。
+ */
+export function chatCompletionsUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+  if (trimmed === "") throw new Error("接口地址为空");
+  if (/\/chat\/completions$/.test(trimmed)) return trimmed;
+  return trimmed + "/chat/completions";
 }
 
 function toWireMessage(message: ChatMessage): Record<string, unknown> {

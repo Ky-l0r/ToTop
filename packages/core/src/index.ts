@@ -25,6 +25,7 @@ export { bindParams, quoteSqlValue } from "./db/sql-text";
 export type {
   ChatMessage,
   LlmChunk,
+  LlmEndpoint,
   LlmFailure,
   LlmFailureKind,
   LlmRequest,
@@ -33,7 +34,15 @@ export type {
 } from "./llm/types";
 export { addUsage, EMPTY_USAGE } from "./llm/types";
 export { SseParser, type SseEvent } from "./llm/sse";
-export { buildChatBody, toChunk, DONE_MARKER } from "./llm/openai";
+export {
+  buildChatBody,
+  chatCompletionsUrl,
+  parseCompletion,
+  toChunk,
+  DONE_MARKER,
+  type CompletionResult,
+} from "./llm/openai";
+export { createFetchTransport, type FetchTransportOptions } from "./llm/fetch-transport";
 export { abortedFailure, classifyHttpFailure, networkFailure } from "./llm/errors";
 export { backoffMs, MAX_ATTEMPTS, shouldRetry } from "./llm/retry";
 
