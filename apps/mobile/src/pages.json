@@ -59,6 +59,18 @@
       "style": {
         "navigationBarTitleText": "知识点详情"
       }
+    },
+    {
+      "path": "pages/materials/index",
+      "style": {
+        "navigationBarTitleText": "资料库"
+      }
+    },
+    {
+      "path": "pages/materials/detail",
+      "style": {
+        "navigationBarTitleText": "资料详情"
+      }
     }
   ],
   "globalStyle": {

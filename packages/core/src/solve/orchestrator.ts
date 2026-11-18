@@ -93,8 +93,7 @@ export async function runSolve(input: SolveInput, deps: SolveDeps): Promise<Solv
       }
       attempt += 1;
       try {
-        const text = await consumeStage({
-          stage,
+        const text = await runSingleCall({
           prompt,
           userText,
           images,
@@ -217,31 +216,45 @@ export function buildSolvePayload(spec: QuestionSpec): Record<string, unknown> {
   };
 }
 
-interface ConsumeArgs {
-  stage: Stage;
+export interface SingleCallArgs {
+  /** 系统提示词。 */
   prompt: string;
   userText: string;
-  images: string[];
-  streamDeltas: boolean;
+  images?: string[];
   transport: LlmTransport;
   model: string;
   signal: AbortSignal;
-  emit: (event: SolveEvent) => void;
-  onUsage: (usage: TokenUsage) => void;
+  /** 边跑边把正文推给界面（拍题的阶段 B 用）。 */
+  streamDeltas?: boolean;
+  emit?: (event: SolveEvent) => void;
+  onUsage?: (usage: TokenUsage) => void;
+  temperature?: number;
+  /** 要求厂商返回严格 JSON；材料解析、复习资料都走这条。 */
+  jsonMode?: boolean;
 }
 
-async function consumeStage(args: ConsumeArgs): Promise<string> {
+/**
+ * 跑一次模型调用，把流拼成完整正文。
+ *
+ * 抽出来是因为除四阶段之外还有几处"一次调用、要一份 JSON"的场景
+ * （标准答案解析、复习资料生成）。它们必须和四阶段共享同一套
+ * 空输出 / 截断判定，否则换个入口就换了一种失败表现。
+ */
+export async function runSingleCall(args: SingleCallArgs): Promise<string> {
+  const emit = args.emit ?? (() => undefined);
+  const onUsage = args.onUsage ?? (() => undefined);
+  const streamDeltas = args.streamDeltas ?? false;
   let text = "";
   let lastFinish = "";
 
   for await (const chunk of args.transport.stream(
     {
       model: args.model,
-      temperature: 0.2,
-      jsonMode: true,
+      temperature: args.temperature ?? 0.2,
+      jsonMode: args.jsonMode ?? true,
       messages: [
         { role: "system", content: args.prompt },
-        { role: "user", content: args.userText, images: args.images },
+        { role: "user", content: args.userText, images: args.images ?? [] },
       ],
     },
     args.signal,
@@ -250,25 +263,25 @@ async function consumeStage(args: ConsumeArgs): Promise<string> {
       case "delta":
         text += chunk.text;
         // 只有阶段 B 的正文值得边跑边显示；A/C/D 是 JSON，边流边显示只是噪音。
-        if (args.streamDeltas) args.emit({ kind: "delta", text: chunk.text });
+        if (streamDeltas) emit({ kind: "delta", text: chunk.text });
         break;
       case "reasoning":
-        if (args.streamDeltas) args.emit({ kind: "reasoning", text: chunk.text });
+        if (streamDeltas) emit({ kind: "reasoning", text: chunk.text });
         break;
       case "finished":
         lastFinish = chunk.finishReason;
-        args.onUsage(chunk.usage);
+        onUsage(chunk.usage);
         break;
       case "failed":
-        throw new StageFailure(chunk.failure);
+        throw new SingleCallError(chunk.failure);
     }
   }
 
   if (text.trim() === "") {
-    throw new StageFailure({ kind: "output_empty", message: "模型没有输出内容，重试一次" });
+    throw new SingleCallError({ kind: "output_empty", message: "模型没有输出内容，重试一次" });
   }
   if (lastFinish === "length") {
-    throw new StageFailure({
+    throw new SingleCallError({
       kind: "output_truncated",
       message: "输出被长度上限截断了，把题拆小一点再问",
     });
@@ -276,15 +289,16 @@ async function consumeStage(args: ConsumeArgs): Promise<string> {
   return text;
 }
 
-class StageFailure extends Error {
+/** 单次调用失败。`failure` 已经分好档，调用方直接拿去显示。 */
+export class SingleCallError extends Error {
   constructor(readonly failure: LlmFailure) {
     super(failure.message);
-    this.name = "StageFailure";
+    this.name = "SingleCallError";
   }
 }
 
 function toFailure(error: unknown): LlmFailure {
-  if (error instanceof StageFailure) return error.failure;
+  if (error instanceof SingleCallError) return error.failure;
   if (error instanceof Error) {
     if (error.name === "AbortError") return { kind: "aborted", message: "已取消" };
     return { kind: "network", message: error.message || "请求失败" };

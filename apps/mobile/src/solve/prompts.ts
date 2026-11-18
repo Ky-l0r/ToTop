@@ -1,5 +1,7 @@
 import type { PromptSet } from "@totop/core";
 import versionInfo from "../assets/prompts/prompt_version.json";
+import materialExplain from "../assets/prompts/material_explain.md?raw";
+import materialImport from "../assets/prompts/material_import.md?raw";
 import stageA from "../assets/prompts/stage_a_identify.md?raw";
 import stageB from "../assets/prompts/stage_b_solve.md?raw";
 import stageC from "../assets/prompts/stage_c_locate_error.md?raw";
@@ -21,3 +23,12 @@ export const PROMPTS: PromptSet = {
   c: stageC,
   d: stageD,
 };
+
+/**
+ * 辅助模板：不参与四阶段缓存键，但和主模板一起随包发布。
+ * 挂在 prompt_version.json 的 auxiliary 里，改动时一并登记。
+ */
+export const AUX_PROMPTS = {
+  materialImport,
+  materialExplain,
+} as const;

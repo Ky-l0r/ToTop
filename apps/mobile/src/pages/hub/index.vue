@@ -18,7 +18,7 @@ const entries: Entry[] = [
   { label: "易错题", hint: "按科目、错因、时间翻旧账", url: "/pages/mistakes/index" },
   { label: "知识点", hint: "哪块不熟，一目了然", url: "/pages/knowledge/index" },
   { label: "巩固练习", hint: "对着不熟的点练几道" },
-  { label: "资料库", hint: "标准答案收在这一处" },
+  { label: "资料库", hint: "标准答案收在这一处", url: "/pages/materials/index" },
   { label: "复习资料", hint: "按知识点整成一份" },
   { label: "学情", hint: "成绩与趋势", url: "/pages/exams/index" },
   { label: "设置", hint: "模型、科目、数据", url: "/pages/settings/index" },

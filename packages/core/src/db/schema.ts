@@ -8,7 +8,7 @@
  *    离线写队列，后两者是日汇总与周报，1.0 都不做，留着只会有人往里写。
  * 3. **加列只加在末尾**，方便旧备份按列名交集拷贝（见 legacy.ts）。
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SCHEMA_STATEMENTS: readonly string[] = [
   // ---------- 题目与错题 ----------
@@ -131,11 +131,13 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
     subject TEXT NOT NULL DEFAULT '',
     kpointId TEXT,
     title TEXT NOT NULL DEFAULT '',
+    stem TEXT NOT NULL DEFAULT '',
     stepsJson TEXT NOT NULL DEFAULT '[]',
     answer TEXT NOT NULL DEFAULT '',
     source TEXT NOT NULL DEFAULT 'standard_answer',
     origin TEXT NOT NULL DEFAULT '',
     note TEXT NOT NULL DEFAULT '',
+    explanation TEXT NOT NULL DEFAULT '',
     pitfallsJson TEXT NOT NULL DEFAULT '[]',
     imagePath TEXT,
     createdAtUtc INTEGER NOT NULL

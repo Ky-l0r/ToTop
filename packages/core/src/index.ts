@@ -57,6 +57,23 @@ export {
   type MasteryEventKind,
 } from "./mastery/algorithm";
 export {
+  countMaterials,
+  createMaterial,
+  deleteMaterial,
+  getMaterial,
+  listMaterials,
+  saveExplanation,
+  type MaterialDetail,
+  type MaterialFilter,
+  type MaterialListItem,
+} from "./repo/materials";
+export {
+  buildMaterialUserText,
+  parseMaterialDraft,
+  type MaterialDraft,
+  type MaterialParseResult,
+} from "./solve/material-parse";
+export {
   applyMastery,
   chapterHeat,
   kpointDetail,
@@ -140,7 +157,19 @@ export {
   type Subject,
   type SummaryCardSpec,
 } from "./solve/contracts";
-export { buildSolvePayload, runSolve, SolveError, type SolveDeps, type SolveEvent, type SolveInput, type SolveOutcome, type Stage } from "./solve/orchestrator";
+export {
+  buildSolvePayload,
+  runSingleCall,
+  runSolve,
+  SingleCallError,
+  SolveError,
+  type SingleCallArgs,
+  type SolveDeps,
+  type SolveEvent,
+  type SolveInput,
+  type SolveOutcome,
+  type Stage,
+} from "./solve/orchestrator";
 export type { PromptSet } from "./solve/prompts";
 export {
   labelOf,
