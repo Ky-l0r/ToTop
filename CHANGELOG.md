@@ -5,6 +5,31 @@
 
 ## [Unreleased]
 
+### 质量门禁接入：ESLint 10 与 Vitest
+
+#### Added
+
+- **`eslint.config.mjs`**：全仓 flat config。`@typescript-eslint/no-explicit-any` 为 error，
+  Vue 用 essential 档，`app/` 与 `legacy/` 排除在外（那两棵树走 ktlint / detekt）。
+  已用探针文件验证规则确实会拦下 `any`，不是空转。
+- **Vitest**：`packages/core` 跑 Node 单测，`pnpm run test` 一键执行。
+  当前只有一条骨架冒烟用例，真正有价值的算法用例从 T3 开始加。
+- **根脚本 `pnpm run check`**：类型检查 + lint + 单测串起来，作为提交前的默认动作。
+
+#### Changed
+
+- **TypeScript 钉在 4.9.4 全仓一个版本**。装工具链时 `pnpm add typescript` 抓到了 7.0.2，
+  而 typescript-eslint 8.x 明确拒绝 TS 7，lint 直接退出；降到 4.9.4 后与 uni-app 官方模板、
+  `vue-tsc` 1.x 一致。
+- **`vue/multi-word-component-names` 对 `pages/` 豁免**：页面入口按 uni-app 约定都叫 `index.vue`，
+  这条规则套到页面上只是噪音，组件目录仍受约束。
+
+#### Notes
+
+- 实跑结果：`pnpm run check` 通过（两包类型检查 + lint 零问题 + 1 个用例通过）。
+- lint 只做正确性与禁用项，不介入排版偏好，因此不引入 Prettier。
+- CI 尚未加 `apps/mobile` 流水线，属 10.6 的范围，等 T5 能出包再挂。
+
 ### 1.0 工程骨架（T1）：三棵树与四个 tab 空壳
 
 #### Added

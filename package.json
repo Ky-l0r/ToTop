@@ -8,6 +8,18 @@
     "dev": "pnpm --filter @totop/mobile dev:h5",
     "build:h5": "pnpm --filter @totop/mobile build:h5",
     "build:app": "pnpm --filter @totop/mobile build:app",
-    "typecheck": "pnpm -r --if-present run type-check"
+    "typecheck": "pnpm -r --if-present run type-check",
+    "lint": "eslint .",
+    "test": "pnpm -r --if-present run test",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "globals": "^17.14.0",
+    "typescript": "4.9.4",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^5.1.0"
   }
 }

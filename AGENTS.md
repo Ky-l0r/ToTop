@@ -539,7 +539,8 @@ git ls-files -z '*.kt' '*.md' '*.kts' '*.json' ':(exclude)app/src/main/assets/co
 | 准备发版 | 上项 + 双端构建 + 真机清单 |
 
 命令以 `apps/mobile/package.json` 为准（类型检查、lint、单测、双端构建各一条），
-本章不写死脚本名，避免与工程实际配置脱节。
+本章不写死脚本名，避免与工程实际配置脱节。**提交前的默认动作是 `pnpm run check`**：
+它把类型检查、lint、单测串起来跑，等价于旧树的 `ktlintCheck + detekt + testDebugUnitTest`。
 
 ### 13.6 本文件中已失效或部分失效的条款
 
