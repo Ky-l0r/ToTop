@@ -8,7 +8,9 @@
 
 以下条目来自《AI 辅助学习 App 开发方案》，任何 PR 触碰都会被拒绝：
 
-1. 仅 Android 原生，Kotlin + Jetpack Compose。禁止 XML View，禁止跨端框架。
+1. 平台形态按版本分支：`legacy/android/` 为 Kotlin + Jetpack Compose 原生实现（已冻结，只修致命缺陷）；
+   1.0 起新代码写在 `apps/mobile/`，技术栈为 UniApp + Vue 3 + TypeScript，交付 Android 与 iOS 两端。
+   禁止 XML View；禁止在 1.0 里引入第三套 UI 框架。新增文件只进新树，见 [AGENTS.md](AGENTS.md) 第十三章。
 2. 禁止引入统计、广告、埋点、崩溃上报类 SDK（Firebase、友盟、Bugly、Crashlytics 等一律不允许）。
 3. 禁止引入需要自建后端的依赖（Supabase、云函数、云 OCR 等）。
 4. 不采集身份信息，不做账号体系。
@@ -108,6 +110,9 @@
 - 解析失败时记录告警，不得静默丢弃
 
 ### 4.5 性能要求
+
+本章描述冻结的原生版。1.0 新工程改为运行时分档，限制从"写死在代码里"变成"按设备能力选择"，
+具体阈值与四条不放开项见 `docs/改造指南-1.0.0.md` 第四章。
 
 - 不使用毛玻璃模糊、视差与大面积弹性动画
 - 长列表使用分页查询，禁止一次查全表
