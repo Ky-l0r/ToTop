@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMistakesStore, type TimeRange } from "@/stores/mistakes";
 import { ERROR_TYPES, labelOf, relativeTime, SUBJECTS, type Subject } from "@totop/core";
-import { onShow } from "@dcloudio/uni-app";
+import { onLoad, onShow } from "@dcloudio/uni-app";
 
 /**
  * 易错题：一页翻旧账。
@@ -20,6 +20,14 @@ const timeRanges: Array<{ value: TimeRange; label: string }> = [
 
 onShow(() => {
   void store.load();
+});
+
+/** 从首页"不熟知识点"点进来时带着知识点，直接按它筛。 */
+onLoad((query) => {
+  const kpointId = query?.kpointId;
+  if (typeof kpointId === "string" && kpointId !== "") {
+    store.kpointId = decodeURIComponent(kpointId);
+  }
 });
 
 function openDetail(mistakeId: string): void {

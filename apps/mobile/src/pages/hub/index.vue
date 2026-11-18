@@ -1,22 +1,47 @@
 <script setup lang="ts">
-// 功能中心骨架。七格入口与改名在 T8 落地；已经做出来的页面先挂一个入口，免得做完没法点。
-const entries: Array<{ label: string; url: string }> = [
-  { label: "易错题", url: "/pages/mistakes/index" },
+/**
+ * 功能中心。
+ *
+ * 七格：易错题、知识点、巩固练习、资料库、复习资料、学情、设置（三列，最后一行一格）。
+ * 名字全部按 1.0 口径：没有"复习打卡""多练的知识点""卡点笔记"。
+ *
+ * 还没做的入口显示为禁用，而不是点进去看到白屏——"每个入口都有页面"这条验收
+ * 要等 T10 至 T12，在那之前不假装可用。
+ */
+interface Entry {
+  label: string;
+  hint: string;
+  url?: string;
+}
+
+const entries: Entry[] = [
+  { label: "易错题", hint: "按科目、错因、时间翻旧账", url: "/pages/mistakes/index" },
+  { label: "知识点", hint: "哪块不熟，一目了然" },
+  { label: "巩固练习", hint: "对着不熟的点练几道" },
+  { label: "资料库", hint: "标准答案收在这一处" },
+  { label: "复习资料", hint: "按知识点整成一份" },
+  { label: "学情", hint: "成绩与趋势" },
+  { label: "设置", hint: "模型、科目、数据" },
 ];
 
-function open(url: string): void {
-  uni.navigateTo({ url });
+function open(entry: Entry): void {
+  if (!entry.url) return;
+  uni.navigateTo({ url: entry.url });
 }
 </script>
 
 <template>
   <view class="page">
-    <text class="title">全部功能</text>
-    <text class="hint">七格入口在 T8 落地，先挂已完成的页面</text>
-
-    <view class="entries">
-      <view v-for="entry in entries" :key="entry.url" class="entry" @tap="open(entry.url)">
-        <text class="entry-label">{{ entry.label }}</text>
+    <view class="grid">
+      <view
+        v-for="entry in entries"
+        :key="entry.label"
+        class="cell"
+        :class="{ 'cell-off': !entry.url }"
+        @tap="open(entry)"
+      >
+        <text class="cell-label">{{ entry.label }}</text>
+        <text class="cell-hint">{{ entry.hint }}</text>
       </view>
     </view>
   </view>
@@ -24,32 +49,34 @@ function open(url: string): void {
 
 <style scoped>
 .page {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 24px 16px;
-}
-.title {
-  font-size: 22px;
-  font-weight: 600;
-}
-.hint {
-  font-size: 13px;
-  opacity: 0.55;
-}
-.entries {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-}
-.entry {
   padding: 14px;
+}
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cell {
+  width: calc(33.333% - 6px);
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 10px;
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
-.entry-label {
+.cell-off {
+  opacity: 0.45;
+}
+.cell-label {
   font-size: 15px;
+  font-weight: 600;
   color: var(--tt-on-surface);
+}
+.cell-hint {
+  font-size: 11px;
+  color: var(--tt-on-surface-variant);
+  line-height: 1.4;
 }
 </style>

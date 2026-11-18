@@ -34,6 +34,14 @@ export {
   type SavedIds,
 } from "./repo/mistakes";
 export { createId } from "./util/id";
+export {
+  homeStats,
+  MASTERY_MASTERED_THRESHOLD,
+  weakKpoints,
+  type HomeStats,
+  type LatestExam,
+  type WeakKpoint,
+} from "./repo/home";
 export { bindParams, quoteSqlValue } from "./db/sql-text";
 
 // ---------- 模型调用 ----------
