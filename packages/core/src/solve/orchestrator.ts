@@ -13,6 +13,7 @@ import {
   type StandardSolutionSpec,
 } from "./contracts";
 import type { PromptSet } from "./prompts";
+import { skeletonInstruction } from "./question-type";
 
 export type Stage = "A" | "B" | "C" | "D";
 
@@ -133,9 +134,10 @@ export async function runSolve(input: SolveInput, deps: SolveDeps): Promise<Solv
   notes.push(...a.notes);
   const spec = a.value;
 
-  // 阶段 B：独立求解。只给题目。
+  // 阶段 B：独立求解。只给题目，另按"学科 × 题型"追加骨架要求（写进系统提示词，不进用户数据）。
   const bPayload = buildSolvePayload(spec);
-  const bRaw = await callStage("B", deps.prompts.b, JSON.stringify(bPayload), [], true);
+  const bPrompt = deps.prompts.b + "\n\n" + skeletonInstruction(spec.subject, spec.questionType);
+  const bRaw = await callStage("B", bPrompt, JSON.stringify(bPayload), [], true);
   const b = parseStandardSolution(bRaw);
   if (!b.ok) {
     throw new SolveError("B", { kind: "parse_failed", message: b.reason }, b.reason);

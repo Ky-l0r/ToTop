@@ -30,6 +30,7 @@
 | ask | string | 所求内容，一句话表述 |
 | options | string[] | 选择题选项原文（含 A/B/C/D 标记）；非选择题为空数组 |
 | choiceType | string | 题型，只能取 `"single"`（单选）、`"multi"`（多选）、`"none"`（非选择题）、`"unknown"`（无法判断）。判定规则见第四节第 8 条 |
+| questionType | string | 题型名称，必须取**该科目允许的值**：语文 `"现代文阅读"`/`"文言文"`/`"作文"`；数学 `"选择"`/`"填空"`/`"大题"`；英语 `"阅读"`/`"七选五"`/`"完形"`/`"语法填空"`/`"作文"`/`"读后续写"`；物理、化学、生物、政治、历史、地理、技术一律 `"全题型"`。取值见第四节第 11 条 |
 | hasFigure | boolean | 题干是否含几何图形、函数图象、电路图、流程图或表格 |
 | stemLatex | string | 题干中的公式改写为 LaTeX，行内公式用单个美元符号包裹；无公式时为空字符串 |
 | handwriting | string | 卷面上有没有**学生手写的过程**：`"none"`、`"partial"`、`"full"`。只算手写，不算印刷体与批注符号 |
@@ -71,13 +72,19 @@
     整道题不分小问时，输出**一条** `no` 为 `null` 的记录。
     `handwriting` 为 `"none"` 时 `progress` 输出空数组——没写就是没写，不要给每问都标 `missing`。
 
+11. `questionType` 只能从**本科目**的取值里选，跨科目取值一律算错（例如数学题不能填 `"完形"`）。
+    判不出来时**不要硬猜一个精确题型**：单题型科目填 `"全题型"`；
+    语文、数学、英语判不出来时填该科最常见的一档（`"现代文阅读"` / `"大题"` / `"阅读"`），
+    并把「题型不确定」写进 `warnings`。
+    这一项决定后续用哪套解析骨架，猜错会让语文题按数学的结构作答。
+
 ## 五、JSON Schema
 
 ```json
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["subject", "grade", "title", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
+  "required": ["subject", "grade", "title", "questionType", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
   "properties": {
     "subject": {
       "type": "string",
@@ -90,6 +97,7 @@
     "ask": { "type": "string", "minLength": 1 },
     "options": { "type": "array", "items": { "type": "string" } },
     "choiceType": { "type": "string", "enum": ["single", "multi", "none", "unknown"] },
+    "questionType": { "type": "string", "enum": ["现代文阅读", "文言文", "作文", "选择", "填空", "大题", "阅读", "七选五", "完形", "语法填空", "读后续写", "全题型"] },
     "hasFigure": { "type": "boolean" },
     "stemLatex": { "type": "string" },
     "handwriting": { "type": "string", "enum": ["none", "partial", "full"] },
@@ -127,6 +135,7 @@
   "subject": "math",
   "grade": "高一",
   "title": "二次函数在闭区间的最小值",
+  "questionType": "选择",
   "stem": "已知函数 f(x)=x^2-2x+1，求 f(x) 在区间 [0,3] 上的最小值。",
   "known": ["f(x)=x^2-2x+1", "x 的取值范围是 [0,3]"],
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
@@ -154,6 +163,7 @@
   "subject": "physics",
   "grade": "高一",
   "title": "自由落体求落地时间",
+  "questionType": "全题型",
   "stem": "一物体从 20 m 高处自由下落，取 g=10 m/s^2，求落地所需时间。",
   "known": ["下落高度 20 m", "重力加速度 g=10 m/s^2", "初速度为零"],
   "ask": "求物体落地所需的时间",
@@ -182,6 +192,7 @@
   "subject": "chemistry",
   "grade": "高一",
   "title": "判断哪些物质属于电解质",
+  "questionType": "全题型",
   "stem": "下列物质中，属于电解质的是（  ）",
   "known": ["需判断各选项物质是否属于电解质"],
   "ask": "选出属于电解质的物质",
@@ -274,6 +285,7 @@
   "subject": "math",
   "grade": "高一",
   "title": "二次函数在闭区间的最小值",
+  "questionType": "选择",
   "stem": "已知函数 f(x)=x^2-2x+1，求 f(x) 在区间 [0,3] 上的最小值。",
   "known": ["f(x)=x^2-2x+1", "x 的取值范围是 [0,3]"],
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
@@ -300,6 +312,7 @@
   "subject": "chemistry",
   "grade": "高二",
   "title": "酯的结构简式与水解方程式",
+  "questionType": "全题型",
   "stem": "某酯 A 的分子式为 C4H8O2，能发生银镜反应。(1) 写出 A 的结构简式；(2) 写出 A 与 NaOH 溶液共热的化学方程式；(3) 写出 A 的同分异构体中属于羧酸的一种。",
   "known": ["A 的分子式为 C4H8O2", "A 能发生银镜反应"],
   "ask": "分别写出结构简式、水解方程式与一种羧酸类同分异构体",

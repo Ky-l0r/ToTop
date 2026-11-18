@@ -15,7 +15,14 @@ const servers: Server[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    servers.splice(0).map((server) => new Promise<void>((resolve) => server.close(() => resolve()))),
+    servers.splice(0).map(
+      (server) =>
+        new Promise<void>((resolve) => {
+          // 取消类用例会留下半开的连接，不主动断掉会让 close 一直等
+          server.closeAllConnections();
+          server.close(() => resolve());
+        }),
+    ),
   );
 });
 
@@ -124,8 +131,9 @@ describe("fetch 流式传输", () => {
     const baseUrl = await startServer((_req, res) => {
       res.writeHead(200, { "Content-Type": "text/event-stream" });
       res.write('data: {"choices":[{"delta":{"content":"一"}}]}\n\n');
-      // 不主动结束，等客户端取消
-      setTimeout(() => res.end(), 200);
+      // 故意不结束：让"取消"成为唯一的收尾方式。
+      // 之前这里用 200ms 后 end()，机器忙的时候 end 会先于 abort 到达，
+      // 用例偶发失败——测时序的用例不能依赖"谁先到"。
     });
 
     const controller = new AbortController();

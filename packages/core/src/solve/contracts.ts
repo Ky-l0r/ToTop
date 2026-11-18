@@ -1,4 +1,5 @@
 import { extractJson } from "./json";
+import { resolveQuestionType } from "./question-type";
 
 /**
  * 四个阶段的输出契约与校验。
@@ -53,6 +54,8 @@ export interface QuestionSpec {
   grade: string;
   /** 一句话概括，用作会话标题；缺失时用题干兜底。 */
   title: string;
+  /** 学科 × 题型，受控枚举；判不出来时取该科最常见的一档并记进 notes。 */
+  questionType: string;
   stem: string;
   known: string[];
   ask: string;
@@ -206,6 +209,14 @@ export function parseQuestionSpec(raw: string): Parsed<QuestionSpec> {
     const title = titleRaw === "" ? fallbackTitle(stem) : titleRaw;
     if (titleRaw === "") notes.push("title 缺失，用题干前 12 字兜底");
 
+    const questionTypeRaw = asOptionalString(obj, "questionType").trim();
+    const resolvedType = resolveQuestionType(subject, questionTypeRaw);
+    if (resolvedType.guessed) {
+      notes.push(
+        `题型无法识别（${questionTypeRaw || "空"}），按「${resolvedType.type}」处理`,
+      );
+    }
+
     const choiceType = oneOf(
       asOptionalString(obj, "choiceType", "unknown"),
       ["single", "multi", "none", "unknown"] as const,
@@ -234,6 +245,7 @@ export function parseQuestionSpec(raw: string): Parsed<QuestionSpec> {
         subject,
         grade: asOptionalString(obj, "grade", "未知"),
         title,
+        questionType: resolvedType.type,
         stem,
         known: asStringArray(obj, "known", "known"),
         ask,

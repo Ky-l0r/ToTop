@@ -15,7 +15,13 @@ const servers: Server[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    servers.splice(0).map((server) => new Promise<void>((resolve) => server.close(() => resolve()))),
+    servers.splice(0).map(
+      (server) =>
+        new Promise<void>((resolve) => {
+          server.closeAllConnections();
+          server.close(() => resolve());
+        }),
+    ),
   );
 });
 
@@ -94,7 +100,8 @@ async function startMockProvider(): Promise<string> {
       const body = JSON.parse(Buffer.concat(parts).toString("utf8")) as {
         messages: Array<{ content: string }>;
       };
-      const system = body.messages[0]?.content ?? "PROMPT_A";
+      // 系统提示词可能追加了骨架要求，按第一行认阶段
+      const system = (body.messages[0]?.content ?? "PROMPT_A").split("\n")[0] ?? "PROMPT_A";
       const reply = REPLIES[system] ?? "";
 
       res.writeHead(200, { "Content-Type": "text/event-stream" });

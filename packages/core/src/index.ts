@@ -84,14 +84,23 @@ export {
   type Subject,
   type SummaryCardSpec,
 } from "./solve/contracts";
-export {
-  buildSolvePayload,
-  runSolve,
-  SolveError,
-  type SolveDeps,
-  type SolveEvent,
-  type SolveInput,
-  type SolveOutcome,
-  type Stage,
-} from "./solve/orchestrator";
+export { buildSolvePayload, runSolve, SolveError, type SolveDeps, type SolveEvent, type SolveInput, type SolveOutcome, type Stage } from "./solve/orchestrator";
 export type { PromptSet } from "./solve/prompts";
+export {
+  labelOf,
+  QUESTION_TYPES,
+  questionTypesFor,
+  resolveQuestionType,
+  skeletonFor,
+  skeletonInstruction,
+  SKELETONS,
+  type ResolvedQuestionType,
+} from "./solve/question-type";
+export {
+  extractChoiceLetters,
+  judgeChoice,
+  markOptions,
+  parseOptions,
+  type ChoiceVerdict,
+  type OptionItem,
+} from "./solve/choice";

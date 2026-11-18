@@ -13,10 +13,14 @@ import {
 } from "@/platform/image";
 import {
   EMPTY_USAGE,
+  judgeChoice,
+  markOptions,
   runSolve,
   SETTINGS_KEYS,
   SolveError,
+  type ChoiceVerdict,
   type LlmFailure,
+  type OptionItem,
   type SolveEvent,
   type SolveOutcome,
   type Stage,
@@ -80,8 +84,52 @@ export const useSolveStore = defineStore("solve", () => {
 
   let controller: AbortController | null = null;
 
+  /** 学生确认过"这题确实多选"之后，同一条解答不再反复追问。 */
+  const choiceConfirmed = ref(false);
+
   const running = computed(() => phase.value === "running");
   const title = computed(() => outcome.value?.spec.title ?? "拍题");
+
+  /** 选择题自洽判定：不拦截答案，只决定要不要问一句。 */
+  const choiceVerdict = computed<ChoiceVerdict | null>(() => {
+    const current = outcome.value;
+    if (!current) return null;
+    return judgeChoice(
+      current.spec.choiceType,
+      current.spec.options,
+      current.solution.finalAnswer,
+    );
+  });
+
+  const optionItems = computed<OptionItem[]>(() => {
+    const current = outcome.value;
+    if (!current) return [];
+    const verdict = choiceVerdict.value;
+    const letters = verdict && "letters" in verdict ? verdict.letters : [];
+    return markOptions(current.spec.options, letters);
+  });
+
+  /** 单选题型却给了多个字母：问一次，不擅自截断。 */
+  const showChoiceConfirm = computed(
+    () => !choiceConfirmed.value && choiceVerdict.value?.kind === "confirm_multi",
+  );
+
+  /** 多选只给了一个字母，或答案里找不到字母：提示核对，不改答案。 */
+  const choiceWarning = computed(() => {
+    const verdict = choiceVerdict.value;
+    if (!verdict) return "";
+    if (verdict.kind === "under_count") {
+      return "这题标的是多选，但答案只给了一个选项，自己核对一下";
+    }
+    if (verdict.kind === "unparsed") {
+      return "没能从答案里认出选项，可能这题不是选择题";
+    }
+    return "";
+  });
+
+  function confirmChoice(): void {
+    choiceConfirmed.value = true;
+  }
   const stageLabel = computed(() => {
     if (phase.value === "running") return stage.value ? STAGE_LABEL[stage.value] : "正在开始";
     if (phase.value === "done") return "解完了";
@@ -168,6 +216,7 @@ export const useSolveStore = defineStore("solve", () => {
     outcome.value = null;
     failure.value = null;
     usage.value = EMPTY_USAGE;
+    choiceConfirmed.value = false;
 
     controller = new AbortController();
     try {
@@ -215,6 +264,7 @@ export const useSolveStore = defineStore("solve", () => {
     outcome.value = null;
     failure.value = null;
     usage.value = EMPTY_USAGE;
+    choiceConfirmed.value = false;
   }
 
   return {
@@ -237,6 +287,11 @@ export const useSolveStore = defineStore("solve", () => {
     running,
     title,
     stageLabel,
+    choiceVerdict,
+    optionItems,
+    showChoiceConfirm,
+    choiceWarning,
+    confirmChoice,
     canSend,
     loadConfig,
     saveEndpoint,

@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { MAX_PAGES } from "@/platform/image";
 import { useSolveStore, type TeachingMode } from "@/stores/solve";
-import { onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 /**
- * 拍题页（1.0 第二批：接上拍照与相册）。
+ * 拍题页（1.0 第三批：题型骨架与版式）。
  *
- * 按指南 5.3 已落实：AI 概括作标题、模式双段放大、输入区精简、多页图片、
- * 结论/步骤/思路/错因/知识点、错误分档与重试。
- * 还没做：选项逐行、单多选确认、抓拍裁剪、追问、写库（T6 至 T9）。
+ * 按指南 5.3 已落实：AI 概括作标题、学科·题型标识、模式双段、多页图片、
+ * 答案/步骤/选项逐行/错因/知识点、单选多选确认条、长解答折叠、错误分档与重试。
+ * 还没做：公式 KaTeX 宿主（T6b）、追问（T7）、写库（T9）。
  */
 const store = useSolveStore();
 
@@ -16,6 +16,17 @@ const modes: Array<{ value: TeachingMode; label: string; hint: string }> = [
   { value: "DIRECT", label: "直接讲解", hint: "给完整步骤与答案" },
   { value: "GUIDED", label: "提示引导", hint: "先给方向，卡住再要提示" },
 ];
+
+/** 步骤默认只露前 6 步：长解答一屏塞不下，先让人看到结论与主干。 */
+const STEP_PREVIEW = 6;
+const stepsExpanded = ref(false);
+const visibleSteps = computed(() => {
+  const steps = store.outcome?.solution.steps ?? [];
+  return stepsExpanded.value ? steps : steps.slice(0, STEP_PREVIEW);
+});
+const hiddenStepCount = computed(() =>
+  Math.max(0, (store.outcome?.solution.steps.length ?? 0) - STEP_PREVIEW),
+);
 
 onMounted(() => {
   void store.loadConfig();
@@ -26,7 +37,12 @@ onMounted(() => {
   <view class="page">
     <view class="header">
       <text class="title">{{ store.title }}</text>
-      <text v-if="store.stageLabel" class="stage">{{ store.stageLabel }}</text>
+      <view class="meta">
+        <text v-if="store.outcome" class="meta-item">
+          {{ store.outcome.spec.grade }} · {{ store.outcome.spec.questionType }}
+        </text>
+        <text v-if="store.stageLabel" class="stage">{{ store.stageLabel }}</text>
+      </view>
     </view>
 
     <!-- 模式：两档做大并带一句说明。选中态是填充色，不是小胶囊。 -->
@@ -50,14 +66,51 @@ onMounted(() => {
         <text class="answer-text">{{ store.outcome.solution.finalAnswer }}</text>
       </view>
 
+      <!-- 单选却给了多个字母：问一句，不擅自截断（答案本身不改） -->
+      <view v-if="store.showChoiceConfirm" class="confirm">
+        <text class="confirm-text">这题标的是单选，但答案给了两个以上选项</text>
+        <view class="confirm-actions">
+          <text class="confirm-action" @tap="store.confirmChoice()">是单选</text>
+          <text class="confirm-action" @tap="store.confirmChoice()">对，多选</text>
+        </view>
+      </view>
+      <text v-else-if="store.choiceWarning" class="notice">{{ store.choiceWarning }}</text>
+
       <view class="block">
         <text class="block-title">步骤</text>
-        <view v-for="step in store.outcome.solution.steps" :key="step.idx" class="step">
+        <view v-for="step in visibleSteps" :key="step.idx" class="step">
           <text class="step-no">{{ step.idx }}</text>
           <view class="step-body">
             <text class="step-content">{{ step.content }}</text>
             <text v-if="step.why" class="step-why">{{ step.why }}</text>
           </view>
+        </view>
+        <text
+          v-if="hiddenStepCount > 0 && !stepsExpanded"
+          class="expand"
+          @tap="stepsExpanded = true"
+        >
+          展开剩余 {{ hiddenStepCount }} 步
+        </text>
+        <text
+          v-else-if="stepsExpanded && hiddenStepCount > 0"
+          class="expand"
+          @tap="stepsExpanded = false"
+        >
+          收起
+        </text>
+      </view>
+
+      <!-- 选项逐行：每个选项独占一行，选中项加标记 -->
+      <view v-if="store.optionItems.length" class="block">
+        <text class="block-title">选项</text>
+        <view v-for="option in store.optionItems" :key="option.label" class="option">
+          <text class="option-label" :class="{ 'option-label-on': option.selected }">
+            {{ option.label }}
+          </text>
+          <text class="option-text" :class="{ 'option-text-on': option.selected }">
+            {{ option.text }}
+          </text>
         </view>
       </view>
 
@@ -176,6 +229,76 @@ onMounted(() => {
   color: var(--tt-on-surface);
 }
 .stage {
+  font-size: 12px;
+  color: var(--tt-primary);
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.meta-item {
+  font-size: 12px;
+  color: var(--tt-on-surface-variant);
+}
+
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: var(--tt-radius-sm);
+  background: var(--tt-warning-container);
+}
+.confirm-text {
+  font-size: 12px;
+  color: var(--tt-warning);
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: 16px;
+}
+.confirm-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tt-warning);
+}
+.notice {
+  font-size: 12px;
+  color: var(--tt-warning);
+  line-height: 1.5;
+}
+
+.option {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--tt-radius-sm);
+}
+.option-label {
+  width: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tt-on-surface-variant);
+}
+.option-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--tt-on-surface);
+  line-height: 1.5;
+}
+/* 选中项：主色底 + 加粗，扫一眼就知道答案在哪一项 */
+.option-label-on {
+  color: var(--tt-primary);
+}
+.option-text-on {
+  color: var(--tt-primary);
+  font-weight: 600;
+}
+
+.expand {
+  align-self: flex-start;
   font-size: 12px;
   color: var(--tt-primary);
 }

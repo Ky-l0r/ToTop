@@ -9,6 +9,7 @@ const STAGE_A = JSON.stringify({
   subject: "math",
   grade: "高一",
   title: "二次函数闭区间最值",
+  questionType: "大题",
   stem: "已知 f(x)=x^2-2x+1，求 [0,3] 上最小值。",
   known: ["f(x)=x^2-2x+1"],
   ask: "求最小值",
@@ -64,7 +65,8 @@ class ScriptedTransport implements LlmTransport {
 
   async *stream(request: LlmRequest): AsyncIterable<LlmChunk> {
     this.requests.push(request);
-    const marker = request.messages[0]?.content ?? "";
+    // 系统提示词可能带追加的骨架要求，取第一行认阶段
+    const marker = (request.messages[0]?.content ?? "").split("\n")[0] ?? "";
     const key = marker.replace("PROMPT_", "");
 
     const remaining = this.failures[key] ?? 0;
@@ -109,12 +111,9 @@ describe("四阶段编排", () => {
     const events: SolveEvent[] = [];
     const outcome = await run(transport, baseInput(), events);
 
-    expect(transport.requests.map((r) => r.messages[0]?.content)).toEqual([
-      "PROMPT_A",
-      "PROMPT_B",
-      "PROMPT_C",
-      "PROMPT_D",
-    ]);
+    expect(
+      transport.requests.map((r) => (r.messages[0]?.content ?? "").split("\n")[0]),
+    ).toEqual(["PROMPT_A", "PROMPT_B", "PROMPT_C", "PROMPT_D"]);
     expect(outcome.spec.title).toBe("二次函数闭区间最值");
     expect(outcome.solution.finalAnswer).toBe("0");
     expect(outcome.report?.firstError?.type).toBe("计算失误");
@@ -122,6 +121,19 @@ describe("四阶段编排", () => {
 
     const started = events.filter((e) => e.kind === "stage" && e.state === "start");
     expect(started).toHaveLength(4);
+  });
+
+  it("阶段 B 的系统提示词追加了本科目本题型的骨架", async () => {
+    const transport = new ScriptedTransport({ A: STAGE_A, B: STAGE_B, C: STAGE_C, D: STAGE_D });
+    await run(transport);
+
+    const bSystem = transport.requests[1]?.messages[0]?.content ?? "";
+    expect(bSystem.startsWith("PROMPT_B")).toBe(true);
+    expect(bSystem).toContain("学科：数学；题型：大题");
+    expect(bSystem).toContain("分步给分点");
+    // 骨架只进系统提示词，用户消息仍然只有题目字段
+    const userContent = transport.requests[1]?.messages[1]?.content ?? "";
+    expect(userContent.startsWith("{")).toBe(true);
   });
 
   it("阶段 B 的输入里没有学生作答——这是物理隔离，不是提示词约束", async () => {
