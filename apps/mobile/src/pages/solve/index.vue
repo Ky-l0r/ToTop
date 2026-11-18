@@ -1,15 +1,14 @@
 <script setup lang="ts">
+import { MAX_PAGES } from "@/platform/image";
 import { useSolveStore, type TeachingMode } from "@/stores/solve";
 import { onMounted } from "vue";
 
 /**
- * 拍题页（1.0 第一批：文字链路）。
+ * 拍题页（1.0 第二批：接上拍照与相册）。
  *
- * 本批只接文字提问——拍图要等 T4 的压缩与 base64 转换，那一步在真机上没验过之前
- * 不放按钮，免得学生拍了图却发不出去。
- *
- * 按指南 5.3 已落实：AI 概括作标题、模式双段放大、输入区精简、结论/步骤/思路/错因/知识点、
- * 错误分档与重试。还没做：选项逐行、单多选确认、追问、写库（T6 至 T9）。
+ * 按指南 5.3 已落实：AI 概括作标题、模式双段放大、输入区精简、多页图片、
+ * 结论/步骤/思路/错因/知识点、错误分档与重试。
+ * 还没做：选项逐行、单多选确认、抓拍裁剪、追问、写库（T6 至 T9）。
  */
 const store = useSolveStore();
 
@@ -105,13 +104,34 @@ onMounted(() => {
 
     <!-- 输入区 -->
     <view class="composer">
+      <!-- 拍好的图片在输入框上方：先看拍了什么，再决定要不要补拍 -->
+      <view v-if="store.images.length" class="shots">
+        <view v-for="(shot, index) in store.images" :key="shot.sha256" class="shot">
+          <image :src="shot.path" class="shot-img" mode="aspectFill" />
+          <view class="shot-del" @tap="store.removeImage(index)">
+            <text class="shot-del-text">×</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="shot-actions">
+        <view class="ghost" @tap="store.addImages('camera')">拍照</view>
+        <view class="ghost" @tap="store.addImages('album')">相册</view>
+        <text class="tip">
+          {{ store.preparing ? "正在处理图片…" : `最多 ${MAX_PAGES} 张，同一道题的多页` }}
+        </text>
+      </view>
+
       <textarea
         v-model="store.draft"
         class="input"
         :maxlength="2000"
-        placeholder="把题干贴进来，或说说你卡在哪"
+        placeholder="可以补一句你的思路，或者卡在哪"
         auto-height
       />
+
+      <text v-if="store.imageError" class="failure-text">{{ store.imageError }}</text>
+
       <view class="composer-row">
         <text v-if="!store.configured" class="tip">先在下面填好模型地址与 Key</text>
         <text v-else class="tip">一条只解一道题</text>
@@ -331,6 +351,48 @@ onMounted(() => {
   padding: 10px 12px;
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
+}
+
+.shots {
+  display: flex;
+  gap: 8px;
+}
+.shot {
+  position: relative;
+  width: 68px;
+  height: 68px;
+}
+.shot-img {
+  width: 68px;
+  height: 68px;
+  border-radius: var(--tt-radius-sm);
+  background: var(--tt-surface);
+}
+.shot-del {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--tt-on-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.shot-del-text {
+  font-size: 13px;
+  line-height: 1;
+  color: #ffffff;
+}
+.shot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shot-actions .tip {
+  flex: 1;
+  text-align: right;
 }
 .input {
   width: 100%;

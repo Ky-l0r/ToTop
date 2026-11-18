@@ -46,6 +46,18 @@ export { createFetchTransport, type FetchTransportOptions } from "./llm/fetch-tr
 export { abortedFailure, classifyHttpFailure, networkFailure } from "./llm/errors";
 export { backoffMs, MAX_ATTEMPTS, shouldRetry } from "./llm/retry";
 
+// ---------- 图片 ----------
+export {
+  IMAGE_PROFILE_LEAN,
+  IMAGE_PROFILE_STANDARD,
+  pickProfile,
+  planResize,
+  type ImageProfile,
+  type ImageSize,
+  type ResizePlan,
+} from "./image/plan";
+export { base64ToBytes, sha256OfBase64, sha256OfText } from "./image/sha256";
+
 // ---------- 解题链路 ----------
 export { extractJson, stripFence } from "./solve/json";
 export {

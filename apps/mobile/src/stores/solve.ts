@@ -5,6 +5,13 @@ import {
 import { getDatabase } from "@/services/db";
 import { PROMPTS } from "@/solve/prompts";
 import {
+  MAX_PAGES,
+  pickImages,
+  prepareImage,
+  resolveProfile,
+  type PreparedImage,
+} from "@/platform/image";
+import {
   EMPTY_USAGE,
   runSolve,
   SETTINGS_KEYS,
@@ -58,6 +65,10 @@ export const useSolveStore = defineStore("solve", () => {
   // ---------- 输入 ----------
   const mode = ref<TeachingMode>("GUIDED");
   const draft = ref("");
+  /** 同一道题的多页图片。多页会被当成同一道题，这是 0.8.0 定下的口径。 */
+  const images = ref<PreparedImage[]>([]);
+  const preparing = ref(false);
+  const imageError = ref("");
 
   // ---------- 运行 ----------
   const phase = ref<SolvePhase>("idle");
@@ -77,7 +88,11 @@ export const useSolveStore = defineStore("solve", () => {
     return "";
   });
   const canSend = computed(
-    () => !running.value && draft.value.trim() !== "" && configured.value,
+    () =>
+      !running.value &&
+      !preparing.value &&
+      configured.value &&
+      (draft.value.trim() !== "" || images.value.length > 0),
   );
 
   /** 读取已保存的端点与模型名。Key 读不回来，只能每次手填。 */
@@ -110,6 +125,36 @@ export const useSolveStore = defineStore("solve", () => {
     mode.value = next;
   }
 
+  /**
+   * 加一张或多张图。
+   *
+   * 按 sha256 去重：学生常常把同一页拍两次，发给模型两张一样的图既费 token，
+   * 也会让阶段 A 以为是两个不同的页面。
+   */
+  async function addImages(source: "camera" | "album"): Promise<void> {
+    if (preparing.value || running.value) return;
+    imageError.value = "";
+    preparing.value = true;
+    try {
+      const paths = await pickImages({ source, remaining: MAX_PAGES - images.value.length });
+      const profile = resolveProfile();
+      for (const path of paths) {
+        const prepared = await prepareImage(path, profile);
+        if (images.value.some((item) => item.sha256 === prepared.sha256)) continue;
+        if (images.value.length >= MAX_PAGES) break;
+        images.value.push(prepared);
+      }
+    } catch (error) {
+      imageError.value = error instanceof Error ? error.message : "图片处理失败";
+    } finally {
+      preparing.value = false;
+    }
+  }
+
+  function removeImage(index: number): void {
+    images.value.splice(index, 1);
+  }
+
   function stop(): void {
     controller?.abort();
   }
@@ -128,7 +173,7 @@ export const useSolveStore = defineStore("solve", () => {
     try {
       const result = await runSolve(
         {
-          images: [],
+          images: images.value.map((item) => item.dataUrl),
           studentText: draft.value.trim(),
           mode: mode.value,
           // 知识点候选要等知识点仓储（T10）。为空时阶段 D 直接跳过，不浪费一次请求。
@@ -180,6 +225,9 @@ export const useSolveStore = defineStore("solve", () => {
     configured,
     mode,
     draft,
+    images,
+    preparing,
+    imageError,
     phase,
     stage,
     streamText,
@@ -193,6 +241,8 @@ export const useSolveStore = defineStore("solve", () => {
     loadConfig,
     saveEndpoint,
     setMode,
+    addImages,
+    removeImage,
     stop,
     send,
     reset,
