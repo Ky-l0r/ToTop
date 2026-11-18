@@ -20,8 +20,8 @@ const entries: Entry[] = [
   { label: "巩固练习", hint: "对着不熟的点练几道" },
   { label: "资料库", hint: "标准答案收在这一处" },
   { label: "复习资料", hint: "按知识点整成一份" },
-  { label: "学情", hint: "成绩与趋势" },
-  { label: "设置", hint: "模型、科目、数据" },
+  { label: "学情", hint: "成绩与趋势", url: "/pages/exams/index" },
+  { label: "设置", hint: "模型、科目、数据", url: "/pages/settings/index" },
 ];
 
 function open(entry: Entry): void {

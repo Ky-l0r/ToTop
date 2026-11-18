@@ -35,6 +35,18 @@
       "style": {
         "navigationBarTitleText": "错题详情"
       }
+    },
+    {
+      "path": "pages/exams/index",
+      "style": {
+        "navigationBarTitleText": "学情"
+      }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置"
+      }
     }
   ],
   "globalStyle": {

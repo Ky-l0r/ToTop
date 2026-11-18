@@ -35,6 +35,16 @@ export {
 } from "./repo/mistakes";
 export { createId } from "./util/id";
 export {
+  examTrend,
+  latestExam,
+  listExams,
+  saveExam,
+  scoredSubjects,
+  type ExamScoreRow,
+  type ExamSessionRow,
+  type SaveExamInput,
+} from "./repo/exams";
+export {
   homeStats,
   MASTERY_MASTERED_THRESHOLD,
   weakKpoints,

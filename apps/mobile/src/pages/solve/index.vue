@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { MAX_PAGES } from "@/platform/image";
+import { useLlmStore } from "@/stores/llm";
 import { useSolveStore, type TeachingMode } from "@/stores/solve";
 import { computed, onMounted, ref } from "vue";
 
@@ -11,6 +12,7 @@ import { computed, onMounted, ref } from "vue";
  * 还没做：公式 KaTeX 宿主（T6b）、追问（T7）、写库（T9）。
  */
 const store = useSolveStore();
+const llm = useLlmStore();
 
 const modes: Array<{ value: TeachingMode; label: string; hint: string }> = [
   { value: "DIRECT", label: "直接讲解", hint: "给完整步骤与答案" },
@@ -29,8 +31,12 @@ const hiddenStepCount = computed(() =>
 );
 
 onMounted(() => {
-  void store.loadConfig();
+  void llm.load();
 });
+
+function openSettings(): void {
+  uni.navigateTo({ url: "/pages/settings/index" });
+}
 
 function openSaved(): void {
   if (!store.savedMistakeId) return;
@@ -195,7 +201,9 @@ function openSaved(): void {
       <text v-if="store.imageError" class="failure-text">{{ store.imageError }}</text>
 
       <view class="composer-row">
-        <text v-if="!store.configured" class="tip">先在下面填好模型地址与 Key</text>
+        <text v-if="!store.configured" class="tip tip-link" @tap="openSettings">
+          还没配置模型，去设置里填地址与 Key
+        </text>
         <text v-else class="tip">一条只解一道题</text>
         <view v-if="store.running" class="send stop" @tap="store.stop()">
           <text class="send-text">停止</text>
@@ -206,16 +214,6 @@ function openSaved(): void {
       </view>
     </view>
 
-    <!-- 配置：Key 不落盘，界面必须说清楚 -->
-    <view class="card config">
-      <text class="block-title">模型设置</text>
-      <input v-model="store.baseUrl" class="field" placeholder="接口地址，如 https://api.deepseek.com/v1" />
-      <input v-model="store.model" class="field" placeholder="模型名，如 deepseek-chat" />
-      <input v-model="store.apiKey" class="field" password placeholder="API Key（只存在本次运行内）" />
-      <text class="tip">Key 不写入任何存储，关掉应用要重填；系统钥匙串在 T12 接入。</text>
-      <view class="ghost" @tap="store.saveEndpoint()">保存地址与模型</view>
-      <text v-if="store.configError" class="failure-text">{{ store.configError }}</text>
-    </view>
   </view>
 </template>
 
@@ -569,17 +567,7 @@ function openSaved(): void {
   color: #ffffff;
 }
 
-.config {
-  gap: 8px;
-}
-.field {
-  width: 100%;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: var(--tt-radius-sm);
-  background: var(--tt-surface);
-  border: 1px solid var(--tt-outline);
-  font-size: 13px;
-  color: var(--tt-on-surface);
+.tip-link {
+  color: var(--tt-primary);
 }
 </style>

@@ -127,9 +127,9 @@ function goTab(url: string): void {
             <text class="grid-label">知识点</text>
             <text class="grid-hint">T10 上线</text>
           </view>
-          <view class="grid-item grid-off">
-            <text class="grid-label">复习资料</text>
-            <text class="grid-hint">T11 上线</text>
+          <view class="grid-item" @tap="go('/pages/exams/index')">
+            <text class="grid-label">学情</text>
+            <text class="grid-hint">成绩与趋势</text>
           </view>
           <view class="grid-item" @tap="goTab('/pages/hub/index')">
             <text class="grid-label">全部功能</text>

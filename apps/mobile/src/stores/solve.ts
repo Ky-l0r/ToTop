@@ -4,6 +4,7 @@ import {
 } from "@/platform/net/transport";
 import { getDatabase } from "@/services/db";
 import { PROMPTS } from "@/solve/prompts";
+import { useLlmStore } from "@/stores/llm";
 import {
   MAX_PAGES,
   pickImages,
@@ -17,7 +18,6 @@ import {
   markOptions,
   runSolve,
   saveSolvedQuestion,
-  SETTINGS_KEYS,
   SolveError,
   type ChoiceVerdict,
   type LlmFailure,
@@ -50,22 +50,8 @@ const STAGE_LABEL: Record<Stage, string> = {
  * 全塞进一个枚举，结果"页面切回来内容没了"这类问题查了很久。
  */
 export const useSolveStore = defineStore("solve", () => {
-  // ---------- 配置 ----------
-  const baseUrl = ref("");
-  const model = ref("");
-  /**
-   * API Key 只在内存里。
-   *
-   * 不落盘是有意的：系统钥匙串要等原生插件（T12），在那之前把 Key 写进
-   * settings 表或 uni storage 都是明文，等于把学生的 Key 交给任何一个能读沙箱的进程。
-   * 代价是杀掉进程要重填，界面上必须说清楚。
-   */
-  const apiKey = ref("");
-  const configError = ref("");
-
-  const configured = computed(
-    () => baseUrl.value.trim() !== "" && model.value.trim() !== "" && apiKey.value.trim() !== "",
-  );
+  // 模型端点与 Key 由 llm store 统一持有：设置页与这一页改的是同一份值。
+  const llm = useLlmStore();
 
   // ---------- 输入 ----------
   const mode = ref<TeachingMode>("GUIDED");
@@ -140,39 +126,16 @@ export const useSolveStore = defineStore("solve", () => {
     if (phase.value === "done") return "解完了";
     return "";
   });
+  /** 配置是否齐（地址 / 模型名 / Key）。缺一项就不能发。 */
+  const configured = computed(() => llm.configured);
+
   const canSend = computed(
     () =>
       !running.value &&
       !preparing.value &&
-      configured.value &&
+      llm.configured &&
       (draft.value.trim() !== "" || images.value.length > 0),
   );
-
-  /** 读取已保存的端点与模型名。Key 读不回来，只能每次手填。 */
-  async function loadConfig(): Promise<void> {
-    configError.value = "";
-    try {
-      const { settings } = await getDatabase();
-      baseUrl.value = (await settings.get(SETTINGS_KEYS.llmBaseUrl)) ?? "";
-      model.value = (await settings.get(SETTINGS_KEYS.llmModel)) ?? "";
-    } catch (error) {
-      configError.value = error instanceof Error ? error.message : "读不到本地设置";
-    }
-  }
-
-  /** 保存端点与模型名（不含 Key）。 */
-  async function saveEndpoint(): Promise<void> {
-    configError.value = "";
-    try {
-      const { settings } = await getDatabase();
-      await settings.put(SETTINGS_KEYS.llmBaseUrl, baseUrl.value.trim());
-      await settings.put(SETTINGS_KEYS.llmModel, model.value.trim());
-    } catch (error) {
-      // 存不下也不能挡住使用：这次填的值仍在内存里，下次进来手填一次就好。
-      const detail = error instanceof Error ? error.message : "本地库不可用";
-      configError.value = `这次能直接用，但没保存下来：${detail}`;
-    }
-  }
 
   function setMode(next: TeachingMode): void {
     mode.value = next;
@@ -263,12 +226,9 @@ export const useSolveStore = defineStore("solve", () => {
           signal: controller.signal,
         },
         {
-          transport: createTransport(DEFAULT_TRANSPORT_MODE, () => ({
-            baseUrl: baseUrl.value,
-            apiKey: apiKey.value,
-          })),
+          transport: createTransport(DEFAULT_TRANSPORT_MODE, llm.endpoint),
           prompts: PROMPTS,
-          model: model.value.trim(),
+          model: llm.model.trim(),
           onEvent: (event: SolveEvent) => {
             if (event.kind === "stage" && event.state === "start") stage.value = event.stage;
             if (event.kind === "delta") streamText.value += event.text;
@@ -304,10 +264,6 @@ export const useSolveStore = defineStore("solve", () => {
   }
 
   return {
-    baseUrl,
-    model,
-    apiKey,
-    configError,
     configured,
     mode,
     draft,
@@ -331,8 +287,6 @@ export const useSolveStore = defineStore("solve", () => {
     choiceWarning,
     confirmChoice,
     canSend,
-    loadConfig,
-    saveEndpoint,
     setMode,
     addImages,
     removeImage,
