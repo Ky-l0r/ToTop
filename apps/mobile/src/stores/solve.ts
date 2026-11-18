@@ -16,6 +16,7 @@ import {
   judgeChoice,
   markOptions,
   runSolve,
+  saveSolvedQuestion,
   SETTINGS_KEYS,
   SolveError,
   type ChoiceVerdict,
@@ -81,6 +82,10 @@ export const useSolveStore = defineStore("solve", () => {
   const outcome = ref<SolveOutcome | null>(null);
   const failure = ref<LlmFailure | null>(null);
   const usage = ref<TokenUsage>(EMPTY_USAGE);
+
+  /** 落库结果。存不下时不能把已经算出来的解答丢掉，所以只提示、不清屏。 */
+  const savedMistakeId = ref("");
+  const saveError = ref("");
 
   let controller: AbortController | null = null;
 
@@ -207,6 +212,34 @@ export const useSolveStore = defineStore("solve", () => {
     controller?.abort();
   }
 
+  /**
+   * 把这次解答写进库。
+   *
+   * 失败不抛：解答已经算出来了，因为写库失败把整屏清掉是最差的选择。
+   * 页面上给一行提示，学生至少还能看、还能截图。
+   */
+  async function persist(result: SolveOutcome): Promise<void> {
+    saveError.value = "";
+    savedMistakeId.value = "";
+    try {
+      const { db } = await getDatabase();
+      const saved = await saveSolvedQuestion(db, {
+        spec: result.spec,
+        solution: result.solution,
+        report: result.report,
+        kpoints: result.kpoints,
+        mode: mode.value,
+        nowUtc: Date.now(),
+        imagePath: images.value[0]?.path ?? null,
+        imageSha256: images.value[0]?.sha256 ?? null,
+      });
+      savedMistakeId.value = saved.mistakeId;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "本地库不可用";
+      saveError.value = `解答算出来了，但没存进错题本：${detail}`;
+    }
+  }
+
   async function send(): Promise<void> {
     if (!canSend.value) return;
 
@@ -246,6 +279,7 @@ export const useSolveStore = defineStore("solve", () => {
       outcome.value = result;
       usage.value = result.usage;
       phase.value = "done";
+      await persist(result);
     } catch (error) {
       const parsed = toFailure(error);
       failure.value = parsed;
@@ -265,6 +299,8 @@ export const useSolveStore = defineStore("solve", () => {
     failure.value = null;
     usage.value = EMPTY_USAGE;
     choiceConfirmed.value = false;
+    savedMistakeId.value = "";
+    saveError.value = "";
   }
 
   return {
@@ -284,6 +320,8 @@ export const useSolveStore = defineStore("solve", () => {
     outcome,
     failure,
     usage,
+    savedMistakeId,
+    saveError,
     running,
     title,
     stageLabel,

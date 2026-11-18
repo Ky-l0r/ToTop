@@ -19,6 +19,21 @@ export {
   type ImportReport,
 } from "./db/legacy";
 export { SETTINGS_KEYS, SettingsRepo, type SettingKey } from "./repo/settings";
+export {
+  countMistakes,
+  getMistake,
+  listMistakeKpoints,
+  listMistakes,
+  relativeTime,
+  saveSolvedQuestion,
+  type KpointOption,
+  type MistakeDetail,
+  type MistakeFilter,
+  type MistakeListItem,
+  type SaveSolvedInput,
+  type SavedIds,
+} from "./repo/mistakes";
+export { createId } from "./util/id";
 export { bindParams, quoteSqlValue } from "./db/sql-text";
 
 // ---------- 模型调用 ----------

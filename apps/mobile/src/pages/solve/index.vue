@@ -31,6 +31,13 @@ const hiddenStepCount = computed(() =>
 onMounted(() => {
   void store.loadConfig();
 });
+
+function openSaved(): void {
+  if (!store.savedMistakeId) return;
+  uni.navigateTo({
+    url: `/pages/mistakes/detail?id=${encodeURIComponent(store.savedMistakeId)}`,
+  });
+}
 </script>
 
 <template>
@@ -139,6 +146,8 @@ onMounted(() => {
       <text class="usage">
         本次用量 {{ store.usage.inputTokens }} + {{ store.usage.outputTokens }} tokens
       </text>
+      <text v-if="store.savedMistakeId" class="saved" @tap="openSaved">已存进错题本</text>
+      <text v-if="store.saveError" class="notice">{{ store.saveError }}</text>
     </view>
 
     <!-- 失败：说清是什么问题，再给重试 -->
@@ -437,6 +446,10 @@ onMounted(() => {
 .usage {
   font-size: 11px;
   color: var(--tt-on-surface-variant);
+}
+.saved {
+  font-size: 12px;
+  color: var(--tt-primary);
 }
 
 .failure {

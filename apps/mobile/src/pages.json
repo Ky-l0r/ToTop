@@ -23,6 +23,18 @@
       "style": {
         "navigationBarTitleText": "全部功能"
       }
+    },
+    {
+      "path": "pages/mistakes/index",
+      "style": {
+        "navigationBarTitleText": "易错题"
+      }
+    },
+    {
+      "path": "pages/mistakes/detail",
+      "style": {
+        "navigationBarTitleText": "错题详情"
+      }
     }
   ],
   "globalStyle": {
