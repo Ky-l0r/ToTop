@@ -17,6 +17,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const tier = ref<PerformanceTier>("auto");
   const subjects = ref<string[]>([]);
   const importedAt = ref(0);
+  const firstContentMs = ref(0);
   const error = ref("");
   const loading = ref(false);
 
@@ -35,6 +36,9 @@ export const useSettingsStore = defineStore("settings", () => {
 
       const rawImported = await settings.get(SETTINGS_KEYS.legacyImportedAt);
       importedAt.value = rawImported ? Number(rawImported) : 0;
+
+      const rawFirst = await settings.get(SETTINGS_KEYS.firstContentMs);
+      firstContentMs.value = rawFirst ? Number(rawFirst) : 0;
     } catch (caught) {
       error.value = caught instanceof Error ? caught.message : "读不到设置";
     } finally {
@@ -66,7 +70,18 @@ export const useSettingsStore = defineStore("settings", () => {
     }
   }
 
-  return { tier, subjects, importedAt, error, loading, schemaVersion, load, setTier, toggleSubject };
+  return {
+    tier,
+    subjects,
+    importedAt,
+    firstContentMs,
+    error,
+    loading,
+    schemaVersion,
+    load,
+    setTier,
+    toggleSubject,
+  };
 });
 
 function parseSubjects(raw: string | null): string[] {

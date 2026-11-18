@@ -1,7 +1,4 @@
-import {
-  DEFAULT_TRANSPORT_MODE,
-  createTransport,
-} from "@/platform/net/transport";
+import { createTransport, defaultTransportMode } from "@/platform/net/transport";
 import { getDatabase } from "@/services/db";
 import { PROMPTS } from "@/solve/prompts";
 import { useLlmStore } from "@/stores/llm";
@@ -226,7 +223,7 @@ export const useSolveStore = defineStore("solve", () => {
           signal: controller.signal,
         },
         {
-          transport: createTransport(DEFAULT_TRANSPORT_MODE, llm.endpoint),
+          transport: createTransport(defaultTransportMode(), llm.endpoint),
           prompts: PROMPTS,
           model: llm.model.trim(),
           onEvent: (event: SolveEvent) => {

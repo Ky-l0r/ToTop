@@ -148,6 +148,23 @@ describe("fetch 流式传输", () => {
     expect(chunks.at(-1)).toMatchObject({ kind: "failed", failure: { kind: "aborted" } });
   });
 
+  it("服务端不回应时按超时收尾，文案说的是超时而不是网络错误", async () => {
+    const baseUrl = await startServer(() => {
+      // 只握手，不回任何数据，也不结束
+    });
+
+    const transport = createFetchTransport({
+      endpoint: () => endpoint(baseUrl),
+      timeoutMs: 50,
+    });
+    const chunks = await collect(transport.stream(request, new AbortController().signal));
+
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toMatchObject({ kind: "failed", failure: { kind: "network" } });
+    const message = chunks[0]?.kind === "failed" ? chunks[0].failure.message : "";
+    expect(message).toContain("还没回应");
+  });
+
   it("连不上时给网络失败，不抛到调用方", async () => {
     // 一个几乎肯定没有服务在听的端口
     const transport = createFetchTransport({ endpoint: () => endpoint("http://127.0.0.1:9") });

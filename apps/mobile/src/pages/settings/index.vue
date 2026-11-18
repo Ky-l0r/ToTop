@@ -29,6 +29,13 @@ const importedText = computed(() => {
 
 const promptVersion = PROMPTS.version;
 
+/** 首屏耗时：从模块加载到首页数据到位，真机验收就靠这个数。 */
+const firstContentText = computed(() => {
+  const ms = settings.firstContentMs;
+  if (!ms) return "还没记录";
+  return `${(ms / 1000).toFixed(2)} 秒`;
+});
+
 onShow(() => {
   void llm.load();
   void settings.load();
@@ -140,6 +147,10 @@ function notReady(): void {
       <view class="about-row">
         <text class="about-key">库结构</text>
         <text class="about-value">v{{ settings.schemaVersion }}</text>
+      </view>
+      <view class="about-row">
+        <text class="about-key">上次首屏</text>
+        <text class="about-value">{{ firstContentText }}</text>
       </view>
     </view>
 

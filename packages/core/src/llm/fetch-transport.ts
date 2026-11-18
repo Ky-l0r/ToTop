@@ -1,7 +1,7 @@
 import { abortedFailure, classifyHttpFailure, networkFailure } from "./errors";
 import { buildChatBody, chatCompletionsUrl, toChunk } from "./openai";
 import { SseParser } from "./sse";
-import type { LlmChunk, LlmEndpoint, LlmRequest, LlmTransport } from "./types";
+import type { LlmChunk, LlmEndpoint, LlmFailure, LlmRequest, LlmTransport } from "./types";
 
 /**
  * 基于 fetch 的流式传输。
@@ -20,15 +20,37 @@ export interface FetchTransportOptions {
   fetchImpl?: typeof fetch;
   /** 额外请求头，例如自建网关需要的组织标识。 */
   headers?: () => Record<string, string>;
+  /**
+   * 整条请求的超时（毫秒），默认 120 秒。
+   *
+   * 没有超时的 fetch 会一直挂着：学生看到的是"点了发送没反应"，
+   * 而进程还在后台等一个永远不来的响应。非流式的 uni 通道已经设了同样的 120 秒，
+   * 两条路必须一致，否则换驱动就换了一种故障表现。
+   */
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 120_000;
 
 export function createFetchTransport(options: FetchTransportOptions): LlmTransport {
   const doFetch: typeof fetch =
     options.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   return {
     async *stream(request: LlmRequest, signal: AbortSignal): AsyncIterable<LlmChunk> {
       const endpoint = options.endpoint();
+
+      // 超时与"用户取消"共用一个 AbortController，靠 timedOut 区分是谁掐的：
+      // 两者对学生意味着完全不同的下一步（等一等再试 / 自己按的，不用管）。
+      const controller = new AbortController();
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeoutMs);
+      const onAbort = (): void => controller.abort();
+      signal.addEventListener("abort", onAbort, { once: true });
 
       let response: Response;
       try {
@@ -41,13 +63,12 @@ export function createFetchTransport(options: FetchTransportOptions): LlmTranspo
             ...(options.headers?.() ?? {}),
           },
           body: JSON.stringify(buildChatBody(request, { stream: true })),
-          signal,
+          signal: controller.signal,
         });
       } catch (error) {
-        yield {
-          kind: "failed",
-          failure: signal.aborted ? abortedFailure() : networkFailure(describe(error)),
-        };
+        clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
+        yield { kind: "failed", failure: failureOf(error, timedOut, signal, timeoutMs) };
         return;
       }
 
@@ -61,6 +82,8 @@ export function createFetchTransport(options: FetchTransportOptions): LlmTranspo
       if (!body) {
         // 网关偶尔忽略 stream 参数、一次性返回整段 SSE。按整段解析，行为一致。
         const whole = await readTextSafely(response);
+        clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
         for (const chunk of parseAll(whole)) yield chunk;
         return;
       }
@@ -84,11 +107,10 @@ export function createFetchTransport(options: FetchTransportOptions): LlmTranspo
           if (chunk) yield chunk;
         }
       } catch (error) {
-        yield {
-          kind: "failed",
-          failure: signal.aborted ? abortedFailure() : networkFailure(describe(error)),
-        };
+        yield { kind: "failed", failure: failureOf(error, timedOut, signal, timeoutMs) };
       } finally {
+        clearTimeout(timer);
+        signal.removeEventListener("abort", onAbort);
         // 不 release 也能被 GC，但显式释放能让 abort 立刻断开底层连接。
         try {
           reader.releaseLock();
@@ -123,6 +145,28 @@ async function readTextSafely(response: Response): Promise<string> {
   } catch {
     return "";
   }
+}
+
+/**
+ * 把异常翻译成失败档。
+ *
+ * 超时也走 network 档：对学生来说两者都是"没连上"，但文案要写明是超时，
+ * 否则他会一直重试同一个已经挂住的地址。
+ */
+function failureOf(
+  error: unknown,
+  timedOut: boolean,
+  signal: AbortSignal,
+  timeoutMs: number,
+): LlmFailure {
+  if (timedOut) {
+    return {
+      kind: "network",
+      message: `等了 ${Math.round(timeoutMs / 1000)} 秒还没回应，可能是网络或接口地址的问题`,
+    };
+  }
+  if (signal.aborted) return abortedFailure();
+  return networkFailure(describe(error));
 }
 
 function describe(error: unknown): string {
