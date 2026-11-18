@@ -11,7 +11,7 @@
     "typecheck": "pnpm -r --if-present run type-check",
     "lint": "eslint .",
     "test": "pnpm -r --if-present run test",
-    "check": "pnpm run typecheck && pnpm run lint && pnpm run test"
+    "check": "pnpm run typecheck && pnpm run lint && pnpm --filter @totop/mobile run check:tokens && pnpm run test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

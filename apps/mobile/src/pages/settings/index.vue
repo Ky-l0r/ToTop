@@ -162,20 +162,20 @@ function notReady(): void {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) var(--tt-space-16) var(--tt-space-32);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
 .card-title {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
@@ -183,30 +183,30 @@ function notReady(): void {
 .field {
   width: 100%;
   height: 40px;
-  padding: 0 10px;
+  padding: 0 var(--tt-space-10);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-surface);
   border: 1px solid var(--tt-outline);
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .hint {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .tiers {
   display: flex;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .tier {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 9px 8px;
+  gap: var(--tt-space-2);
+  padding: var(--tt-space-10) var(--tt-space-8);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-surface);
   border: 1px solid transparent;
@@ -216,7 +216,7 @@ function notReady(): void {
   background: var(--tt-primary-container);
 }
 .tier-label {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
@@ -224,19 +224,19 @@ function notReady(): void {
   color: var(--tt-primary);
 }
 .tier-hint {
-  font-size: 10px;
+  font-size: var(--tt-text-10);
   color: var(--tt-on-surface-variant);
-  line-height: 1.4;
+  line-height: var(--tt-leading-tight);
 }
 
 .subjects {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .subject {
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-12);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface);
   border: 1px solid transparent;
 }
@@ -245,7 +245,7 @@ function notReady(): void {
   border-color: var(--tt-primary);
 }
 .subject-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .subject-on .subject-text {
@@ -255,7 +255,7 @@ function notReady(): void {
 
 .ghost {
   align-self: flex-start;
-  padding: 7px 14px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
@@ -263,7 +263,7 @@ function notReady(): void {
   opacity: 0.45;
 }
 .ghost-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
@@ -272,16 +272,16 @@ function notReady(): void {
   justify-content: space-between;
 }
 .about-key {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 .about-value {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface);
 }
 
 .error {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

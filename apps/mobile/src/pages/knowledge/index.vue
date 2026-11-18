@@ -116,8 +116,8 @@ function notReady(): void {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) 0 var(--tt-space-32);
 }
 
 .filters {
@@ -126,12 +126,12 @@ function notReady(): void {
 }
 .filter-row {
   display: flex;
-  gap: 8px;
-  padding: 4px 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-4) var(--tt-space-16);
 }
 .chip {
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-12);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface-variant);
   border: 1px solid transparent;
 }
@@ -140,7 +140,7 @@ function notReady(): void {
   border-color: var(--tt-primary);
 }
 .chip-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .chip-on .chip-text {
@@ -150,28 +150,28 @@ function notReady(): void {
 
 .heat {
   display: flex;
-  gap: 6px;
-  padding: 0 14px;
+  gap: var(--tt-space-6);
+  padding: 0 var(--tt-space-16);
   overflow-x: auto;
 }
 .heat-cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--tt-space-4);
   align-items: center;
   min-width: 56px;
 }
 .heat-bar {
   width: 100%;
   height: 6px;
-  border-radius: 3px;
+  border-radius: var(--tt-radius-xs);
 }
 .heat-name {
-  font-size: 10px;
+  font-size: var(--tt-text-10);
   color: var(--tt-on-surface-variant);
 }
 .heat-value {
-  font-size: 10px;
+  font-size: var(--tt-text-10);
   color: var(--tt-on-surface-variant);
 }
 
@@ -191,15 +191,15 @@ function notReady(): void {
 .list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 14px;
+  gap: var(--tt-space-6);
+  padding: 0 var(--tt-space-16);
 }
 .item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 12px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
@@ -207,57 +207,57 @@ function notReady(): void {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--tt-space-4);
 }
 .item-name {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .item-meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .item-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--tt-space-10);
 }
 /* 分数用色块表示档位，和章节热力同一套颜色 */
 .item-score {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: var(--tt-space-2) var(--tt-space-8);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-12);
   font-weight: 600;
 }
 .practice {
-  padding: 4px 12px;
+  padding: var(--tt-space-4) var(--tt-space-12);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .practice-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface);
 }
 
 .empty {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--tt-space-4);
   align-items: center;
-  padding: 40px 16px;
+  padding: var(--tt-space-40) var(--tt-space-16);
 }
 .empty-title {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .empty-hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .error {
-  padding: 0 16px;
-  font-size: 12px;
+  padding: 0 var(--tt-space-16);
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

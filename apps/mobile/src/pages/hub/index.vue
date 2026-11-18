@@ -49,20 +49,20 @@ function open(entry: Entry): void {
 
 <style scoped>
 .page {
-  padding: 14px;
+  padding: var(--tt-space-16);
 }
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .cell {
   width: calc(33.333% - 6px);
   min-height: 78px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 10px;
+  gap: var(--tt-space-4);
+  padding: var(--tt-space-12) var(--tt-space-10);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
@@ -70,13 +70,13 @@ function open(entry: Entry): void {
   opacity: 0.45;
 }
 .cell-label {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
 .cell-hint {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
-  line-height: 1.4;
+  line-height: var(--tt-leading-tight);
 }
 </style>

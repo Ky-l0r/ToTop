@@ -150,21 +150,21 @@ function formatDate(utc: number): string {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) var(--tt-space-16) var(--tt-space-32);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
 .card-title,
 .block-title {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
@@ -174,28 +174,28 @@ function formatDate(utc: number): string {
   justify-content: space-between;
 }
 .meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .stem {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
-  line-height: 1.6;
+  line-height: var(--tt-leading-relaxed);
 }
 .answer {
-  font-size: 16px;
+  font-size: var(--tt-text-16);
   font-weight: 600;
   color: var(--tt-primary);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .step {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .step-no {
   width: 18px;
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
   text-align: center;
 }
@@ -203,17 +203,17 @@ function formatDate(utc: number): string {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--tt-space-2);
 }
 .step-content {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.55;
+  line-height: var(--tt-leading-normal);
 }
 .step-why {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .warn {
@@ -224,28 +224,28 @@ function formatDate(utc: number): string {
   color: var(--tt-warning);
 }
 .warn-text {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--tt-text-13);
+  line-height: var(--tt-leading-normal);
 }
 
 .ai {
   background: var(--tt-primary-container);
 }
 .explain {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.7;
+  line-height: var(--tt-leading-relaxed);
 }
 
 .hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .primary {
   align-self: flex-start;
-  padding: 8px 16px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-primary);
 }
@@ -253,23 +253,23 @@ function formatDate(utc: number): string {
   opacity: 0.5;
 }
 .primary-text {
-  font-size: 13px;
-  color: #ffffff;
+  font-size: var(--tt-text-13);
+  color: var(--tt-on-primary);
 }
 
 .ghost {
   align-self: flex-start;
-  padding: 8px 16px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .ghost-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .error {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

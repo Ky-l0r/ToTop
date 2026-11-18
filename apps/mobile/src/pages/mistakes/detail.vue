@@ -134,15 +134,15 @@ function formatDate(utc: number): string {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) var(--tt-space-16) var(--tt-space-32);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
@@ -152,31 +152,31 @@ function formatDate(utc: number): string {
   justify-content: space-between;
 }
 .meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .stem {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
-  line-height: 1.6;
+  line-height: var(--tt-leading-relaxed);
 }
 .ask {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 
 .block-title {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
 .answer {
-  font-size: 18px;
+  font-size: var(--tt-text-19);
   font-weight: 600;
   color: var(--tt-primary);
 }
 .answer-muted {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface-variant);
 }
 
@@ -188,22 +188,22 @@ function formatDate(utc: number): string {
   color: var(--tt-error);
 }
 .error-head {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   font-weight: 600;
 }
 .error-body {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.55;
+  line-height: var(--tt-leading-normal);
 }
 
 .step {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .step-no {
   width: 18px;
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
   text-align: center;
 }
@@ -211,17 +211,17 @@ function formatDate(utc: number): string {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--tt-space-2);
 }
 .step-content {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.55;
+  line-height: var(--tt-leading-normal);
 }
 .step-why {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .fold-row {
@@ -230,47 +230,47 @@ function formatDate(utc: number): string {
   justify-content: space-between;
 }
 .fold {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 .student-steps {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--tt-space-4);
 }
 .student-step {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .ghost {
   align-self: flex-start;
-  padding: 8px 16px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .ghost-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .kpoint {
   align-self: flex-start;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: var(--tt-space-4) var(--tt-space-10);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
   background: var(--tt-primary-container);
 }
 
 .error-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

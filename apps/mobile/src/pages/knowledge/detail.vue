@@ -117,20 +117,20 @@ function notReady(): void {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) var(--tt-space-16) var(--tt-space-32);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
 .card-title {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
@@ -141,76 +141,76 @@ function notReady(): void {
   justify-content: space-between;
 }
 .name {
-  font-size: 18px;
+  font-size: var(--tt-text-19);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
 .score {
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 15px;
+  padding: var(--tt-space-4) var(--tt-space-10);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-15);
   font-weight: 600;
 }
 .meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .level {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .event {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .event-kind {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 .event-time {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .event-score {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .mistake {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px;
+  gap: var(--tt-space-4);
+  padding: var(--tt-space-10);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-surface);
 }
 .mistake-stem {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 .mistake-meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .ghost {
   align-self: flex-start;
-  padding: 8px 16px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .ghost-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
@@ -228,7 +228,7 @@ function notReady(): void {
 }
 
 .error {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

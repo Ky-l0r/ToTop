@@ -8,6 +8,6 @@
 page {
   background-color: var(--tt-background);
   color: var(--tt-on-surface);
-  font-size: 16px;
+  font-size: var(--tt-text-16);
 }
 </style>

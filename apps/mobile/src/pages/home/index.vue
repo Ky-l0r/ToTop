@@ -145,14 +145,14 @@ function goTab(url: string): void {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 14px;
+  gap: var(--tt-space-16);
+  padding: var(--tt-space-16);
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .section-head {
   display: flex;
@@ -160,80 +160,80 @@ function goTab(url: string): void {
   justify-content: space-between;
 }
 .section-title {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
 .section-more {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 
 .weak-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .weak-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  padding: var(--tt-space-12);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
 .weak-main {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--tt-space-4);
 }
 .weak-name {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .weak-meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .weak-arrow {
-  font-size: 18px;
+  font-size: var(--tt-text-19);
   color: var(--tt-outline-strong);
 }
 
 .stats {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .stat {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 12px;
+  gap: var(--tt-space-4);
+  padding: var(--tt-space-12);
   border-radius: var(--tt-radius-md);
   background: var(--tt-primary-container);
 }
 .stat-value {
-  font-size: 20px;
+  font-size: var(--tt-text-19);
   font-weight: 600;
   color: var(--tt-primary);
 }
 .stat-label {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .grid-item {
   width: calc(50% - 4px);
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 14px;
+  gap: var(--tt-space-4);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
@@ -241,26 +241,26 @@ function goTab(url: string): void {
   opacity: 0.45;
 }
 .grid-label {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .grid-hint {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .skeleton-block {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
 .skeleton-line {
   height: 12px;
   width: 60%;
-  border-radius: 6px;
+  border-radius: var(--tt-radius-xs);
   background: var(--tt-outline);
 }
 .skeleton-line.wide {
@@ -271,7 +271,7 @@ function goTab(url: string): void {
 }
 
 .error-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

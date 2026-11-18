@@ -221,79 +221,79 @@ function openSaved(): void {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px 14px 28px;
+  gap: var(--tt-space-12);
+  padding: var(--tt-space-16) var(--tt-space-16) var(--tt-space-32);
 }
 
 .header {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--tt-space-2);
 }
 .title {
-  font-size: 19px;
+  font-size: var(--tt-text-19);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
 .stage {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 .meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .meta-item {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .confirm {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: var(--tt-space-6);
+  padding: var(--tt-space-8) var(--tt-space-10);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-warning-container);
 }
 .confirm-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-warning);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 .confirm-actions {
   display: flex;
-  gap: 16px;
+  gap: var(--tt-space-16);
 }
 .confirm-action {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   font-weight: 600;
   color: var(--tt-warning);
 }
 .notice {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-warning);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .option {
   display: flex;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-6) var(--tt-space-8);
   border-radius: var(--tt-radius-sm);
 }
 .option-label {
   width: 16px;
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
 .option-text {
   flex: 1;
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 /* 选中项：主色底 + 加粗，扫一眼就知道答案在哪一项 */
 .option-label-on {
@@ -306,21 +306,21 @@ function openSaved(): void {
 
 .expand {
   align-self: flex-start;
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 
 .modes {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .mode {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--tt-space-4);
   min-height: 44px;
-  padding: 10px 12px;
+  padding: var(--tt-space-10) var(--tt-space-12);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
   border: 1px solid transparent;
@@ -330,7 +330,7 @@ function openSaved(): void {
   border-color: var(--tt-primary);
 }
 .mode-label {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
@@ -338,15 +338,15 @@ function openSaved(): void {
   color: var(--tt-primary);
 }
 .mode-hint {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
@@ -354,14 +354,14 @@ function openSaved(): void {
 .answer {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--tt-space-2);
 }
 .answer-label {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .answer-text {
-  font-size: 18px;
+  font-size: var(--tt-text-19);
   font-weight: 600;
   color: var(--tt-primary);
 }
@@ -369,21 +369,21 @@ function openSaved(): void {
 .block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .block-title {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   font-weight: 600;
   color: var(--tt-on-surface-variant);
 }
 
 .step {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .step-no {
   width: 18px;
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
   text-align: center;
 }
@@ -391,22 +391,22 @@ function openSaved(): void {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--tt-space-2);
 }
 .step-content {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.55;
+  line-height: var(--tt-leading-normal);
 }
 /* 思路比结论小一号、换个颜色：扫读时先看结论，需要时才读依据 */
 .step-why {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .error {
-  padding: 10px;
+  padding: var(--tt-space-10);
   border-radius: var(--tt-radius-md);
   background: var(--tt-error-container);
 }
@@ -414,39 +414,39 @@ function openSaved(): void {
   color: var(--tt-error);
 }
 .error-head {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 .error-text {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.55;
+  line-height: var(--tt-leading-normal);
 }
 .error-next {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .chip {
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: var(--tt-space-4) var(--tt-space-10);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
   background: var(--tt-primary-container);
 }
 
 .usage {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .saved {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 
@@ -454,42 +454,42 @@ function openSaved(): void {
   background: var(--tt-error-container);
 }
 .failure-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-error);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 .failure-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 
 .ghost {
   align-self: flex-start;
-  padding: 6px 12px;
+  padding: var(--tt-space-6) var(--tt-space-12);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .stream {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .composer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-10) var(--tt-space-12);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
 
 .shots {
   display: flex;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .shot {
   position: relative;
@@ -515,14 +515,14 @@ function openSaved(): void {
   justify-content: center;
 }
 .shot-del-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   line-height: 1;
-  color: #ffffff;
+  color: var(--tt-on-primary);
 }
 .shot-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .shot-actions .tip {
   flex: 1;
@@ -532,18 +532,18 @@ function openSaved(): void {
   width: 100%;
   min-height: 44px;
   max-height: 140px;
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
 }
 .composer-row {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .tip {
   flex: 1;
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 /* 发送键与输入框底边对齐，单行时也不上浮 */
@@ -563,8 +563,8 @@ function openSaved(): void {
   background: var(--tt-error);
 }
 .send-text {
-  font-size: 14px;
-  color: #ffffff;
+  font-size: var(--tt-text-14);
+  color: var(--tt-on-primary);
 }
 
 .tip-link {

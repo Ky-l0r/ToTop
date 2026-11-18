@@ -88,8 +88,8 @@ function when(utc: number): string {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) 0 var(--tt-space-32);
 }
 
 .filters {
@@ -98,12 +98,12 @@ function when(utc: number): string {
 }
 .filter-row {
   display: flex;
-  gap: 8px;
-  padding: 4px 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-4) var(--tt-space-16);
 }
 .chip {
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-12);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface-variant);
   border: 1px solid transparent;
 }
@@ -112,7 +112,7 @@ function when(utc: number): string {
   border-color: var(--tt-primary);
 }
 .chip-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .chip-on .chip-text {
@@ -122,39 +122,39 @@ function when(utc: number): string {
 
 .actions {
   display: flex;
-  gap: 8px;
-  padding: 0 14px;
+  gap: var(--tt-space-8);
+  padding: 0 var(--tt-space-16);
 }
 .primary {
-  padding: 9px 16px;
+  padding: var(--tt-space-10) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-primary);
 }
 .primary-text {
-  font-size: 14px;
-  color: #ffffff;
+  font-size: var(--tt-text-14);
+  color: var(--tt-on-primary);
 }
 .ghost {
-  padding: 9px 16px;
+  padding: var(--tt-space-10) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .ghost-text {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
 }
 
 .cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 14px;
+  gap: var(--tt-space-8);
+  padding: 0 var(--tt-space-16);
 }
 .card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px;
+  gap: var(--tt-space-6);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
@@ -162,25 +162,25 @@ function when(utc: number): string {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .card-title {
   flex: 1;
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   font-weight: 600;
   color: var(--tt-on-surface);
-  line-height: 1.4;
+  line-height: var(--tt-leading-tight);
 }
 .card-time {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
   flex-shrink: 0;
 }
 /* 答案首段限两行：卡片高度要可预期，不然一屏里长短差太多 */
 .card-answer {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -190,12 +190,12 @@ function when(utc: number): string {
 .card-foot {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .tag {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  padding: var(--tt-space-2) var(--tt-space-8);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-11);
   color: var(--tt-primary);
   background: var(--tt-primary-container);
 }
@@ -211,27 +211,27 @@ function when(utc: number): string {
 .empty {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--tt-space-4);
   align-items: center;
-  padding: 44px 16px;
+  padding: var(--tt-space-40) var(--tt-space-16);
 }
 .empty-title {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .empty-hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .ok {
-  padding: 0 16px;
-  font-size: 12px;
+  padding: 0 var(--tt-space-16);
+  font-size: var(--tt-text-12);
   color: var(--tt-success);
 }
 .error {
-  padding: 0 16px;
-  font-size: 12px;
+  padding: 0 var(--tt-space-16);
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

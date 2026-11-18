@@ -65,4 +65,14 @@ export default tseslint.config(
       eqeqeq: ["error", "smart"],
     },
   },
+  {
+    // 构建/检查脚本跑在 Node 里，用 process 与 console 是本职。
+    files: ["**/scripts/**/*.mjs"],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+    rules: {
+      "no-console": "off",
+    },
+  },
 );

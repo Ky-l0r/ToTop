@@ -217,8 +217,8 @@ function subjectName(code: string): string {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) 0 var(--tt-space-32);
 }
 
 .subjects {
@@ -227,12 +227,12 @@ function subjectName(code: string): string {
 }
 .subject-row {
   display: flex;
-  gap: 8px;
-  padding: 4px 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-4) var(--tt-space-16);
 }
 .chip {
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-12);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface-variant);
   border: 1px solid transparent;
 }
@@ -241,7 +241,7 @@ function subjectName(code: string): string {
   border-color: var(--tt-primary);
 }
 .chip-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .chip-on .chip-text {
@@ -250,11 +250,11 @@ function subjectName(code: string): string {
 }
 
 .card {
-  margin: 0 14px;
+  margin: 0 var(--tt-space-16);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-16);
   border-radius: var(--tt-radius-lg);
   background: var(--tt-surface-variant);
 }
@@ -264,96 +264,96 @@ function subjectName(code: string): string {
   align-items: baseline;
 }
 .card-title {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   font-weight: 600;
   color: var(--tt-on-surface);
 }
 .card-date {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .score-line {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .score {
-  font-size: 26px;
+  font-size: var(--tt-text-26);
   font-weight: 600;
   color: var(--tt-primary);
 }
 .score-full {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .rate {
   margin-left: auto;
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
 }
 
 .hint {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
 }
 
 .trend {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .bar-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .bar-date {
   width: 64px;
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .bar-track {
   flex: 1;
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--tt-radius-xs);
   background: var(--tt-surface);
   overflow: hidden;
 }
 .bar-fill {
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--tt-radius-xs);
   background: var(--tt-primary);
 }
 .bar-value {
   width: 38px;
   text-align: right;
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface);
 }
 
 .empty {
-  margin: 0 14px;
+  margin: 0 var(--tt-space-16);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--tt-space-8);
   align-items: center;
-  padding: 40px 16px;
+  padding: var(--tt-space-40) var(--tt-space-16);
 }
 .empty-title {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .empty-hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .primary {
-  margin: 0 14px;
+  margin: 0 var(--tt-space-16);
   align-self: center;
-  padding: 9px 22px;
+  padding: var(--tt-space-10) var(--tt-space-24);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-primary);
 }
@@ -361,30 +361,30 @@ function subjectName(code: string): string {
   margin: 0;
 }
 .primary-text {
-  font-size: 14px;
-  color: #ffffff;
+  font-size: var(--tt-text-14);
+  color: var(--tt-on-primary);
 }
 
 .ghost {
-  margin: 0 14px;
+  margin: 0 var(--tt-space-16);
   align-self: flex-start;
-  padding: 7px 14px;
+  padding: var(--tt-space-8) var(--tt-space-16);
   border-radius: var(--tt-radius-sm);
   border: 1px solid var(--tt-outline-strong);
 }
 .ghost-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .field {
   width: 100%;
   height: 40px;
-  padding: 0 10px;
+  padding: 0 var(--tt-space-10);
   border-radius: var(--tt-radius-sm);
   background: var(--tt-surface);
   border: 1px solid var(--tt-outline);
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 .field-picker {
@@ -392,7 +392,7 @@ function subjectName(code: string): string {
   align-items: center;
 }
 .picker-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 .field-small {
@@ -402,11 +402,11 @@ function subjectName(code: string): string {
 .pick-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--tt-space-6);
 }
 .pick {
-  padding: 5px 10px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-10);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface);
   border: 1px solid transparent;
 }
@@ -415,7 +415,7 @@ function subjectName(code: string): string {
   border-color: var(--tt-primary);
 }
 .pick-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 .pick-on .pick-text {
@@ -426,16 +426,16 @@ function subjectName(code: string): string {
 .score-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .score-subject {
   width: 52px;
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface);
 }
 
 .error {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

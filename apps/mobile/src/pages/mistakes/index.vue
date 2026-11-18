@@ -145,8 +145,8 @@ function timeLabel(createdAt: number): string {
 .page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 28px;
+  gap: var(--tt-space-10);
+  padding: var(--tt-space-12) 0 var(--tt-space-32);
 }
 
 .filters {
@@ -155,12 +155,12 @@ function timeLabel(createdAt: number): string {
 }
 .filter-row {
   display: flex;
-  gap: 8px;
-  padding: 4px 14px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-4) var(--tt-space-16);
 }
 .chip {
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: var(--tt-space-6) var(--tt-space-12);
+  border-radius: var(--tt-radius-pill);
   background: var(--tt-surface-variant);
   border: 1px solid transparent;
 }
@@ -169,7 +169,7 @@ function timeLabel(createdAt: number): string {
   border-color: var(--tt-primary);
 }
 .chip-text {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   color: var(--tt-on-surface-variant);
 }
 .chip-on .chip-text {
@@ -180,44 +180,44 @@ function timeLabel(createdAt: number): string {
 .filter-summary {
   display: flex;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 var(--tt-space-16);
 }
 .summary-text {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 .summary-clear {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-primary);
 }
 
 .empty {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--tt-space-4);
   align-items: center;
-  padding: 48px 16px;
+  padding: var(--tt-space-40) var(--tt-space-16);
 }
 .empty-title {
-  font-size: 15px;
+  font-size: var(--tt-text-15);
   color: var(--tt-on-surface);
 }
 .empty-hint {
-  font-size: 12px;
+  font-size: var(--tt-text-12);
   color: var(--tt-on-surface-variant);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 14px;
+  gap: var(--tt-space-8);
+  padding: 0 var(--tt-space-16);
 }
 .item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
+  gap: var(--tt-space-6);
+  padding: var(--tt-space-12);
   border-radius: var(--tt-radius-md);
   background: var(--tt-surface-variant);
 }
@@ -226,13 +226,13 @@ function timeLabel(createdAt: number): string {
   justify-content: space-between;
 }
 .item-meta {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 .item-stem {
-  font-size: 14px;
+  font-size: var(--tt-text-14);
   color: var(--tt-on-surface);
-  line-height: 1.5;
+  line-height: var(--tt-leading-normal);
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
@@ -243,23 +243,23 @@ function timeLabel(createdAt: number): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--tt-space-8);
 }
 .kpoint {
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
+  padding: var(--tt-space-2) var(--tt-space-8);
+  border-radius: var(--tt-radius-pill);
+  font-size: var(--tt-text-11);
   color: var(--tt-primary);
   background: var(--tt-primary-container);
 }
 .item-answer {
-  font-size: 11px;
+  font-size: var(--tt-text-11);
   color: var(--tt-on-surface-variant);
 }
 
 .error-text {
-  padding: 0 16px;
-  font-size: 12px;
+  padding: 0 var(--tt-space-16);
+  font-size: var(--tt-text-12);
   color: var(--tt-error);
 }
 </style>

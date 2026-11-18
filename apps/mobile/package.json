@@ -8,7 +8,8 @@
     "build:h5": "uni build",
     "dev:app": "uni -p app",
     "build:app": "uni build -p app",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "check:tokens": "node scripts/check-tokens.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-5030420261029002",

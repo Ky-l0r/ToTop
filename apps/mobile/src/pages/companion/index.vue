@@ -13,15 +13,15 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 24px 16px;
+  gap: var(--tt-space-8);
+  padding: var(--tt-space-24) var(--tt-space-16);
 }
 .title {
-  font-size: 22px;
+  font-size: var(--tt-text-22);
   font-weight: 600;
 }
 .hint {
-  font-size: 13px;
+  font-size: var(--tt-text-13);
   opacity: 0.55;
 }
 </style>
