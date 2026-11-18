@@ -5,6 +5,31 @@
 
 ## [Unreleased]
 
+### 1.0 工程骨架（T1）：三棵树与四个 tab 空壳
+
+#### Added
+
+- **根 workspace**：`package.json` + `pnpm-workspace.yaml`，三处应用共用一个 lockfile。
+  `pnpm 12` 起依赖安装脚本默认不执行，`allowBuilds` 里只放行 esbuild，core-js 明确拒绝。
+- **`apps/mobile/`**：uni-app + Vue 3 + TypeScript 工程，官方 `uni-preset-vue#vite-ts` 模板落地，
+  依赖种类裁到双端实际需要的四项（uni-app、uni-app-plus、uni-components、uni-h5）。
+- **四个 tab**：首页 / 拍题 / 陪伴 / 功能中心，`pages.json` 配好 tabBar，页脚文字配色沿用
+  `Tokens.kt` 的 `#6D5BD0` 与 `#69667A`，页面本身只是占位，等 T8 至 T12 填内容。
+- **`packages/core/`**：纯 TS 领域层骨架，严格模式 + 禁未使用变量，不依赖任何平台 API。
+
+#### Changed
+
+- **manifest 权限从 17 条收到 5 条**：删掉模板自带的 READ_LOGS、GET_ACCOUNTS、READ_PHONE_STATE、
+  WRITE_SETTINGS、MOUNT_UNMOUNT_FILESYSTEMS 等，只留联网、网络状态、相机、振动。
+  模板给的是"能用就行"的全量清单，与本项目"不采集身份信息"的底线冲突。
+- **删除小程序与快应用的编译配置**：本期只出 Android 与 iOS，留着 mp-weixin 段只会让人以为支持。
+
+#### Notes
+
+- 验证：`type-check` 与 `build:h5` 均通过，产物里四个页面各自成 chunk。
+- `dev:app` / `build:app` 未验证，端上构建需 HBuilderX 或云打包，属 T13。
+- lint 与单元测试尚未接入，T3 之前必须补上。
+
 ### 1.0 改造规划：UniApp 双端与页面重构
 
 本次只提交文档与规范，不含代码改动；实施顺序与工期见 `docs/改造指南-1.0.0.md`。

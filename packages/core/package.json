@@ -1,0 +1,17 @@
+{
+  "name": "@totop/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "To Top 领域层：纯 TypeScript，不依赖任何平台 API",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.4"
+  }
+}

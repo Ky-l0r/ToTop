@@ -1,0 +1,31 @@
+{
+  "name": "@totop/mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "To Top 双端应用（Android / iOS）",
+  "scripts": {
+    "dev:h5": "uni",
+    "build:h5": "uni build",
+    "dev:app": "uni -p app",
+    "build:app": "uni build -p app",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5030420261029002",
+    "@dcloudio/uni-app-plus": "3.0.0-5030420261029002",
+    "@dcloudio/uni-components": "3.0.0-5030420261029002",
+    "@dcloudio/uni-h5": "3.0.0-5030420261029002",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-cli-shared": "3.0.0-5030420261029002",
+    "@dcloudio/uni-stacktracey": "3.0.0-5030420261029002",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5030420261029002",
+    "@vue/runtime-core": "^3.4.21",
+    "@vue/tsconfig": "^0.1.3",
+    "typescript": "^4.9.4",
+    "vite": "5.2.8",
+    "vue-tsc": "^1.0.24"
+  }
+}

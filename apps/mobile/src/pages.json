@@ -1,0 +1,60 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "To Top"
+      }
+    },
+    {
+      "path": "pages/solve/index",
+      "style": {
+        "navigationBarTitleText": "拍题"
+      }
+    },
+    {
+      "path": "pages/companion/index",
+      "style": {
+        "navigationBarTitleText": "陪伴"
+      }
+    },
+    {
+      "path": "pages/hub/index",
+      "style": {
+        "navigationBarTitleText": "全部功能"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "To Top",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#FFFFFF",
+    "backgroundColorTop": "#FFFFFF",
+    "backgroundColorBottom": "#FFFFFF"
+  },
+  "tabBar": {
+    "color": "#69667A",
+    "selectedColor": "#6D5BD0",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/solve/index",
+        "text": "拍题"
+      },
+      {
+        "pagePath": "pages/companion/index",
+        "text": "陪伴"
+      },
+      {
+        "pagePath": "pages/hub/index",
+        "text": "功能"
+      }
+    ]
+  }
+}
