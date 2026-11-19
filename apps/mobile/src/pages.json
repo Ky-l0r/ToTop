@@ -1,4 +1,6 @@
 {
+  "darkmode": true,
+  "themeLocation": "theme.json",
   "pages": [
     {
       "path": "pages/home/index",
@@ -74,17 +76,17 @@
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "black",
+    "navigationBarTextStyle": "@navTextColor",
     "navigationBarTitleText": "To Top",
-    "navigationBarBackgroundColor": "#FFFFFF",
-    "backgroundColor": "#FFFFFF",
-    "backgroundColorTop": "#FFFFFF",
-    "backgroundColorBottom": "#FFFFFF"
+    "navigationBarBackgroundColor": "@navBgColor",
+    "backgroundColor": "@pageBgColor",
+    "backgroundColorTop": "@pageBgColor",
+    "backgroundColorBottom": "@pageBgColor"
   },
   "tabBar": {
-    "color": "#69667A",
-    "selectedColor": "#6D5BD0",
-    "backgroundColor": "#FFFFFF",
+    "color": "@tabTextColor",
+    "selectedColor": "@tabSelectedColor",
+    "backgroundColor": "@tabBgColor",
     "borderStyle": "black",
     "list": [
       {

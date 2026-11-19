@@ -71,3 +71,4 @@ pnpm-debug.log*
 
 # 构建期生成的类型文件
 apps/mobile/src/uni_modules/**/node_modules/
+.tools/

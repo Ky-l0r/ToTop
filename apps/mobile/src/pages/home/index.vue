@@ -229,6 +229,9 @@ function goTab(url: string): void {
   gap: var(--tt-space-8);
 }
 .grid-item {
+  /* 必须 border-box：content-box 下 padding 会让每格超过 50%，两列放不下就掉成一列。
+     真机上第一版就是这样：四格竖着排，占了两屏高。 */
+  box-sizing: border-box;
   width: calc(50% - 4px);
   display: flex;
   flex-direction: column;

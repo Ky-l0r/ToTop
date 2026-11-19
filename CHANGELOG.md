@@ -5,6 +5,35 @@
 
 ## [Unreleased]
 
+### 1.0 真机接入与首轮发现（T13 起步）
+
+通过无线调试连上手机（Redmi K30 5G / Android 12 / 5.4GB 内存），把 H5 产物推到手机浏览器
+里做真机渲染验证。**两个问题当场暴露，当场修掉**：
+
+#### Fixed
+
+- **首页"常用功能"四格挤成一列**：`width: calc(50% - 4px)` 配 `padding` 但没设
+  `box-sizing: border-box`，content-box 下每格实际宽度超过 50%，两列放不下就换行。
+  功能中心的七格三列同病。手机浏览器截图前后对照确认修复。
+  这种问题在桌面浏览器里永远看不出来——桌面窗口太宽，怎么排都放得下。
+
+#### Changed
+
+- **`darkmode: true` + `theme.json`**：导航栏、页面背景、tabBar 的颜色改用主题变量
+  （`@navBgColor` 等）。App 端编译产物里两套值都在（暗 `#141319` / 亮 `#ffffff`），
+  系统切暗色时导航栏跟着变。
+- `.tools/`（本地 adb）加入 `.gitignore`，工具不入库。
+
+#### Notes
+
+- **H5 端导航栏仍是白色**：uni 的 `darkmode`/`theme.json` 只支持 App 与小程序，
+  H5 编译产物里 `@navBgColor` 未被解析。内容区暗色正常（走 CSS 媒体查询）。
+  App 端不受影响。
+- 真机 App 安装仍未开始：这台 PC 没有 HBuilderX，无法出 APK。H5 链路能验
+  渲染、布局、交互与网络；相机与 SQLite 要等 App 装上手机。
+- adb 放在 `.tools/platform-tools/`（不入库）；`adb mdns` 发现有约 4 秒延迟，
+  连接脚本里要 `sleep 4` 再列设备。
+
 ### 1.0 改写内核与陪伴对话（T7）
 
 #### Added

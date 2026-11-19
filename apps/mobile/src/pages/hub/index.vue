@@ -57,6 +57,8 @@ function open(entry: Entry): void {
   gap: var(--tt-space-8);
 }
 .cell {
+  /* 同上：不加 border-box，padding 会把每格撑过 33%，三列掉成两列 */
+  box-sizing: border-box;
   width: calc(33.333% - 6px);
   min-height: 78px;
   display: flex;
