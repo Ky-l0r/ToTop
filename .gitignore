@@ -53,22 +53,5 @@ Thumbs.db
 # 本地构建输出目录
 .gradle-local/
 
-# ---------- 1.0 双端工程（UniApp / Node） ----------
-
-# 依赖与产物
-node_modules/
-apps/mobile/dist/
-apps/mobile/unpackage/
-packages/*/dist/
-
-# 包管理日志与本地缓存
-pnpm-debug.log*
-.npmrc.local
-.eslintcache
-
-# HBuilderX 本地工程状态（含真机调试记录，不入库）
-.hbuilderx/
-
-# 构建期生成的类型文件
-apps/mobile/src/uni_modules/**/node_modules/
+# 本机工具链（adb、SDK 解压目录等，体积大且与代码无关）
 .tools/
