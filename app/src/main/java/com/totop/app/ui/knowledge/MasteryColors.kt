@@ -2,20 +2,30 @@ package com.totop.app.ui.knowledge
 
 import androidx.compose.ui.graphics.Color
 import com.totop.app.domain.model.MasteryBand
+import com.totop.app.ui.theme.Tokens
 
-/** 掌握度色阶取色（红 <40 / 黄 40-70 / 绿 >70，未练习为灰）。 */
+/**
+ * 掌握度色阶取色（红 <40 / 黄 40-70 / 绿 >70，未练习为灰）。
+ *
+ * 色值只有一份，在 [Tokens]；本对象只负责把 [MasteryBand] 映射成颜色。
+ *
+ * 2026-11 收敛前，这里自己存了一套色值（#9B2C2C / #B4690E / #1F6F5C），
+ * `Tokens` 与 `theme/Color.kt` 又各存一套（#C0392B / #C79100 / #2E7D5B 等），
+ * 同一个「掌握度红」在首页与知识点页是两个值，截图对不上。
+ * 现在统一取知识点页一直在用的那一套（低饱和、同明度），另外两套删除。
+ */
 object MasteryColors {
     /** 红：<40。 */
-    val Red: Color = Color(0xFF9B2C2C)
+    val Red: Color = Tokens.MasteryLow
 
     /** 黄：40-70。 */
-    val Yellow: Color = Color(0xFFB4690E)
+    val Yellow: Color = Tokens.MasteryMid
 
     /** 绿：>70。 */
-    val Green: Color = Color(0xFF1F6F5C)
+    val Green: Color = Tokens.MasteryHigh
 
     /** 未练习。 */
-    val Untouched: Color = Color(0xFF9AA0A6)
+    val Untouched: Color = Tokens.MasteryNone
 
     fun of(band: MasteryBand): Color =
         when (band) {
@@ -24,26 +34,8 @@ object MasteryColors {
             MasteryBand.GREEN -> Green
         }
 
-    /**
-     * 错因饼图的调色板（七类固定顺序）。
-     *
-     * 旧版是七个饱和度拉满的深色（墨绿、赭石、藏蓝、紫、砖红、青、灰），
-     * 色相之间没有关系，同一块饼里出现三四块就非常刺眼。现在改为一组
-     * **同明度、同饱和度**的柔和色，冷暖交替排列：
-     * 1. 相邻扇区永远一暖一冷，不会糊成一片；
-     * 2. 明度交替（深-中-深-中…），黑白打印也能靠深浅分出边界；
-     * 3. 与主题的紫、语义的成功绿/警示橙同族，不破坏整页观感。
-     */
-    val PiePalette: List<Color> =
-        listOf(
-            Color(0xFFC2703A),
-            Color(0xFF7B5AA6),
-            Color(0xFF3F7FA6),
-            Color(0xFFC9A227),
-            Color(0xFF4E8C6A),
-            Color(0xFF8C6A4F),
-            Color(0xFF8A8794),
-        )
+    /** 错因饼图调色板；排序与配色理由见 [Tokens.MasteryPiePalette]。 */
+    val PiePalette: List<Color> = Tokens.MasteryPiePalette
 
     fun pieColor(index: Int): Color = PiePalette[index % PiePalette.size]
 }

@@ -9,7 +9,8 @@ import org.junit.jupiter.params.provider.CsvSource
 
 /**
  * 掌握度色阶边界（方案 4.3.1：红 <40 / 黄 40-70 / 绿 >70）。
- * 该测试同时用于验证 JUnit5 测试链路可用。
+ *
+ * 色值自 2026-11 起只有一份，在 [Tokens]；本测试同时守着「不要再长出第二套色阶」。
  *
  * 说明：函数名必须使用 ASCII 标识符（ktlint standard:function-naming），
  * 中文语义通过 @DisplayName 表达，不影响可读性。
@@ -30,10 +31,10 @@ class MasteryColorTest {
         expected: String,
     ) {
         val actual =
-            when (masteryColor(score)) {
-                MasteryRed -> "RED"
-                MasteryYellow -> "YELLOW"
-                MasteryGreen -> "GREEN"
+            when (Tokens.masteryColor(score)) {
+                Tokens.MasteryLow -> "RED"
+                Tokens.MasteryMid -> "YELLOW"
+                Tokens.MasteryHigh -> "GREEN"
                 else -> "UNKNOWN"
             }
         assertEquals(expected, actual)
@@ -42,7 +43,8 @@ class MasteryColorTest {
     @Test
     @DisplayName("三档色值互不相同")
     fun threeLevelsAreDistinct() {
-        val colors: Set<Color> = setOf(MasteryRed, MasteryYellow, MasteryGreen)
+        val colors: Set<Color> =
+            setOf(Tokens.MasteryLow, Tokens.MasteryMid, Tokens.MasteryHigh)
         assertEquals(3, colors.size)
     }
 }

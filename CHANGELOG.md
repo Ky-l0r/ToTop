@@ -5,6 +5,25 @@
 
 ## [Unreleased]
 
+### 掌握度色阶与字号只剩一份来源
+
+#### Changed
+
+- **掌握度红黄绿统一为一套取值**：采用知识点页原有的低饱和配色（`#9B2C2C` / `#B4690E` / `#1F6F5C`）。
+  此前 `Tokens`、`theme/Color.kt`、`knowledge/MasteryColors.kt` 各存一套，
+  同一个「掌握度红」在首页与知识点页是两个值，截图对不上。
+  `Tokens` 同时补了「未练习」灰与错因饼图七色，取色仍走 `Tokens.masteryColor` 一个入口。
+- **删除 `theme/Color.kt`**：里面是早期绿色主题的调色板（`TotopGreen` 等），
+  已无任何引用；同文件的 `MasteryRed/Yellow/Green` 与 `masteryColor` 一并移除。
+- **`TotopTypography` 补上 `titleSmall` 与 `labelSmall`**：这两级此前没有定义，
+  页面实际用的是 Material3 默认值（14/20、11/16）。取值与默认值一致，
+  本次不制造视觉突变，但字号从此只有一处可改，不必翻一百多处页面。
+
+#### Notes
+
+- 色阶收敛会带来一处可见变化：首页与知识点页的「红」从此深浅一致。
+- 排版补齐是纯结构性改动，界面观感与 0.8.0 一致；真正的字号调整留给 UI 统一的后几批。
+
 ### 化学方程式能正常排版了
 
 #### Added

@@ -51,6 +51,20 @@ val TotopTypography =
                 fontSize = 17.sp,
                 lineHeight = 24.sp,
             ),
+        /**
+         * 卡片标题、列表主标题。
+         *
+         * 这一级在 2026-11 之前没有定义，页面里用的是 Material3 的默认值（14sp / 20sp / Medium）。
+         * 显式写出来是为了让「只能从 Typography 取字号」这条规则真正成立——
+         * 否则改字号要翻 19 个页面。取值与默认值一致，本版不制造视觉突变。
+         */
+        titleSmall =
+            TextStyle(
+                fontFamily = Default,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            ),
         bodyLarge =
             TextStyle(
                 fontFamily = Default,
@@ -84,6 +98,19 @@ val TotopTypography =
                 fontFamily = Default,
                 fontWeight = FontWeight.Medium,
                 fontSize = 12.sp,
+                lineHeight = 16.sp,
+            ),
+        /**
+         * 卡片副标题、元信息（时间、次数、科目）。
+         *
+         * 全仓用得最多的一级（一百余处），此前同样走的 Material3 默认值（11sp / 16sp / Medium）。
+         * 取值保持不变，理由同 [titleSmall]。
+         */
+        labelSmall =
+            TextStyle(
+                fontFamily = Default,
+                fontWeight = FontWeight.Medium,
+                fontSize = 11.sp,
                 lineHeight = 16.sp,
             ),
     )

@@ -96,12 +96,40 @@ object Tokens {
     /** 计算块的浅底：把连续几行算式聚成一块，避免公式堆叠成一片。 */
     val CalculationContainer = Color(0xFFE9F5F7)
 
-    // ---------- 掌握度三档（沿用既有语义：红<40 / 黄<=70 / 绿>70） ----------
-    val MasteryLow = Color(0xFFC0392B)
+    // ---------- 掌握度四档（红<40 / 黄<=70 / 绿>70 / 未练习灰） ----------
+    //
+    // 取值口径：采用知识点页一直在用的那一套（低饱和、同明度），
+    // 而不是早先 `Color.kt` 里那套饱和度更高的 #C0392B / #C79100。
+    // 2026-11 收敛前，同一个「红」在首页与知识点页是两个值，截图对不上。
+    val MasteryLow = Color(0xFF9B2C2C)
 
-    val MasteryMid = Color(0xFFC79100)
+    val MasteryMid = Color(0xFFB4690E)
 
-    val MasteryHigh = Color(0xFF2E7D5B)
+    val MasteryHigh = Color(0xFF1F6F5C)
+
+    /** 未练习：中性灰，不参与红黄绿的语义。 */
+    val MasteryNone = Color(0xFF9AA0A6)
+
+    /**
+     * 错因饼图的调色板（七类固定顺序）。
+     *
+     * 旧版是七个饱和度拉满的深色（墨绿、赭石、藏蓝、紫、砖红、青、灰），
+     * 色相之间没有关系，同一块饼里出现三四块就非常刺眼。现在改为一组
+     * **同明度、同饱和度**的柔和色，冷暖交替排列：
+     * 1. 相邻扇区永远一暖一冷，不会糊成一片；
+     * 2. 明度交替（深-中-深-中…），黑白打印也能靠深浅分出边界；
+     * 3. 与主题的紫、语义的成功绿/警示橙同族，不破坏整页观感。
+     */
+    val MasteryPiePalette: List<Color> =
+        listOf(
+            Color(0xFFC2703A),
+            Color(0xFF7B5AA6),
+            Color(0xFF3F7FA6),
+            Color(0xFFC9A227),
+            Color(0xFF4E8C6A),
+            Color(0xFF8C6A4F),
+            Color(0xFF8A8794),
+        )
 
     // ---------- 圆角 ----------
     val RadiusSmall = 8.dp
@@ -123,7 +151,7 @@ object Tokens {
 
     val SpaceXl = 24.dp
 
-    /** 卡片阴影高度：低端机上避免大范围模糊。 */
+    /** 卡片阴影高度：统一 1dp，够分层又不堆模糊。 */
     val Elevation = 1.dp
 
     /** 按掌握度分数取色（全应用统一入口）。 */
