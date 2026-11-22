@@ -49,6 +49,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.StudentStepStatus
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
 import com.totop.app.ui.theme.Tokens
 
 /**
@@ -514,15 +516,7 @@ private fun DetailSection(
     accent: androidx.compose.ui.graphics.Color = Tokens.OnSurfaceVariant,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Tokens.RadiusLarge))
-                .background(Tokens.Surface)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    SurfaceCard(tone = CardTone.Raised, spacing = Tokens.SpaceXs) {
         Text(
             text = title,
             style = MaterialTheme.typography.labelLarge,
