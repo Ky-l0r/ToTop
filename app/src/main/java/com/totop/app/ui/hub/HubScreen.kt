@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.totop.app.ui.theme.Tokens
 
 /** 功能中心的一个入口。 */
@@ -180,7 +179,7 @@ private fun HubCell(
         Spacer(Modifier.height(2.dp))
         Text(
             text = entry.subtitle,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 13.sp),
+            style = MaterialTheme.typography.labelSmall,
             color = Tokens.OnSurfaceVariant,
             textAlign = TextAlign.Center,
             maxLines = 2,

@@ -140,6 +140,20 @@ object Tokens {
 
     val RadiusXLarge = 20.dp
 
+    /** 图标容器圆角：与卡片圆角区分开，避免小方块看起来像缩小的卡片。 */
+    val RadiusIcon = 10.dp
+
+    // ---------- 尺寸 ----------
+
+    /** 行内图标容器（列表行、指标卡）。 */
+    val IconBoxSmall = 28.dp
+
+    /** 区块图标容器（宫格、头图）。 */
+    val IconBoxLarge = 40.dp
+
+    /** 卡片内边距：全应用统一 14dp，改这一处即可整体调整。 */
+    val CardPadding = 14.dp
+
     // ---------- 间距 ----------
     val SpaceXs = 4.dp
 

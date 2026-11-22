@@ -1,7 +1,6 @@
 package com.totop.app.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
 import com.totop.app.ui.theme.Tokens
 
 /**
@@ -262,68 +263,62 @@ private fun MetricCard(
     metric: HomeMetric,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(Tokens.RadiusLarge),
-        colors = CardDefaults.cardColors(containerColor = Tokens.SurfaceVariant),
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier =
-                        Modifier.size(30.dp)
-                            .background(Tokens.Surface, RoundedCornerShape(9.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = metricIconOf(metric.key),
-                        contentDescription = null,
-                        tint = Tokens.Primary,
-                        modifier = Modifier.size(17.dp),
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = metric.label,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Tokens.OnSurfaceVariant,
+    SurfaceCard(modifier = modifier, tone = CardTone.Tint) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier =
+                    Modifier.size(Tokens.IconBoxSmall)
+                        .background(Tokens.Surface, RoundedCornerShape(Tokens.RadiusIcon)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = metricIconOf(metric.key),
+                    contentDescription = null,
+                    tint = Tokens.Primary,
+                    modifier = Modifier.size(17.dp),
                 )
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.width(Tokens.SpaceSm))
             Text(
-                text = metric.value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Tokens.Primary,
+                text = metric.label,
+                style = MaterialTheme.typography.labelMedium,
+                color = Tokens.OnSurfaceVariant,
             )
-            if (metric.caption.isNotBlank()) {
-                Text(
-                    text = metric.caption,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-            }
-            // 进度条只在有明确完成度时出现（目前只有「今天待复习」）
-            metric.progress?.let { value ->
-                Spacer(Modifier.height(8.dp))
+        }
+        Spacer(Modifier.height(Tokens.SpaceSm))
+        Text(
+            text = metric.value,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = Tokens.Primary,
+        )
+        if (metric.caption.isNotBlank()) {
+            Text(
+                text = metric.caption,
+                style = MaterialTheme.typography.labelSmall,
+                color = Tokens.OnSurfaceVariant,
+            )
+        }
+        // 进度条只在有明确完成度时出现（目前只有「今天待复习」）
+        metric.progress?.let { value ->
+            Spacer(Modifier.height(Tokens.SpaceSm))
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(Tokens.Outline, RoundedCornerShape(2.dp)),
+            ) {
                 Box(
                     modifier =
                         Modifier
-                            .fillMaxWidth()
+                            .fillMaxWidth(value.coerceIn(0f, 1f))
                             .height(4.dp)
-                            .background(Tokens.Outline, RoundedCornerShape(2.dp)),
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth(value.coerceIn(0f, 1f))
-                                .height(4.dp)
-                                .background(
-                                    if (value >= 1f) Tokens.Success else Tokens.Primary,
-                                    RoundedCornerShape(2.dp),
-                                ),
-                    )
-                }
+                            .background(
+                                if (value >= 1f) Tokens.Success else Tokens.Primary,
+                                RoundedCornerShape(2.dp),
+                            ),
+                )
             }
         }
     }
@@ -353,37 +348,29 @@ private fun QuickEntry(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = RoundedCornerShape(Tokens.RadiusMedium),
-        colors = CardDefaults.cardColors(containerColor = Tokens.Surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = Tokens.Elevation),
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Box(
-                modifier =
-                    Modifier.size(28.dp)
-                        .background(Tokens.PrimaryContainer, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Tokens.Primary,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Medium,
-                color = Tokens.OnSurface,
+    SurfaceCard(modifier = modifier, onClick = onClick) {
+        Box(
+            modifier =
+                Modifier.size(Tokens.IconBoxSmall)
+                    .background(Tokens.PrimaryContainer, RoundedCornerShape(Tokens.RadiusIcon)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Tokens.Primary,
+                modifier = Modifier.size(16.dp),
             )
-            Spacer(Modifier.height(2.dp))
-            Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = Tokens.OnSurfaceVariant)
         }
+        Spacer(Modifier.height(Tokens.SpaceSm))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Medium,
+            color = Tokens.OnSurface,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = Tokens.OnSurfaceVariant)
     }
 }
 
@@ -394,23 +381,17 @@ private fun WeakKpointRow(
     count: Int,
     onClick: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge, color = Tokens.OnSurface)
-            Text(
-                text = subject + " · 错过 " + count + " 次",
-                style = MaterialTheme.typography.labelSmall,
-                color = Tokens.OnSurfaceVariant,
-            )
+    SurfaceCard(modifier = Modifier.fillMaxWidth(), tone = CardTone.Tint, onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(text = name, style = MaterialTheme.typography.bodyLarge, color = Tokens.OnSurface)
+                Text(
+                    text = subject + " · 错过 " + count + " 次",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Tokens.OutlineStrong)
         }
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Tokens.OutlineStrong)
     }
 }
