@@ -403,7 +403,7 @@ private fun InlineFormulaRun(
     LaunchedEffect(latexes, renderer) {
         latexes.distinct().forEach { latex ->
             if (rendered.containsKey(latex)) return@forEach
-            val handle = renderer.request(latex, displayMode = false, maxWidthPx = maxWidthPx)
+            val handle = renderer.request(ChemistryLatex.expand(latex), displayMode = false, maxWidthPx = maxWidthPx)
             handle.onResult = { outcome -> rendered[latex] = outcome }
         }
         // 兜底：行内公式没有逐条超时判断，一旦结果永远不回来（WebView 被回收、
@@ -558,7 +558,7 @@ private fun FormulaBlock(
     val currentStyle by rememberUpdatedState(style)
 
     LaunchedEffect(key) {
-        val handle = renderer.request(latex, displayMode, maxWidthPx)
+        val handle = renderer.request(ChemistryLatex.expand(latex), displayMode, maxWidthPx)
         handle.onResult = { outcome -> result = outcome }
         // 双重保险：渲染器自身有超时（首帧 2 秒 / 之后 300ms），这里再加一层宽限，
         // 确保迟到也不会卡住。两处必须用同一个预算，否则外层会先于渲染器判失败。
@@ -573,8 +573,11 @@ private fun FormulaBlock(
         is FormulaRenderResult.Rendered -> RenderedFormula(current, displayMode)
         is FormulaRenderResult.Failed ->
             if (fallbackToRaw) {
+                // 降级时把 \ce{} 这类外壳剥掉再显示：学生至少能看到 H2SO4，
+                // 而不是一串带反斜杠的源码。
+                val plain = LatexPlain.normalize(latex)
                 Text(
-                    text = if (displayMode) "\n" + latex + "\n" else latex,
+                    text = if (displayMode) "\n" + plain + "\n" else plain,
                     style = currentStyle.copy(fontFamily = FontFamily.Monospace),
                 )
             }
