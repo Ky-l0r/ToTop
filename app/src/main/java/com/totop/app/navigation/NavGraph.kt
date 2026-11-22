@@ -3,7 +3,6 @@ package com.totop.app.navigation
 import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -69,6 +68,7 @@ import com.totop.app.ui.practice.PracticeScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
 import com.totop.app.ui.settings.SettingsScreen
+import com.totop.app.ui.theme.Motion
 import com.totop.app.ui.theme.Tokens
 import kotlinx.coroutines.delay
 
@@ -150,7 +150,7 @@ fun ToTopApp(
         AnimatedVisibility(
             visible = showSplash,
             enter = EnterTransition.None,
-            exit = fadeOut(animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)),
+            exit = fadeOut(animationSpec = tween(durationMillis = Motion.SPLASH_FADE_MS, easing = Motion.Easing)),
         ) {
             com.totop.app.ui.common.SplashScreen()
         }
@@ -169,37 +169,8 @@ fun ToTopApp(
  */
 private const val SPLASH_MIN_VISIBLE_MS: Long = 1200L
 
-/** 进入过渡时长（毫秒）。比系统默认短，避免「点了没反应」的观感。 */
-private const val TRANSITION_ENTER_MS: Int = 260
-
-/** 退出过渡时长（毫秒）。退出比进入更短，让新页面尽快成为视觉主体。 */
-private const val TRANSITION_EXIT_MS: Int = 200
-
-/** 底栏同级切换只有淡入淡出：横移会把「并列」说成「层级」，见 0.5.0 需求定稿。 */
-private const val TRANSITION_TAB_MS: Int = 180
-
-/**
- * 位移幅度 = 屏宽 / 该值。
- *
- * 上一版取 18（约 5.5%，20dp 左右），在 360dp 窄屏上等于没动；
- * 真机反馈「完全看不到过渡动画」。10 约等于 10%，方向一眼可辨，又不至于像翻书。
- */
-private const val TRANSITION_SLIDE_DIVISOR: Int = 10
-
-/** 进入时的起始缩放。只做 1.5% 的轻微推近，与横移一起构成「往里走」的层次感。 */
-private const val TRANSITION_ENTER_SCALE: Float = 0.985f
-
-/**
- * 动画时长的下限系数（相对系统「动画时长缩放」）。
- *
- * 系统设 0.5x 时，Compose 会把我们写的时长再砍一半：260ms 变 130ms、位移又只有 10%，
- * 观感上就是「没有动画」。这里反过来补偿，保证等效时长不低于 0.8 倍：
- *
- *     scale = 0.5 -> 系数 1.6 -> 实际 260 * 1.6 * 0.5 = 208ms（等效 0.8）
- *
- * 系统把动画完全关掉（scale <= 0）时不补偿：那是用户明确的无障碍选择，不该对着干。
- */
-private const val MOTION_SCALE_FLOOR: Float = 0.8f
+// 动效的时长、位移幅度、缩放系数与缓动统一放在 ui/theme/Motion：
+// 页面与导航共用一个来源，避免同一层级两处快慢不一。此处不再保留副本。
 
 /** 二级页进入：淡入 + 横向位移 + 轻微推近；退栈时位移方向相反。 */
 private fun slideEnter(
@@ -207,11 +178,11 @@ private fun slideEnter(
     fromLeft: Boolean = false,
 ): EnterTransition {
     val direction = if (fromLeft) -1 else 1
-    return fadeIn(tween(ms, easing = FastOutSlowInEasing)) +
-        slideInHorizontally(tween(ms, easing = FastOutSlowInEasing)) { width ->
-            direction * width / TRANSITION_SLIDE_DIVISOR
+    return fadeIn(tween(ms, easing = Motion.Easing)) +
+        slideInHorizontally(tween(ms, easing = Motion.Easing)) { width ->
+            direction * width / Motion.SLIDE_DIVISOR
         } +
-        scaleIn(tween(ms, easing = FastOutSlowInEasing), initialScale = TRANSITION_ENTER_SCALE)
+        scaleIn(tween(ms, easing = Motion.Easing), initialScale = Motion.ENTER_SCALE)
 }
 
 /**
@@ -235,11 +206,8 @@ private fun isTabSwitch(
  * 幅度取高度的 1/50，360dp 宽屏上约 8dp，与启动页字母的上移量一致。
  */
 private fun tabEnter(ms: Int): EnterTransition =
-    fadeIn(tween(ms, easing = FastOutSlowInEasing)) +
-        slideInVertically(tween(ms, easing = FastOutSlowInEasing)) { height -> height / TAB_RISE_DIVISOR }
-
-/** 上浮幅度的分母：高度取这个值的倒数，360dp 宽屏上约 8dp。 */
-private const val TAB_RISE_DIVISOR: Int = 50
+    fadeIn(tween(ms, easing = Motion.Easing)) +
+        slideInVertically(tween(ms, easing = Motion.Easing)) { height -> height / Motion.RISE_DIVISOR }
 
 /** 把基准时长换算成实际写入 [tween] 的时长（含系统缩放补偿）。 */
 private fun durationMs(
@@ -263,7 +231,7 @@ private fun rememberMotionCompensation(): Float {
             }.getOrDefault(1f)
         when {
             scale <= 0f -> 1f
-            scale < MOTION_SCALE_FLOOR -> MOTION_SCALE_FLOOR / scale
+            scale < Motion.SCALE_FLOOR -> Motion.SCALE_FLOOR / scale
             else -> 1f
         }
     }
@@ -311,7 +279,7 @@ private fun FloatingNavBar(
             val offsetX by
                 animateDpAsState(
                     targetValue = targetOffset,
-                    animationSpec = tween(NAV_INDICATOR_MS, easing = FastOutSlowInEasing),
+                    animationSpec = tween(Motion.INDICATOR_MS, easing = Motion.Easing),
                     label = "nav-indicator-offset",
                 )
             Box(
@@ -366,9 +334,6 @@ private val NAV_ITEM_GAP = 2.dp
 /** 导航项高度。 */
 private val NAV_ITEM_HEIGHT = 42.dp
 
-/** 滑块位移时长：与底栏淡入同量级，短到不拖沓，又足以被看见是「滑过去」。 */
-private const val NAV_INDICATOR_MS: Int = 220
-
 /** 胶囊半径：取高度的一半附近，保证两端是完整的半圆而不是圆角矩形。 */
 private val NAV_BAR_RADIUS = 26.dp
 
@@ -379,11 +344,11 @@ fun ToTopNavHost(
     startRoute: String = Routes.HOME,
     modifier: Modifier = Modifier,
 ) {
-    // 系统动画缩放补偿：见 MOTION_SCALE_FLOOR 的说明。
+    // 系统动画缩放补偿：见 Motion.SCALE_FLOOR 的说明。
     val motionFactor = rememberMotionCompensation()
-    val enterMs = durationMs(TRANSITION_ENTER_MS, motionFactor)
-    val exitMs = durationMs(TRANSITION_EXIT_MS, motionFactor)
-    val tabMs = durationMs(TRANSITION_TAB_MS, motionFactor)
+    val enterMs = durationMs(Motion.ENTER_MS, motionFactor)
+    val exitMs = durationMs(Motion.EXIT_MS, motionFactor)
+    val tabMs = durationMs(Motion.TAB_MS, motionFactor)
 
     NavHost(
         navController = navController,
@@ -406,7 +371,7 @@ fun ToTopNavHost(
             }
         },
         exitTransition = {
-            fadeOut(tween(exitMs, easing = FastOutSlowInEasing))
+            fadeOut(tween(exitMs, easing = Motion.Easing))
         },
         popEnterTransition = {
             if (isTabSwitch(initialState, targetState)) {
@@ -416,7 +381,7 @@ fun ToTopNavHost(
             }
         },
         popExitTransition = {
-            fadeOut(tween(exitMs, easing = FastOutSlowInEasing))
+            fadeOut(tween(exitMs, easing = Motion.Easing))
         },
     ) {
         composable(route = Routes.ONBOARDING) {
