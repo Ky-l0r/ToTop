@@ -56,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
 import com.totop.app.ui.theme.Tokens
 
 /**
@@ -250,12 +252,7 @@ private fun HistorySection(
     // 删除前二次确认：资料本身能重新生成，但删错了会以为自己丢过东西
     var pendingDelete by remember { mutableStateOf<ReviewMaterialSummary?>(null) }
 
-    Column(
-        modifier =
-            Modifier.fillMaxWidth()
-                .background(Tokens.SurfaceVariant, RoundedCornerShape(Tokens.RadiusMedium))
-                .padding(14.dp),
-    ) {
+    SurfaceCard(tone = CardTone.Tint) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

@@ -1,7 +1,6 @@
 package com.totop.app.ui.library
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.domain.model.KpointMethod
 import com.totop.app.domain.model.LearnedMaterial
 import com.totop.app.domain.model.Subjects
+import com.totop.app.ui.components.SurfaceCard
 import com.totop.app.ui.theme.Tokens
 import java.io.File
 import java.text.SimpleDateFormat
@@ -268,66 +268,59 @@ private fun MaterialCard(
     onOpen: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(Tokens.Surface)
-                .clickable(onClick = onOpen)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Thumbnail(item = item)
-        Spacer(Modifier.width(10.dp))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    SurfaceCard(modifier = Modifier.fillMaxWidth(), onClick = onOpen) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+            Thumbnail(item = item)
+            Spacer(Modifier.width(Tokens.SpaceMd))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Tokens.SpaceXs),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = Subjects.label(item.subject) + " · " + item.kpointName,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Tokens.Primary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = "查看 ›",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.OnSurfaceVariant,
+                    )
+                }
+                if (item.title.isNotBlank()) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Tokens.OnSurface,
+                    )
+                }
+                if (item.summary.isNotBlank()) {
+                    Text(
+                        text = item.summary,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Tokens.OnSurfaceVariant,
+                    )
+                }
                 Text(
-                    text = Subjects.label(item.subject) + " · " + item.kpointName,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Tokens.Primary,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = "查看 ›",
+                    text = "来源：" + item.sourceLabel + " · " + formatTime(item.createdAtUtc),
                     style = MaterialTheme.typography.labelSmall,
                     color = Tokens.OnSurfaceVariant,
                 )
             }
-            if (item.title.isNotBlank()) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Tokens.OnSurface,
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "删除这条资料",
+                    tint = Tokens.OnSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
                 )
             }
-            if (item.summary.isNotBlank()) {
-                Text(
-                    text = item.summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-            }
-            Text(
-                text = "来源：" + item.sourceLabel + " · " + formatTime(item.createdAtUtc),
-                style = MaterialTheme.typography.labelSmall,
-                color = Tokens.OnSurfaceVariant,
-            )
-        }
-        IconButton(
-            onClick = onDelete,
-            modifier = Modifier.size(32.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Delete,
-                contentDescription = "删除这条资料",
-                tint = Tokens.OnSurfaceVariant,
-                modifier = Modifier.size(18.dp),
-            )
         }
     }
 }
