@@ -35,6 +35,14 @@ data class AiQuestion(
      */
     val choiceType: String? = null,
     /**
+     * 题型细分（0.9 新增，见 [QuestionType]）。
+     *
+     * 与 [choiceType] 分工不同：`choiceType` 只管「选几个」，决定答案个数校验；
+     * 这一项管「这是哪一类题」，决定阶段 B 挂哪份补充要领。
+     * 两者都可能有值，也可能一个都没有——老缓存里两项都不存在。
+     */
+    val questionType: String? = null,
+    /**
      * 卷面上是否有学生手写的过程：`none` / `partial` / `full`。
      *
      * 这条只影响两件事：能不能在没有打字的情况下定位错因（手写转写会当作学生过程

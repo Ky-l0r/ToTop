@@ -30,12 +30,27 @@
 | ask | string | 所求内容，一句话表述 |
 | options | string[] | 选择题选项原文（含 A/B/C/D 标记）；非选择题为空数组 |
 | choiceType | string | 题型，只能取 `"single"`（单选）、`"multi"`（多选）、`"none"`（非选择题）、`"unknown"`（无法判断）。判定规则见第四节第 8 条 |
+| questionType | string | 题型细分，从下表按科目取一个；拿不准时用 `"unknown"`。它与 `choiceType` 分工不同：`choiceType` 管「选几个」，本字段管「这是哪一类题」，决定后续挂哪份答题要领 |
 | hasFigure | boolean | 题干是否含几何图形、函数图象、电路图、流程图或表格 |
 | stemLatex | string | 题干中的公式改写为 LaTeX，行内公式用单个美元符号包裹；无公式时为空字符串 |
 | handwriting | string | 卷面上有没有**学生手写的过程**：`"none"`、`"partial"`、`"full"`。只算手写，不算印刷体与批注符号 |
 | handwritingText | string | 手写过程的转写，规则见第四节第 9 条；`handwriting` 为 `"none"` 时为空字符串 |
 | progress | object[] | 逐问进度，元素为 `{"no": 1, "state": "done"}`；`state` 只能取 `done` / `stuck` / `missing`，见第四节第 10 条 |
 | warnings | string[] | 识别不确定项，如「第(2)问末尾字符模糊，已按 x 的平方记录」 |
+
+题型细分取值（`questionType`）：
+
+| 科目 | 取值 |
+| --- | --- |
+| 数学 | `math_choice`（选择）、`math_fill`（填空）、`math_solve`（解答题） |
+| 语文 | `chinese_reading`（现代文阅读）、`chinese_classical`（文言文）、`chinese_composition`（作文） |
+| 英语 | `english_reading`、`english_seven_five`（七选五）、`english_cloze`（完形）、`english_grammar_fill`（语法填空）、`english_composition`（作文）、`english_continuation`（读后续写） |
+| 物理 / 化学 / 生物 | `science_solve` |
+| 政治 / 历史 / 地理 | `humanities` |
+| 技术（信息技术与通用技术） | `technology` |
+| 无法判断 | `unknown` |
+
+题型只按题干与设问判断，不要用「这题该怎么答」去反推；判断不出填 `unknown`。
 
 ## 四、禁止事项
 
@@ -76,7 +91,7 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["subject", "grade", "title", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
+  "required": ["subject", "grade", "title", "stem", "known", "ask", "options", "choiceType", "questionType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
   "properties": {
     "subject": {
       "type": "string",
@@ -89,6 +104,7 @@
     "ask": { "type": "string", "minLength": 1 },
     "options": { "type": "array", "items": { "type": "string" } },
     "choiceType": { "type": "string", "enum": ["single", "multi", "none", "unknown"] },
+    "questionType": { "type": "string", "enum": ["math_choice", "math_fill", "math_solve", "chinese_reading", "chinese_classical", "chinese_composition", "english_reading", "english_seven_five", "english_cloze", "english_grammar_fill", "english_composition", "english_continuation", "science_solve", "humanities", "technology", "unknown"] },
     "hasFigure": { "type": "boolean" },
     "stemLatex": { "type": "string" },
     "handwriting": { "type": "string", "enum": ["none", "partial", "full"] },
@@ -131,6 +147,7 @@
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
   "options": ["A. 0", "B. 1", "C. 2", "D. 4"],
   "choiceType": "unknown",
+  "questionType": "math_choice",
   "hasFigure": false,
   "stemLatex": "已知函数 $f(x)=x^{2}-2x+1$，求 $f(x)$ 在区间 $[0,3]$ 上的最小值。",
   "handwriting": "none",
@@ -158,6 +175,7 @@
   "ask": "求物体落地所需的时间",
   "options": [],
   "choiceType": "none",
+  "questionType": "science_solve",
   "hasFigure": false,
   "stemLatex": "一物体从 $20\\,\\mathrm{m}$ 高处自由下落，取 $g=10\\,\\mathrm{m/s^{2}}$，求落地所需时间。",
   "handwriting": "none",
@@ -186,6 +204,7 @@
   "ask": "选出属于电解质的物质",
   "options": ["A. 铜丝", "B. 蔗糖溶液", "C. 氯化钠固体", "D. 酒精"],
   "choiceType": "unknown",
+  "questionType": "science_solve",
   "hasFigure": false,
   "stemLatex": "",
   "handwriting": "none",
@@ -210,7 +229,8 @@
   "title": "实验室制取氨气的操作判断",
   "stem": "关于实验室制取氨气，下列说法中正确的有（多选）",
   "options": ["A. 可用加热氯化铵固体的方法制取", "B. 可用碱石灰干燥", "C. 收集时用向下排空气法", "D. 尾气可直接排入空气"],
-  "choiceType": "multi"
+  "choiceType": "multi",
+  "questionType": "science_solve"
 }
 ```
 
@@ -304,6 +324,7 @@
   "ask": "分别写出结构简式、水解方程式与一种羧酸类同分异构体",
   "options": [],
   "choiceType": "none",
+  "questionType": "science_solve",
   "hasFigure": false,
   "stemLatex": "",
   "handwriting": "partial",

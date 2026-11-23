@@ -192,6 +192,7 @@ class PromptRepository(
 
     private var cachedVersion: PromptVersionFile? = null
     private val templateCache = HashMap<AiStage, String>()
+    private var typeNotesCache: Map<String, String>? = null
 
     /** 提示词版本（参与缓存键）。 */
     fun promptVersion(): String = versionFile().promptVersion
@@ -213,6 +214,53 @@ class PromptRepository(
             assetReader.read(root + "/" + file)
         }
 
+    /**
+     * 题型补充要领：按 `questionType` 从 `assets/prompts/type_notes.md` 取对应小节。
+     *
+     * 为什么放在 assets 而不是 Kotlin：这些是「这类题怎么答」的教学口径，
+     * 与阶段模板同一性质，修改频率远高于代码；写进代码里每次调整都要发版。
+     *
+     * 文件缺失或该题型没有小节时返回 null，调用方按通用模板作答——
+     * 新增题型只要往文件里加一节，不用改代码。
+     */
+    fun typeNote(questionType: String?): String? =
+        questionType?.trim()?.lowercase()?.let { typeNotes()[it] }?.takeIf { it.isNotBlank() }
+
+    private fun typeNotes(): Map<String, String> =
+        typeNotesCache
+            ?: runCatching { assetReader.read(root + "/type_notes.md") }
+                .getOrDefault("")
+                .let(::parseTypeNotes)
+                .also { typeNotesCache = it }
+
+    /** 解析 `## 键` 形式的分节；没有分节标记时返回空表。 */
+    private fun parseTypeNotes(raw: String): Map<String, String> {
+        if (raw.isBlank()) return emptyMap()
+        val result = LinkedHashMap<String, String>()
+        var key: String? = null
+        val body = StringBuilder()
+        raw.lineSequence().forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.startsWith("## ")) {
+                key?.let { result[it] = body.toString().trim() }
+                body.setLength(0)
+                key = trimmed.removePrefix("## ").trim().lowercase()
+            } else if (key != null) {
+                body.append(line).append('\n')
+            }
+        }
+        key?.let { result[it] = body.toString().trim() }
+        return result
+    }
+
+    /** 阶段模板 + 题型补充要领（仅阶段 B 有题型可用）。 */
+    private fun systemPromptOf(input: StageInput): String {
+        val base = template(input.stage)
+        val question = (input as? StageInput.Solve)?.question ?: return base
+        val note = typeNote(question.questionType) ?: return base
+        return base + "\n\n" + note
+    }
+
     /** 按阶段拼装提示词。 */
     fun assemble(
         input: StageInput,
@@ -233,7 +281,7 @@ class PromptRepository(
         return AssembledPrompt(
             stage = input.stage,
             promptVersion = promptVersion(),
-            systemPrompt = template(input.stage),
+            systemPrompt = systemPromptOf(input),
             userPrompt = builder.toString(),
             payloadKeys = keys,
             strict = strict,
@@ -327,6 +375,8 @@ class PromptRepository(
             put("hasFigure", question.hasFigure)
             // 阶段 B 必须知道题型才能给出数量正确的答案（单选一个、多选至少两个）
             put("choiceType", ChoiceAnswerGuard.normalize(question.choiceType))
+            // 题型细分子集：老缓存里没有，缺省不写这个键，避免给模型一个空值去猜
+            question.questionType?.takeIf { it.isNotBlank() }?.let { put("questionType", it) }
         }
 
     private fun solutionJson(solution: AiStandardSolution): JsonObject =
