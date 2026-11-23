@@ -824,6 +824,16 @@ private fun SolutionStepsCard(payload: SolutionPayload) {
                     color = Tokens.Primary,
                     fontWeight = FontWeight.SemiBold,
                 )
+                // 题型没判出来时补一行小字（0.9）：模型是按最可能的一种给的答案，
+                // 学生得知道「这是按单选算的」，否则多选题只给一个选项会被当成漏答。
+                // 这行只用于展示，不写进错题本，也不参与统计口径。
+                ChoiceTypeNote.of(choiceType = payload.choiceType, optionCount = payload.options.size)?.let { note ->
+                    Text(
+                        text = note,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Tokens.OnSurfaceVariant,
+                    )
+                }
             }
         }
     }
