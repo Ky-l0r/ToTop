@@ -238,6 +238,44 @@ class SolveSessionTest {
     }
 
     @Test
+    @DisplayName("有题目概括时优先用它做标题")
+    fun sessionTitlePrefersQuestionTitle() {
+        val turns =
+            listOf(
+                ConversationMessage(id = "1", fromStudent = true, text = "这题怎么做"),
+                ConversationMessage(
+                    id = "2",
+                    fromStudent = false,
+                    text = "……",
+                    solution =
+                        SolutionPayload(
+                            questionId = "q-1",
+                            subjectCode = "math",
+                            title = "二次函数在闭区间上的最值",
+                            stem = "求 f(x)=x^2-2x+1 在 [0,3] 上的最小值",
+                        ),
+                ),
+            )
+        assertEquals("二次函数在闭区间上的最值", SessionTurns.titleOf(turns))
+    }
+
+    @Test
+    @DisplayName("题目概括为空时仍回退到学生第一句")
+    fun sessionTitleFallsBackWhenQuestionTitleBlank() {
+        val turns =
+            listOf(
+                ConversationMessage(id = "1", fromStudent = true, text = "这题怎么做"),
+                ConversationMessage(
+                    id = "2",
+                    fromStudent = false,
+                    text = "……",
+                    solution = SolutionPayload(questionId = "q-1", subjectCode = "math", stem = "求最小值"),
+                ),
+            )
+        assertEquals("这题怎么做", SessionTurns.titleOf(turns))
+    }
+
+    @Test
     @DisplayName("没有学生发言时标题回退到题干首行")
     fun sessionTitleFallsBackToStemFirstLine() {
         val turns = listOf(ConversationMessage(id = "1", fromStudent = false, text = ""))

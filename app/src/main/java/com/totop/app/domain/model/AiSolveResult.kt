@@ -12,6 +12,17 @@ data class AiQuestion(
     val subject: String? = null,
     val grade: String? = null,
     val stem: String? = null,
+    /**
+     * 一句话题目概括（0.9 新增）。
+     *
+     * 用途是**会话标题**：以前标题取学生输入的第一句（常常是「这题怎么做」），
+     * 十来个会话之后侧边栏全是同一句话，认不出哪条是哪道题。
+     * 由阶段 A 顺手给一句「考什么」的概括（二十字以内）。
+     *
+     * 可空且默认 null：老会话、老缓存里没有这个字段，解析不能因此失败；
+     * 缺省时标题回退到原来的规则（学生第一句 → 题干首行）。
+     */
+    val title: String? = null,
     val known: List<String> = emptyList(),
     val ask: String? = null,
     val options: List<String> = emptyList(),

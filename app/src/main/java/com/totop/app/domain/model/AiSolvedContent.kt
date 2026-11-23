@@ -60,6 +60,13 @@ data class AiSolvedContent(
     val handwritingText: String? = null,
     /** 逐问进度：写到 / 卡住 / 没写。 */
     val progress: List<QuestionProgress> = emptyList(),
+    /**
+     * 阶段 A 给的一句话题目概括（0.9 新增），只用于会话标题。
+     *
+     * 与 [choiceType] 同理，不写进 question 表：标题是「这一次对话叫什么」的展示信息，
+     * 不参与错题统计，也就不值得为它加一列、加一次迁移。
+     */
+    val title: String = "",
 ) {
     /** 首个错误步骤的领域类型；未定位到错误返回 null。 */
     val errorTypeOrNull: ErrorType? get() = firstError?.type

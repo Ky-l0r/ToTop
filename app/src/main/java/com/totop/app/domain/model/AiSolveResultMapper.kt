@@ -47,6 +47,7 @@ object AiSolveResultMapper {
                 handwriting = result.question?.handwriting,
                 handwritingText = result.question?.handwritingText,
                 progress = result.question?.progress.orEmpty(),
+                title = result.question?.title.orEmpty(),
             )
         return AiSolveMapping(content = content, warnings = warnings)
     }

@@ -93,6 +93,12 @@ data class ConversationMessage(
 data class SolutionPayload(
     val questionId: String,
     val subjectCode: String,
+    /**
+     * 阶段 A 给的一句话题目概括，用作会话标题。
+     *
+     * 默认空串：老会话文件里没有这个键，反序列化后为空，标题回退到旧规则。
+     */
+    val title: String = "",
     val stem: String,
     val known: List<String> = emptyList(),
     val ask: String = "",
@@ -603,6 +609,7 @@ object SolutionMapper {
         return SolutionPayload(
             questionId = content.question.id,
             subjectCode = content.question.subject,
+            title = content.title,
             stem = content.question.stemText,
             known = content.question.known,
             ask = content.question.ask,
@@ -762,9 +769,16 @@ object SessionTurns {
         turns: List<ConversationMessage>,
         fallbackStem: String = "",
     ): String {
+        // 0.9 起优先用阶段 A 的题目概括。「答题过程」这类标题看十遍也分不清，
+        // 而概括说的是这道题考什么（「二次函数最值与参数范围」），扫一眼就能认。
+        val aiTitle =
+            turns.asSequence()
+                .mapNotNull { it.solution?.title }
+                .firstOrNull { it.isNotBlank() }
         val firstStudent = turns.firstOrNull { it.fromStudent }?.text?.trim().orEmpty()
         val candidate =
-            firstStudent.takeIf { it.isNotEmpty() }
+            aiTitle?.trim()?.takeIf { it.isNotEmpty() }
+                ?: firstStudent.takeIf { it.isNotEmpty() }
                 ?: fallbackStem.lineSequence().firstOrNull { it.isNotBlank() }?.trim().orEmpty()
         return candidate.take(TITLE_MAX_CHARS).ifBlank { "新对话" }
     }

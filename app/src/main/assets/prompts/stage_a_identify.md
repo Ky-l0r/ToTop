@@ -25,6 +25,7 @@
 | subject | string | 科目代码，只能取下列之一：`"chinese"`、`"math"`、`"english"`、`"physics"`、`"chemistry"`、`"biology"`、`"politics"`、`"history"`、`"geography"`、`"technology"`；确实无法判断时用 `"general"` |
 | grade | string | 学段年级，取值如 `"七年级"`、`"八年级"`、`"九年级"`、`"高一"`、`"高二"`、`"高三"`；无法判断时用 `"未知"` |
 | stem | string | 题干正文，保留原有文字与学科符号，不添加解题信息 |
+| title | string | 一句话概括这道题考什么，**不超过 20 个字**。写「二次函数在闭区间上的最值」这种短语，不要写「本题考查…」开头，不要写答案，不要复述题干原句 |
 | known | string[] | 已知条件，一条一个元素；无已知条件时为空数组 |
 | ask | string | 所求内容，一句话表述 |
 | options | string[] | 选择题选项原文（含 A/B/C/D 标记）；非选择题为空数组 |
@@ -66,6 +67,8 @@
     - `missing`：这一问完全没有笔迹。
     整道题不分小问时，输出**一条** `no` 为 `null` 的记录。
     `handwriting` 为 `"none"` 时 `progress` 输出空数组——没写就是没写，不要给每问都标 `missing`。
+11. `title` 只描述「这道题考什么」，不写答案、不写解法、不复述题干原句；
+    不超过 20 个字，不以「本题考查」开头。它是会话列表里给人扫一眼的标签，不是摘要。
 
 ## 五、JSON Schema
 
@@ -73,13 +76,14 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["subject", "grade", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
+  "required": ["subject", "grade", "title", "stem", "known", "ask", "options", "choiceType", "hasFigure", "stemLatex", "handwriting", "handwritingText", "progress", "warnings"],
   "properties": {
     "subject": {
       "type": "string",
       "enum": ["chinese", "math", "english", "physics", "chemistry", "biology", "politics", "history", "geography", "technology", "general"]
     },
     "grade": { "type": "string" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 20 },
     "stem": { "type": "string", "minLength": 1 },
     "known": { "type": "array", "items": { "type": "string" } },
     "ask": { "type": "string", "minLength": 1 },
@@ -121,6 +125,7 @@
 {
   "subject": "math",
   "grade": "高一",
+  "title": "二次函数在闭区间上的最值",
   "stem": "已知函数 f(x)=x^2-2x+1，求 f(x) 在区间 [0,3] 上的最小值。",
   "known": ["f(x)=x^2-2x+1", "x 的取值范围是 [0,3]"],
   "ask": "求 f(x) 在区间 [0,3] 上的最小值",
@@ -147,6 +152,7 @@
 {
   "subject": "physics",
   "grade": "高一",
+  "title": "自由落体求落地时间",
   "stem": "一物体从 20 m 高处自由下落，取 g=10 m/s^2，求落地所需时间。",
   "known": ["下落高度 20 m", "重力加速度 g=10 m/s^2", "初速度为零"],
   "ask": "求物体落地所需的时间",
@@ -174,6 +180,7 @@
 {
   "subject": "chemistry",
   "grade": "高一",
+  "title": "电解质与非电解质的判断",
   "stem": "下列物质中，属于电解质的是（  ）",
   "known": ["需判断各选项物质是否属于电解质"],
   "ask": "选出属于电解质的物质",
@@ -200,6 +207,7 @@
 
 ```json
 {
+  "title": "实验室制取氨气的操作判断",
   "stem": "关于实验室制取氨气，下列说法中正确的有（多选）",
   "options": ["A. 可用加热氯化铵固体的方法制取", "B. 可用碱石灰干燥", "C. 收集时用向下排空气法", "D. 尾气可直接排入空气"],
   "choiceType": "multi"
@@ -290,6 +298,7 @@
 {
   "subject": "chemistry",
   "grade": "高二",
+  "title": "酯的结构与水解",
   "stem": "某酯 A 的分子式为 C4H8O2，能发生银镜反应。(1) 写出 A 的结构简式；(2) 写出 A 与 NaOH 溶液共热的化学方程式；(3) 写出 A 的同分异构体中属于羧酸的一种。",
   "known": ["A 的分子式为 C4H8O2", "A 能发生银镜反应"],
   "ask": "分别写出结构简式、水解方程式与一种羧酸类同分异构体",
