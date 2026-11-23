@@ -14,7 +14,8 @@
     "exerciseVerify": "exercise_verify.md",
     "companionAsk": "companion_ask.md",
     "methodRewrite": "kpoint_method_rewrite.md",
-    "typeNotes": "type_notes.md"
+    "typeNotes": "type_notes.md",
+    "quickThink": "exam_quick_thinking.md"
   },
   "rules": [
     "版本号采用语义化版本：提示词措辞调整升 PATCH，输出字段变化升 MINOR，阶段边界变化升 MAJOR",
@@ -23,6 +24,7 @@
     "auxiliary 里是不参与四阶段缓存键的辅助模板（如复习资料），改动它不必单独升版本，但仍随本文件一同登记"
   ],
   "changes": [
+    "1.12.0-aux：新增考场思维闪记模板 exam_quick_thinking.md（十科通用，技术同此模板）；属 auxiliary，不参与四阶段缓存键，故未升 promptVersion",
     "1.12.0：阶段 A 新增 questionType（受控题型细分，16 个取值；输出字段变化，升 MINOR），阶段 B 按题型追加 type_notes.md 的补充要领",
     "1.11.1：阶段 C 增加语气词与铺垫禁令（explain / correctThinking 直接说错误位置），阶段 D 的 usage 禁套话；仅约束调整，无字段变化，升 PATCH",
     "1.11.0：阶段 A 新增 title（一句话题目概括，20 字以内，仅用作会话标题；输出字段变化，升 MINOR），并同步更新字段表、JSON Schema 与五个示例；阶段 B 新增两条硬约束——选项判断逐行、禁语气词与过渡语",
