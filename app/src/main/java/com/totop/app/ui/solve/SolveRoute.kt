@@ -63,6 +63,7 @@ fun SolveRoute(
     val mode by viewModel.mode.collectAsStateWithLifecycle()
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val currentSessionId by viewModel.sessionId.collectAsStateWithLifecycle()
+    val quickThink by viewModel.quickThink.collectAsStateWithLifecycle()
     val toast by viewModel.toast.collectAsStateWithLifecycle()
     val stages by viewModel.stages.collectAsStateWithLifecycle()
     val masteredQuestionId by viewModel.masteredQuestionId.collectAsStateWithLifecycle()
@@ -229,6 +230,9 @@ fun SolveRoute(
         onSelfCheckDisagree = viewModel::onSelfCheckDisagree,
         onMarkUnknown = viewModel::markUnknown,
         onRequestSolution = viewModel::requestSolution,
+        quickThink = quickThink,
+        onRequestQuickThink = viewModel::requestQuickThink,
+        onDismissQuickThink = viewModel::dismissQuickThink,
         masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,

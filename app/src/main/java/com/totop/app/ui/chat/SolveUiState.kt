@@ -181,6 +181,21 @@ data class SolutionStepView(
     val why: String = "",
 )
 
+/**
+ * 「考场思维闪记」的界面状态。
+ *
+ * 独立成一个小状态而不是塞进 SolutionPayload：闪记随时可以重新要一次，
+ * 换掉它不该让整张解答卡重组；而且它可能为空（这次没生成出来），
+ * 挂在解答上会让「有没有解答」的判断变复杂。
+ */
+data class QuickThinkUi(
+    val visible: Boolean = false,
+    val loading: Boolean = false,
+    val steps: List<String> = emptyList(),
+    /** 失败或没生成出来时的说明；非空表示这次没拿到可用内容。 */
+    val message: String = "",
+)
+
 /** 首个错误的展示行。 */
 @kotlinx.serialization.Serializable
 data class FirstErrorView(

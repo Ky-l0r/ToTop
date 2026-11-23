@@ -14,6 +14,7 @@ import com.totop.app.data.remote.FollowUpTurn
 import com.totop.app.data.remote.KpointMethodGateway
 import com.totop.app.data.remote.LlmCallRegistry
 import com.totop.app.data.remote.LlmException
+import com.totop.app.data.remote.QuickThinkGateway
 import com.totop.app.data.remote.SolveContextBuilder
 import com.totop.app.data.remote.SolveEvent
 import com.totop.app.data.remote.SolveRequest
@@ -91,6 +92,7 @@ class SolveViewModel
         private val gateway: AiGateway,
         private val followUpGateway: FollowUpGateway,
         private val methodGateway: KpointMethodGateway,
+        private val quickThinkGateway: QuickThinkGateway,
         private val knowledgeCatalog: KnowledgeCatalogReader,
         private val questionRepository: QuestionRepository,
         private val mistakeRepository: MistakeRepository,
@@ -162,6 +164,10 @@ class SolveViewModel
         /** 当前会话 ID；尚未建立会话时为 null。 */
         private val _sessionId = MutableStateFlow<String?>(null)
         val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
+
+        /** 考场思维闪记：独立于解答卡的一块状态，随时可重新要一次。 */
+        private val _quickThink = MutableStateFlow(QuickThinkUi())
+        val quickThink: StateFlow<QuickThinkUi> = _quickThink.asStateFlow()
 
         /** 会话列表（多对话管理面板）。 */
         private val _sessions = MutableStateFlow<List<SolveSession>>(emptyList())
@@ -993,6 +999,56 @@ class SolveViewModel
                     solution = solution,
                 )
             }
+        }
+
+        /**
+         * 要一份考场思维闪记（0.9）。
+         *
+         * 不重跑四阶段：输入就是当前这道题的题目与已有答案，输出是 3 至 5 条短句。
+         * 失败不阻塞解答，也不清空上一次的结果——学生可能只是想再看一眼。
+         */
+        fun requestQuickThink() {
+            val payload = latestSolution()
+            if (payload == null) {
+                showToast("先解一道题，再要闪记")
+                return
+            }
+            val credentials = runCatching { secretStore.read() }.getOrNull()
+            if (credentials == null || !credentials.canCall) {
+                showToast("还没有配置模型，先去设置里填一下")
+                return
+            }
+            _quickThink.value = QuickThinkUi(visible = true, loading = true)
+            viewModelScope.launch {
+                val steps =
+                    runCatching {
+                        quickThinkGateway.think(
+                            credentials = credentials,
+                            input =
+                                QuickThinkGateway.Input(
+                                    subject = payload.subjectCode,
+                                    stem = payload.stem,
+                                    ask = payload.ask,
+                                    options = payload.options,
+                                    standardAnswer = payload.finalAnswer,
+                                    method = payload.method,
+                                ),
+                            requestId = java.util.UUID.randomUUID().toString(),
+                        )
+                    }.getOrElse { emptyList() }
+                _quickThink.value =
+                    QuickThinkUi(
+                        visible = true,
+                        loading = false,
+                        steps = steps,
+                        message = if (steps.isEmpty()) "这次没生成出来，可以再点一次" else "",
+                    )
+            }
+        }
+
+        /** 关闭闪记面板：只收起界面，不清结果，下次打开还在。 */
+        fun dismissQuickThink() {
+            _quickThink.update { it.copy(visible = false) }
         }
 
         /**

@@ -6,13 +6,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -31,15 +34,15 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -68,6 +71,7 @@ import com.totop.app.ml.rememberVoiceInput
 import com.totop.app.ui.chat.ComposerPhase
 import com.totop.app.ui.chat.ConversationMessage
 import com.totop.app.ui.chat.ModeMeta
+import com.totop.app.ui.chat.QuickThinkUi
 import com.totop.app.ui.chat.SolutionPayload
 import com.totop.app.ui.chat.SolveDraft
 import com.totop.app.ui.common.HoldToTalk
@@ -140,6 +144,10 @@ fun SolveConversationScreen(
     onMarkUnknown: (String?) -> Unit = {},
     /** 输入框「+」菜单：要一份标准解法 / 另一种做法。 */
     onRequestSolution: (SolutionAsk) -> Unit = {},
+    /** 考场思维闪记的当前状态与操作。 */
+    quickThink: QuickThinkUi = QuickThinkUi(),
+    onRequestQuickThink: () -> Unit = {},
+    onDismissQuickThink: () -> Unit = {},
     /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
     masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
@@ -239,6 +247,9 @@ fun SolveConversationScreen(
                 onRemovePage = onRemovePage,
                 onOpenPage = onOpenPage,
                 onRequestSolution = onRequestSolution,
+                quickThink = quickThink,
+                onRequestQuickThink = onRequestQuickThink,
+                onDismissQuickThink = onDismissQuickThink,
                 onNotice = onNotice,
             )
         }
@@ -505,6 +516,7 @@ private fun OfflineHint() {
  * 上一版把拍照/相册一起收进「+」菜单，结果每次拍题都要多点一次；
  * 这一版把相机拿回来，只把相册留在菜单里。
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun Composer(
     draft: SolveDraft,
@@ -521,6 +533,9 @@ private fun Composer(
     onRemovePage: (Int) -> Unit,
     onOpenPage: (Int) -> Unit,
     onRequestSolution: (SolutionAsk) -> Unit,
+    quickThink: QuickThinkUi,
+    onRequestQuickThink: () -> Unit,
+    onDismissQuickThink: () -> Unit,
     onNotice: (String) -> Unit,
 ) {
     var attachMenuOpen by remember { mutableStateOf(false) }
@@ -550,6 +565,54 @@ private fun Composer(
         if (focusRequested && !voiceMode) {
             focusRequested = false
             runCatching { focusRequester.requestFocus() }
+        }
+    }
+
+    // 三点菜单改成底部抽屉（0.9）：下拉菜单在小屏上贴着按钮展开，五个动作挤成一条窄列；
+    // 抽屉能把图标、文字与分组都摆开，也顺手解决了「拍照只在下拉里出现过一次」的问题。
+    if (attachMenuOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { attachMenuOpen = false },
+            containerColor = Tokens.Surface,
+        ) {
+            SheetAction(text = "拍照", icon = Icons.Filled.CameraAlt) {
+                attachMenuOpen = false
+                voice.cancel()
+                onOpenCamera()
+            }
+            SheetAction(text = "从相册选", icon = Icons.Filled.PhotoLibrary) {
+                attachMenuOpen = false
+                voice.cancel()
+                onOpenAlbum()
+            }
+            SolutionAsk.entries.forEach { kind ->
+                SheetAction(
+                    text = "看" + kind.label,
+                    icon =
+                        if (kind == SolutionAsk.STANDARD) {
+                            Icons.AutoMirrored.Filled.MenuBook
+                        } else {
+                            Icons.Filled.Lightbulb
+                        },
+                ) {
+                    attachMenuOpen = false
+                    // 与拍照一致：先把语音识别掐掉，否则识别结果会在提问发出后才落进输入框。
+                    voice.cancel()
+                    onRequestSolution(kind)
+                }
+            }
+            SheetAction(text = "考场思维闪记", icon = Icons.Filled.Psychology) {
+                attachMenuOpen = false
+                voice.cancel()
+                onRequestQuickThink()
+            }
+            Spacer(Modifier.height(6.dp))
+        }
+    }
+
+    if (quickThink.visible) {
+        ModalBottomSheet(onDismissRequest = onDismissQuickThink, containerColor = Tokens.Surface) {
+            QuickThinkPanel(state = quickThink, onRetry = onRequestQuickThink, onClose = onDismissQuickThink)
         }
     }
 
@@ -694,21 +757,10 @@ private fun Composer(
                 }
 
                 ComposerActionIcons(
-                    menuOpen = attachMenuOpen,
                     onMenuOpenChange = { attachMenuOpen = it },
                     onOpenCamera = {
                         voice.cancel()
                         onOpenCamera()
-                    },
-                    onOpenAlbum = {
-                        voice.cancel()
-                        onOpenAlbum()
-                    },
-                    onRequestSolution = { kind ->
-                        // 与拍照一致：先把语音识别掐掉，否则识别结果会在提问发出后
-                        // 才迟到落进输入框，看起来像「点了菜单却多出一段字」。
-                        voice.cancel()
-                        onRequestSolution(kind)
                     },
                 )
             }
@@ -748,11 +800,8 @@ private fun Composer(
  */
 @Composable
 private fun ComposerActionIcons(
-    menuOpen: Boolean,
     onMenuOpenChange: (Boolean) -> Unit,
     onOpenCamera: () -> Unit,
-    onOpenAlbum: () -> Unit,
-    onRequestSolution: (SolutionAsk) -> Unit,
 ) {
     IconButton(onClick = onOpenCamera, modifier = Modifier.size(40.dp)) {
         Icon(
@@ -762,45 +811,13 @@ private fun ComposerActionIcons(
             modifier = Modifier.size(22.dp),
         )
     }
-    Box {
-        IconButton(onClick = { onMenuOpenChange(true) }, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = Icons.Filled.MoreHoriz,
-                contentDescription = "更多",
-                tint = Tokens.OnSurfaceVariant,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { onMenuOpenChange(false) }) {
-            DropdownMenuItem(
-                text = { Text("从相册选") },
-                leadingIcon = { Icon(Icons.Filled.PhotoLibrary, contentDescription = null) },
-                onClick = {
-                    onMenuOpenChange(false)
-                    onOpenAlbum()
-                },
-            )
-            HorizontalDivider(color = Tokens.Outline)
-            SolutionAsk.entries.forEach { kind ->
-                DropdownMenuItem(
-                    text = { Text("看" + kind.label) },
-                    leadingIcon = {
-                        Icon(
-                            imageVector =
-                                when (kind) {
-                                    SolutionAsk.STANDARD -> Icons.AutoMirrored.Filled.MenuBook
-                                    SolutionAsk.ALTERNATE -> Icons.Filled.Lightbulb
-                                },
-                            contentDescription = null,
-                        )
-                    },
-                    onClick = {
-                        onMenuOpenChange(false)
-                        onRequestSolution(kind)
-                    },
-                )
-            }
-        }
+    IconButton(onClick = { onMenuOpenChange(true) }, modifier = Modifier.size(40.dp)) {
+        Icon(
+            imageVector = Icons.Filled.MoreHoriz,
+            contentDescription = "更多",
+            tint = Tokens.OnSurfaceVariant,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
@@ -844,5 +861,111 @@ private fun StopCircleButton(onClick: () -> Unit) {
             tint = Color.White,
             modifier = Modifier.size(20.dp),
         )
+    }
+}
+
+/** 抽屉里的一行：图标 + 文字，整行可点。 */
+@Composable
+private fun SheetAction(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 22.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Tokens.Primary,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(Modifier.width(14.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Tokens.OnSurface,
+        )
+    }
+}
+
+/**
+ * 考场思维闪记面板。
+ *
+ * 三条状态：正在想 / 没拿到 / 拿到了。
+ * 失败不清空上一次的结果——学生可能只是想再看一眼，重新要一次失败就抹掉反而更烦。
+ */
+@Composable
+private fun QuickThinkPanel(
+    state: QuickThinkUi,
+    onRetry: () -> Unit,
+    onClose: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 4.dp)) {
+        Text(
+            text = "考场思维闪记",
+            style = MaterialTheme.typography.titleMedium,
+            color = Tokens.OnSurface,
+        )
+        Text(
+            text = "考场上最快的一条路，不是完整写法。",
+            style = MaterialTheme.typography.labelSmall,
+            color = Tokens.OnSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+        Spacer(Modifier.height(12.dp))
+        when {
+            state.loading -> {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "正在想最短的那条路…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Tokens.OnSurfaceVariant,
+                    )
+                }
+            }
+
+            state.steps.isEmpty() -> {
+                Text(
+                    text = state.message.ifBlank { "这次没生成出来" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
+
+            else -> {
+                state.steps.forEachIndexed { index, step ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                        Text(
+                            text = (index + 1).toString(),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Tokens.Primary,
+                            modifier = Modifier.width(18.dp),
+                        )
+                        com.totop.app.ui.components.FormulaText(
+                            text = step,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onRetry) {
+                Text(if (state.steps.isEmpty()) "再试一次" else "换一份")
+            }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = onClose) { Text("关闭") }
+        }
+        Spacer(Modifier.height(6.dp))
     }
 }
