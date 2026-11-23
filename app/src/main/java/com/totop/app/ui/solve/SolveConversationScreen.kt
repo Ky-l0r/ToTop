@@ -68,6 +68,7 @@ import com.totop.app.ml.rememberVoiceInput
 import com.totop.app.ui.chat.ComposerPhase
 import com.totop.app.ui.chat.ConversationMessage
 import com.totop.app.ui.chat.ModeMeta
+import com.totop.app.ui.chat.SolutionPayload
 import com.totop.app.ui.chat.SolveDraft
 import com.totop.app.ui.common.HoldToTalk
 import com.totop.app.ui.common.VoiceCapturePanel
@@ -132,6 +133,7 @@ fun SolveConversationScreen(
     onSaveMaterial: (String, String) -> Unit = { _, _ -> },
     /** 自检「我核对过，一致」。 */
     onSelfCheckAgree: (String?) -> Unit = {},
+    onRewriteSolution: (SolutionPayload) -> Unit = {},
     /** 自检「核出来不一样」：把这题预填进追问。 */
     onSelfCheckDisagree: (String?) -> Unit = {},
     /** 解答卡「这题我不会」：就地把这道题改回「不会」。 */
@@ -213,6 +215,7 @@ fun SolveConversationScreen(
                 onRevealSolution = onRevealSolution,
                 onSaveMaterial = { messageId, source -> onSaveMaterial(messageId, source) },
                 onSelfCheckAgree = onSelfCheckAgree,
+                onRewriteSolution = onRewriteSolution,
                 onSelfCheckDisagree = onSelfCheckDisagree,
                 onMarkUnknown = onMarkUnknown,
                 modifier = Modifier.weight(1f),
@@ -343,6 +346,7 @@ private fun ConversationList(
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
     onMarkUnknown: (String?) -> Unit,
+    onRewriteSolution: (SolutionPayload) -> Unit,
     // 由调用方传入 Modifier.weight(1f)：weight 是 ColumnScope 的扩展，
     // 在被抽出的独立 Composable 里没有 ColumnScope 上下文，只能从外面带进来。
     modifier: Modifier = Modifier,
@@ -374,6 +378,7 @@ private fun ConversationList(
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
                 onMarkUnknown = onMarkUnknown,
+                onRewriteSolution = onRewriteSolution,
             )
         }
     }

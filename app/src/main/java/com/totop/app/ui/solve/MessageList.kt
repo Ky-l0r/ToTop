@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -73,6 +74,7 @@ internal fun MessageItem(
     onSelfCheckAgree: (String?) -> Unit = {},
     onSelfCheckDisagree: (String?) -> Unit = {},
     onMarkUnknown: (String?) -> Unit = {},
+    onRewriteSolution: (SolutionPayload) -> Unit = {},
 ) {
     when {
         message.fromStudent -> StudentBubble(message)
@@ -88,6 +90,7 @@ internal fun MessageItem(
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
                 onMarkUnknown = onMarkUnknown,
+                onRewriteSolution = onRewriteSolution,
             )
         else ->
             AssistantTextBubble(
@@ -324,9 +327,30 @@ private fun SolutionBubble(
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
     onMarkUnknown: (String?) -> Unit,
+    onRewriteSolution: (SolutionPayload) -> Unit,
 ) {
     // 来源输入框：存资料前问一句「这是哪来的」，因为资料的可信度全靠这条标注。
     var materialDialogOpen by remember { mutableStateOf(false) }
+    // 复写错题本前的确认：覆盖不可恢复，每次都要问一遍，不做「本会话已确认」。
+    var rewriteConfirm by remember { mutableStateOf(false) }
+    if (rewriteConfirm) {
+        AlertDialog(
+            onDismissRequest = { rewriteConfirm = false },
+            title = { Text("覆盖错题本里的答案？") },
+            text = { Text("会用这份解答覆盖原来的答案与完整过程，覆盖后无法恢复。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        rewriteConfirm = false
+                        onRewriteSolution(payload)
+                    },
+                ) { Text("覆盖") }
+            },
+            dismissButton = {
+                TextButton(onClick = { rewriteConfirm = false }) { Text("取消") }
+            },
+        )
+    }
     if (materialDialogOpen) {
         MaterialSourceDialog(
             onDismiss = { materialDialogOpen = false },
@@ -544,6 +568,16 @@ private fun SolutionBubble(
                 SmallAction(text = "这题我不会", onClick = { onMarkUnknown(payload.mistakeId) })
                 Text(
                     text = "归到「不会」，复习先讲思路",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
+            }
+            // 复写：导入标准答案、看标准解答、追问订正，三条路都会走到这里。
+            // 只写过程与答案，不改状态、不写复习记录——复写是换一份更可信的答案，不是一次自评。
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SmallAction(text = "用这份答案覆盖错题本", onClick = { rewriteConfirm = true })
+                Text(
+                    text = "覆盖后不可恢复",
                     style = MaterialTheme.typography.labelSmall,
                     color = Tokens.OnSurfaceVariant,
                 )

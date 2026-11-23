@@ -996,6 +996,49 @@ class SolveViewModel
         }
 
         /**
+         * 「用这份答案覆盖错题本」（0.9 复写规则）。
+         *
+         * 导入标准答案、点开标准解答、追问中 AI 订正，三条途径都汇到这里：
+         * 写一次完整过程与答案，并记下「这份是从哪来的」。
+         *
+         * 不改状态、不写复习记录：复写是换一份更可信的答案，不是一次复习自评，
+         * 写成自评会把掌握度算成「做对了」。
+         */
+        fun onRewriteSolution(payload: SolutionPayload) {
+            val mistakeId = payload.mistakeId
+            if (mistakeId.isNullOrBlank()) {
+                showToast("这道题还没进错题本，先看解答就好")
+                return
+            }
+            viewModelScope.launch {
+                val solution =
+                    com.totop.app.domain.model.StandardSolution(
+                        steps =
+                            payload.steps.map {
+                                com.totop.app.domain.model.SolutionStep(
+                                    idx = it.idx,
+                                    content = it.content,
+                                    why = it.why,
+                                )
+                            },
+                        finalAnswer = payload.finalAnswer,
+                        method = payload.method,
+                    )
+                val ok =
+                    runCatching {
+                        selfCheckRepository.rewriteSolution(
+                            mistakeId = mistakeId,
+                            solution = solution,
+                            source = com.totop.app.domain.model.SolutionSource.AI,
+                        )
+                    }.getOrDefault(false)
+                // 覆盖后不刷新界面状态：错题详情走数据库流，下次打开自然是最新的；
+                // 这里只需告诉学生「成了没有」，他不用手动刷新什么。
+                showToast(if (ok) "错题本里的答案与过程已更新" else "这条错题已被删除，没能更新")
+            }
+        }
+
+        /**
          * 「我核对过，一致」：写一条复习记录（来源=核对），并把这道题推到「理解」。
          *
          * 同一天只记一次：反复点不该把掌握度刷上去，重复点击只更新卡片状态。
