@@ -108,14 +108,7 @@ object EntityMappers {
             firstErrorStepIdx = firstErrorStepIdx,
             errorType = errorType.code,
             errorExplain = errorExplain,
-            correctPathJson =
-                stringListCodec.encodeToString(
-                    PersistSolution(
-                        steps = correctSolution.steps.map { PersistSolutionStep(it.idx, it.content, it.why) },
-                        finalAnswer = correctSolution.finalAnswer,
-                        method = correctSolution.method,
-                    ),
-                ),
+            correctPathJson = encodeSolution(correctSolution),
             finalAnswer = finalAnswer,
             mode = mode.wire,
             createdAt = createdAtUtc,
@@ -352,6 +345,16 @@ object EntityMappers {
             )
         }
     }
+
+    /** 标准解答 -> correctPathJson，[decodeSolution] 的逆操作。 */
+    internal fun encodeSolution(solution: com.totop.app.domain.model.StandardSolution): String =
+        stringListCodec.encodeToString(
+            PersistSolution(
+                steps = solution.steps.map { PersistSolutionStep(it.idx, it.content, it.why) },
+                finalAnswer = solution.finalAnswer,
+                method = solution.method,
+            ),
+        )
 
     internal fun decodeSolution(raw: String?): com.totop.app.domain.model.StandardSolution {
         if (raw.isNullOrBlank()) return com.totop.app.domain.model.StandardSolution()

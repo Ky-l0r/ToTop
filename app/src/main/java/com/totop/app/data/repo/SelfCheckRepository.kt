@@ -3,9 +3,12 @@ package com.totop.app.data.repo
 import com.totop.app.data.local.dao.MistakeDao
 import com.totop.app.data.local.dao.ReviewDao
 import com.totop.app.data.local.entity.ReviewLogEntity
+import com.totop.app.data.local.mapper.EntityMappers
 import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.domain.model.RecallSelfResult
 import com.totop.app.domain.model.ReviewSource
+import com.totop.app.domain.model.SolutionSource
+import com.totop.app.domain.model.StandardSolution
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,6 +32,33 @@ class SelfCheckRepository
     ) {
         /** 放在类内而不是构造参数：构造参数会让 Hilt 去要一个 CoroutineDispatcher 绑定。 */
         private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+
+        /**
+         * 复写这道错题的标准解答（0.9）。
+         *
+         * 覆盖即不可恢复：指南明确要求不保留旧值、不做版本回看，
+         * 因此这里只做一次写入；「要不要覆盖」的确认交给调用方在写库前弹窗，
+         * 仓储层不拦截——拦截了就会出现「确认过却写不进去」。
+         *
+         * @return false 表示这条错题已经不存在（被删掉了），调用方应提示而不是假装成功
+         */
+        suspend fun rewriteSolution(
+            mistakeId: String,
+            solution: StandardSolution,
+            source: SolutionSource,
+            nowUtc: Long = System.currentTimeMillis(),
+        ): Boolean =
+            withContext(dispatcher) {
+                val updated =
+                    mistakeDao.updateSolution(
+                        id = mistakeId,
+                        correctPathJson = EntityMappers.encodeSolution(solution),
+                        finalAnswer = solution.finalAnswer,
+                        source = source.wire,
+                        updatedAt = nowUtc,
+                    )
+                updated > 0
+            }
 
         /**
          * 记一条「核对一致」：写复习记录（source = 核对）并把该题推到「理解」。

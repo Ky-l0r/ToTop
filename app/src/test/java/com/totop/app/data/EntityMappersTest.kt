@@ -312,4 +312,25 @@ class EntityMappersTest {
         assertEquals("漏看条件", restored.errorExplain)
         assertEquals(EntityMappers.decodeStringList("[]"), emptyList<String>())
     }
+
+    @Test
+    @DisplayName("标准解答编码后可原样读回（复写依赖这条链路）")
+    fun solutionRoundTrip() {
+        val solution =
+            StandardSolution(
+                steps =
+                    listOf(
+                        SolutionStep(idx = 1, content = "配方", why = "化成顶点式"),
+                        SolutionStep(idx = 2, content = "比较端点与顶点", why = "闭区间最值看三处"),
+                    ),
+                finalAnswer = "0",
+                method = "配方法",
+            )
+        val decoded = EntityMappers.decodeSolution(EntityMappers.encodeSolution(solution))
+        assertEquals(solution.finalAnswer, decoded.finalAnswer)
+        assertEquals(solution.method, decoded.method)
+        assertEquals(2, decoded.steps.size)
+        assertEquals("配方", decoded.steps.first().content)
+        assertEquals("化成顶点式", decoded.steps.first().why)
+    }
 }

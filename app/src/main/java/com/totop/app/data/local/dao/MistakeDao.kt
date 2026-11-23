@@ -105,6 +105,26 @@ interface MistakeDao {
         status: String,
     ): Int
 
+    /**
+     * 复写标准解答（0.9）。
+     *
+     * 一次性更新「过程 + 最终答案 + 来源 + 时间」四列，不分成两条语句：
+     * 分两条写就有一瞬间库里是「新过程配旧答案」，列表与详情各读一半就会对不上。
+     *
+     * @return 受影响行数，0 表示这条错题已不存在（已被删除），调用方按失败处理
+     */
+    @Query(
+        "UPDATE mistake_record SET correctPathJson = :correctPathJson, finalAnswer = :finalAnswer, " +
+            "solutionSource = :source, solutionUpdatedAt = :updatedAt WHERE id = :id",
+    )
+    suspend fun updateSolution(
+        id: String,
+        correctPathJson: String,
+        finalAnswer: String,
+        source: String,
+        updatedAt: Long,
+    ): Int
+
     @Query("DELETE FROM mistake_record")
     suspend fun deleteAll()
 
