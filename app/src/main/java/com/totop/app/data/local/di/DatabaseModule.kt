@@ -279,6 +279,24 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * v10 -> v11：错题记录加「这份标准解答是怎么来的」与「最近一次复写时间」。
+     *
+     * 只加两列，不再加 standardSolution 列：完整过程已经在 correctPathJson 里，
+     * 同一份数据存两个字段，迟早会出现「一处更新、另一处还是旧的」。
+     *
+     * 两列都带默认值/可空，旧记录不需要回填：
+     * solutionSource 为 "ai" 表示是拍题时首次给出的解答；
+     * solutionUpdatedAt 为 null 表示从未复写过。
+     */
+    private val MIGRATION_10_11: Migration =
+        object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE mistake_record ADD COLUMN solutionSource TEXT NOT NULL DEFAULT 'ai'")
+                db.execSQL("ALTER TABLE mistake_record ADD COLUMN solutionUpdatedAt INTEGER")
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
         arrayOf(
@@ -291,6 +309,7 @@ object DatabaseModule {
             MIGRATION_7_8,
             MIGRATION_8_9,
             MIGRATION_9_10,
+            MIGRATION_10_11,
         )
 
     @Provides

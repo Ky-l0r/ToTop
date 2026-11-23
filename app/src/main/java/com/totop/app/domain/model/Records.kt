@@ -54,6 +54,9 @@ enum class ReviewSource(
 
     /** 解答卡底部「我核对过，一致」。 */
     CHECK("check", "核对"),
+
+    /** 巩固练习：做完「做对了 / 仍不懂」自评后写下的那条（0.9 起）。 */
+    PRACTICE("practice", "练习"),
     ;
 
     companion object {

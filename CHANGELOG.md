@@ -5,6 +5,25 @@
 
 ## [Unreleased]
 
+### 数据库 v11：知道答案是怎么来的
+
+#### Added
+
+- `mistake_record` 增 `solutionSource`（`ai` / `import` / `check` / `followup`，默认 `ai`）与
+  `solutionUpdatedAt`（UTC 毫秒，null 表示从未复写）。
+- `ReviewSource` 增 `practice`：巩固练习的「做对了 / 仍不懂」自评有了独立来源，不再混进自评。
+
+#### Changed
+
+- 数据库版本 10 升到 11，补 `MIGRATION_10_11` 与 v11 schema 快照，`MigrationTest` 增一条 10→11 用例。
+
+#### Notes
+
+- **只加两列，没加 `standardSolution`**：完整过程本来就存在 `correctPathJson`，
+  再加一列等于同一份数据存两处，复写时只更新一处就会出现「列表新答案、详情旧过程」。
+  这项与指南的偏差写进了 `docs/偏离记录.md` 第 50 章。
+- 迁移用例需要设备或模拟器（`connectedDebugAndroidTest`），**本机未执行**，只做了编译校验与 schema 比对。
+
 ### 考场思维闪记：先说清「考场上怎么想到」
 
 #### Added

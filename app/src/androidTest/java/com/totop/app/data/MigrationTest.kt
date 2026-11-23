@@ -451,6 +451,34 @@ class MigrationTest {
         }
     }
 
+    @Test
+    @Throws(IOException::class)
+    fun migrate10To11AddsSolutionProvenance() {
+        // v11 给 mistake_record 加「这份标准解答是怎么来的」与「最近一次复写时间」。
+        // 断言点：旧记录迁移后 source 落到默认的 ai、时间为 null，且原有解答内容一字未动。
+        helper.createDatabase(TEST_DB, 10).use { db ->
+            db.execSQL(
+                "INSERT INTO question (id, subject, grade, stemText, knownJson, ask, optionsJson, " +
+                    "hasFigure, imagePath, createdAt, status) " +
+                    "VALUES ('q1', 'math', '高一', '求最小值', '[]', '求最小值', '[]', 0, NULL, 1, 'solved')",
+            )
+            db.execSQL(
+                "INSERT INTO mistake_record (id, questionId, studentStepsJson, firstErrorStepIdx, errorType, " +
+                    "errorExplain, correctPathJson, finalAnswer, mode, createdAt, recurrenceIndex, status, source) " +
+                    "VALUES ('m1', 'q1', '[]', NULL, 'formula_misuse', '', '{\"steps\":[],\"finalAnswer\":\"0\"', " +
+                    "'0', 'DIRECT', 1, 1, 'wrong', 'solve')",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 11, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT solutionSource, solutionUpdatedAt FROM mistake_record WHERE id = 'm1'").use { cursor ->
+                assertTrue("迁移后旧错题必须还在", cursor.moveToFirst())
+                assertEquals("旧记录默认视为 AI 首次给出", "ai", cursor.getString(0))
+                assertTrue("旧记录不应有复写时间", cursor.isNull(1))
+            }
+        }
+    }
+
     private companion object {
         const val TEST_DB = "totop-migration-test.db"
     }
