@@ -43,6 +43,9 @@ import com.totop.app.R
 import com.totop.app.ui.common.ALL_SUBJECTS
 import com.totop.app.ui.common.SkeletonList
 import com.totop.app.ui.common.SubjectTabs
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
+import com.totop.app.ui.theme.Tokens
 
 /**
  * 知识点掌握度页（FR-3，M4）。
@@ -216,14 +219,7 @@ private fun ChartCard(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+    SurfaceCard(modifier = modifier, tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
         Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         if (!subtitle.isNullOrBlank()) {
             Text(
@@ -249,14 +245,7 @@ private fun SubjectHeatSection(
     onOpenKnowledgePoint: (String) -> Unit,
 ) {
     var expanded by rememberSaveable(group.subject) { mutableStateOf(expandedByDefault) }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    SurfaceCard(tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
         Row(
             modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
@@ -300,13 +289,7 @@ private fun ChapterHeatCard(
     // key 带上科目：不同科目完全可能同名章节（例如「函数」），
     // 只用章节名做 saveable key 会让两个科目的展开状态互相覆盖。
     var expanded by rememberSaveable(group.subject + "/" + group.chapter) { mutableStateOf(false) }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-    ) {
+    SurfaceCard(tone = CardTone.Tint) {
         Row(
             modifier =
                 Modifier

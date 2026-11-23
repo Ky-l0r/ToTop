@@ -43,7 +43,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
 import com.totop.app.domain.model.MasteryBand
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
 import com.totop.app.ui.mistakes.KpointTag
+import com.totop.app.ui.theme.Tokens
 
 /**
  * 知识点详情（FR-3.3）。
@@ -412,14 +415,7 @@ private fun DetailCard(
     icon: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    SurfaceCard(modifier = modifier, tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) {
                 Box(modifier = Modifier.padding(end = 6.dp)) { icon() }

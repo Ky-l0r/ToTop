@@ -68,6 +68,9 @@ import com.totop.app.domain.model.TeachingMode
 import com.totop.app.ml.ScanLevel
 import com.totop.app.ml.TtsSpeed
 import com.totop.app.ml.VoiceEngines
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
+import com.totop.app.ui.theme.Tokens
 
 /**
  * 设置页（FR-6 / 方案 6.1）。
@@ -228,14 +231,7 @@ internal fun ContentCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    SurfaceCard(modifier = modifier, tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
         Column {
             Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             Text(

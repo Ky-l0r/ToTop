@@ -51,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
 import com.totop.app.domain.model.RecallSelfResult
+import com.totop.app.ui.components.SectionCard
 
 /**
  * 复习闭环（FR-4.2 / FR-4.3 / FR-4.4）。
@@ -510,31 +511,6 @@ private fun ErrorBlock(
     SectionCard(title = "读取失败") {
         Text(text = message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         OutlinedButton(onClick = onRetry) { Text(text = "重试") }
-    }
-}
-
-/** 统一卡片容器（与解题页视觉一致，但不跨包依赖）。 */
-@Composable
-internal fun SectionCard(
-    title: String,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            content()
-        }
     }
 }
 

@@ -25,6 +25,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.totop.app.R
+import com.totop.app.ui.components.CardTone
+import com.totop.app.ui.components.SurfaceCard
+import com.totop.app.ui.theme.Tokens
 import com.totop.app.util.BackupLayout
 
 /**
@@ -111,14 +114,7 @@ private fun InfoCard(
     title: String,
     body: String,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
+    SurfaceCard(tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
         Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
         Text(text = body, style = MaterialTheme.typography.bodyMedium)
     }
