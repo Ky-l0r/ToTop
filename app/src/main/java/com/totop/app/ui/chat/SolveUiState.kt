@@ -182,6 +182,22 @@ data class SolutionStepView(
 )
 
 /**
+ * 「导入标准答案」的界面状态（0.9）。
+ *
+ * 导入走两步：先把图里的答案读出来给学生看一眼，确认后才覆盖错题本。
+ * 因此这里同时承载「读到了什么」与「是否正在读」，确认动作由仓储层之外的 UI 触发。
+ */
+data class ImportSolutionUi(
+    val visible: Boolean = false,
+    val loading: Boolean = false,
+    val finalAnswer: String = "",
+    val stepCount: Int = 0,
+    val warnings: List<String> = emptyList(),
+    /** 读失败时的说明；非空表示这次没读到可用答案。 */
+    val message: String = "",
+)
+
+/**
  * 「考场思维闪记」的界面状态。
  *
  * 独立成一个小状态而不是塞进 SolutionPayload：闪记随时可以重新要一次，

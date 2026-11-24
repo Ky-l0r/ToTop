@@ -64,6 +64,7 @@ fun SolveRoute(
     val sessions by viewModel.sessions.collectAsStateWithLifecycle()
     val currentSessionId by viewModel.sessionId.collectAsStateWithLifecycle()
     val quickThink by viewModel.quickThink.collectAsStateWithLifecycle()
+    val importSolution by viewModel.importSolution.collectAsStateWithLifecycle()
     val toast by viewModel.toast.collectAsStateWithLifecycle()
     val stages by viewModel.stages.collectAsStateWithLifecycle()
     val masteredQuestionId by viewModel.masteredQuestionId.collectAsStateWithLifecycle()
@@ -86,6 +87,12 @@ fun SolveRoute(
                 pendingPreview = true
             },
             onCancelled = { viewModel.showToast("已取消相册选择") },
+        )
+    // 导入标准答案走独立的相册入口：选中的图不进本题草稿，只当作答案页读一遍。
+    val pickSolutionImage =
+        rememberAlbumPicker(
+            onPicked = { uri -> viewModel.importSolutionFromUri(uri) },
+            onCancelled = { viewModel.showToast("已取消导入") },
         )
     val requestPermission =
         rememberCameraPermissionRequester(
@@ -233,6 +240,10 @@ fun SolveRoute(
         quickThink = quickThink,
         onRequestQuickThink = viewModel::requestQuickThink,
         onDismissQuickThink = viewModel::dismissQuickThink,
+        importSolution = importSolution,
+        onImportSolution = pickSolutionImage,
+        onConfirmImport = viewModel::confirmImportSolution,
+        onDismissImport = viewModel::dismissImportSolution,
         masteredQuestionId = masteredQuestionId,
         thinkingHint = thinkingHint,
         onNotice = viewModel::showToast,

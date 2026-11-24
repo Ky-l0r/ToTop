@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +71,7 @@ import com.totop.app.ml.rememberRecordAudioPermissionRequester
 import com.totop.app.ml.rememberVoiceInput
 import com.totop.app.ui.chat.ComposerPhase
 import com.totop.app.ui.chat.ConversationMessage
+import com.totop.app.ui.chat.ImportSolutionUi
 import com.totop.app.ui.chat.ModeMeta
 import com.totop.app.ui.chat.QuickThinkUi
 import com.totop.app.ui.chat.SolutionPayload
@@ -148,6 +150,11 @@ fun SolveConversationScreen(
     quickThink: QuickThinkUi = QuickThinkUi(),
     onRequestQuickThink: () -> Unit = {},
     onDismissQuickThink: () -> Unit = {},
+    /** 导入标准答案：读图 → 展示 → 确认覆盖。 */
+    importSolution: ImportSolutionUi = ImportSolutionUi(),
+    onImportSolution: () -> Unit = {},
+    onConfirmImport: () -> Unit = {},
+    onDismissImport: () -> Unit = {},
     /** 当前这道题是否已经被标记为「已掌握」；顶部勾选只有它为真时才变绿。 */
     masteredQuestionId: String? = null,
     /** 生成期间的状态文案（当前阶段），用于「AI 正在思考」占位。 */
@@ -250,6 +257,10 @@ fun SolveConversationScreen(
                 quickThink = quickThink,
                 onRequestQuickThink = onRequestQuickThink,
                 onDismissQuickThink = onDismissQuickThink,
+                importSolution = importSolution,
+                onImportSolution = onImportSolution,
+                onConfirmImport = onConfirmImport,
+                onDismissImport = onDismissImport,
                 onNotice = onNotice,
             )
         }
@@ -536,6 +547,10 @@ private fun Composer(
     quickThink: QuickThinkUi,
     onRequestQuickThink: () -> Unit,
     onDismissQuickThink: () -> Unit,
+    importSolution: ImportSolutionUi,
+    onImportSolution: () -> Unit,
+    onConfirmImport: () -> Unit,
+    onDismissImport: () -> Unit,
     onNotice: (String) -> Unit,
 ) {
     var attachMenuOpen by remember { mutableStateOf(false) }
@@ -601,6 +616,11 @@ private fun Composer(
                     onRequestSolution(kind)
                 }
             }
+            SheetAction(text = "导入标准答案", icon = Icons.Filled.PhotoLibrary) {
+                attachMenuOpen = false
+                voice.cancel()
+                onImportSolution()
+            }
             SheetAction(text = "考场思维闪记", icon = Icons.Filled.Psychology) {
                 attachMenuOpen = false
                 voice.cancel()
@@ -614,6 +634,14 @@ private fun Composer(
         ModalBottomSheet(onDismissRequest = onDismissQuickThink, containerColor = Tokens.Surface) {
             QuickThinkPanel(state = quickThink, onRetry = onRequestQuickThink, onClose = onDismissQuickThink)
         }
+    }
+
+    if (importSolution.visible) {
+        ImportSolutionDialog(
+            state = importSolution,
+            onConfirm = onConfirmImport,
+            onDismiss = onDismissImport,
+        )
     }
 
     Column(
@@ -968,4 +996,67 @@ private fun QuickThinkPanel(
         }
         Spacer(Modifier.height(6.dp))
     }
+}
+
+/**
+ * 导入标准答案的确认框。
+ *
+ * 三种态：正在读 / 没读到 / 读到了。只有第三种才给「覆盖」按钮——
+ * 读失败时如果还留一个确认键，学生很容易点下去，把错题本的解答清掉。
+ */
+@Composable
+private fun ImportSolutionDialog(
+    state: ImportSolutionUi,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (state.loading) "正在读这张答案" else "用这份答案覆盖错题本？") },
+        text = {
+            when {
+                state.loading -> {
+                    Text("正在把图里的解答整理成步骤，稍等一下。")
+                }
+
+                state.message.isNotBlank() -> {
+                    Text(state.message)
+                }
+
+                else -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "读到：" + state.finalAnswer.ifBlank { "（图里没有写最终答案）" },
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        Text(
+                            text = if (state.stepCount > 0) "过程 " + state.stepCount + " 步" else "图里只有答案，没有过程",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Tokens.OnSurfaceVariant,
+                        )
+                        state.warnings.forEach { warning ->
+                            Text(
+                                text = "· " + warning,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Tokens.OnSurfaceVariant,
+                            )
+                        }
+                        Text(
+                            text = "覆盖后不可恢复。",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Tokens.OnSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            if (!state.loading && state.message.isBlank()) {
+                TextButton(onClick = onConfirm) { Text("覆盖") }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(if (state.loading) "取消" else "算了") }
+        },
+    )
 }

@@ -31,6 +31,8 @@ internal object OneShotCompletion {
         maxTokens: Int,
         temperature: Double,
         jsonObject: Boolean = true,
+        /** 随消息一起发出的图片（视觉档）；为空表示纯文本调用。 */
+        images: List<com.totop.app.util.EncodedImage> = emptyList(),
     ): String {
         val text = StringBuilder()
         val flow: Flow<LlmChunk> =
@@ -38,8 +40,27 @@ internal object OneShotCompletion {
                 credentials = credentials,
                 config =
                     ChatRequestConfig(
-                        model = credentials.effectiveTextModel,
-                        messages = listOf(ChatMessage("system", system), ChatMessage("user", user)),
+                        // 带图时必须换视觉档：文本模型看不了图，会当成空请求返回
+                        model =
+                            if (images.isEmpty()) {
+                                credentials.effectiveTextModel
+                            } else {
+                                credentials.effectiveVisionModel
+                            },
+                        messages =
+                            listOf(
+                                ChatMessage("system", system),
+                                ChatMessage(
+                                    role = "user",
+                                    parts =
+                                        buildList {
+                                            add(ChatPart.Text(user))
+                                            images.forEach { image ->
+                                                add(ChatPart.Image(base64 = image.base64, mimeType = "image/jpeg"))
+                                            }
+                                        },
+                                ),
+                            ),
                         maxTokens = maxTokens,
                         temperature = temperature,
                         jsonObject = jsonObject,

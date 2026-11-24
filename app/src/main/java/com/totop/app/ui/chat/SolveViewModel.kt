@@ -11,6 +11,7 @@ import com.totop.app.data.remote.FollowUpCorrection
 import com.totop.app.data.remote.FollowUpEvent
 import com.totop.app.data.remote.FollowUpGateway
 import com.totop.app.data.remote.FollowUpTurn
+import com.totop.app.data.remote.ImportSolutionGateway
 import com.totop.app.data.remote.KpointMethodGateway
 import com.totop.app.data.remote.LlmCallRegistry
 import com.totop.app.data.remote.LlmException
@@ -93,6 +94,7 @@ class SolveViewModel
         private val followUpGateway: FollowUpGateway,
         private val methodGateway: KpointMethodGateway,
         private val quickThinkGateway: QuickThinkGateway,
+        private val importSolutionGateway: ImportSolutionGateway,
         private val knowledgeCatalog: KnowledgeCatalogReader,
         private val questionRepository: QuestionRepository,
         private val mistakeRepository: MistakeRepository,
@@ -164,6 +166,13 @@ class SolveViewModel
         /** 当前会话 ID；尚未建立会话时为 null。 */
         private val _sessionId = MutableStateFlow<String?>(null)
         val sessionId: StateFlow<String?> = _sessionId.asStateFlow()
+
+        /** 导入标准答案：读到内容后先展示，确认才覆盖错题本。 */
+        private val _importSolution = MutableStateFlow(ImportSolutionUi())
+        val importSolution: StateFlow<ImportSolutionUi> = _importSolution.asStateFlow()
+
+        /** 已读到、待确认的那份标准解答；确认前不落库。 */
+        private var pendingImport: com.totop.app.domain.model.StandardSolution? = null
 
         /** 考场思维闪记：独立于解答卡的一块状态，随时可重新要一次。 */
         private val _quickThink = MutableStateFlow(QuickThinkUi())
@@ -999,6 +1008,89 @@ class SolveViewModel
                     solution = solution,
                 )
             }
+        }
+
+        /**
+         * 导入标准答案：把一张答案页照片读成标准解答（0.9，口径「图即标准答案」）。
+         *
+         * 只读不写：读到之后先摆给学生看，确认了才覆盖错题本。
+         * 导入的图**不当作学生过程**，绝不会喂给阶段 C，因此不会影响错因判定。
+         */
+        fun importSolutionFromUri(uri: Uri) {
+            val credentials = runCatching { secretStore.read() }.getOrNull()
+            if (credentials == null || !credentials.canCall) {
+                showToast("还没有配置模型，先去设置里填一下")
+                return
+            }
+            _importSolution.value = ImportSolutionUi(visible = true, loading = true)
+            viewModelScope.launch {
+                val page =
+                    (
+                        runCatching { imagePreprocessor.preprocessFromUri(uri) }.getOrNull()
+                            as? com.totop.app.ml.PreprocessResult.Success
+                    )?.image
+                if (page == null) {
+                    _importSolution.value = ImportSolutionUi(visible = true, message = "这张图读不了，换一张试试")
+                    return@launch
+                }
+                val stem = latestSolution()?.stem.orEmpty()
+                val imported =
+                    runCatching {
+                        importSolutionGateway.read(
+                            credentials = credentials,
+                            images = listOf(page.encoded),
+                            stem = stem,
+                            requestId = java.util.UUID.randomUUID().toString(),
+                        )
+                    }.getOrNull()
+                if (imported == null || !imported.usable) {
+                    _importSolution.value =
+                        ImportSolutionUi(visible = true, message = "这张图里没读出可用的答案，换一张试试")
+                    return@launch
+                }
+                pendingImport = imported.solution
+                _importSolution.value =
+                    ImportSolutionUi(
+                        visible = true,
+                        finalAnswer = imported.solution.finalAnswer,
+                        stepCount = imported.solution.steps.size,
+                        warnings = imported.warnings,
+                    )
+            }
+        }
+
+        /** 确认用导入的那份覆盖错题本。 */
+        fun confirmImportSolution() {
+            val solution = pendingImport
+            if (solution == null) {
+                _importSolution.value = ImportSolutionUi()
+                return
+            }
+            val mistakeId = latestSolution()?.mistakeId
+            if (mistakeId.isNullOrBlank()) {
+                _importSolution.value = ImportSolutionUi()
+                showToast("这道题还没进错题本，先拍题解一遍再导入答案")
+                return
+            }
+            viewModelScope.launch {
+                val ok =
+                    runCatching {
+                        selfCheckRepository.rewriteSolution(
+                            mistakeId = mistakeId,
+                            solution = solution,
+                            source = com.totop.app.domain.model.SolutionSource.IMPORT,
+                        )
+                    }.getOrDefault(false)
+                pendingImport = null
+                _importSolution.value = ImportSolutionUi()
+                showToast(if (ok) "已用导入的答案覆盖错题本" else "这条错题已被删除，没能更新")
+            }
+        }
+
+        /** 放弃这次导入：什么都不写。 */
+        fun dismissImportSolution() {
+            pendingImport = null
+            _importSolution.value = ImportSolutionUi()
         }
 
         /**
