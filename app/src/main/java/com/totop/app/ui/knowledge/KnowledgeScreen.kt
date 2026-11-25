@@ -52,12 +52,11 @@ import com.totop.app.ui.theme.Tokens
  *
  * 页面结构（自上而下）：
  * 1. 摘要行：平均掌握度 / 薄弱知识点数 / 累计错题；
- * 2. 雷达图：错题最多的 6-8 个知识点；
- * 3. 章节树热力列表：按章节折叠，行内红/黄/绿条（未练习为灰「待练习」）；
- * 4. 趋势折线：掌握度历史，降采样到 <= 60 点；
- * 5. 错因分布饼图：固定七类。
+ * 2. 章节树热力列表：按章节折叠，行内红/黄/绿条（未练习为灰「待练习」）。
  *
- * 图表全部为 Canvas 静态绘制，无动画、无实时力导向（方案 7.1）。
+ * 0.9 起只留「排行与入口」：掌握度雷达、趋势折线、错因分布饼图全部移除。
+ * 三张图各自要一整块卡片，手机上大部分时间在滚动而不是在看；
+ * 学生真正要的是「哪一章最弱、点进去练」，这两件事热力列表都能给。
  *
  * @param onOpenKnowledgePoint 跳转知识点详情
  */
@@ -113,27 +112,6 @@ fun KnowledgeScreen(
 
             if (uiState.hasNoMastery) {
                 item(key = "empty") { EmptyRow() }
-            }
-
-            item(key = "radar") {
-                ChartCard(title = "掌握度雷达", subtitle = "按错题最多的知识点排序，越靠外越熟练") {
-                    RadarChart(data = uiState.radar)
-                }
-            }
-
-            item(key = "trend") {
-                ChartCard(
-                    title = "掌握度趋势",
-                    subtitle = KnowledgeViewModel.trendRangeText(uiState.trend),
-                ) {
-                    TrendChart(data = uiState.trend)
-                }
-            }
-
-            item(key = "pie") {
-                ChartCard(title = "错因分布", subtitle = "固定七类错因，全部本机统计") {
-                    ErrorTypePieChart(data = uiState.pie)
-                }
             }
 
             item(key = "heat-title") {
@@ -208,27 +186,6 @@ private fun SummaryRow(uiState: KnowledgeUiState) {
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
         }
-    }
-}
-
-/** 图表卡片。 */
-@Composable
-private fun ChartCard(
-    title: String,
-    subtitle: String?,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    SurfaceCard(modifier = modifier, tone = CardTone.Raised, spacing = Tokens.SpaceSm) {
-        Text(text = title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-        if (!subtitle.isNullOrBlank()) {
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        content()
     }
 }
 
@@ -355,7 +312,7 @@ private fun EmptyRow() {
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = "先做一道题并把它标为错题，或在「错题本 -> 复习」里勾选自评，这里就会出现雷达与热力。",
+            text = "先做一道题并把它标进错题本，这里就会出现章节热力排行。",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
