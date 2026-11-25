@@ -264,7 +264,18 @@ class StudyViewModel
                     recordSubjects = termSubjects,
                     trend = trend,
                     overview = overview,
-                    exams = visible.sortedByDescending { record -> record.occurredOn },
+                    // 选了科目就只看「包含这门课的最近一场」：这一页要回答的是
+                    // 「这门课最近考得怎么样」，把整学期的所有场次摊开只会让人自己找。
+                    // 没选科目（全部科目）时保持整学期列表。
+                    exams =
+                        visible
+                            .filter { record ->
+                                state.selectedSubject?.let { subject ->
+                                    record.countableScores.any { it.subject == subject }
+                                } ?: true
+                            }
+                            .sortedByDescending { record -> record.occurredOn }
+                            .let { list -> if (state.selectedSubject == null) list else list.take(1) },
                 )
             }
         }

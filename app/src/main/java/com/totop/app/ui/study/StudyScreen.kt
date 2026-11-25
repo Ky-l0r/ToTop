@@ -145,6 +145,7 @@ fun StudyScreen(
                     TrendCard(state = state, onKind = viewModel::selectKind, onOpenKnowledge = onOpenKnowledge)
                     ExamListCard(
                         exams = state.exams,
+                        subjectLabel = state.selectedSubject?.let { state.subjectLabel },
                         onEdit = { record ->
                             editing = record
                             entryOpen = true
@@ -582,12 +583,18 @@ private fun TrendCard(
 @Composable
 private fun ExamListCard(
     exams: List<ExamRecord>,
+    subjectLabel: String?,
     onEdit: (ExamRecord) -> Unit,
 ) {
-    SectionCard(title = "每次考得怎么样") {
+    SectionCard(title = if (subjectLabel.isNullOrBlank()) "每次考得怎么样" else subjectLabel + " 最近一场") {
         if (exams.isEmpty()) {
             Text(
-                text = "本学期还没有记录。",
+                text =
+                    if (subjectLabel.isNullOrBlank()) {
+                        "本学期还没有记录。"
+                    } else {
+                        "这门课本学期还没有成绩记录。录一次就有趋势了。"
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 color = Tokens.OnSurfaceVariant,
             )
