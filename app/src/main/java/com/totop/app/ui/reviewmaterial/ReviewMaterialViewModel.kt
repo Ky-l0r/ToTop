@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -55,12 +56,30 @@ class ReviewMaterialViewModel
         @ApplicationContext private val context: Context,
         private val gateway: ReviewMaterialGateway,
         private val secretStore: SecretStore,
+        private val subjectPrefs: com.totop.app.data.prefs.SubjectPrefs,
         private val mistakeRepository: MistakeRepository,
         private val questionRepository: com.totop.app.data.repo.QuestionRepository,
         private val insights: com.totop.app.data.repo.CompanionInsightRepository,
         private val noteRepository: com.totop.app.data.repo.StudyNoteRepository,
         private val materialStore: ReviewMaterialStore,
     ) : ViewModel() {
+        init {
+            // 科目网格只显示设置里勾选的那几科（0.9）。
+            // 观察而不是只读一次：在设置页改完勾选走回来，这一页要立刻收敛。
+            viewModelScope.launch {
+                subjectPrefs.observe().collect { allowed ->
+                    val labels = Subjects.ORDER.filter { allowed.contains(it) }.map { Subjects.label(it) }
+                    if (labels.isEmpty()) return@collect
+                    _uiState.update { current ->
+                        current.copy(
+                            subjects = labels,
+                            selectedSubject = current.selectedSubject.takeIf { it in labels } ?: labels.first(),
+                        )
+                    }
+                }
+            }
+        }
+
         private val _uiState = MutableStateFlow(ReviewMaterialUiState())
         val uiState: StateFlow<ReviewMaterialUiState> = _uiState.asStateFlow()
 

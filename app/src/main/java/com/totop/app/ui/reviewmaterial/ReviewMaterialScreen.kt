@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,6 +39,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -78,6 +80,7 @@ fun ReviewMaterialScreen(
     viewModel: ReviewMaterialViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var historyOpen by remember { mutableStateOf(false) }
 
     // 生成成功后的一次性跳转：事件由 Channel 发出，旋转重建不会重放
     LaunchedEffect(viewModel) {
@@ -94,9 +97,33 @@ fun ReviewMaterialScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
+                // 0.9：历史入口收到右上角。它属于「回头看」的动作，
+                // 摆在正文下方会让每次进来都要滑到底才能看见。
+                actions = {
+                    IconButton(onClick = { historyOpen = true }) {
+                        Icon(Icons.Filled.HistoryEdu, contentDescription = "以往的复习资料")
+                    }
+                },
             )
         },
     ) { innerPadding ->
+        if (historyOpen) {
+            ModalBottomSheet(onDismissRequest = { historyOpen = false }, containerColor = Tokens.Surface) {
+                Box(Modifier.padding(horizontal = 16.dp)) {
+                    HistorySection(
+                        items = state.history,
+                        loading = state.historyLoading,
+                        onOpen = { createdAtUtc ->
+                            historyOpen = false
+                            onOpenDetail(createdAtUtc)
+                        },
+                        onDelete = viewModel::deleteHistory,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+            }
+        }
+
         Column(
             modifier =
                 Modifier
@@ -157,16 +184,6 @@ fun ReviewMaterialScreen(
                     },
                 )
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            // 以往的复习资料：点一条进详情页看正文与导出，列表只留摘要
-            HistorySection(
-                items = state.history,
-                loading = state.historyLoading,
-                onOpen = onOpenDetail,
-                onDelete = viewModel::deleteHistory,
-            )
 
             Spacer(Modifier.height(16.dp))
 
