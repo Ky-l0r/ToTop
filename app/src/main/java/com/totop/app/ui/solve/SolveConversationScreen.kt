@@ -135,8 +135,6 @@ fun SolveConversationScreen(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
-    /** 把这一轮解答存进资料库（参数是来源标注）。 */
-    onSaveMaterial: (String, String) -> Unit = { _, _ -> },
     /** 自检「我核对过，一致」。 */
     onSelfCheckAgree: (String?) -> Unit = {},
     onRewriteSolution: (SolutionPayload) -> Unit = {},
@@ -228,7 +226,6 @@ fun SolveConversationScreen(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
-                onSaveMaterial = { messageId, source -> onSaveMaterial(messageId, source) },
                 onSelfCheckAgree = onSelfCheckAgree,
                 onRewriteSolution = onRewriteSolution,
                 onSelfCheckDisagree = onSelfCheckDisagree,
@@ -364,7 +361,6 @@ private fun ConversationList(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
-    onSaveMaterial: (String, String) -> Unit,
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
     onMarkUnknown: (String?) -> Unit,
@@ -396,7 +392,6 @@ private fun ConversationList(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
-                onSaveMaterial = { source -> onSaveMaterial(item.id, source) },
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
                 onMarkUnknown = onMarkUnknown,

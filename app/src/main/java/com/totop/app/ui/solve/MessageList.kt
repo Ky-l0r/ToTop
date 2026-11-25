@@ -70,7 +70,6 @@ internal fun MessageItem(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
-    onSaveMaterial: (String) -> Unit = {},
     onSelfCheckAgree: (String?) -> Unit = {},
     onSelfCheckDisagree: (String?) -> Unit = {},
     onMarkUnknown: (String?) -> Unit = {},
@@ -86,7 +85,6 @@ internal fun MessageItem(
                 onOpenKnowledgePoint = onOpenKnowledgePoint,
                 onUnlockHint = onUnlockHint,
                 onRevealSolution = onRevealSolution,
-                onSaveMaterial = onSaveMaterial,
                 onSelfCheckAgree = onSelfCheckAgree,
                 onSelfCheckDisagree = onSelfCheckDisagree,
                 onMarkUnknown = onMarkUnknown,
@@ -323,14 +321,11 @@ private fun SolutionBubble(
     onOpenKnowledgePoint: (String) -> Unit,
     onUnlockHint: (String) -> Unit,
     onRevealSolution: (String) -> Unit,
-    onSaveMaterial: (String) -> Unit,
     onSelfCheckAgree: (String?) -> Unit,
     onSelfCheckDisagree: (String?) -> Unit,
     onMarkUnknown: (String?) -> Unit,
     onRewriteSolution: (SolutionPayload) -> Unit,
 ) {
-    // 来源输入框：存资料前问一句「这是哪来的」，因为资料的可信度全靠这条标注。
-    var materialDialogOpen by remember { mutableStateOf(false) }
     // 复写错题本前的确认：覆盖不可恢复，每次都要问一遍，不做「本会话已确认」。
     var rewriteConfirm by remember { mutableStateOf(false) }
     if (rewriteConfirm) {
@@ -348,15 +343,6 @@ private fun SolutionBubble(
             },
             dismissButton = {
                 TextButton(onClick = { rewriteConfirm = false }) { Text("取消") }
-            },
-        )
-    }
-    if (materialDialogOpen) {
-        MaterialSourceDialog(
-            onDismiss = { materialDialogOpen = false },
-            onConfirm = { source ->
-                materialDialogOpen = false
-                onSaveMaterial(source)
             },
         )
     }
@@ -519,23 +505,6 @@ private fun SolutionBubble(
                         }
                     }
                 }
-            }
-        }
-
-        // 存进资料库：把这次的解法留成「别人的解析」，下次解同类题时作为参考。
-        // 放在卡片末尾而不是顶部：它是看完之后才会产生的动作。
-        // 存过之后就地把回执摆在这里，学生不用滚到页面顶部找提示。
-        val savedNote = message.materialNote
-        if (savedNote != null) {
-            MaterialSavedNote(savedNote)
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                SmallAction(text = "存进资料库", onClick = { materialDialogOpen = true })
-                Text(
-                    text = "下次解同类题时参考",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
             }
         }
 
@@ -1058,47 +1027,3 @@ private fun MaterialSavedNote(text: String) {
         )
     }
 }
-
-/**
- * 存资料时的来源输入。
- *
- * 为什么要问：资料的**可信度全靠这条标注**。作业帮、老师发的、同学笔记——
- * 来源不同，将来它给 AI 参考时的分量也不同；不标注的话，三个月后学生自己也想不起来
- * 「这条到底是谁说的」。
- */
-@Composable
-private fun MaterialSourceDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit,
-) {
-    var source by remember { mutableStateOf("作业帮截图") }
-    androidx.compose.material3.AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("存进资料库") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "这条解法来自哪里？会显示在资料库里，提醒你它不是你自己做的。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Tokens.OnSurfaceVariant,
-                )
-                androidx.compose.material3.OutlinedTextField(
-                    value = source,
-                    onValueChange = { source = it.take(SOURCE_MAX_CHARS) },
-                    singleLine = true,
-                    label = { Text("来源") },
-                    placeholder = { Text("作业帮截图 / 老师发的解析") },
-                )
-            }
-        },
-        confirmButton = {
-            androidx.compose.material3.TextButton(onClick = { onConfirm(source) }) { Text("存进去") }
-        },
-        dismissButton = {
-            androidx.compose.material3.TextButton(onClick = onDismiss) { Text("取消") }
-        },
-    )
-}
-
-/** 来源标注的长度上限：它是一句标注，不是一段说明。 */
-private const val SOURCE_MAX_CHARS: Int = 30

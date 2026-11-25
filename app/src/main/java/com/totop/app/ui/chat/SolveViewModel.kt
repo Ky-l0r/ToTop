@@ -1389,7 +1389,7 @@ class SolveViewModel
                 )
             val saved = runCatching { learnedMaterials.save(material) }.isSuccess
             if (saved) {
-                updateMessage(replyId) { it.copy(materialNote = "补拍的截图已存入资料库") }
+                updateMessage(replyId) { it.copy(materialNote = "补拍的截图已存档，解题时会作为参考") }
             }
         }
 
