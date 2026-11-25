@@ -316,7 +316,22 @@ private fun AskComposer(
     onQuestionChange: (String) -> Unit,
     onAsk: () -> Unit,
 ) {
-    var voiceMode by remember { mutableStateOf(true) }
+    val hostContext = androidx.compose.ui.platform.LocalContext.current
+    // 0.9：上次用语音还是键盘，与拍题页共用一套记忆（InputModePrefs）。
+    var voiceMode by remember {
+        mutableStateOf(
+            if (com.totop.app.data.prefs.InputModePrefs.remember(hostContext)) {
+                com.totop.app.data.prefs.InputModePrefs.lastVoice(hostContext) ?: true
+            } else {
+                true
+            },
+        )
+    }
+    androidx.compose.runtime.LaunchedEffect(voiceMode) {
+        if (com.totop.app.data.prefs.InputModePrefs.remember(hostContext)) {
+            com.totop.app.data.prefs.InputModePrefs.setLastVoice(hostContext, voiceMode)
+        }
+    }
     // 切到键盘态后要拉起的输入法：不能在同一次点击里 requestFocus，
     // 那时 TextField 还没被组合出来，会抛 IllegalStateException。
     var focusRequested by remember { mutableStateOf(false) }

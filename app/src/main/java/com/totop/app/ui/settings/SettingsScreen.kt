@@ -609,6 +609,22 @@ private fun PreferenceSection(
             checked = toggles.generateExercise,
             onCheckedChange = viewModel::setGenerateExercise,
         )
+
+        // 输入方式的记忆（0.9）：拍题页与陪伴页共用这一项，关掉后两页都回到各自的默认态。
+        // 存在 SharedPreferences 而不是 settings 表：它是设备偏好，不进导出、不参与统计。
+        val inputContext = androidx.compose.ui.platform.LocalContext.current
+        var rememberInput by remember {
+            mutableStateOf(com.totop.app.data.prefs.InputModePrefs.remember(inputContext))
+        }
+        ToggleRow(
+            title = "记住上次的输入方式",
+            subtitle = "拍题与陪伴两页共用：上次用语音，下次进来还是语音",
+            checked = rememberInput,
+            onCheckedChange = { value ->
+                rememberInput = value
+                com.totop.app.data.prefs.InputModePrefs.setRemember(inputContext, value)
+            },
+        )
     }
 
     VoiceEngineSection()

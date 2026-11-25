@@ -551,7 +551,22 @@ private fun Composer(
     var attachMenuOpen by remember { mutableStateOf(false) }
     // 默认停在语音态：一句话的思路说出来比打出来快。已经有草稿时停在文字态，
     // 否则用户看不到自己写了什么（草稿是跨会话保留的，进来常常不是空的）。
-    var voiceMode by remember { mutableStateOf(draft.studentProcess.isBlank()) }
+    // 0.9：记住上次的输入方式（与陪伴页共用 InputModePrefs）；没记过就按草稿判断。
+    val inputContext = androidx.compose.ui.platform.LocalContext.current
+    var voiceMode by remember {
+        mutableStateOf(
+            if (com.totop.app.data.prefs.InputModePrefs.remember(inputContext)) {
+                com.totop.app.data.prefs.InputModePrefs.lastVoice(inputContext) ?: draft.studentProcess.isBlank()
+            } else {
+                draft.studentProcess.isBlank()
+            },
+        )
+    }
+    LaunchedEffect(voiceMode) {
+        if (com.totop.app.data.prefs.InputModePrefs.remember(inputContext)) {
+            com.totop.app.data.prefs.InputModePrefs.setLastVoice(inputContext, voiceMode)
+        }
+    }
     // 切到键盘态后要拉起的输入法：不能在同一次点击里 requestFocus，
     // 那时 TextField 还没被组合出来，会抛 IllegalStateException。
     var focusRequested by remember { mutableStateOf(false) }
