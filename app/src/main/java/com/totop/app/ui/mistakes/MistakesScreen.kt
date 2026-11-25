@@ -1,10 +1,6 @@
 package com.totop.app.ui.mistakes
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,7 +29,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,15 +37,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.totop.app.R
-import com.totop.app.domain.model.MistakeStatus
-import com.totop.app.ui.theme.Tokens
 
 /**
  * 错题本（FR-4，M3）。
@@ -72,7 +63,6 @@ import com.totop.app.ui.theme.Tokens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MistakesScreen(
-    onOpenReview: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenMistake: (mistakeId: String) -> Unit = {},
     // 从功能中心进入后需要返回上一层；默认空实现保持既有调用方不变
@@ -113,9 +103,6 @@ fun MistakesScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
-                actions = {
-                    TextButton(onClick = onOpenReview) { Text(text = "复习") }
-                },
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -147,13 +134,6 @@ fun MistakesScreen(
                         CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                     }
                 }
-            }
-
-            item(key = "status-row") {
-                StatusFilterRow(
-                    selected = uiState.filter.status,
-                    onSelect = viewModel::setStatus,
-                )
             }
 
             item(key = "filter-bar") {
@@ -222,60 +202,6 @@ fun MistakesScreen(
                 }
             }
         }
-    }
-}
-
-/**
- * 状态分段：全部 / 不会 / 错误 / 存疑 / 理解。
- *
- * 放在筛选条**上面**而不是塞进筛选菜单：这四态是这一页的第一分类维度，
- * 学生进来先看「哪些是我根本不会的」，再才轮到科目与错因。
- */
-@Composable
-private fun StatusFilterRow(
-    selected: MistakeStatus?,
-    onSelect: (MistakeStatus?) -> Unit,
-) {
-    val entries = MistakeStatus.entries
-    Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        StatusChip(
-            text = "全部",
-            selected = selected == null,
-            onClick = { onSelect(null) },
-        )
-        entries.forEach { status ->
-            StatusChip(
-                text = status.label,
-                selected = selected == status,
-                onClick = { onSelect(status) },
-            )
-        }
-    }
-}
-
-/** 一个状态胶囊：选中用主色底，未选中留白边。 */
-@Composable
-private fun StatusChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(50))
-                .background(if (selected) Tokens.PrimaryContainer else Tokens.SurfaceVariant)
-                .clickable(onClick = onClick)
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelMedium,
-            color = if (selected) Tokens.Primary else Tokens.OnSurfaceVariant,
-        )
     }
 }
 

@@ -468,7 +468,6 @@ fun ToTopNavHost(
 
         composable(route = Routes.MISTAKES) {
             MistakesScreen(
-                onOpenReview = { navController.navigate(Routes.REVIEW) },
                 // 点一道错题 -> 打开「回顾」页，而不是复习页。
                 //
                 // 旧实现两个入口都跳到 Routes.REVIEW，学生想「看看我当时错在哪」

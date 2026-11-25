@@ -43,7 +43,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.totop.app.domain.model.ErrorType
-import com.totop.app.domain.model.MistakeStatus
 import com.totop.app.ui.theme.Tokens
 
 /**
@@ -310,9 +309,8 @@ fun MistakeCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Box(modifier = Modifier.weight(1f))
-                // 状态徽标放在复发徽标左边：状态是「这道题现在算什么」，
-                // 复发是「错了第几次」，前者更基础。
-                StatusBadge(status = card.status)
+                // 0.9 起不再显示状态徽标：错题本只回答「错过什么」，
+                // 「现在算什么」是学生自己的判断，不该在列表里替他分类。
                 card.recurrenceBadge?.let { badge ->
                     RecurrenceBadge(text = badge)
                 }
@@ -468,39 +466,6 @@ fun KpointTag(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-/** 状态徽标：不会 / 错误 / 存疑 / 理解，只做区分，不用高饱和色抢注意力。 */
-@Composable
-fun StatusBadge(
-    status: MistakeStatus,
-    modifier: Modifier = Modifier,
-) {
-    // 配色按「语义轻重」而非按状态顺序：
-    // - 不会（黄）：还没掌握，提示味；它是自动判定里最常见的一类，用红会满屏警戒；
-    // - 错误（红）：确认做错且指到了具体步骤，是唯一需要立刻重做的；
-    // - 存疑（紫）：结论还没定，颜色必须与「错误」拉开，否则又是「一条要背的错题」；
-    // - 理解（绿）：过关，与顶栏勾选变绿同一套色（Tokens.Success）。
-    val (background, foreground) =
-        when (status) {
-            MistakeStatus.UNKNOWN -> Tokens.WarningContainer to Tokens.Warning
-            MistakeStatus.WRONG -> Tokens.ErrorContainer to Tokens.Error
-            MistakeStatus.DISPUTED -> Tokens.ReasoningContainer to Tokens.Reasoning
-            MistakeStatus.UNDERSTOOD -> Tokens.SuccessContainer to Tokens.Success
-        }
-    Box(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(6.dp))
-                .background(background)
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-    ) {
-        Text(
-            text = status.label,
-            style = MaterialTheme.typography.labelSmall,
-            color = foreground,
         )
     }
 }
