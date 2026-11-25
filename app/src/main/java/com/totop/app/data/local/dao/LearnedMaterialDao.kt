@@ -15,6 +15,10 @@ interface LearnedMaterialDao {
     @Query("SELECT * FROM learned_material ORDER BY createdAtUtc DESC")
     fun observeAll(): Flow<List<LearnedMaterialEntity>>
 
+    /** 只取某一类来源（0.9：资料库只展示导入的标准答案）。 */
+    @Query("SELECT * FROM learned_material WHERE origin = :origin ORDER BY createdAtUtc DESC")
+    fun observeByOrigin(origin: String): Flow<List<LearnedMaterialEntity>>
+
     @Query("SELECT * FROM learned_material ORDER BY createdAtUtc DESC LIMIT :limit")
     suspend fun recent(limit: Int): List<LearnedMaterialEntity>
 

@@ -1,9 +1,31 @@
+## [Unreleased]
+
+### 资料库只收导入的标准答案（DB v12）
+
+#### Added
+
+- `learned_material` 增 `origin`（`collected` / `import`，默认 `collected`）并建索引；
+  数据库 11 升到 12，补 `MIGRATION_11_12`、v12 schema 快照与 11→12 迁移用例。
+- 「导入标准答案」确认后**同时写一条资料**（origin = import）：答案、步骤、方法、
+  科目与知识点都带上，供 AI 在解同类题时参考。
+- 资料库页只查询 `import`。老资料一条不删，只是不再出现在列表里。
+
+#### Changed
+
+- 文案与口径对齐：功能中心「自己攒的好解析」→「导入的标准答案」；
+  页面说明与空态改为「在拍题页右上角⋯里选导入标准答案」。
+- 卡片式列表本来就是，结构未动。
+
+#### Notes
+
+- 迁移用例需要设备，未执行；schema 12.json 已随迁移一起提交。
+- 「旧解析保留不展示」是刻意的：删除不可逆，隐藏只是列表少几行。
+- 界面未在真机点过。
+
 # Changelog
 
 本文件格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循[语义化版本](https://semver.org/lang/zh-CN/)。
-
-## [Unreleased]
 
 ### 删掉卡点笔记，功能中心按 0.9 改名
 

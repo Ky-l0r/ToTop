@@ -46,7 +46,10 @@ class LibraryViewModel
         private val methodCards: KpointMethodRepository,
     ) : ViewModel() {
         val state: StateFlow<LibraryUiState> =
-            combine(materials.observeAll(), methodCards.observeAll()) { items, methods ->
+            combine(
+                materials.observeByOrigin(com.totop.app.domain.model.MaterialOrigin.IMPORTED),
+                methodCards.observeAll(),
+            ) { items, methods ->
                 if (items.isEmpty() && methods.isEmpty()) {
                     LibraryUiState.Empty
                 } else {

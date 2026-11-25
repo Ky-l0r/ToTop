@@ -297,6 +297,21 @@ object DatabaseModule {
             }
         }
 
+    /**
+     * v11 -> v12：资料加「来源类别」（自己收集 / 导入的标准答案）。
+     *
+     * 旧记录一律落 collected：它们都是拍题页「存进资料库」进来的，
+     * 而 0.9 才出现「导入标准答案」这条新路。资料库页只展示 import，
+     * 旧数据保留不展示——删掉是不可逆的，而保留只是列表里少几行。
+     */
+    private val MIGRATION_11_12: Migration =
+        object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE learned_material ADD COLUMN origin TEXT NOT NULL DEFAULT 'collected'")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_learned_material_origin ON learned_material(origin)")
+            }
+        }
+
     /** 迁移列表。追加新版本时保持升序。 */
     val MIGRATIONS: Array<Migration> =
         arrayOf(
@@ -310,6 +325,7 @@ object DatabaseModule {
             MIGRATION_8_9,
             MIGRATION_9_10,
             MIGRATION_10_11,
+            MIGRATION_11_12,
         )
 
     @Provides

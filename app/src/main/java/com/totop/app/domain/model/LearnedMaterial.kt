@@ -20,6 +20,8 @@ data class LearnedMaterial(
     val sourceLabel: String,
     val imagePath: String?,
     val createdAtUtc: Long,
+    /** 来源类别：自己收集 / 导入的标准答案（0.9）。 */
+    val origin: MaterialOrigin = MaterialOrigin.COLLECTED,
 ) {
     /** 列表里的一行摘要。 */
     val summary: String

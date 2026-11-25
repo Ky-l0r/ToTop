@@ -36,6 +36,10 @@ class LearnedMaterialRepository
 
         fun observeAll(): Flow<List<LearnedMaterial>> = dao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
+        /** 只观察某一类来源；资料库页用 [com.totop.app.domain.model.MaterialOrigin.IMPORTED]。 */
+        fun observeByOrigin(origin: com.totop.app.domain.model.MaterialOrigin): Flow<List<LearnedMaterial>> =
+            dao.observeByOrigin(origin.wire).map { rows -> rows.map { it.toDomain() } }
+
         fun observeCount(): Flow<Int> = dao.observeCount()
 
         suspend fun recent(limit: Int = DEFAULT_LIMIT): List<LearnedMaterial> =
@@ -90,6 +94,7 @@ class LearnedMaterialRepository
                 sourceLabel = sourceLabel,
                 imagePath = imagePath,
                 createdAtUtc = createdAtUtc,
+                origin = com.totop.app.domain.model.MaterialOrigin.fromWire(origin),
             )
 
         private fun LearnedMaterial.toEntity(): LearnedMaterialEntity =
@@ -106,6 +111,7 @@ class LearnedMaterialRepository
                 sourceLabel = sourceLabel,
                 imagePath = imagePath,
                 createdAtUtc = createdAtUtc,
+                origin = origin.wire,
             )
 
         private fun encodeList(values: List<String>): String =

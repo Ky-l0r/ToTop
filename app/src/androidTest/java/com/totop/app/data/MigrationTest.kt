@@ -479,6 +479,28 @@ class MigrationTest {
         }
     }
 
+    @Test
+    @Throws(IOException::class)
+    fun migrate11To12AddsMaterialOrigin() {
+        // v12 给资料加「来源类别」。旧记录一律落 collected：它们都是拍题页「存进资料库」进来的，
+        // 而 0.9 才出现「导入标准答案」这条新路。
+        helper.createDatabase(TEST_DB, 11).use { db ->
+            db.execSQL(
+                "INSERT INTO learned_material (id, subject, kpointId, kpointName, title, method, " +
+                    "keyStepsJson, answer, pitfallsJson, sourceLabel, imagePath, createdAtUtc) " +
+                    "VALUES ('m1', 'math', NULL, '二次函数', '标题', '配方法', '[]', '0', '[]', '作业帮', NULL, 1)",
+            )
+        }
+        @Suppress("SpreadOperator")
+        helper.runMigrationsAndValidate(TEST_DB, 12, true, *DatabaseModule.MIGRATIONS).use { db ->
+            db.query("SELECT origin, title FROM learned_material WHERE id = 'm1'").use { cursor ->
+                assertTrue("迁移后旧资料必须还在", cursor.moveToFirst())
+                assertEquals("旧资料默认视为自己收集", "collected", cursor.getString(0))
+                assertEquals("标题", cursor.getString(1))
+            }
+        }
+    }
+
     private companion object {
         const val TEST_DB = "totop-migration-test.db"
     }

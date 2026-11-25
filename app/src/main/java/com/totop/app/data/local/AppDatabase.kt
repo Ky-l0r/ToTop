@@ -173,7 +173,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         /** 当前数据库版本。 */
-        const val VERSION: Int = 11
+        const val VERSION: Int = 12
 
         /** 数据库文件名。 */
         const val NAME: String = "totop.db"

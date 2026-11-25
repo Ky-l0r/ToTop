@@ -1072,6 +1072,7 @@ class SolveViewModel
                 showToast("这道题还没进错题本，先拍题解一遍再导入答案")
                 return
             }
+            val payload = latestSolution()
             viewModelScope.launch {
                 val ok =
                     runCatching {
@@ -1081,9 +1082,33 @@ class SolveViewModel
                             source = com.totop.app.domain.model.SolutionSource.IMPORT,
                         )
                     }.getOrDefault(false)
+                // 同时收进资料库（0.9）：导入的答案既覆盖错题本，也留一份供 AI 参考。
+                // 只写 origin=import 的那一类，资料库页只展示它们，不会和自己的旧解析混在一起。
+                if (ok && payload != null) {
+                    val kpoint = payload.kpoints.firstOrNull()
+                    runCatching {
+                        learnedMaterials.save(
+                            com.totop.app.domain.model.LearnedMaterial(
+                                id = "",
+                                subject = payload.subjectCode,
+                                kpointId = kpoint?.id,
+                                kpointName = kpoint?.name ?: payload.subjectLabel,
+                                title = payload.title.ifBlank { payload.stem.take(MATERIAL_TITLE_CHARS) },
+                                method = solution.method,
+                                keySteps = solution.steps.take(MATERIAL_STEP_LIMIT).map { it.content },
+                                answer = solution.finalAnswer,
+                                pitfalls = emptyList(),
+                                sourceLabel = "导入的标准答案",
+                                imagePath = null,
+                                createdAtUtc = System.currentTimeMillis(),
+                                origin = com.totop.app.domain.model.MaterialOrigin.IMPORTED,
+                            ),
+                        )
+                    }
+                }
                 pendingImport = null
                 _importSolution.value = ImportSolutionUi()
-                showToast(if (ok) "已用导入的答案覆盖错题本" else "这条错题已被删除，没能更新")
+                showToast(if (ok) "已用导入的答案覆盖错题本，并存进资料库" else "这条错题已被删除，没能更新")
             }
         }
 

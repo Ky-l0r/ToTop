@@ -1,5 +1,6 @@
 package com.totop.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -15,7 +16,7 @@ import androidx.room.PrimaryKey
  */
 @Entity(
     tableName = "learned_material",
-    indices = [Index(value = ["subject"]), Index(value = ["createdAtUtc"])],
+    indices = [Index(value = ["subject"]), Index(value = ["createdAtUtc"]), Index(value = ["origin"])],
 )
 data class LearnedMaterialEntity(
     @PrimaryKey val id: String,
@@ -41,4 +42,12 @@ data class LearnedMaterialEntity(
     val imagePath: String?,
     /** 收录时间，UTC 毫秒。 */
     val createdAtUtc: Long,
+    /**
+     * [com.totop.app.domain.model.MaterialOrigin] 的 wire 值（0.9 新增）。
+     *
+     * default 必须与迁移里的 DEFAULT 逐字一致，否则升级时会抛
+     * 「Migration didn't properly handle」。
+     */
+    @ColumnInfo(defaultValue = "collected")
+    val origin: String = "collected",
 )

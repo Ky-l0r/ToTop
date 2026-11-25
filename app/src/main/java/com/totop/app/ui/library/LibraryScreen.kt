@@ -134,8 +134,8 @@ private fun LibraryHint() {
         text =
             "上面那些「通用解法」是自动攒的：每次解题会把方法和步骤按知识点归纳成一张卡，" +
                 "同类题做得越多，卡片越接近这类题的标准路径，解题时会挑两张给 AI 参考。" +
-                "下面是你从别的渠道存进来的解析原文，点开能看截图与当时提取的内容；" +
-                "它们没有经过校验，AI 只用来对齐思路，不照抄结论。",
+                "下面是你在拍题页「导入标准答案」时读进来的那份答案，点开能看答案与步骤；" +
+                "它来自人手写的答案页，比自动归纳更接近标准路径。",
         style = MaterialTheme.typography.bodySmall,
         color = Tokens.OnSurfaceVariant,
     )
@@ -254,7 +254,7 @@ private fun EmptyLibrary() {
         Text(
             text =
                 "拍一道题、解完之后就会在这里长出一张「通用解法」卡；" +
-                    "在解答卡底部点「存进资料库」，还会把你收集的原文留在这里。",
+                    "在拍题页右上角「⋯」里选「导入标准答案」，读进来的答案会存在这里。",
             style = MaterialTheme.typography.bodySmall,
             color = Tokens.OnSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),

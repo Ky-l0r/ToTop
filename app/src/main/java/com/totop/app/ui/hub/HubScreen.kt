@@ -79,7 +79,7 @@ fun HubScreen(
             HubEntry("知识点", "薄弱点排行与变式训练", Icons.Filled.Star, onOpenKnowledge),
             HubEntry("巩固练习", "选科目与知识点，练同类题", Icons.Filled.Refresh, onOpenPractice),
             HubEntry("复习资料", "AI 生成的考前资料", Icons.AutoMirrored.Filled.List, onOpenReviewMaterial),
-            HubEntry("资料库", "自己攒的好解析", Icons.Filled.Book, onOpenLibrary),
+            HubEntry("资料库", "导入的标准答案", Icons.Filled.Book, onOpenLibrary),
             HubEntry("学情", "成绩趋势与学习报告", Icons.Filled.DateRange, onOpenReport),
             HubEntry("设置", "模型、偏好与数据", Icons.Filled.Tune, onOpenSettings),
         )
