@@ -421,7 +421,6 @@ fun ToTopNavHost(
 
         composable(route = Routes.HOME) {
             HomeScreen(
-                onOpenCapture = { navController.navigateTopLevel(Routes.SOLVE) },
                 onOpenMistakes = { navController.navigate(Routes.MISTAKES) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
                 onOpenHub = { navController.navigateTopLevel(Routes.HUB) },

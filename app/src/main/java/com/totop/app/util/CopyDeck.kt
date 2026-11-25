@@ -4,21 +4,14 @@ import android.content.Context
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** assets/copy/home_lines.json 的一行。 */
-@Serializable
-private data class CopyLine(
-    val emoji: String = "",
-    val text: String = "",
-)
-
 @Serializable
 private data class CopyFile(
-    val lines: List<CopyLine> = emptyList(),
+    // 0.9 首页去掉了每日一句，`lines` 字段不再读取；JSON 里保留它不影响解析（ignoreUnknownKeys）。
     val encouragements: List<String> = emptyList(),
 )
 
 /**
- * 文案表（首页每日一句、答完题的鼓励语）。
+ * 文案表（答完题的鼓励语）。
  *
  * 为什么放 assets 而不是 res/strings.xml 或 Kotlin 常量：
  * - 这类文案会经常改，改一句话不该牵动任何代码；
@@ -30,28 +23,9 @@ private data class CopyFile(
 object CopyDeck {
     private const val ASSET_PATH: String = "copy/home_lines.json"
 
-    private const val MILLIS_PER_DAY: Long = 86_400_000L
-
     private val json = Json { ignoreUnknownKeys = true }
 
     private var cached: CopyFile? = null
-
-    /**
-     * 今天这一句。
-     *
-     * 按 UTC 日序号取模，保证**同一天内反复进出首页看到的都是同一句**：
-     * 每次随机会让人觉得「这句刚才不是这句」，反而像加载出了问题。
-     */
-    fun dailyLine(
-        context: Context,
-        nowUtc: Long,
-    ): String {
-        val lines = load(context).lines
-        if (lines.isEmpty()) return ""
-        val day = Math.floorDiv(nowUtc, MILLIS_PER_DAY)
-        val line = lines[Math.floorMod(day, lines.size.toLong()).toInt()]
-        return if (line.emoji.isBlank()) line.text else line.emoji + " " + line.text
-    }
 
     /** 答完一道题后的收束语，随机取一条。 */
     fun encouragement(context: Context): String {

@@ -20,15 +20,12 @@ import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,7 +54,6 @@ import com.totop.app.ui.theme.Tokens
  */
 @Composable
 fun HomeScreen(
-    onOpenCapture: () -> Unit,
     onOpenMistakes: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
     onOpenHub: () -> Unit,
@@ -83,70 +78,44 @@ fun HomeScreen(
             fontWeight = FontWeight.SemiBold,
             color = Tokens.OnSurface,
         )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = state.subtitle,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Tokens.OnSurfaceVariant,
-        )
 
-        if (state.dailyLine.isNotBlank()) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = state.dailyLine,
-                style = MaterialTheme.typography.bodySmall,
-                color = Tokens.Primary.copy(alpha = 0.85f),
-            )
-        }
+        // 三块，顺序即优先级：先看哪块最弱，再看最近学得怎么样，最后才是去别处。
+        // 0.9 删掉了顶部的标语与「拍一道不会的题」大卡：拍题本来就在底栏正中，
+        // 首页再放一张同义的大卡只是把下面的内容挤下去。
 
-        Spacer(Modifier.height(16.dp))
-
-        // 拍题主入口：整块可点，不做小按钮
-        Card(
-            onClick = onOpenCapture,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(Tokens.RadiusLarge),
-            colors = CardDefaults.cardColors(containerColor = Tokens.PrimaryContainer),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier =
-                        Modifier.size(44.dp)
-                            .background(Tokens.Primary, RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = null, tint = Color.White)
-                }
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = "拍一道不会的题",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Tokens.OnPrimaryContainer,
-                    )
-                    Text(
-                        text = "拍下来，我陪你一步步想明白",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Tokens.OnPrimaryContainer.copy(alpha = 0.75f),
-                    )
-                }
-                Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Tokens.Primary)
+        Spacer(Modifier.height(18.dp))
+        SectionTitle(title = "最近不熟的知识点")
+        Spacer(Modifier.height(8.dp))
+        val forgotten = state.forgottenKpoints
+        val weak = state.weakKpoints
+        if (forgotten.isEmpty() && weak.isEmpty()) {
+            EmptyBlock(text = "还没有记录。拍一道不会的题，或在错题本里标一道，这里就会把最不熟的知识点排出来。")
+        } else {
+            forgotten.forEach { item ->
+                WeakKpointRow(
+                    name = item.name,
+                    subject = "写作业时问过 " + item.askCount + " 次",
+                    count = item.askCount,
+                    onClick = { onOpenKnowledgePoint(item.kpointId) },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+            weak.forEach { item ->
+                WeakKpointRow(
+                    name = item.name,
+                    subject = item.subjectLabel,
+                    count = item.mistakeCount,
+                    onClick = { onOpenKnowledgePoint(item.id) },
+                )
+                Spacer(Modifier.height(8.dp))
             }
         }
 
-        Spacer(Modifier.height(20.dp))
-
-        // 学习概览：两行两列的图标卡片。
-        //
-        // 旧版是三个并排的数字，首页除了一张拍题卡就是三行字，看起来「太空」。
-        // 现在每个指标都带图标、数字、一句说明，今天待复习那张卡还有一条进度条；
-        // 信息量上去了，但仍然是静态布局，没有动画与视差（性能规范）。
-        SectionTitle(title = "最近学得怎么样")
+        Spacer(Modifier.height(18.dp))
+        SectionTitle(title = "近期学情")
         Spacer(Modifier.height(8.dp))
+        // 指标块永远有四个（数值为 0 也照常显示）：
+        // 空态交给下面那句提示，而不是把整块藏起来——藏起来更像「坏了」。
         state.metrics.chunked(2).forEach { rowMetrics ->
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
@@ -167,8 +136,7 @@ fun HomeScreen(
             )
         }
 
-        Spacer(Modifier.height(20.dp))
-
+        Spacer(Modifier.height(18.dp))
         SectionTitle(title = "常用功能")
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -180,7 +148,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f),
             )
             QuickEntry(
-                title = "易错题",
+                title = "错题本",
                 subtitle = "不会、做错、存疑的都在这",
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 onClick = onOpenMistakes,
@@ -196,46 +164,13 @@ fun HomeScreen(
                 onClick = onOpenReviewMaterial,
                 modifier = Modifier.weight(1f),
             )
-        }
-        Spacer(Modifier.height(10.dp))
-        QuickEntry(
-            title = "全部功能",
-            subtitle = "知识点、学情、设置",
-            icon = Icons.Filled.Apps,
-            onClick = onOpenHub,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(Modifier.height(20.dp))
-
-        if (state.forgottenKpoints.isNotEmpty()) {
-            SectionTitle(title = "写作业时常问的")
-            Spacer(Modifier.height(8.dp))
-            state.forgottenKpoints.forEach { item ->
-                WeakKpointRow(
-                    name = item.name,
-                    subject = "问过 " + item.askCount + " 次",
-                    count = item.askCount,
-                    onClick = { onOpenKnowledgePoint(item.kpointId) },
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-
-        if (state.weakKpoints.isNotEmpty()) {
-            SectionTitle(title = "还需要多练的知识点")
-            Spacer(Modifier.height(8.dp))
-            state.weakKpoints.forEach { item ->
-                WeakKpointRow(
-                    name = item.name,
-                    subject = item.subjectLabel,
-                    count = item.mistakeCount,
-                    onClick = { onOpenKnowledgePoint(item.id) },
-                )
-                Spacer(Modifier.height(8.dp))
-            }
-            Spacer(Modifier.height(12.dp))
+            QuickEntry(
+                title = "全部功能",
+                subtitle = "知识点、学情、设置",
+                icon = Icons.Filled.Apps,
+                onClick = onOpenHub,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         Spacer(Modifier.height(24.dp))
@@ -394,4 +329,15 @@ private fun WeakKpointRow(
             Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = Tokens.OutlineStrong)
         }
     }
+}
+
+/** 一块内容的空态：一句话说清「做什么才会出现」。 */
+@Composable
+private fun EmptyBlock(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = Tokens.OnSurfaceVariant,
+        modifier = Modifier.padding(vertical = 4.dp),
+    )
 }
