@@ -23,7 +23,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,7 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,10 +51,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.totop.app.data.prefs.VoiceEnginePrefs
 import com.totop.app.domain.model.StudyNoteKind
 import com.totop.app.ml.rememberRecordAudioPermissionRequester
@@ -66,7 +61,6 @@ import com.totop.app.ui.common.VoiceCapturePanel
 import com.totop.app.ui.common.VoiceTranscriptStrip
 import com.totop.app.ui.components.FormulaText
 import com.totop.app.ui.theme.Tokens
-import kotlinx.coroutines.delay
 
 /**
  * 陪伴作业。
@@ -93,36 +87,11 @@ import kotlinx.coroutines.delay
  */
 @Composable
 fun CompanionScreen(
-    /** 把卡住的那道题拍下来问。当前页的计时与问答流不会因此丢失（各自存在 ViewModel 里）。 */
-    onOpenCamera: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: CompanionViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    // 只在这一页真正可见时走秒。
-    //
-    // 不把循环放进 ViewModel：那样切到后台、切到别的底栏页都会继续计，
-    // 学生把手机放下半小时，当天学习时长就凭空多出半小时。
-    // RESUMED 之外的任何状态（含被拍题页盖住、切到后台）都会自动挂起，回来接着走。
-    LaunchedEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            while (true) {
-                delay(1_000L)
-                viewModel.tick()
-            }
-        }
-    }
-
-    // 离开页面时把剩余时长结账。
-    //
-    // 不能指望 ViewModel 的 onCleared：切换底栏时 ViewModel 仍然活着，
-    // 真正需要结账的时机恰恰是「人走了但对象还在」。
-    DisposableEffect(Unit) {
-        onDispose { viewModel.checkpoint() }
-    }
 
     // 新增一条问答、或当前这条答完时滚到底部。
     // 不用「答案每长一个字就滚」：流式增量约 10Hz，反复滚动会把手动翻看顶掉。
@@ -131,7 +100,7 @@ fun CompanionScreen(
     }
 
     Column(modifier = modifier.fillMaxSize().background(Tokens.Background)) {
-        CompanionHeader(clockLabel = state.clockLabel)
+        CompanionHeader()
 
         if (state.items.isEmpty()) {
             EmptyStream(Modifier.weight(1f))
@@ -161,7 +130,6 @@ fun CompanionScreen(
             canAsk = state.canAsk,
             onQuestionChange = viewModel::updateQuestion,
             onAsk = viewModel::ask,
-            onOpenCamera = onOpenCamera,
         )
 
         // 页面级公式渲染宿主：陪伴页的回答里常带公式（「酯基是什么」就会画出结构式），
@@ -171,9 +139,14 @@ fun CompanionScreen(
     }
 }
 
-/** 顶栏：标题 + 一行时长。没有返回箭头——它是底栏顶层页。 */
+/**
+ * 顶栏：只有标题。没有返回箭头——它是底栏顶层页。
+ *
+ * 0.9 去掉了右侧那行「今天已写 N 分钟」：陪伴页的定位是随手问，
+ * 挂一条不断跳动的数字会让人以为这页在考核坐了多久。
+ */
 @Composable
-private fun CompanionHeader(clockLabel: String) {
+private fun CompanionHeader() {
     Row(
         modifier =
             Modifier
@@ -187,12 +160,6 @@ private fun CompanionHeader(clockLabel: String) {
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Medium,
             color = Tokens.OnSurface,
-        )
-        Spacer(Modifier.weight(1f))
-        Text(
-            text = clockLabel,
-            style = MaterialTheme.typography.labelMedium,
-            color = Tokens.OnSurfaceVariant,
         )
     }
 }
@@ -348,7 +315,6 @@ private fun AskComposer(
     canAsk: Boolean,
     onQuestionChange: (String) -> Unit,
     onAsk: () -> Unit,
-    onOpenCamera: () -> Unit,
 ) {
     var voiceMode by remember { mutableStateOf(true) }
     // 切到键盘态后要拉起的输入法：不能在同一次点击里 requestFocus，
@@ -495,13 +461,6 @@ private fun AskComposer(
                                 .weight(1f)
                                 .heightIn(min = 44.dp, max = 120.dp)
                                 .focusRequester(focusRequester),
-                        placeholder = {
-                            Text(
-                                text = "比如：链式法则是什么",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Tokens.OnSurfaceVariant,
-                            )
-                        },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                         keyboardActions = KeyboardActions(onSend = { onAsk() }),
                         colors =
@@ -512,22 +471,6 @@ private fun AskComposer(
                                 unfocusedIndicatorColor = Color.Transparent,
                             ),
                         maxLines = 4,
-                    )
-                }
-
-                // 相机常驻：卡住的题用嘴描述最费劲，拍一张最快。
-                IconButton(
-                    onClick = {
-                        voice.cancel()
-                        onOpenCamera()
-                    },
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.CameraAlt,
-                        contentDescription = "拍下来问",
-                        tint = Tokens.Primary,
-                        modifier = Modifier.size(22.dp),
                     )
                 }
             }

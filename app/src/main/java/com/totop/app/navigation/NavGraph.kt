@@ -414,9 +414,7 @@ fun ToTopNavHost(
         // 陪伴是顶层页（底栏第三项）：不显示返回箭头，问在页内直接用语音或打字。
         // 相机走 SOLVE_NEW：拍下来的是一道题，要的是完整解答，不该塞进「随手问」的一轮对话。
         composable(route = Routes.COMPANION) {
-            com.totop.app.ui.companion.CompanionScreen(
-                onOpenCamera = { navController.navigate(Routes.SOLVE_NEW) },
-            )
+            com.totop.app.ui.companion.CompanionScreen()
         }
 
         composable(route = Routes.HOME) {
