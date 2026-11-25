@@ -8,6 +8,7 @@ import com.totop.app.data.repo.ExerciseRepository
 import com.totop.app.data.repo.MasteryRecorder
 import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.data.repo.PageRequest
+import com.totop.app.data.repo.QuestionRepository
 import com.totop.app.domain.model.AnswerText
 import com.totop.app.domain.model.Exercise
 import com.totop.app.domain.model.ExerciseDifficulty
@@ -69,6 +70,7 @@ class PracticeViewModel
         private val mistakeRepository: MistakeRepository,
         private val knowledgeRepository: com.totop.app.data.repo.KnowledgeRepository,
         private val masteryRecorder: MasteryRecorder,
+        private val questionRepository: QuestionRepository,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(PracticeUiState())
         val uiState: StateFlow<PracticeUiState> = _uiState.asStateFlow()
@@ -83,8 +85,10 @@ class PracticeViewModel
         fun start(
             kpointId: String,
             kpointName: String,
+            questionTypeLabel: String = "",
+            useHistory: Boolean = false,
         ) {
-            val key = kpointId + "|" + kpointName
+            val key = kpointId + "|" + kpointName + "|" + questionTypeLabel + "|" + useHistory
             if (loadedKey == key && !_uiState.value.loading) return
             loadedKey = key
             _uiState.value = PracticeUiState(loading = true, kpointId = kpointId, kpointName = kpointName)
@@ -97,6 +101,22 @@ class PracticeViewModel
                         }.getOrNull().orEmpty()
                     }
                 _uiState.value = _uiState.value.copy(kpointName = resolvedName)
+                // 按历史题出题：拿该知识点最近一道错题的题干当「同一考法」的样本，
+                // 只给题干、不给答案与错因——出题环节不需要知道学生当时错在哪。
+                val sourceStem =
+                    if (useHistory) {
+                        val latest =
+                            runCatching {
+                                mistakeRepository.pageByKpoint(kpointId, PageRequest(page = 0, size = 1)).firstOrNull()
+                            }.getOrNull()
+                        latest
+                            ?.let { record ->
+                                runCatching { questionRepository.byId(record.questionId)?.stemText }.getOrNull()
+                            }?.trim()
+                            .orEmpty()
+                    } else {
+                        ""
+                    }
                 val credentials = runCatching { secretStore.read() }.getOrNull()
                 if (credentials == null || !credentials.canCall) {
                     _uiState.value =
@@ -113,8 +133,9 @@ class PracticeViewModel
                             kpointName = resolvedName,
                             difficultyLabel = ExerciseDifficulty.MEDIUM.label,
                             count = QUESTION_COUNT,
-                            sourceStem = "",
+                            sourceStem = sourceStem,
                             requestId = UUID.randomUUID().toString(),
+                            questionTypeLabel = questionTypeLabel,
                         )
                     }.getOrElse { failure ->
                         _uiState.value =

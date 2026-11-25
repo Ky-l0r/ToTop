@@ -40,6 +40,8 @@ class ExerciseGateway
             count: Int,
             sourceStem: String,
             requestId: String,
+            /** 题型（选择 / 填空 / 解答）；空串表示不限制。0.9 巩固练习用。 */
+            questionTypeLabel: String = "",
         ): List<Draft> {
             val system = loadAsset(GENERATE_ASSET)
             val user =
@@ -47,6 +49,9 @@ class ExerciseGateway
                     append("知识点：").append(kpointName).append('\n')
                     append("难度：").append(difficultyLabel).append('\n')
                     append("题数：").append(count).append('\n')
+                    if (questionTypeLabel.isNotBlank()) {
+                        append("题型：").append(questionTypeLabel).append('\n')
+                    }
                     if (sourceStem.isNotBlank()) {
                         append("学生最近错过的一道同类题（只参考考法，不要照抄）：\n").append(sourceStem).append('\n')
                     }

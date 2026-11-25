@@ -25,6 +25,7 @@
     "auxiliary 里是不参与四阶段缓存键的辅助模板（如复习资料），改动它不必单独升版本，但仍随本文件一同登记"
   ],
   "changes": [
+    "1.12.0-aux：出题模板 exercise_generate.md 支持输入「题型」（选择/填空/解答），给了题型则三题同型；属 auxiliary，不参与四阶段缓存键，故未升 promptVersion",
     "1.12.0-aux：新增导入标准答案誊录模板 import_solution.md（把答案页照片整理成 steps/finalAnswer/method，禁止重新解题）；属 auxiliary，不参与四阶段缓存键，故未升 promptVersion",
     "1.12.0-aux：新增考场思维闪记模板 exam_quick_thinking.md（十科通用，技术同此模板）；属 auxiliary，不参与四阶段缓存键，故未升 promptVersion",
     "1.12.0：阶段 A 新增 questionType（受控题型细分，16 个取值；输出字段变化，升 MINOR），阶段 B 按题型追加 type_notes.md 的补充要领",

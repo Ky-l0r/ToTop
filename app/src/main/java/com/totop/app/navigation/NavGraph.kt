@@ -64,6 +64,7 @@ import com.totop.app.ui.knowledge.KnowledgePointDetailScreen
 import com.totop.app.ui.knowledge.KnowledgeScreen
 import com.totop.app.ui.mistakes.MistakesScreen
 import com.totop.app.ui.mistakes.ReviewScreen
+import com.totop.app.ui.practice.PracticePickerScreen
 import com.totop.app.ui.practice.PracticeScreen
 import com.totop.app.ui.reviewmaterial.ReviewMaterialScreen
 import com.totop.app.ui.settings.BackupScreen
@@ -461,7 +462,7 @@ fun ToTopNavHost(
                 onOpenNotes = { navController.navigate(Routes.NOTES) },
                 onOpenReport = { navController.navigate(Routes.REPORT) },
                 onOpenReviewMaterial = { navController.navigate(Routes.REVIEW_MATERIAL) },
-                onOpenReview = { navController.navigate(Routes.REVIEW) },
+                onOpenPractice = { navController.navigate(Routes.PRACTICE_PICKER) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
             )
         }
@@ -603,6 +604,15 @@ fun ToTopNavHost(
             )
         }
 
+        composable(route = Routes.PRACTICE_PICKER) {
+            PracticePickerScreen(
+                onStart = { kpointId, name, questionType, useHistory ->
+                    navController.navigate(Routes.practice(kpointId, name, questionType, useHistory))
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+
         composable(
             route = Routes.PRACTICE,
             arguments =
@@ -612,12 +622,22 @@ fun ToTopNavHost(
                         type = NavType.StringType
                         defaultValue = ""
                     },
+                    navArgument(Routes.PRACTICE_TYPE_ARG) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                    navArgument(Routes.PRACTICE_HISTORY_ARG) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    },
                 ),
         ) { entry ->
             PracticeScreen(
                 kpointId = entry.arguments?.getString(Routes.PRACTICE_ARG).orEmpty(),
                 kpointName = entry.arguments?.getString(Routes.PRACTICE_NAME_ARG).orEmpty(),
                 onBack = { navController.popBackStack() },
+                questionType = entry.arguments?.getString(Routes.PRACTICE_TYPE_ARG).orEmpty(),
+                useHistory = entry.arguments?.getBoolean(Routes.PRACTICE_HISTORY_ARG) ?: false,
             )
         }
 

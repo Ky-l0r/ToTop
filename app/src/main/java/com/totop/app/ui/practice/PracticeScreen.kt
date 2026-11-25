@@ -43,12 +43,14 @@ fun PracticeScreen(
     kpointId: String,
     kpointName: String,
     onBack: () -> Unit,
+    questionType: String = "",
+    useHistory: Boolean = false,
     viewModel: PracticeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // 幂等在 ViewModel 里：同一知识点重复进入不会重复出题（出题是要花钱的）。
-    androidx.compose.runtime.LaunchedEffect(kpointId, kpointName) {
-        viewModel.start(kpointId, kpointName)
+    androidx.compose.runtime.LaunchedEffect(kpointId, kpointName, questionType, useHistory) {
+        viewModel.start(kpointId, kpointName, questionType, useHistory)
     }
     Column(modifier = Modifier.fillMaxSize()) {
         Row(

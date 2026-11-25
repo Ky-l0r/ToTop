@@ -82,15 +82,28 @@ object Routes {
     /** 复习资料详情的跳转：时间戳是存档文件名，天然是字符串安全参数。 */
     fun reviewMaterialDetail(createdAtUtc: Long): String = "review_material_detail/" + createdAtUtc
 
+    /** 巩固练习选择页（0.9）：先选科目，再选知识点与题型。 */
+    const val PRACTICE_PICKER = "practice_picker"
+
     /** 变式刷题：按知识点出三题，两题对上即过关。 */
     const val PRACTICE_ARG = "kpointId"
     const val PRACTICE_NAME_ARG = "name"
-    const val PRACTICE = "practice/{$PRACTICE_ARG}?$PRACTICE_NAME_ARG={$PRACTICE_NAME_ARG}"
+    const val PRACTICE_TYPE_ARG = "qtype"
+    const val PRACTICE_HISTORY_ARG = "history"
+    const val PRACTICE =
+        "practice/{$PRACTICE_ARG}?$PRACTICE_NAME_ARG={$PRACTICE_NAME_ARG}" +
+            "&$PRACTICE_TYPE_ARG={$PRACTICE_TYPE_ARG}&$PRACTICE_HISTORY_ARG={$PRACTICE_HISTORY_ARG}"
 
     fun practice(
         kpointId: String,
         name: String = "",
-    ): String = "practice/" + kpointId + "?name=" + java.net.URLEncoder.encode(name, "UTF-8")
+        questionType: String = "",
+        useHistory: Boolean = false,
+    ): String =
+        "practice/" + kpointId +
+            "?name=" + java.net.URLEncoder.encode(name, "UTF-8") +
+            "&" + PRACTICE_TYPE_ARG + "=" + java.net.URLEncoder.encode(questionType, "UTF-8") +
+            "&" + PRACTICE_HISTORY_ARG + "=" + useHistory
 
     fun mistakeDetail(mistakeId: String): String = "mistake_detail/" + mistakeId
 }

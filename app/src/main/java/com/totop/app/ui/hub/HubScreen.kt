@@ -69,7 +69,7 @@ fun HubScreen(
     onOpenNotes: () -> Unit,
     onOpenReport: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
-    onOpenReview: () -> Unit,
+    onOpenPractice: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -79,7 +79,7 @@ fun HubScreen(
         listOf(
             HubEntry("易错题", "按错因与知识点归档", Icons.Filled.Warning, onOpenMistakes),
             HubEntry("多练的知识点", "薄弱点排行与变式训练", Icons.Filled.Star, onOpenKnowledge),
-            HubEntry("复习打卡", "今天该复习的都在这", Icons.Filled.Refresh, onOpenReview),
+            HubEntry("巩固练习", "选科目与知识点，练同类题", Icons.Filled.Refresh, onOpenPractice),
             HubEntry("复习资料", "AI 生成的考前资料", Icons.AutoMirrored.Filled.List, onOpenReviewMaterial),
             // 笔记紧挨着复习资料：两者是同一件事的两端（自己记的 vs 系统生成的）。
             HubEntry("卡点笔记", "重点与还没想通的地方", Icons.Filled.Edit, onOpenNotes),
