@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
@@ -66,7 +65,6 @@ fun HubScreen(
     onOpenMistakes: () -> Unit,
     onOpenKnowledge: () -> Unit,
     onOpenLibrary: () -> Unit,
-    onOpenNotes: () -> Unit,
     onOpenReport: () -> Unit,
     onOpenReviewMaterial: () -> Unit,
     onOpenPractice: () -> Unit,
@@ -77,12 +75,10 @@ fun HubScreen(
     // 「陪伴」不在这里：底栏第二项已是它，再放一格只会重复。
     val entries =
         listOf(
-            HubEntry("易错题", "按错因与知识点归档", Icons.Filled.Warning, onOpenMistakes),
-            HubEntry("多练的知识点", "薄弱点排行与变式训练", Icons.Filled.Star, onOpenKnowledge),
+            HubEntry("错题本", "按错因与知识点归档", Icons.Filled.Warning, onOpenMistakes),
+            HubEntry("知识点", "薄弱点排行与变式训练", Icons.Filled.Star, onOpenKnowledge),
             HubEntry("巩固练习", "选科目与知识点，练同类题", Icons.Filled.Refresh, onOpenPractice),
             HubEntry("复习资料", "AI 生成的考前资料", Icons.AutoMirrored.Filled.List, onOpenReviewMaterial),
-            // 笔记紧挨着复习资料：两者是同一件事的两端（自己记的 vs 系统生成的）。
-            HubEntry("卡点笔记", "重点与还没想通的地方", Icons.Filled.Edit, onOpenNotes),
             HubEntry("资料库", "自己攒的好解析", Icons.Filled.Book, onOpenLibrary),
             HubEntry("学情", "成绩趋势与学习报告", Icons.Filled.DateRange, onOpenReport),
             HubEntry("设置", "模型、偏好与数据", Icons.Filled.Tune, onOpenSettings),
