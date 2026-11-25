@@ -5,12 +5,16 @@ import androidx.lifecycle.viewModelScope
 import com.totop.app.data.prefs.SecretStore
 import com.totop.app.data.remote.ExerciseGateway
 import com.totop.app.data.repo.ExerciseRepository
+import com.totop.app.data.repo.MasteryRecorder
 import com.totop.app.data.repo.MistakeRepository
 import com.totop.app.data.repo.PageRequest
 import com.totop.app.domain.model.AnswerText
 import com.totop.app.domain.model.Exercise
 import com.totop.app.domain.model.ExerciseDifficulty
 import com.totop.app.domain.model.MistakeStatus
+import com.totop.app.domain.model.RecallSelfResult
+import com.totop.app.domain.model.ReviewLog
+import com.totop.app.domain.model.ReviewSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,9 +34,9 @@ data class PracticeUiState(
     val total: Int = 0,
     val stem: String = "",
     val answer: String = "",
+    /** 生成时给出的分步解析（0.9 起直接展示，不要求学生先写答案）。 */
+    val steps: String = "",
     val revealed: Boolean = false,
-    /** 学生自己写的答案（可以不写，直接看答案）。 */
-    val studentAnswer: String = "",
     /** 自评「对上了」的题数。 */
     val matched: Int = 0,
     val finished: Boolean = false,
@@ -64,12 +68,16 @@ class PracticeViewModel
         private val exerciseRepository: ExerciseRepository,
         private val mistakeRepository: MistakeRepository,
         private val knowledgeRepository: com.totop.app.data.repo.KnowledgeRepository,
+        private val masteryRecorder: MasteryRecorder,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(PracticeUiState())
         val uiState: StateFlow<PracticeUiState> = _uiState.asStateFlow()
 
         private var questions: List<ExerciseGateway.Draft> = emptyList()
         private var loadedKey: String = ""
+
+        /** 自评要挂到一条错题上（review_log 的 mistakeId 是外键）；没有错题时为 null。 */
+        private var anchorMistakeId: String? = null
 
         /** 载入并按知识点出题（幂等：同一知识点不重复出题）。 */
         fun start(
@@ -147,14 +155,10 @@ class PracticeViewModel
                         index = 0,
                         stem = verified.first().stem,
                         answer = verified.first().answer,
+                        steps = verified.first().steps,
                         revealed = false,
-                        studentAnswer = "",
                     )
             }
-        }
-
-        fun updateStudentAnswer(text: String) {
-            _uiState.value = _uiState.value.copy(studentAnswer = text)
         }
 
         /** 看答案：只展示，不判断对错。 */
@@ -173,6 +177,9 @@ class PracticeViewModel
         fun rate(matched: Boolean) {
             val state = _uiState.value
             if (!state.revealed || state.finished) return
+            // 每次自评都落一条 review_log（来源=练习）：这是掌握度公式的输入，
+            // 只在过关时补一条会让「做了三轮只对了三题」看起来和「一轮全对」一样。
+            logPractice(state.kpointId, matched)
             val matchedCount = if (matched) state.matched + 1 else state.matched
             val next = state.index + 1
             if (next < questions.size) {
@@ -182,8 +189,8 @@ class PracticeViewModel
                         index = next,
                         stem = question.stem,
                         answer = question.answer,
+                        steps = question.steps,
                         revealed = false,
-                        studentAnswer = "",
                         matched = matchedCount,
                     )
                 return
@@ -235,6 +242,41 @@ class PracticeViewModel
                 runCatching {
                     val latest = mistakeRepository.pageByKpoint(kpointId, PageRequest(page = 0, size = 1)).firstOrNull()
                     if (latest != null) mistakeRepository.setStatus(latest.id, MistakeStatus.UNDERSTOOD)
+                    // 写完状态要把掌握度按新输入重算一次，否则要点开知识点页才更新
+                    masteryRecorder.recompute(listOf(kpointId))
+                }
+            }
+        }
+
+        /**
+         * 写一条练习自评。
+         *
+         * 挂在「该知识点下最近一条错题」上：review_log 的 mistakeId 是外键，没有错题就无处可挂，
+         * 这种知识点（纯按知识点出题、从未错过的）本来也不需要更新掌握度。
+         */
+        private fun logPractice(
+            kpointId: String,
+            matched: Boolean,
+        ) {
+            viewModelScope.launch {
+                runCatching {
+                    val mistakeId =
+                        anchorMistakeId
+                            ?: mistakeRepository
+                                .pageByKpoint(kpointId, PageRequest(page = 0, size = 1))
+                                .firstOrNull()
+                                ?.id
+                                ?.also { anchorMistakeId = it }
+                            ?: return@runCatching
+                    mistakeRepository.addReview(
+                        ReviewLog(
+                            id = UUID.randomUUID().toString(),
+                            mistakeId = mistakeId,
+                            reviewedAtUtc = System.currentTimeMillis(),
+                            selfResult = if (matched) RecallSelfResult.GOT_IT else RecallSelfResult.STILL_LOST,
+                            source = ReviewSource.PRACTICE,
+                        ),
+                    )
                 }
             }
         }

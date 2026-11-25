@@ -18,7 +18,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -119,28 +118,33 @@ private fun QuestionCard(
     ) {
         Text(text = state.stem, style = MaterialTheme.typography.bodyLarge)
         Text(
-            text = "先自己写，写完再看答案。",
+            text = "不用写答案。看完解析，自己判断这道题会不会。",
             style = MaterialTheme.typography.labelSmall,
             color = Tokens.OnSurfaceVariant,
         )
-        OutlinedTextField(
-            value = state.studentAnswer,
-            onValueChange = viewModel::updateStudentAnswer,
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 2,
-            label = { Text(text = "你的答案（可以不写）") },
-        )
         if (!state.revealed) {
-            Button(onClick = viewModel::reveal, enabled = state.canReveal) { Text(text = "看答案") }
+            Button(onClick = viewModel::reveal, enabled = state.canReveal) { Text(text = "看答案与解析") }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(text = "答案", style = MaterialTheme.typography.labelMedium, color = Tokens.Primary)
                 Text(text = state.answer, style = MaterialTheme.typography.bodyLarge)
+                if (state.steps.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(text = "解析", style = MaterialTheme.typography.labelMedium, color = Tokens.Primary)
+                    com.totop.app.ui.components.FormulaText(
+                        text = state.steps,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 Spacer(Modifier.height(4.dp))
-                Text(text = "和你写的一样吗？", style = MaterialTheme.typography.labelSmall, color = Tokens.OnSurfaceVariant)
+                Text(
+                    text = "这道题你做对了吗？",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Tokens.OnSurfaceVariant,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { viewModel.rate(matched = true) }) { Text(text = "对上了") }
-                    TextButton(onClick = { viewModel.rate(matched = false) }) { Text(text = "没对上") }
+                    Button(onClick = { viewModel.rate(matched = true) }) { Text(text = "做对了") }
+                    TextButton(onClick = { viewModel.rate(matched = false) }) { Text(text = "仍不懂") }
                 }
             }
         }
@@ -168,11 +172,16 @@ private fun ResultCard(
             color = if (state.passed) Tokens.Success else Tokens.OnSurface,
         )
         Text(
-            text = "这一轮 " + state.total + " 题里对上了 " + state.matched + " 题。",
+            text = "这一轮 " + state.total + " 题里做对 " + state.matched + " 题。",
             style = MaterialTheme.typography.bodyMedium,
         )
         Text(
-            text = if (state.passed) "已把这个知识点下最近一道错题标成「理解」。" else "再来一轮，把没对上的那种问法练熟。",
+            text =
+                if (state.passed) {
+                    "已把这个知识点下最近一道错题标成「理解」，掌握度按这次的记录重算。"
+                } else {
+                    "再来一轮，把这几种问法练熟。每次自评都记了一条复习记录。"
+                },
             style = MaterialTheme.typography.labelSmall,
             color = Tokens.OnSurfaceVariant,
         )
