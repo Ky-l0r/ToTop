@@ -286,9 +286,8 @@ class StudyViewModel
             return ExamOverview(
                 mistakeCount = rows.sumOf { it.mistakeCount },
                 reviewDoneCount = rows.sumOf { it.reviewDoneCount },
-                studySeconds = rows.sumOf { it.studySeconds },
                 activeDays =
-                    rows.filter { it.studySeconds > 0L || it.mistakeCount > 0 || it.reviewDoneCount > 0 }
+                    rows.filter { it.mistakeCount > 0 || it.reviewDoneCount > 0 }
                         .map { it.dateEpochDayUtc }
                         .distinct()
                         .size,

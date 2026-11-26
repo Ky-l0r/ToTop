@@ -1,5 +1,25 @@
 ## [Unreleased]
 
+### 移除学习时长（0.9.1）
+
+#### Removed
+
+- 学情页「本学期概览」去掉「学习时长」，从四项变三项。
+- 陪伴页的计时链整条删除：`tick` / `checkpoint` / `clockLabel` / `elapsedSeconds` / `todayBaseSeconds`，
+  以及 `CompanionInsightRepository.addFocusSeconds` / `todayFocusSeconds` 与那个保留学科键 `_focus`。
+
+#### Changed
+
+- 「活跃天数」的判定改为「有错题或有复习」，不再看秒数——否则这一项会永远为 0，变成假指标。
+- `docs/偏离记录.md` 第 53 章从「未定」改为「已定：移除」；学情文档 4.5 同步；改造指南进度表更新。
+
+#### Notes
+
+- `daily_stats.studySeconds` **这一列没删**：周报用例仍在读它，删列要迁移并丢历史；
+  它只是不再增长。哪天周报也不需要了，再单独做迁移。
+- 为什么不换成「按题数估算」：估出来的数字叫不出「时长」这个名字，指标要么真实要么不要。
+- 界面未在真机点过。
+
 ### 版本号规范化：每次推送 patch +1
 
 #### Docs

@@ -45,24 +45,16 @@ data class CompanionQa(
  * 而写作业是连续的，题目之间没有段落。现在只有「这一场自习」一个单位：
  * 进来即计时，只有问和答，离开即结账。
  *
- * @param elapsedSeconds 本次进入后累计的秒数
- * @param todayBaseSeconds 进入本页之前当天已经记过的秒数（顶栏显示「今天」而不是「这次」）
  * @param items 问答流，问过的都留着，不再「写完一题就清空」
+ *
+ * 0.9 去掉了计时：不再有 elapsedSeconds / todayBaseSeconds，也不再写 `daily_stats` 的学习时长。
+ * 这一页只负责「问与答」，坐多久是学生自己的事。
  */
 data class CompanionUiState(
-    val elapsedSeconds: Int = 0,
-    val todayBaseSeconds: Int = 0,
     val question: String = "",
     val items: List<CompanionQa> = emptyList(),
     val asking: Boolean = false,
 ) {
-    /** 当天累计：进入之前的存量 + 本次进入后的增量。 */
-    val todaySeconds: Int get() = todayBaseSeconds + elapsedSeconds
-
-    /** 顶栏那行小字。不足一分钟时不显示「0 分钟」这种读起来像没开始的内容。 */
-    val clockLabel: String
-        get() = if (todaySeconds < 60) "刚开始" else "今天已写 " + (todaySeconds / 60) + " 分钟"
-
     /** 有内容且不在等回答时才能发第二条，避免同一句话连发两次。 */
     val canAsk: Boolean get() = question.isNotBlank() && !asking
 }
@@ -96,32 +88,8 @@ class CompanionViewModel
         private val registry = LlmCallRegistry()
         private var askJob: Job? = null
 
-        /** 已经写进当天统计的秒数。用游标而不是「一次结账」，避免切页时重复累加。 */
-        private var recordedSeconds: Int = 0
-
-        init {
-            // 起点只读一次：之后本页的每一秒都由 tick 自己累加，
-            // 若改成持续观察当天那一行，checkpoint 写库与界面读数之间会有一次回跳。
-            viewModelScope.launch {
-                val base = runCatching { insightRepository.todayFocusSeconds() }.getOrDefault(0L)
-                _uiState.update { it.copy(todayBaseSeconds = base.toInt()) }
-            }
-        }
-
         fun updateQuestion(text: String) {
             _uiState.update { it.copy(question = text) }
-        }
-
-        /**
-         * 走一秒。
-         *
-         * 由界面在**页面可见时**调用（`repeatOnLifecycle(RESUMED)` 里每秒一次），
-         * 不放在 ViewModel 自己起的循环里：那样切到后台、或切到别的一页也照常计，
-         * 学生把手机放下半小时就等于凭空多记半小时。
-         */
-        fun tick() {
-            _uiState.update { it.copy(elapsedSeconds = it.elapsedSeconds + 1) }
-            if (_uiState.value.elapsedSeconds - recordedSeconds >= CHECKPOINT_SECONDS) checkpoint()
         }
 
         /**
@@ -149,23 +117,6 @@ class CompanionViewModel
                     runCatching { runAsk(text, index) }
                     _uiState.update { it.copy(asking = false) }
                 }
-        }
-
-        /**
-         * 把自上次以来的专注时长写进当天统计。
-         *
-         * 由界面在离开页面时调用，[tick] 每分钟也会调一次兜底：
-         * 不能放在 [onCleared] 里——那时 viewModelScope 已经跟着取消，
-         * 启动的协程还没跑到写库就没了。
-         */
-        fun checkpoint() {
-            val elapsed = _uiState.value.elapsedSeconds
-            val delta = elapsed - recordedSeconds
-            if (delta <= 0) return
-            recordedSeconds = elapsed
-            viewModelScope.launch {
-                runCatching { insightRepository.addFocusSeconds(delta.toLong(), System.currentTimeMillis()) }
-            }
         }
 
         /**
@@ -334,7 +285,6 @@ class CompanionViewModel
             const val MAX_KP_HITS: Int = 3
 
             /** 每隔这么久把专注时长写一次库：进程被杀最多丢一分钟，又不至于每秒写一次。 */
-            const val CHECKPOINT_SECONDS: Int = 60
         }
 
         override fun onCleared() {

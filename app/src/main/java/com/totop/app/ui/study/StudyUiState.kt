@@ -10,28 +10,11 @@ import com.totop.app.domain.model.Term
 data class ExamOverview(
     val mistakeCount: Int = 0,
     val reviewDoneCount: Int = 0,
-    val studySeconds: Long = 0L,
     val activeDays: Int = 0,
     val kpointCount: Int = 0,
 ) {
-    /** 学习时长文案：不足 1 小时给分钟，避免「0.1 小时」。 */
-    val studyText: String
-        get() {
-            val minutes = studySeconds / 60
-            return when {
-                minutes <= 0L -> "0 分钟"
-                minutes < 60 -> minutes.toString() + " 分钟"
-                else -> {
-                    val hours = minutes / 60
-                    val rest = minutes % 60
-                    if (rest == 0L) hours.toString() + " 小时" else hours.toString() + " 小时 " + rest + " 分"
-                }
-            }
-        }
-
-    /** 是否一条都没有（用于空态判断）。 */
     val isEmpty: Boolean
-        get() = mistakeCount == 0 && reviewDoneCount == 0 && studySeconds == 0L && kpointCount == 0
+        get() = mistakeCount == 0 && reviewDoneCount == 0 && kpointCount == 0
 }
 
 /** AI 解读状态。 */

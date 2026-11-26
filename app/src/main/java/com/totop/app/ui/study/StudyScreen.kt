@@ -651,14 +651,13 @@ private fun ExamListCard(
     }
 }
 
-/** 本学期概览：四项行为指标，与成绩无关。 */
+/** 本学期概览：三项行为指标，与成绩无关（0.9 去掉了「学习时长」，口径见偏离记录 53）。 */
 @Composable
 private fun OverviewCard(overview: ExamOverview) {
     SectionCard(title = "本学期概览") {
         Row(modifier = Modifier.fillMaxWidth()) {
             OverviewCell("新增错题", overview.mistakeCount.toString() + " 道", Modifier.weight(1f))
             OverviewCell("完成复习", overview.reviewDoneCount.toString() + " 次", Modifier.weight(1f))
-            OverviewCell("学习时长", overview.studyText, Modifier.weight(1f))
             OverviewCell("活跃天数", overview.activeDays.toString() + " 天", Modifier.weight(1f))
         }
     }
