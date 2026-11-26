@@ -83,11 +83,11 @@ android {
         // 0.8.0：易错题状态由五态收成四态（不再有「待校对」），配色重排；公式与星号渲染兜底修复；
         //        理解与「这题我不会」统一入口；笔记分类与卡点笔记板块（DB v9）；
         //        方法卡按知识点归纳、攒够 3 道同类题后整卡重写一次（DB v10）；加号菜单可要解法。
-        // 0.8.1：起改为「每次推送 patch +1」（AGENTS 3.2.1）。本轮含：导入标准答案并复写错题本（DB v11 复写来源）、
+        // 0.9.0：基线抬到这里，之后每次推送只动第三位（AGENTS 3.2.1）。本轮含：导入标准答案并复写错题本（DB v11 复写来源）、
         //        资料库只收导入答案（DB v12 origin）、错题本去状态、知识点去图表、巩固练习重做（选择页/题型/自评落日志）、
         //        首页三块、陪伴页去计时、学情与复习资料按科目收敛、记住输入方式。
         versionCode = 12
-        versionName = "0.8.1"
+        versionName = "0.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
