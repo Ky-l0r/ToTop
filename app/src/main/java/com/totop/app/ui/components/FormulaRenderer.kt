@@ -161,8 +161,12 @@ class FormulaRenderer private constructor(
         val host =
             FrameLayout(context).apply {
                 setBackgroundColor(Color.TRANSPARENT)
-                clipChildren = false
-                clipToPadding = false
+                // 必须裁剪子视图。宿主本身只有 1dp，里面的 WebView 却是 HOST_WIDTH_PX 宽、
+                // 高度跟随内容；clipChildren 为 false 时它会从宿主位置（页面左上角）画到屏幕外，
+                // 真机表现为「顶栏上压着一行上一次渲染的化学式」。
+                // 截图走 webView.draw(Canvas)，由本容器之外的代码直接绘制，不受这里裁剪影响。
+                clipChildren = true
+                clipToPadding = true
             }
         val created = createWebView(context)
         host.addView(
@@ -334,7 +338,20 @@ class FormulaRenderer private constructor(
             request.request.onResult?.invoke(result)
         }
         request.request.onResult = null
+        clearPage()
         if (!destroyed) drainQueue()
+    }
+
+    /**
+     * 截完图立刻擦掉页面内容。
+     *
+     * 这个 WebView 是进程级单例，页面里的 `#slot` 会一直保留最后一次渲染的公式
+     * （渲染失败时还会退回源码文本）。公式位图已经拿到，留着只会在跨页面复用宿主时
+     * 从别处漏出来；清空之后页面在两次渲染之间是空白的，不留残留。
+     */
+    private fun clearPage() {
+        if (destroyed || !readyState.value) return
+        webView?.evaluateJavascript(CLEAR_SCRIPT, null)
     }
 
     /** JS 回调：公式已排版完成，按实际内容尺寸截图。 */
@@ -521,6 +538,9 @@ class FormulaRenderer private constructor(
         private const val BRIDGE_NAME: String = "ToTopBridge"
 
         private const val ASSET_URL: String = "file:///android_asset/formula_render.html"
+
+        /** 擦除页面内容的脚本；`ToTop` 未定义（页面还没加载完）时保持空操作。 */
+        private const val CLEAR_SCRIPT: String = "window.ToTop && window.ToTop.clear && window.ToTop.clear();"
 
         private const val IF_NOT_READY: String = "公式渲染器尚未就绪"
 

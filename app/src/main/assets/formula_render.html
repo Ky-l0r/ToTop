@@ -108,6 +108,18 @@
 
         var ToTop = {
             /**
+             * 清空页面内容。
+             *
+             * 这个 WebView 跨页面复用，`#slot` 会一直保留最后一次渲染的公式；Kotlin 侧截完图
+             * 就会调用这里擦掉，避免残留内容在别的页面上露出，也避免下一次渲染前先闪一下旧内容。
+             */
+            clear: function () {
+                slot.textContent = "";
+                slot.className = "";
+                slot.style.width = "";
+            },
+
+            /**
              * 渲染一条公式。
              * @param {number} id       请求序号
              * @param {string} latex    LaTeX 源码（不含定界符）
